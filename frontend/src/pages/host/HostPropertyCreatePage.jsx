@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, ArrowRight, Building2, Check, ClipboardList, Clock3, FileText, ImagePlus, Info, LoaderCircle, LockKeyhole, Pencil, Save, Shield, Star, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import PropertyLocationMap from '../../components/PropertyLocationMap.jsx';
@@ -32,21 +32,9 @@ function ReviewFields({ rows }) {
 function RegistrationForm({ user, accessBlocked = false }) {
   const notify = useToast();
   const [pending, setPending] = useState(null);
-  const [checking, setChecking] = useState({ loading: true, error: '' });
-  const [checkRevision, setCheckRevision] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const submission = useRef();
-  useEffect(() => {
-    const controller = new AbortController();
-    setChecking({ loading: true, error: '' });
-    hostApi.currentRegistration(controller.signal).then(record => {
-      if (!controller.signal.aborted) { setPending(record); setChecking({ loading: false, error: '' }); }
-    }).catch(error => {
-      if (!controller.signal.aborted) setChecking({ loading: false, error: error.message });
-    });
-    return () => controller.abort();
-  }, [checkRevision]);
   useEffect(() => () => submission.current?.abort(), []);
   const [data, setData] = useState(() => createPropertyForm(user));
   const [step, setStep] = useState(0);
@@ -153,21 +141,13 @@ function RegistrationForm({ user, accessBlocked = false }) {
       if (!controller.signal.aborted) received(record);
     } catch (error) {
       if (controller.signal.aborted) return;
-      if (error.status === 409) {
-        try {
-          const record = await hostApi.currentRegistration(controller.signal);
-          if (record && !controller.signal.aborted) { received(record); return; }
-        } catch { /* Preserve the original submission error when a status recheck fails. */ }
-      }
       setSubmitError(error.message);
     } finally {
       submission.current = undefined;
       if (!controller.signal.aborted) setSubmitting(false);
     }
   };
-  if (checking.loading) return <StateView kind="loading" message="Đang kiểm tra hồ sơ đăng ký nhà trọ..." />;
-  if (checking.error) return <StateView kind="error" message={checking.error}><button className="p-button" onClick={() => setCheckRevision(value => value + 1)}>Thử lại</button></StateView>;
-  if (pending) return <section className="registration-pending" role="status"><div className="registration-pending-icon"><Clock3 size={34} /></div><span className="registration-pending-badge">{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</span><h2>{pending.status==='NEEDS_SUPPLEMENT'?'Hồ sơ đăng ký nhà trọ cần bổ sung':'Hồ sơ đăng ký nhà trọ đang chờ xét duyệt'}</h2><p>Đã tiếp nhận hồ sơ <strong>{pending.name}</strong>.{pending.status==='NEEDS_SUPPLEMENT'?' Vui lòng xem nội dung yêu cầu của staff bên dưới.':' Vui lòng chờ Ban Quản Trị HL_RCS kiểm tra và xét duyệt.'}</p>{pending.reasonNote&&<p className="hp-review-note">{pending.reasonNote}</p>}<dl><div><dt>Mã hồ sơ</dt><dd>#{pending.registrationId}</dd></div><div><dt>Trạng thái</dt><dd>{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</dd></div></dl><p>Nhà trọ chưa được hiển thị công khai khi chưa được phê duyệt.</p><div className="portal-actions"><Link className="p-button primary" to="/host/property">Nhà trọ của tôi</Link><Link className="p-button" to="/host">Về bảng điều khiển</Link></div></section>;
+  if (pending) return <section className="registration-pending" role="status"><div className="registration-pending-icon"><Clock3 size={34} /></div><span className="registration-pending-badge">{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</span><h2>{pending.status==='NEEDS_SUPPLEMENT'?'Hồ sơ đăng ký nhà trọ cần bổ sung':'Hồ sơ đăng ký nhà trọ đang chờ xét duyệt'}</h2><p>Đã tiếp nhận hồ sơ <strong>{pending.name}</strong>.{pending.status==='NEEDS_SUPPLEMENT'?' Vui lòng xem nội dung yêu cầu của staff bên dưới.':' Vui lòng chờ Ban Quản Trị HL_RCS kiểm tra và xét duyệt.'}</p>{pending.reasonNote&&<p className="hp-review-note">{pending.reasonNote}</p>}<dl><div><dt>Mã hồ sơ</dt><dd>#{pending.registrationId}</dd></div><div><dt>Trạng thái</dt><dd>{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</dd></div></dl><p>Nhà trọ chưa được hiển thị công khai khi chưa được phê duyệt.</p><div className="portal-actions"><Link className="p-button primary" to="/host/property">Nhà trọ của tôi</Link><button type="button" className="p-button" onClick={()=>{setPending(null);setData(createPropertyForm(user));setStep(0);setFurthestStep(0);setReturnToReview(false);setErrors({});setSubmitError('');setDraftSaved(false);setNotice('');}}>Đăng ký nhà trọ khác</button><Link className="p-button" to="/host">Về bảng điều khiển</Link></div></section>;
   const progress = [16, 33, 50, 67, 83, 100][step];
   return <div className="property-registration">
     <nav className="registration-breadcrumb" aria-label="Đường dẫn"><Link to="/host">Dashboard</Link><span>/</span><Link to="/host/property">Nhà trọ của tôi</Link><span>/</span><strong>Đăng ký nhà trọ</strong></nav>
@@ -265,6 +245,6 @@ export default function HostPropertyCreatePage() {
   }, [user?.userId, revision]);
   if (access.userId !== user?.userId || (access.loading && !access.data)) return <StateView kind="loading" />;
   if (access.error && !access.data) return <StateView kind="error" message={access.error}><button className="p-button" onClick={() => setRevision(value => value + 1)}>Thử lại</button></StateView>;
-  if (access.data.reason === 'HAS_PROPERTY') return <Navigate to="/host/property" replace />;
+  if (!access.data.canRegister) return <StateView kind="error" message="Máy chủ chưa cho phép đăng ký thêm nhà trọ. Vui lòng khởi động lại backend để áp dụng quy định mới." />;
   return <>{access.error && <p className="registration-submit-error" role="alert">Không thể kiểm tra lại quyền đăng ký: {access.error} Thông tin đang nhập được giữ nguyên. <button type="button" className="p-button" onClick={() => setRevision(value => value + 1)}>Thử lại</button></p>}<RegistrationForm key={user?.userId} user={user} accessBlocked={Boolean(access.error)} /></>;
 }

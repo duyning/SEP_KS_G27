@@ -11,6 +11,8 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "exceljs": "4.4.0",
+    "jszip": "3.10.1",
     "leaflet": "1.9.4",
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",

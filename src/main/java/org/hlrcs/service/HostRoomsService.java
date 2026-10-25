@@ -43,10 +43,10 @@ public class HostRoomsService {
         if(value.customPrice()==null&&(type.getPrice()==null||type.getPrice().signum()<=0))throw new BadRequestException("Loại phòng chưa có giá hợp lệ. Hãy cập nhật loại phòng hoặc nhập giá riêng.");
         var room=id==null?Room.builder().property(property).build():owned(id);
         if(!room.getProperty().getPropertyId().equals(property.getPropertyId()))throw new BadRequestException("Không được chuyển phòng sang nhà trọ khác.");
-        String number=value.roomNumber().trim().toUpperCase(java.util.Locale.ROOT);
-        if(!number.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ._-]{0,29}")||value.floor().trim().isEmpty())throw new BadRequestException("Số phòng chỉ gồm chữ, số, dấu cách, chấm, gạch ngang hoặc gạch dưới.");
+        String number=RoomRules.number(value.roomNumber());
+        String floor=RoomRules.floor(value.floor());
         if(rooms.existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot(property.getPropertyId(),number,id==null?-1:id))throw new AppException("Số phòng đã tồn tại trong nhà trọ. Vui lòng chọn số phòng khác.",HttpStatus.CONFLICT);
-        room.setRoomType(type);room.setRoomNumber(number);room.setFloor(value.floor().trim());room.setStatus(value.status());room.setCustomPrice(value.customPrice());room.setConfirmedAt(LocalDateTime.now());
+        room.setRoomType(type);room.setRoomNumber(number);room.setFloor(floor);room.setStatus(value.status());room.setCustomPrice(value.customPrice());room.setConfirmedAt(LocalDateTime.now());
         try{rooms.saveAndFlush(room);}catch(org.springframework.dao.DataIntegrityViolationException error){throw new AppException("Số phòng đã tồn tại. Vui lòng tải lại và chọn ký hiệu khác.",HttpStatus.CONFLICT);}return mapper.summary(room);
     }
     @Transactional(isolation=Isolation.READ_COMMITTED)

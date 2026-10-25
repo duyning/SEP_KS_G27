@@ -101,6 +101,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/api/auth/**",
                                 "/api/test/public",
+                                "/api/public/properties",
+                                "/api/public/properties/**",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

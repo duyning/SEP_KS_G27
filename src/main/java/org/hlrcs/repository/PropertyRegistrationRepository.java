@@ -5,6 +5,8 @@ import org.hlrcs.entity.enums.RegistrationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PropertyRegistrationRepository extends JpaRepository<PropertyRegistration, Integer> {
+    @org.springframework.data.jpa.repository.Query("select r.user.userId from PropertyRegistration r where r.registrationId=:id")
+    java.util.Optional<Integer> findOwnerId(@org.springframework.data.repository.query.Param("id") Integer id);
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "reviewer"})
     java.util.List<PropertyRegistration> findAllByOrderByCreatedAtDesc();
 

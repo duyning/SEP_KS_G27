@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Check, Clock3, DoorOpen, ExternalLink, FileCheck2, House, ImageOff, Layers, MapPin, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, DoorOpen, ExternalLink, Eye, FileCheck2, House, ImageOff, Layers, LockKeyhole, MapPin, Pencil, Plus, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { hostApi } from '../../services/host.js';
 import { Modal, StateView } from '../../components/PortalUI.jsx';
 import { AMENITIES, RULES } from '../../services/property-registration.js';
+import {filterPropertyRecords,propertyPage,propertyRecordKey,PROPERTY_PAGE_SIZE} from '../../services/host-property-list.js';
 import '../../styles/host-property-page.css';
 
 const steps = [
@@ -17,7 +18,7 @@ export function HostPropertyEmpty() {
   return <section id="stateNoProperty" className="host-property-empty">
     <span className="host-property-intro-badge">Cơ sở lưu trú · Bắt đầu cùng HL_RCS</span>
     <h2>Bạn chưa đăng ký nhà trọ</h2>
-    <p className="host-property-empty-description">Mỗi chủ trọ trên hệ thống quản lý một nhà trọ duy nhất. Hãy đăng ký nhà trọ để bắt đầu tạo loại phòng, cấu hình từng phòng thực tế, quản lý phòng trống và nhận yêu cầu xem phòng từ hàng nghìn sinh viên &amp; người đi làm tại Hòa Lạc.</p>
+    <p className="host-property-empty-description">Bạn có thể đăng ký và quản lý nhiều nhà trọ. Hãy đăng ký nhà trọ để bắt đầu tạo loại phòng, cấu hình từng phòng thực tế, quản lý phòng trống và nhận yêu cầu xem phòng từ hàng nghìn sinh viên &amp; người đi làm tại Hòa Lạc.</p>
     <div className="host-property-empty-steps">{steps.map(([title, description], index) => <article key={title}><span className="host-property-step-number">{index + 1}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
     <div className="host-property-register-action"><Link id="btnStartRegisterProperty" to="/host/property/new"><Plus size={18} /><span>Đăng ký nhà trọ của bạn ngay</span></Link></div>
   </section>;
@@ -48,11 +49,18 @@ function PropertyDetail({ property }) {
   const badge = <span className={`hp-status ${property.displayStatus.toLowerCase()}`}>{pending ? <Clock3 size={13} /> : visible ? <Check size={13} /> : null}{stateLabels[property.displayStatus]}</span>;
   const filter = property.propertyId == null ? '' : `?${new URLSearchParams({ propertyId: property.propertyId })}`;
   const canManage = property.propertyId != null && !pending && property.displayStatus !== 'REJECTED';
-  const edit = (short = false) => <button type="button" className={short ? 'hp-button small' : 'hp-button primary'} disabled title="Chưa có API cập nhật thông tin nhà trọ"><Pencil size={15} />{short ? 'Chỉnh sửa' : 'Chỉnh sửa thông tin'}</button>;
+  const change=property.changeRequest;
+  const changePending=change?.status==='PENDING';
+  const changeEditable=change&&['NEEDS_SUPPLEMENT','REJECTED'].includes(change.status);
+  const editId=changeEditable?change.registrationId:property.registrationId;
+  const canEdit=editId&&!changePending&&(['NEEDS_SUPPLEMENT','REJECTED'].includes(property.displayStatus)||visible||property.displayStatus==='APPROVED');
+  const editLabel=changeEditable?(change.status==='NEEDS_SUPPLEMENT'?'Bổ sung đề nghị thay đổi':'Sửa đề nghị bị từ chối'):property.displayStatus==='NEEDS_SUPPLEMENT'?'Bổ sung hồ sơ':property.displayStatus==='REJECTED'?'Chỉnh sửa & Gửi lại':'Đề nghị thay đổi thông tin';
+  const edit = (short = false) => canEdit?<Link className={short?'hp-button small':'hp-button primary'} to={`/host/property/edit?registrationId=${editId}`}><Pencil size={15}/>{short?'Chỉnh sửa':editLabel}</Link>:<button type="button" className={short?'hp-button small':'hp-button primary'} disabled title={changePending?'Đề nghị thay đổi đang chờ xét duyệt':pending?'Hồ sơ đang chờ xét duyệt, tạm khóa chỉnh sửa':'Hồ sơ chưa đủ điều kiện chỉnh sửa'}><LockKeyhole size={15}/>{changePending?'Đề nghị đang chờ duyệt':'Tạm khóa chỉnh sửa'}</button>;
   const manageLink = (to, label) => canManage ? <Link className="hp-button subtle" to={`${to}${filter}`}>{label}<ArrowRight size={15} /></Link> : <button className="hp-button subtle" disabled title="Chức năng quản lý phòng khả dụng sau khi nhà trọ được tạo và hồ sơ được duyệt">{label}<ArrowRight size={15} /></button>;
   const renderImage = (photo, className) => images[photo.documentId] ? <img className={className} src={images[photo.documentId]} alt={`Ảnh nhà trọ ${property.name}`} onError={() => setImages(previous => ({ ...previous, [photo.documentId]: null }))} /> : <span className="hp-image-placeholder"><ImageOff size={28} /><span>{images[photo.documentId] === null ? 'Không tải được ảnh' : 'Đang tải ảnh'}</span></span>;
   return <article className="hp-detail" data-status={property.displayStatus}>
     <header className="hp-page-heading"><div><h2>{property.name}</h2><p>Quản lý thông tin nhà trọ, các loại phòng, phòng thực tế và cập nhật tính sẵn sàng.</p></div><div className="hp-actions"><button className="hp-button" disabled title={visible ? 'Chưa có trang công khai liên kết với nhà trọ này' : 'Nhà trọ chưa được hiển thị công khai'}><ExternalLink size={15} />Xem trang công khai</button>{edit()}</div></header>
+    {change&&<aside className="hp-change-notice"><strong>Đề nghị thay đổi #{change.registrationId} · {change.status==='PENDING'?'Chờ xét duyệt':change.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Đã từ chối'}</strong><p>Bản đã duyệt của nhà trọ tiếp tục hiển thị. Giá và tình trạng phòng vẫn quản lý bình thường.</p>{change.reasonNote&&<p className="hp-review-note">{change.reasonNote}</p>}{changeEditable&&edit()}</aside>}
     <div className="hp-sheet">
       <section className="hp-summary"><div className="hp-cover">{cover ? <button type="button" disabled={!images[cover.documentId]} title="Xem ảnh nhà trọ" aria-label="Xem ảnh đại diện nhà trọ" onClick={() => setPreview(cover)}>{renderImage(cover)}</button> : <div className="hp-image-placeholder"><House size={40} /><span>Chưa có ảnh nhà trọ</span></div>}{property.verified && <span className="hp-verified"><ShieldCheck size={12} />Đã xác minh</span>}</div>
         <div className="hp-summary-copy"><div className="hp-name-row"><h3>{property.name}</h3>{badge}</div><p className="hp-address"><MapPin size={14} />{property.address || 'Chưa cập nhật địa chỉ'}</p><div className="hp-summary-counts"><span><Layers size={14} />{property.roomTypeCount} loại phòng</span><span><DoorOpen size={14} />{property.totalRooms == null ? 'Chưa có số liệu phòng thực tế' : `${property.totalRooms} phòng thực tế`}</span>{property.vacantRooms != null && <span>{property.vacantRooms} phòng trống</span>}</div><p className="hp-contact">Quản lý: <strong>{property.managerName || 'Chưa cập nhật'}</strong>{property.contactPhone && <> · Hotline: <strong>{property.contactPhone}</strong></>}{property.zaloPhone && <> · Zalo: <strong>{property.zaloPhone}</strong></>}</p>{!property.managerName && property.contactInfo && <p className="hp-contact">{property.contactInfo}</p>}</div>
@@ -76,10 +84,40 @@ function PropertyDetail({ property }) {
   </article>;
 }
 
-export function HostPropertyContent({ data, selectedId }) {
-  if (selectedId && !data.records.some(record => String(record.propertyId) === selectedId)) return <StateView kind="error" message="Không tìm thấy nhà trọ này trong danh sách bạn được phép quản lý." />;
-  if (!data.records.length) return <HostPropertyEmpty />;
-  return data.records.map(record => <PropertyDetail key={`${record.propertyId}-${record.registrationId}`} property={record} />);
+function PropertyCardCover({property}){
+ const id=property.photos[0]?.documentId;const [image,setImage]=useState('');
+ useEffect(()=>{
+  setImage('');if(!id)return;const controller=new AbortController();let url;
+  hostApi.propertyPhoto(id,controller.signal).then(blob=>{if(!controller.signal.aborted){url=URL.createObjectURL(blob);setImage(url);}}).catch(()=>{});
+  return()=>{controller.abort();if(url)URL.revokeObjectURL(url);};
+ },[id]);
+ return <div className="hp-card-cover">{image?<img src={image} alt={`Ảnh nhà trọ ${property.name}`} onError={()=>setImage('')}/>:<div className="hp-card-placeholder"><House size={30}/><span>{id?'Ảnh nhà trọ chưa tải được':'Chưa có ảnh nhà trọ'}</span></div>}{property.verified&&<span className="hp-verified"><ShieldCheck size={12}/>Đã xác minh</span>}</div>;
+}
+
+export function HostPropertyContent({ data, selectedId, selectedRegistrationId, onRefresh }) {
+ const [params,setParams]=useSearchParams();
+ useEffect(()=>{window.scrollTo({top:0,behavior:'instant'});},[selectedId,selectedRegistrationId]);
+ const selected=selectedId?data.records.find(record=>record.propertyId!=null&&String(record.propertyId)===selectedId):selectedRegistrationId?data.records.find(record=>String(record.registrationId)===selectedRegistrationId):null;
+ const change=(key,value)=>{const next=new URLSearchParams(params);if(value===''||value==='ALL'||(key==='sort'&&value==='NEWEST'))next.delete(key);else next.set(key,value);if(key!=='page')next.delete('page');setParams(next,{replace:key==='search'});};
+ const reset=()=>{const next=new URLSearchParams(params);for(const key of ['search','status','sort','page'])next.delete(key);setParams(next);};
+ if(selectedId||selectedRegistrationId){
+  const back=new URLSearchParams(params);back.delete('id');back.delete('registrationId');
+  return <><Link className="hp-back-link" to={`/host/property${back.size?`?${back}`:''}`}><ArrowLeft size={16}/>Danh sách nhà trọ</Link>{selected?<PropertyDetail key={propertyRecordKey(selected)} property={selected}/>:<StateView kind="error" message="Không tìm thấy nhà trọ hoặc hồ sơ này trong danh sách bạn được phép quản lý."/>}</>;
+ }
+ if (!data.records.length) return <HostPropertyEmpty />;
+ const search=params.get('search')||'',status=params.get('status')||'ALL',sort=params.get('sort')||'NEWEST';
+ const filtered=filterPropertyRecords(data.records,{search,status,sort});const current=propertyPage(filtered,params.get('page')||1);
+ const detailLink=record=>{const next=new URLSearchParams(params);next.set(record.propertyId!=null?'id':'registrationId',record.propertyId??record.registrationId);return `/host/property?${next}`;};
+ return <section className="hp-portfolio">
+  <header className="hp-portfolio-heading"><div><span className="hp-eyebrow">QUẢN LÝ CƠ SỞ LƯU TRÚ</span><h2>Nhà trọ của tôi</h2><p>Theo dõi nhà trọ, phòng trống và tiến độ xét duyệt tại một nơi.</p></div><div className="hp-actions"><button type="button" className="hp-button" onClick={onRefresh}><RefreshCw size={15}/>Làm mới</button><Link className="hp-button primary" to="/host/property/new"><Plus size={16}/>Đăng ký thêm nhà trọ</Link></div></header>
+  <div className="hp-portfolio-stats">{[['ALL','Tất cả nhà trọ & hồ sơ',House],['VISIBLE','Đang hiển thị',ShieldCheck],['PENDING','Chờ xét duyệt',Clock3],['NEEDS_SUPPLEMENT','Cần bổ sung',FileCheck2]].map(([key,label,Icon])=><button type="button" key={key} aria-pressed={status===key} className={status===key?'selected':''} onClick={()=>change('status',key)}><span>{label}<Icon size={18}/></span><strong>{key==='ALL'?data.records.length:data.records.filter(record=>record.displayStatus===key).length}</strong></button>)}</div>
+  <div className="hp-portfolio-toolbar"><label className="hp-portfolio-search"><Search size={17}/><input aria-label="Tìm nhà trọ" placeholder="Tìm tên nhà trọ, địa chỉ, người quản lý..." value={search} onChange={event=>change('search',event.target.value)}/></label><select aria-label="Lọc trạng thái nhà trọ" value={status} onChange={event=>change('status',event.target.value)}><option value="ALL">Tất cả trạng thái</option>{Object.entries(stateLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><select aria-label="Sắp xếp nhà trọ" value={sort} onChange={event=>change('sort',event.target.value)}><option value="NEWEST">Mới đăng ký trước</option><option value="NAME">Tên A–Z</option><option value="ROOMS">Nhiều phòng trước</option></select>{(search||status!=='ALL'||sort!=='NEWEST')&&<button type="button" className="hp-button" onClick={reset}>Đặt lại</button>}</div>
+  <div className="hp-portfolio-result"><strong>{filtered.length} nhà trọ & hồ sơ</strong><span>Tối đa {PROPERTY_PAGE_SIZE} mục mỗi trang</span></div>
+  {current.items.length?<div className="hp-property-grid">{current.items.map(record=><article className="hp-property-card" key={propertyRecordKey(record)} data-status={record.displayStatus}>
+   <PropertyCardCover property={record}/><div className="hp-card-body"><div className="hp-card-meta"><span className={`hp-status ${record.displayStatus.toLowerCase()}`}>{stateLabels[record.displayStatus]}</span><small>{record.propertyId!=null?`NT-${record.propertyId}`:`HS-${record.registrationId}`}</small></div><h3><Link to={detailLink(record)}>{record.name}</Link></h3><p className="hp-card-address"><MapPin size={14}/><span>{record.address||'Chưa cập nhật địa chỉ'}</span></p><div className="hp-card-numbers">{[['Loại phòng',record.roomTypeCount],['Tổng phòng',record.totalRooms],['Còn trống',record.vacantRooms]].map(([label,value])=><div key={label}><strong>{value??'—'}</strong><span>{label}</span></div>)}</div><p className="hp-card-date">Đăng ký: {date(record.createdAt)}</p></div><footer className="hp-card-actions"><Link className="hp-button" to={detailLink(record)}><Eye size={14}/>Xem chi tiết</Link>{record.propertyId!=null&&['VISIBLE','APPROVED','INACTIVE'].includes(record.displayStatus)?<Link className="hp-button subtle" to={`/host/rooms?propertyId=${record.propertyId}`}><DoorOpen size={14}/>Quản lý phòng</Link>:<span className="hp-card-waiting">{record.displayStatus==='NEEDS_SUPPLEMENT'?'Xem phản hồi trong chi tiết':record.displayStatus==='REJECTED'?'Xem kết quả xét duyệt':'Chờ xét duyệt'}</span>}</footer>
+  </article>)}</div>:<div className="hp-portfolio-empty"><Search size={32}/><h3>Không có nhà trọ phù hợp</h3><p>Thử thay đổi từ khóa hoặc trạng thái.</p><button type="button" className="hp-button" onClick={reset}>Đặt lại bộ lọc</button></div>}
+  <nav className="hp-pagination" aria-label="Phân trang nhà trọ"><span>{filtered.length?`${(current.page-1)*PROPERTY_PAGE_SIZE+1}–${Math.min(current.page*PROPERTY_PAGE_SIZE,filtered.length)} trong ${filtered.length} mục`:'0 mục'}</span><div><button type="button" className="hp-button" disabled={current.page<=1} onClick={()=>change('page',current.page-1)}><ChevronLeft size={15}/>Trước</button><span>Trang {current.page} / {current.pages}</span><button type="button" className="hp-button" disabled={current.page>=current.pages} onClick={()=>change('page',current.page+1)}>Sau<ChevronRight size={15}/></button></div></nav>
+ </section>;
 }
 
 export default function HostPropertyPage() {
@@ -88,6 +126,7 @@ export default function HostPropertyPage() {
   const [state, setState] = useState({ loading: true, data: null, error: '' });
   const [revision, setRevision] = useState(0);
   const selectedId = params.get('id');
+  const selectedRegistrationId=params.get('registrationId');
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true, data: null, error: '' });
@@ -99,6 +138,6 @@ export default function HostPropertyPage() {
     return () => controller.abort();
   }, [user?.userId, revision, selectedId]);
   return <div className="host-property-page">
-    <div className="host-property-page-content">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><button className="p-button primary" onClick={() => setRevision(value => value + 1)}>Thử lại</button></StateView> : <HostPropertyContent data={state.data} selectedId={selectedId} />}</div>
+    <div className="host-property-page-content">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><button className="p-button primary" onClick={() => setRevision(value => value + 1)}>Thử lại</button></StateView> : <HostPropertyContent data={state.data} selectedId={selectedId} selectedRegistrationId={selectedRegistrationId} onRefresh={()=>setRevision(value=>value+1)} />}</div>
   </div>;
 }

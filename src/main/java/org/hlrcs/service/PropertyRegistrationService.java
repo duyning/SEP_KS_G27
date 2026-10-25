@@ -22,7 +22,6 @@ import java.util.*;
 public class PropertyRegistrationService {
     private final AuthService authService;
     private final UserRepository users;
-    private final PropertyRepository properties;
     private final PropertyRegistrationRepository registrations;
     private final PropertyDocumentRepository documents;
     private final ObjectMapper json;
@@ -35,17 +34,12 @@ public class PropertyRegistrationService {
 
     @Transactional(readOnly = true)
     public Eligibility eligibility() {
-        var id = authService.getCurrentUser().getUserId();
-        if (!properties.findByOwner_UserIdOrderByPropertyIdAsc(id).isEmpty()
-                || registrations.countByUser_UserIdAndStatus(id, RegistrationStatus.APPROVED) > 0) return new Eligibility(false, "HAS_PROPERTY");
-        if (registrations.countByUser_UserIdAndStatus(id, RegistrationStatus.NEEDS_SUPPLEMENT) > 0) return new Eligibility(false, "NEEDS_SUPPLEMENT");
-        if (registrations.countByUser_UserIdAndStatus(id, RegistrationStatus.PENDING) > 0) return new Eligibility(false, "PENDING");
+        authService.getCurrentUser();
         return new Eligibility(true, "ELIGIBLE");
     }
 
     @Transactional(readOnly = true)
     public PropertyRegistrationResponse current() {
-        if (eligibility().reason().equals("HAS_PROPERTY")) throw new AppException("Bạn đã có nhà trọ. Không được truy cập đăng ký nhà trọ mới.", HttpStatus.FORBIDDEN);
         return registrations.findByUser_UserIdOrderByCreatedAtDesc(authService.getCurrentUser().getUserId()).stream()
                 .filter(row -> row.getStatus() == RegistrationStatus.PENDING || row.getStatus() == RegistrationStatus.NEEDS_SUPPLEMENT).findFirst()
                 .map(PropertyRegistrationResponse::from).orElse(null);
@@ -57,11 +51,14 @@ public class PropertyRegistrationService {
         validate(request);
         if (photos == null || photos.isEmpty() || photos.size() > 10) throw new BadRequestException("Cần từ 1 đến 10 ảnh nhà trọ.");
         if (ownership == null || ownership.isEmpty() || idCard == null || idCard.isEmpty()) throw new BadRequestException("Cần giấy tờ sở hữu và CCCD để gửi xét duyệt.");
-        // Serialize submissions by owner so two concurrent requests cannot create two pending profiles.
+        // Distinct properties may be submitted concurrently. Serialize by owner
+        // so retries of the same name/address cannot create duplicate profiles.
         var owner = users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow(() -> new BadRequestException("Không tìm thấy chủ trọ."));
-        if (!properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).isEmpty() || registrations.countByUser_UserIdAndStatus(owner.getUserId(), RegistrationStatus.APPROVED) > 0) throw new AppException("Mỗi chủ trọ chỉ được đăng ký một nhà trọ. Bạn đã có nhà trọ được phê duyệt.", HttpStatus.CONFLICT);
-        if (registrations.countByUser_UserIdAndStatus(owner.getUserId(), RegistrationStatus.PENDING) > 0) throw new AppException("Hồ sơ của bạn đang chờ xét duyệt. Không cần gửi lại.", HttpStatus.CONFLICT);
-        if (registrations.countByUser_UserIdAndStatus(owner.getUserId(), RegistrationStatus.NEEDS_SUPPLEMENT) > 0) throw new AppException("Hồ sơ đang được yêu cầu bổ sung. Vui lòng xem phản hồi tại Nhà trọ của tôi.", HttpStatus.CONFLICT);
+        String address=request.addressDetail().trim()+", "+request.commune();
+        boolean duplicate=registrations.findByUser_UserIdOrderByCreatedAtDesc(owner.getUserId()).stream()
+                .anyMatch(row->row.getStatus()!=RegistrationStatus.REJECTED && row.getName().trim().equalsIgnoreCase(request.name().trim())
+                        && Objects.toString(row.getAddress(),"").trim().equalsIgnoreCase(address));
+        if(duplicate)throw new AppException("Nhà trọ có cùng tên và địa chỉ đã được đăng ký. Vui lòng xem hồ sơ tại Nhà trọ của tôi.",HttpStatus.CONFLICT);
         var registration = registrations.save(PropertyRegistration.builder().user(owner).name(request.name().trim())
                 .address(request.addressDetail().trim() + ", " + request.commune())
                 .contactInfo(request.managerName().trim() + " · " + request.contactPhone())
@@ -74,7 +71,7 @@ public class PropertyRegistrationService {
         return PropertyRegistrationResponse.from(registration);
     }
 
-    private void validate(PropertyRegistrationRequest value) {
+    void validate(PropertyRegistrationRequest value) {
         if (!TYPES.contains(value.propertyType()) || !AREAS.contains(value.commune())) throw new BadRequestException("Loại hình hoặc khu vực nhà trọ không hợp lệ.");
         if (value.name().trim().length() < 3 || value.description().trim().length() < 30 || value.managerName().trim().length() < 2 || value.addressDetail().trim().length() < 10) throw new BadRequestException("Vui lòng điền đầy đủ thông tin nhà trọ.");
         if (!phone(value.contactPhone()) || (value.zaloPhone() != null && !value.zaloPhone().isBlank() && !phone(value.zaloPhone()))) throw new BadRequestException("Số điện thoại không hợp lệ.");
@@ -88,7 +85,7 @@ public class PropertyRegistrationService {
         double number = Double.parseDouble(value);
         if (!Double.isFinite(number) || Math.abs(number) > limit) throw new BadRequestException("Tọa độ không hợp lệ.");
     }
-    private void saveFile(PropertyRegistration registration, String type, MultipartFile file, boolean document) throws IOException {
+    void saveFile(PropertyRegistration registration, String type, MultipartFile file, boolean document) throws IOException {
         if (file.isEmpty() || file.getSize() > (document ? 10L : 5L) * 1024 * 1024) throw new BadRequestException("Tệp rỗng hoặc vượt dung lượng cho phép.");
         byte[] content = file.getBytes();
         String mime = file.getContentType();

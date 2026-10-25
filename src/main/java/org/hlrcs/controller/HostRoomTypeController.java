@@ -15,6 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class HostRoomTypeController {
     private final HostRoomTypeService service;
 
+    @PostMapping(value="/with-rooms",consumes="multipart/form-data")
+    public ApiResponse<HostRoomTypesResponse.RoomTypeSummary> createWithRooms(
+            @jakarta.validation.Valid @RequestPart org.hlrcs.dto.request.RoomTypeRequest details,
+            @jakarta.validation.Valid @RequestPart org.hlrcs.dto.request.RoomBatchRequest layout,
+            @RequestPart(required=false) java.util.List<org.springframework.web.multipart.MultipartFile> photos) {
+        return ApiResponse.success(service.createWithRooms(details,layout,photos));
+    }
+
     @PostMapping(consumes = "application/json")
     @PreAuthorize("hasAnyRole('ROOM_HOST', 'ADMIN')")
     public ApiResponse<HostRoomTypesResponse.RoomTypeSummary> create(@jakarta.validation.Valid @RequestBody org.hlrcs.dto.request.RoomTypeRequest request) {

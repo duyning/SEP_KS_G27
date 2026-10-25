@@ -2,6 +2,19 @@ import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hostApi } from '../src/services/host.js';
 const original = { fetch: globalThis.fetch, sessionStorage: globalThis.sessionStorage, localStorage: globalThis.localStorage };
+test('batch room creation sends preview and photos together and verifies linked database response',async()=>{
+ const details={propertyId:12,roomType:'Studio',price:2200000};const layout={rooms:[{roomNumber:'P.101',floor:'Tầng 1'}]};
+ const photo=new File(['image'],'room.png',{type:'image/png'});
+ globalThis.fetch=async(url,options)=>{
+  assert.equal(url,'/api/host/room-types/with-rooms');assert.equal(options.method,'POST');
+  assert.deepEqual(JSON.parse(await options.body.get('details').text()),details);
+  assert.deepEqual(JSON.parse(await options.body.get('layout').text()),layout);assert.equal(options.body.getAll('photos').length,1);
+  return new Response(JSON.stringify({success:true,data:{...details,roomTypeId:34,amenities:[],rooms:[{...layout.rooms[0],roomId:51,roomTypeId:34,propertyId:12}]}}));
+ };
+ assert.equal((await hostApi.createRoomTypeWithRooms(details,layout,[photo])).rooms[0].roomId,51);
+ globalThis.fetch=async()=>new Response(JSON.stringify({success:true,data:{...details,roomTypeId:34,amenities:[],rooms:[]}}));
+ await assert.rejects(hostApi.createRoomTypeWithRooms(details,layout,[]),error=>error.status===502);
+});
 globalThis.sessionStorage = { getItem: () => 'test-token' };
 globalThis.localStorage = { getItem: () => null };
 after(() => Object.assign(globalThis, original));

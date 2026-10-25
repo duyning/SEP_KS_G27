@@ -26,6 +26,7 @@ async function main() {
     const actual = await (await actualRequest).json();
     assert.equal(actual.success, true);
     if (actual.data.records.length) {
+      await page.locator('.hp-property-card').first().getByRole('link',{name:'Xem chi tiết',exact:true}).click();
       await page.locator('.hp-detail').first().waitFor();
       if (actual.data.records[0].photos.length) await page.waitForFunction(() => document.querySelector('.hp-cover img')?.naturalWidth > 0);
       await capture('database-property-1536.png');
@@ -54,6 +55,7 @@ async function main() {
     const record = { propertyId: null, registrationId: 123, name: 'Nhà trọ theo hợp đồng kiểm thử giao diện', address: 'Số 18, ngõ 4, thôn 2, Tân Xã', displayStatus: 'PENDING', verified: false, propertyType: 'Nhà trọ truyền thống / Phòng trọ sinh viên', addressDetail: 'Số 18, ngõ 4, thôn 2', commune: 'Tân Xã', managerName: 'Chủ trọ kiểm thử', contactPhone: '0912345678', zaloPhone: '0912345678', description: 'Thông tin phản hồi chỉ dùng để kiểm thử giao diện, không phải dữ liệu mẫu trong ứng dụng.', amenities: ['wifi','parking','camera'], selectedRules: ['quietHours','cleanliness'], rules: 'Quy định riêng của hồ sơ.', photos: [{ documentId: 901, type: 'PHOTO_0', fileName: 'test.png' }], documents: [{ documentId: 902, type: 'OWNERSHIP', verificationStatus: 'PENDING' }, { documentId: 903, type: 'ID_CARD', verificationStatus: 'PENDING' }], roomTypeCount: 0, totalRooms: null, vacantRooms: null, pendingViewingCount: 0, createdAt: '2026-10-22T09:00:00', updatedAt: null };
     response = { status: 200, data: { records: [record] } };
     await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
+    await page.locator('.hp-property-card').first().getByRole('link',{name:'Xem chi tiết',exact:true}).click();
     await page.locator('.hp-detail[data-status=PENDING]').waitFor();
     assert.equal(await page.locator('#stateNoProperty').count(), 0);
     const pendingColor = await page.locator('.hp-name-row .hp-status').evaluate(element => getComputedStyle(element).color);
@@ -61,7 +63,7 @@ async function main() {
       response = { status: 200, data: { records: [{ ...record, propertyId: status === 'VISIBLE' ? 456 : null, displayStatus: status, verified: status === 'VISIBLE', roomTypeCount: status === 'VISIBLE' ? 2 : 0 }] } };
       for (const width of [1920,1536,1440,1366,1024,768,390]) {
         await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
-        await page.goto(`${base}/host/property`);
+        await page.goto(`${base}/host/property?${status==='VISIBLE'?'id=456':'registrationId=123'}`);
         await page.locator(`.hp-detail[data-status=${status}]`).waitFor();
         await page.waitForFunction(() => Array.from(document.querySelectorAll('.hp-cover img, .hp-gallery img')).length === 2 && Array.from(document.querySelectorAll('.hp-cover img, .hp-gallery img')).every(image => image.complete && image.naturalWidth > 0));
         const badge = page.locator('.hp-name-row .hp-status');
@@ -82,7 +84,7 @@ async function main() {
     await page.getByRole('link', { name: 'Quản lý loại phòng', exact: true }).click();
     await page.waitForURL(`${base}/host/room-types?propertyId=456`);
     await page.goto(`${base}/host/property?id=999`);
-    await page.getByText('Không tìm thấy nhà trọ này trong danh sách bạn được phép quản lý.', { exact: true }).waitFor();
+    await page.getByText('Không tìm thấy nhà trọ hoặc hồ sơ này trong danh sách bạn được phép quản lý.', { exact: true }).waitFor();
     assert.equal(await page.locator('.hp-detail').count(), 0);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ status: 'PASS', actualDatabaseRecords: actual.data.records.length, actualDatabaseStates: actual.data.records.map(record => record.displayStatus), actualPhotoCount: actual.data.records.reduce((count, record) => count + record.photos.length, 0), viewportChecks: 14, databaseMutations: 0, privatePhotosAuthenticated: photoRequests, checks: ['real database response', 'empty state', 'pending full detail', 'visible green / pending amber', 'authenticated image blob rendering', 'private documents not exposed', 'honest unknown room counts', 'retry', 'inaccessible ID', 'photo dialog', 'management navigation', 'no overflow or runtime errors'] }, null, 2));

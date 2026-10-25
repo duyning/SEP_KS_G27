@@ -29,17 +29,9 @@ async function main(){
    return route.fulfill({json:{success:true,data}});
   });
   await page.goto('http://127.0.0.1:5173/host/rooms');await page.getByRole('heading',{name:'Hiện tại chưa có phòng thực tế'}).waitFor();
-  await page.getByRole('button',{name:'Thêm phòng mới',exact:true}).click();let dialog=page.getByRole('dialog',{name:'Thêm phòng thực tế mới'});await dialog.waitFor();
-  await page.getByRole('button',{name:'Lưu phòng',exact:true}).click();await page.getByRole('alert').first().waitFor();assert.equal(writes,0);
-  assert.equal(await page.getByLabel('Loại phòng liên kết',{exact:false}).locator('option').count(),3);
-  await page.getByLabel('Loại phòng liên kết',{exact:false}).selectOption('34');await page.getByLabel('Số phòng / Ký hiệu phòng',{exact:false}).fill('P.101');
-  assert.equal((await dialog.innerText()).includes('NaN'),false);assert.ok((await page.locator('.hr-inherited').innerText()).includes('2.400.000'));
-  for(const width of [1536,768,390]){await page.setViewportSize({width,height:1000});await dialog.evaluate(element=>element.scrollTop=0);assert.ok(await dialog.evaluate(element=>element.scrollWidth<=element.clientWidth+1));if(width!==768)await page.screenshot({path:path.join(output,`modal-${width}.png`)});}
-  await page.getByRole('button',{name:'Lưu phòng',exact:true}).click();await page.getByText('Browser-only save conflict',{exact:true}).waitFor();assert.equal(await page.getByLabel('Số phòng / Ký hiệu phòng',{exact:false}).inputValue(),'P.101');
-  fail=false;await page.getByRole('button',{name:'Lưu phòng',exact:true}).click();await dialog.waitFor({state:'detached'});await page.getByText('Đã thêm phòng mới thành công.',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Thêm phòng mới',exact:true}).click();await page.getByLabel('Loại phòng liên kết',{exact:false}).selectOption('35');await page.getByLabel('Số phòng / Ký hiệu phòng',{exact:false}).fill('P.201');await page.getByLabel('Tầng / Khu vực',{exact:false}).selectOption('Tầng 2');
-  await page.getByRole('radio',{name:'Đã có người thuê',exact:false}).check();await page.getByRole('checkbox',{name:'Tùy chỉnh giá thuê riêng',exact:false}).check();await page.locator('#room-customPrice').fill('2100000');await page.getByRole('button',{name:'Lưu phòng',exact:true}).click();
-  await page.getByRole('heading',{name:'P.201',exact:true}).waitFor();await page.reload();await page.getByRole('heading',{name:'P.101',exact:true}).waitFor();assert.equal(await page.locator('.hr-room-card').count(),2);
+  assert.equal(await page.getByRole('button',{name:'Thêm phòng mới',exact:true}).count(),0);
+  rooms=types.map((type,index)=>({...type,roomId:index+1,roomNumber:index?'P.201':'P.101',floor:index?'Tầng 2':'Tầng 1',status:index?'OCCUPIED':'VACANT',customPrice:null,confirmedAt:'2026-10-25T08:00:00'}));fail=false;
+  await page.reload();await page.getByRole('heading',{name:'P.101',exact:true}).waitFor();assert.equal(await page.locator('.hr-room-card').count(),2);
   for(const width of [1536,768,390]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));if(width!==768)await page.screenshot({path:path.join(output,`cards-${width}.png`),fullPage:true});}
   await page.getByRole('button',{name:'Bảng',exact:true}).click();assert.equal(await page.locator('.hr-table tbody tr').count(),2);
   for(const width of [1536,768,390]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));if(width===1536)await page.screenshot({path:path.join(output,'table-1536.png'),fullPage:true});}
@@ -48,7 +40,7 @@ async function main(){
   await page.getByRole('button',{name:'Thẻ',exact:true}).click();await page.getByRole('button',{name:'Xóa P.201',exact:true}).click();await page.getByRole('button',{name:'Xác nhận xóa'}).click();await page.getByText('Browser-only occupied room',{exact:true}).waitFor();await page.getByRole('button',{name:'Hủy bỏ',exact:true}).click();
   await page.getByRole('button',{name:'Sửa P.201',exact:true}).click();await page.getByRole('radio',{name:'Còn trống',exact:false}).check();await page.getByRole('button',{name:'Lưu phòng',exact:true}).click();await page.getByText('Đã cập nhật phòng thành công.',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Xóa P.201',exact:true}).click();await page.getByRole('button',{name:'Xác nhận xóa'}).click();await page.getByText('Đã xóa phòng.',{exact:true}).waitFor();assert.equal(rooms.length,1);
-  noTypes=true;rooms=[];await page.reload();await page.getByRole('heading',{name:'Chưa có loại phòng trong nhà trọ'}).waitFor();assert.equal(await page.getByRole('button',{name:'Thêm phòng mới',exact:true}).isDisabled(),true);
+  noTypes=true;rooms=[];await page.reload();await page.getByRole('heading',{name:'Chưa có loại phòng trong nhà trọ'}).waitFor();assert.equal(await page.getByRole('button',{name:'Thêm phòng mới',exact:true}).count(),0);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({passed:true,viewportChecks:9,interceptedSaves:writes,mysqlMutations:0,pageErrors:errors}));
  }finally{await browser.close();}
 }

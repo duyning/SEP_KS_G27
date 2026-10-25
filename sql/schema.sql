@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS `room_type_videos`;
 DROP TABLE IF EXISTS `room_type_images`;
 DROP TABLE IF EXISTS `room_types`;
 DROP TABLE IF EXISTS `properties`;
+DROP TABLE IF EXISTS `property_submission_events`;
 DROP TABLE IF EXISTS `property_documents`;
 DROP TABLE IF EXISTS `property_registrations`;
 DROP TABLE IF EXISTS `user_capabilities`;
@@ -72,7 +73,13 @@ CREATE TABLE `property_registrations` (
     `address` VARCHAR(500) NULL,
     `contact_info` VARCHAR(255) NULL,
     `google_map_link` VARCHAR(500) NULL,
-    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED',
+    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, NEEDS_SUPPLEMENT, APPROVED, REJECTED',
+    `target_property_id` INT NULL,
+    `base_registration_id` INT NULL,
+    `requested_fields_json` TEXT NULL,
+    `submitted_at` DATETIME(6) NULL,
+    `registration_details` TEXT NULL,
+    `reviewed_at` DATETIME(6) NULL,
     `reviewed_by` INT NULL,
     `reason_note` TEXT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -87,10 +94,30 @@ CREATE TABLE `property_documents` (
     `document_type` VARCHAR(100) NULL,
     `document_url` VARCHAR(500) NULL,
     `verification_status` VARCHAR(50) NULL,
+    `file_name` VARCHAR(255) NULL,
+    `content_type` VARCHAR(255) NULL,
+    `file_size` BIGINT NULL,
+    `uploaded_at` DATETIME(6) NULL,
+    `archived_at` DATETIME(6) NULL,
+    `file_content` LONGBLOB NULL,
     CONSTRAINT `fk_pd_registration` FOREIGN KEY (`registration_id`) REFERENCES `property_registrations` (`registration_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. PROPERTIES
+CREATE TABLE `property_submission_events` (
+    `event_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `registration_id` INT NOT NULL,
+    `actor_id` INT NOT NULL,
+    `action` VARCHAR(255) NOT NULL,
+    `previous_details` TEXT NULL,
+    `submitted_details` TEXT NULL,
+    `previous_document_ids` TEXT NULL,
+    `previous_review_note` TEXT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    CONSTRAINT `fk_submission_registration` FOREIGN KEY (`registration_id`) REFERENCES `property_registrations` (`registration_id`),
+    CONSTRAINT `fk_submission_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `properties` (
     `property_id` INT AUTO_INCREMENT PRIMARY KEY,
     `owner_id` INT NOT NULL,

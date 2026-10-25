@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Eye, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { hostApi } from '../../services/host.js';
+import HostPropertySelector from '../../components/HostPropertySelector.jsx';
 import { Modal, StateView, StatusBadge, UnsupportedButton } from '../../components/PortalUI.jsx';
 import '../../styles/host-viewings-page.css';
 
@@ -32,6 +33,7 @@ function ViewingList({ data, propertyId, onRefresh }) {
   ).sort((a, b) => sort === 'APPOINTMENT' ? new Date(a.scheduledDate) - new Date(b.scheduledDate) : new Date(b.createdAt) - new Date(a.createdAt)), [ownedRequests, search, status, date, sort]);
 
   return <section className="host-viewings-list">
+    <HostPropertySelector properties={data.properties} allowAll/>
     <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><button className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></button></div>
     <div className="host-viewings-counts"><span>Tổng yêu cầu <strong>{ownedRequests.length}</strong></span>{Object.entries(statuses).map(([key, label]) => <span key={key}>{label} <strong>{ownedRequests.filter(item => item.status === key).length}</strong></span>)}</div>
     {ownedRequests.length === 0 ? <StateView kind="empty" message="Chưa có yêu cầu xem phòng từ khách thuê. Yêu cầu mới sẽ hiển thị tại đây." /> : <>

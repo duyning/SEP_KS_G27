@@ -6,6 +6,17 @@ function pendingRegistration(data) {
 }
 
 export const hostApi = {
+  async propertyEdit(id,signal){
+    const data=await request(`/property-registrations/${roomTypeId(id)}/edit`,{basePath:'/api/host',signal});
+    if(!data||data.registrationId!==Number(id)||!data.details||!['editableFields','requestedFields','photos','documents'].every(key=>Array.isArray(data[key]))||typeof data.versionToken!=='string')throw new ApiError('Dữ liệu chỉnh sửa không hợp lệ.',502);
+    return data;
+  },
+  async resubmitProperty(id,edit,photos,documents,signal){
+    const body=new FormData();body.append('edit',new Blob([JSON.stringify(edit)],{type:'application/json'}));
+    for(const file of photos)body.append('photos',file);
+    for(const key of ['ownership','idCard','fireSafety'])if(documents[key])body.append(key,documents[key]);
+    return pendingRegistration(await request(`/property-registrations/${roomTypeId(id)}/resubmit`,{basePath:'/api/host',method:'POST',body,signal}));
+  },
   async rooms(signal, propertyId, typeId) {
     const query=new URLSearchParams();
     if(propertyId!=null)query.set('propertyId',roomTypeId(propertyId));
@@ -27,6 +38,13 @@ export const hostApi = {
   },
   async createRoomType(data, signal, photos = []) {
     return this.saveRoomType(null, data, photos, signal);
+  },
+  async createRoomTypeWithRooms(data, layout, photos, signal) {
+    const body=new FormData();body.append('details',new Blob([JSON.stringify(data)],{type:'application/json'}));
+    body.append('layout',new Blob([JSON.stringify(layout)],{type:'application/json'}));for(const photo of photos)body.append('photos',photo);
+    const result=await request('/room-types/with-rooms',{basePath:'/api/host',method:'POST',body,signal});
+    if(!result||!Number.isInteger(result.roomTypeId)||result.propertyId!==data.propertyId||!Array.isArray(result.amenities)||!Array.isArray(result.rooms)||result.rooms.length!==layout.rooms.length||result.rooms.some(room=>room.roomTypeId!==result.roomTypeId||room.propertyId!==data.propertyId))throw new ApiError('Chưa xác nhận được toàn bộ loại phòng và danh sách phòng. Vui lòng tải lại trước khi gửi lại.',502);
+    return result;
   },
   async saveRoomType(id, data, photos, signal) {
     const body = new FormData();

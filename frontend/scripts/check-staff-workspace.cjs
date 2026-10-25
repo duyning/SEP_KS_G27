@@ -44,7 +44,7 @@ async function main() {
       await page.getByRole('link',{name:'Xem hồ sơ',exact:true}).first().click();
       actualDetail=(await(await detailResponse).json()).data;
       await page.getByRole('heading',{name:actualDetail.summary.name,exact:true}).waitFor();
-      assert.ok((await page.locator('.sw-detail-fields').first().innerText()).includes(actualDetail.submission?.description || actualDetail.summary.name));
+      assert.ok((await page.locator(actualDetail.submission?.description?'.svd-property-copy':'.svd-property-name').innerText()).includes(actualDetail.submission?.description || actualDetail.summary.name));
       assert.equal(await page.locator('.sw-photo-gallery button').count(),actualDetail.photos.length);
       if(actualDetail.photos.length)await page.waitForFunction(expected=>Array.from(document.querySelectorAll('.sw-photo-gallery img')).length===expected&&Array.from(document.querySelectorAll('.sw-photo-gallery img')).every(image=>image.complete&&image.naturalWidth>0),actualDetail.photos.length);
       if(actualDetail.documents.length){
@@ -87,13 +87,13 @@ async function main() {
       await page.getByRole('button',{name:'Thử lại',exact:true}).click();
       await page.getByRole('button',{name:'Từ chối hồ sơ',exact:true}).click();
       await page.getByRole('button',{name:'Xác nhận quyết định',exact:true}).click();
-      await page.getByText('Vui lòng nhập lý do từ chối từ 10 đến 2000 ký tự.',{exact:true}).waitFor();
+      await page.getByText('Vui lòng nhập nội dung từ 10 đến 2000 ký tự.',{exact:true}).waitFor();
       assert.equal(reviewCount,0);
       await page.locator('#staff-review-note').fill('Test-only rejection note, no database write.');
       await page.getByRole('button',{name:'Xác nhận quyết định',exact:true}).click();
       await page.getByText('Test-only review failure',{exact:true}).waitFor();
       assert.equal(reviewCount,1);
-      await page.getByRole('button',{name:'Hủy',exact:true}).click();
+      await page.getByRole('button',{name:'Hủy bỏ',exact:true}).click();
       await page.getByRole('button',{name:'Phê duyệt hồ sơ',exact:true}).click();
       reviewMode='success';
       reviewReply={...pending,summary:{...pending.summary,status:'APPROVED'},history:[]};

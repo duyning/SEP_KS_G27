@@ -38,8 +38,17 @@ public class PropertyRegistration {
     private String googleMapLink;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false, length = 50)
     private RegistrationStatus status;
+
+    // A change request references a published property without replacing its approved registration.
+    private Integer targetPropertyId;
+    private Integer baseRegistrationId;
+    @Column(columnDefinition = "TEXT")
+    private String requestedFieldsJson;
+    @Column(columnDefinition = "DATETIME(6)")
+    private LocalDateTime submittedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")

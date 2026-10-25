@@ -36,6 +36,21 @@ public class PropertyDocument {
     @Column(name = "content_type")
     private String contentType;
 
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(columnDefinition = "DATETIME(6)")
+    private java.time.LocalDateTime archivedAt;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "uploaded_at", updatable = false, columnDefinition = "DATETIME(6)")
+    private java.time.LocalDateTime uploadedAt;
+
+    @PrePersist
+    void fillFileSize() {
+        if (fileSize == null && fileContent != null) fileSize = (long) fileContent.length;
+    }
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "file_content", columnDefinition = "LONGBLOB")

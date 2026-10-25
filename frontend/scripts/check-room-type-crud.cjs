@@ -18,12 +18,13 @@ async function main(){
    if(url==='/api/auth/me')data={userId:1,fullName:'Browser host',role:'ROOM_HOST'};
    else if(url==='/api/host/property-registrations/eligibility')data={canRegister:false,reason:'HAS_PROPERTY'};
    else if(url==='/api/host/room-types'&&method==='GET')data={properties:[property],pendingRegistrationCount:0,roomTypes:types};
-   else if(url==='/api/host/room-types'&&method==='POST'||/\/room-types\/\d+$/.test(url)&&method==='PUT'){
+   else if(url==='/api/host/room-types/with-rooms'&&method==='POST'||/\/room-types\/\d+$/.test(url)&&method==='PUT'){
     const form=await new Response(req.postDataBuffer(),{headers:{'Content-Type':req.headers()['content-type']}}).formData();
     const details=JSON.parse(await form.get('details').text());const files=form.getAll('photos');assert.equal(details.propertyId,12);
     if(method==='POST'){
      creates++;assert.equal(files.length,2);assert.equal(details.roomType,'New type');
-     data={...base,...details,roomTypeId:36,images:files.map((file,index)=>({imageId:201+index,fileName:file.name}))};types.push(data);
+     const layout=JSON.parse(await form.get('layout').text());
+     data={...base,...details,roomTypeId:36,totalRooms:layout.rooms.length,vacantRooms:layout.rooms.length,rooms:layout.rooms.map((room,index)=>({...room,roomId:index+1,roomTypeId:36,propertyId:12,status:'VACANT',price:details.price})),images:files.map((file,index)=>({imageId:201+index,fileName:file.name}))};types.push(data);
     }else{
      updates++;assert.deepEqual(details.retainedImageIds,[202]);assert.equal(files.length,1);assert.equal(details.price,2800000);
      data={...types.find(type=>type.roomTypeId===36),...details,images:[{imageId:202,fileName:'create-2.png'},{imageId:203,fileName:files[0].name}]};types=types.map(type=>type.roomTypeId===36?data:type);
@@ -42,7 +43,9 @@ async function main(){
   await page.getByLabel('Tên loại phòng',{exact:false}).fill('New type');await page.getByLabel('Diện tích (m²)',{exact:false}).fill('25');await page.getByLabel('Giá thuê niêm yết',{exact:false}).fill('2400000');
   await page.locator('#rt-photos').setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await page.getByRole('alert').waitFor();assert.equal(creates,0);
   await page.locator('#rt-photos').setInputFiles([{name:'create-1.png',mimeType:'image/png',buffer:png},{name:'create-2.png',mimeType:'image/png',buffer:png}]);assert.equal(await page.locator('.rt-upload-previews figure').count(),2);
-  await page.getByRole('button',{name:'Tạo loại phòng',exact:true}).click();await page.getByText('Đã tạo loại phòng thành công.',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Tiếp theo: Thiết lập danh sách phòng',exact:true}).click();await page.getByRole('button',{name:'Nhập danh sách thủ công',exact:true}).click();await page.getByRole('button',{name:'Thêm 1 dòng',exact:true}).click();
+  await page.getByLabel('Số phòng dòng 1',{exact:true}).fill('P.101');await page.getByLabel('Tầng / khu dòng 1',{exact:true}).fill('Tầng 1');
+  await page.getByRole('button',{name:'Tạo loại phòng và 1 phòng',exact:true}).click();await page.getByText('Đã tạo loại phòng và 1 phòng thành công.',{exact:true}).waitFor();
   const row=()=>page.locator('.rt-table tbody tr').filter({has:page.getByText('New type',{exact:true})});
   await row().getByRole('button',{name:'Chi tiết',exact:true}).click();let dialog=page.getByRole('dialog',{name:'New type',exact:true});await dialog.waitFor();
   await page.waitForFunction(()=>document.querySelectorAll('.rt-info-gallery img').length===2&&[...document.querySelectorAll('.rt-info-gallery img')].every(image=>image.naturalWidth>0));

@@ -2,7 +2,6 @@ package org.hlrcs.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.PropertyRegistrationRequest;
-import org.hlrcs.dto.response.HostPropertyResponse.Attachment;
 import org.hlrcs.dto.response.StaffResponse.*;
 import org.hlrcs.entity.*;
 import org.hlrcs.entity.enums.*;
@@ -28,6 +27,7 @@ public class StaffService {
     private final SupportRequestRepository support;
     private final PostRepository posts;
     private final ObjectMapper json;
+    private final PropertySubmissionEventRepository submissionEvents;
 
     private PropertyRegistrationRequest submission(PropertyRegistration registration) {
         if (registration.getRegistrationDetails() == null) return null;
@@ -44,7 +44,7 @@ public class StaffService {
                 registration.getUser().getFullName(), registration.getUser().getEmail(), registration.getUser().getPhoneNumber(),
                 details == null ? null : details.managerName(), details == null ? null : details.contactPhone(), details == null ? null : details.propertyType(),
                 registration.getStatus().name(), registration.getCreatedAt(), registration.getReviewedAt(),
-                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover);
+                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover, registration.getUser().getUserId(),registration.getTargetPropertyId(),registration.getSubmittedAt());
     }
     private Activity activity(ModerationLog log) {
         return new Activity(log.getLogId(), log.getStaff().getFullName(), log.getTargetType(), log.getTargetId(), log.getAction(), log.getNote(), log.getCreatedAt());
@@ -58,12 +58,14 @@ public class StaffService {
         var photos = new ArrayList<Attachment>();
         var privateFiles = new ArrayList<Attachment>();
         for (var file : documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id)) {
-            var value = new Attachment(file.getDocumentId(), file.getDocumentType(), file.getFileName(), file.getVerificationStatus());
+            var value = new Attachment(file.getDocumentId(), file.getDocumentType(), file.getFileName(), file.getVerificationStatus(),file.getContentType(),file.getFileSize(),file.getUploadedAt());
             if (Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")) photos.add(value);
             else if (Set.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))) privateFiles.add(value);
         }
+        var published=registration.getTargetPropertyId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).map(Property::getRegistration).map(this::submission).orElse(null);
         return new Detail(summary(registration), submission(registration), photos, privateFiles, registration.getReasonNote(),
-                logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).stream().map(this::activity).toList());
+                logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).stream().map(this::activity).toList(),published,
+                submissionEvents.findByRegistration_RegistrationIdOrderByCreatedAtAsc(id).stream().map(event->new SubmissionEvent(event.getEventId(),event.getActor().getFullName(),event.getAction(),event.getCreatedAt())).toList());
     }
     public record FileContent(byte[] bytes, String contentType) {}
     @Transactional(readOnly = true)
@@ -74,22 +76,32 @@ public class StaffService {
         return new FileContent(file.getFileContent(), file.getContentType());
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Detail review(Integer id, String decision, String note) {
+    public Detail review(Integer id, String decision, String note,List<String> requestedFields) {
         if (decision == null || !Set.of("APPROVE", "REJECT", "REQUEST_SUPPLEMENT").contains(decision)) throw new BadRequestException("Quyết định xét duyệt không hợp lệ.");
         String reason = note == null ? "" : note.trim();
         if (reason.length() > 2000 || (!decision.equals("APPROVE") && reason.length() < 10)) throw new BadRequestException("Nội dung phản hồi cần từ 10 đến 2000 ký tự.");
+        var ownerId=registrations.findOwnerId(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
+        var owner=users.findForRegistrationUpdate(ownerId).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy chủ trọ."));
         var registration = registrations.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ."));
         boolean supplement = decision.equals("REQUEST_SUPPLEMENT");
         if (registration.getStatus() != RegistrationStatus.PENDING && (supplement || registration.getStatus() != RegistrationStatus.NEEDS_SUPPLEMENT)) throw new AppException("Hồ sơ đã được xử lý. Vui lòng tải lại để xem kết quả mới nhất.", HttpStatus.CONFLICT);
-        var owner = users.findForRegistrationUpdate(registration.getUser().getUserId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chủ trọ."));
+        if(supplement)registration.setRequestedFieldsJson(requestedFields==null?null:json.writeValueAsString(RegistrationEditPolicy.check(requestedFields)));
         var reviewer = users.findById(auth.getCurrentUser().getUserId()).orElseThrow();
         boolean approve = decision.equals("APPROVE");
         if (approve) {
             var data = submission(registration);
             if (data == null || !Boolean.TRUE.equals(data.termsAccepted()) || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "PHOTO_0") || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "OWNERSHIP") || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "ID_CARD")) throw new BadRequestException("Hồ sơ thiếu dữ liệu hoặc tài liệu bắt buộc, chưa thể phê duyệt.");
-            if (!properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).isEmpty()) throw new AppException("Chủ trọ đã có cơ sở trong hệ thống.", HttpStatus.CONFLICT);
-            properties.save(Property.builder().owner(owner).registration(registration).name(registration.getName()).address(registration.getAddress())
-                    .contactInfo(registration.getContactInfo()).googleMapLink(registration.getGoogleMapLink()).description(data.description()).status("ACTIVE").build());
+            if (properties.existsByRegistration_RegistrationId(id)) throw new AppException("Hồ sơ này đã được tạo thành nhà trọ.", HttpStatus.CONFLICT);
+            if(registration.getTargetPropertyId()==null){
+                properties.save(Property.builder().owner(owner).registration(registration).name(registration.getName()).address(registration.getAddress())
+                        .contactInfo(registration.getContactInfo()).googleMapLink(registration.getGoogleMapLink()).description(data.description()).status("ACTIVE").build());
+            }else{
+                var property=properties.findById(registration.getTargetPropertyId()).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy nhà trọ cần cập nhật."));
+                if(!property.getOwner().getUserId().equals(owner.getUserId())||property.getRegistration()==null||!Objects.equals(registration.getBaseRegistrationId(),property.getRegistration().getRegistrationId()))throw new AppException("Phiên bản công khai đã thay đổi. Không thể phê duyệt đề nghị cũ.",HttpStatus.CONFLICT);
+                property.getRegistration().setTargetPropertyId(property.getPropertyId());
+                property.setRegistration(registration);property.setName(registration.getName());property.setAddress(registration.getAddress());property.setContactInfo(registration.getContactInfo());property.setGoogleMapLink(registration.getGoogleMapLink());property.setDescription(data.description());
+                properties.save(property);
+            }
             for (var document : documents.findByRegistration_RegistrationId(id)) if (!Objects.toString(document.getDocumentType(), "").startsWith("PHOTO_")) document.setVerificationStatus("APPROVED");
         }
         registration.setStatus(supplement ? RegistrationStatus.NEEDS_SUPPLEMENT : approve ? RegistrationStatus.APPROVED : RegistrationStatus.REJECTED);
@@ -110,7 +122,7 @@ public class StaffService {
         var queue = new ArrayList<QueueItem>();
         for (var row : verification) if (row.getStatus() == RegistrationStatus.PENDING) {
             var details = submission(row);
-            queue.add(new QueueItem("PROPERTY-" + row.getRegistrationId(), "PROPERTY", row.getName(), row.getUser().getFullName(), details == null ? row.getAddress() : details.description(), "PENDING", row.getCreatedAt(), "/staff/verifications/detail?id=" + row.getRegistrationId()));
+            queue.add(new QueueItem("PROPERTY-" + row.getRegistrationId(), "PROPERTY", (row.getTargetPropertyId()!=null?"Đề nghị cập nhật: ":"")+row.getName(), row.getUser().getFullName(), details == null ? row.getAddress() : details.description(), "PENDING", row.getSubmittedAt()!=null?row.getSubmittedAt():row.getCreatedAt(), "/staff/verifications/detail?id=" + row.getRegistrationId()));
         }
         for (var row : reportRows) if (row.getStatus() == ReportStatus.PENDING) queue.add(new QueueItem("REPORT-" + row.getReportId(), "REPORT", "Báo cáo #" + row.getReportId(), row.getReporter().getFullName(), row.getReason(), row.getStatus().name(), row.getCreatedAt(), null));
         for (var row : supportRows) if (row.getStatus() != SupportStatus.COMPLETED) queue.add(new QueueItem("SUPPORT-" + row.getRequestId(), "SUPPORT", row.getRequestType(), row.getRequester().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));

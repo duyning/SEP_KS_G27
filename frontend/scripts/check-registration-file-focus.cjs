@@ -18,7 +18,7 @@ async function main(){
    else if(url==='/api/host/property-registrations/eligibility'){
     checks++;if(hold)await new Promise(resolve=>held.push(resolve));
     if(mode==='error')return route.fulfill({status:500,json:{success:false,message:'Test-only recheck failure'}});
-    data={canRegister:mode==='allowed',reason:mode==='approved'?'HAS_PROPERTY':'ELIGIBLE'};
+    data={canRegister:true,reason:'ELIGIBLE'};
    }else if(url==='/api/host/property-registrations/current')data=null;
    else if(url==='/api/host/property')data={records:[]};
    else throw new Error(`Unexpected API ${url}`);
@@ -51,9 +51,9 @@ async function main(){
   assert.equal(await page.locator('.registration-photos figure').count(),1);assert.equal(await page.locator('.registration-next').isDisabled(),true);
   mode='allowed';await page.getByRole('button',{name:'Thử lại',exact:true}).click();await page.waitForLoadState('networkidle');
   assert.equal(await page.locator('.registration-next').isDisabled(),false);assert.equal(await page.locator('.registration-photos figure').count(),1);
-  mode='approved';await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await page.waitForURL(`${base}/host/property`);
-  assert.equal(await page.locator('.registration-form-lock').count(),0);assert.equal(writes,0);assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({passed:true,photoAndDocumentRetained:true,unsavedFieldsRetained:true,recheckFailureRetainsForm:true,approvedAccessStillBlocked:true,mysqlWrites:0}));
+  mode='approved';await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await page.waitForLoadState('networkidle');
+  assert.equal(await page.locator('.registration-form-lock').count(),1);assert.equal(writes,0);assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({passed:true,photoAndDocumentRetained:true,unsavedFieldsRetained:true,recheckFailureRetainsForm:true,registeredHostStillAllowed:true,mysqlWrites:0}));
  }finally{await browser.close();}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

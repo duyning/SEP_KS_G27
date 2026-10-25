@@ -89,7 +89,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
           </p>
         </div>
         <div className="header-cta-col">
-          {!hasProperty && canRegister && <Link to="/host/property/new" className="btn-add-property" id="btnTriggerAddProperty">
+          {canRegister && <Link to="/host/property/new" className="btn-add-property" id="btnTriggerAddProperty">
             <Plus size={18} strokeWidth={2.5} id="headerCtaIcon" />
             <span id="headerCtaText">Đăng ký nhà trọ</span>
           </Link>}
@@ -204,7 +204,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
       <section className="quick-actions-bar" aria-label="Thao tác nhanh">
         <span className="quick-actions-label">THAO TÁC NHANH:</span>
         <div className="quick-actions-list">
-          {!hasProperty && canRegister && <Link to="/host/property/new" className="btn-quick-action" id="btnQuickAddProperty">
+          {canRegister && <Link to="/host/property/new" className="btn-quick-action" id="btnQuickAddProperty">
             <Plus size={15} strokeWidth={2.5} />
             <span id="quickAddPropertyText">Đăng ký nhà trọ</span>
           </Link>}

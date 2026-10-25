@@ -21,7 +21,7 @@ test('unregistered hosts retain registration navigation', () => {
   assert.match(html, /href="\/host\/property\/new"/);
   assert.match(html, /Đăng ký nhà trọ/);
 });
-test('verified registered hosts do not see the registration prompt', () => assert.equal(render(true), ''));
+test('registered hosts can still register another property', () => {assert.match(render(true), /Đăng ký thêm nhà trọ/);assert.match(render(true), /href="\/host\/property\/new"/);});
 test('unknown ownership retains navigation without claiming no property exists', () => {
   assert.match(render(undefined), /href="\/host\/property\/new"/);
   assert.doesNotMatch(render(undefined), /Bạn chưa đăng ký nhà trọ/);

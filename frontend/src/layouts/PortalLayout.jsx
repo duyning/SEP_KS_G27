@@ -7,7 +7,7 @@ import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
 
-const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ' };
+const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
 const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Đã lưu', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare]];
 const menus = {
@@ -62,7 +62,7 @@ export default function PortalLayout({ screen, children }) {
   const sidebar = useRef();
   const popoverRef = useRef();
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
-  const topbarTitle = screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.title;
+  const topbarTitle = screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function PortalLayout({ screen, children }) {
   );
 
   return (
-    <div className={`portal-app ${portal}-portal ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
+    <div className={`portal-app ${portal}-portal ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
       <a className="skip-link" href="#main-content">Đến nội dung chính</a>
 
       {portal === 'public' ? (
@@ -247,7 +247,7 @@ export default function PortalLayout({ screen, children }) {
           <div className="public-navbar">
             <Brand />
             <nav className="public-desktop-nav" aria-label="Điều hướng chính">
-              {publicLinks.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
+              {location.pathname==='/'?<><a href="#nha-tro">Tìm phòng trọ</a><a href="#khu-vuc">Khu vực Hòa Lạc</a><a href="#loi-the">Lợi thế HL_RCS</a><a href="#chu-tro">Dành cho Chủ trọ</a></>:publicLinks.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
             <div className="public-account">{account}</div>
             <button ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
@@ -267,7 +267,7 @@ export default function PortalLayout({ screen, children }) {
               {portal === 'host' && !['/host/rooms', '/host/viewings', '/host/property/new'].includes(screen.path) && (
                 <div className="topbar-status-chip hide-mobile">
                   <span className="live-dot-green" />
-                  <span>{screen.path === '/host/property' ? 'Cơ sở quản lý chính' : screen.path === '/host/room-types' ? 'Bảng giá & Tiện nghi' : 'Hệ thống trực tuyến'}</span>
+                  <span>{screen.path === '/host/property' ? 'Danh mục nhà trọ' : screen.path === '/host/room-types' ? 'Bảng giá & Tiện nghi' : 'Hệ thống trực tuyến'}</span>
                 </div>
               )}
             </div>
@@ -300,9 +300,11 @@ export default function PortalLayout({ screen, children }) {
               <p>{group}</p>
               {links.map(([label, to, Icon]) => {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
-                const active = `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
+                const selectedPropertyId = new URLSearchParams(location.search).get('propertyId');
+                const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
+                const active = location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (
-                  <Link key={to} to={to} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
+                  <Link key={to} to={scopedLink} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
                     <Icon size={19} />
                     <span>{label}</span>
                     {portal === 'staff' && staffBadges[to] != null && <span className="sw-nav-count">{staffBadges[to]}</span>}
@@ -346,7 +348,7 @@ export default function PortalLayout({ screen, children }) {
       </aside>
 
       <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''}`}>
-        {portal !== 'host' && (
+        {portal !== 'host' && location.pathname!=='/' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
             <Link to="/">HL_RCS</Link>
             <ChevronRight size={13} />
@@ -372,7 +374,7 @@ export default function PortalLayout({ screen, children }) {
         </footer>
       )}
 
-      {portal === 'public' && (
+      {portal === 'public' && location.pathname!=='/' && (
         <footer className="public-footer">
           <Brand />
           <p>Kết nối trực tiếp, minh bạch và an toàn.</p>

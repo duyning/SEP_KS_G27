@@ -22,7 +22,7 @@ export const staffApi = {
     if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(blob.type) || blob.size === 0) throw new ApiError('Không tải được tài liệu.', 502);
     return blob;
   },
-  async review(id, decision, note, signal) {
-    return detail(await request(`/verifications/${positive(id)}/review`, { basePath: '/api/staff', method: 'POST', body: { decision, note }, signal }));
+  async review(id, decision, note, signal, requestedFields) {
+    return detail(await request(`/verifications/${positive(id)}/review`, { basePath: '/api/staff', method: 'POST', body: { decision, note,...(requestedFields?{requestedFields}:{}) }, signal }));
   },
 };

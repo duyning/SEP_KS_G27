@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { LoaderCircle, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, LoaderCircle, Trash2, Upload } from 'lucide-react';
 import { Modal } from './PortalUI.jsx';
 import { hostApi } from '../services/host.js';
 import { ROOM_AMENITIES, editRoomType, emptyRoomType, money, roomTypePayload, validateRoomPhotos, validateRoomType } from '../services/room-types.js';
 import RoomTypePhoto from './RoomTypePhoto.jsx';
+import RoomBatchSetup from './RoomBatchSetup.jsx';
+import {blankRoomGroup,roomBatchPayload,validateRoomDrafts} from '../services/room-batch.js';
 
 function LocalPhoto({file}) {
   const [url,setUrl]=useState('');
@@ -11,14 +13,21 @@ function LocalPhoto({file}) {
   return <img src={url||undefined} alt={file.name}/>;
 }
 
-export default function RoomTypeCreateModal({ property, onClose, onCreated, type = null }) {
-  const [data, setData] = useState(()=>type?editRoomType(type):emptyRoomType());
+export default function RoomTypeCreateModal({ property, onClose, onCreated, type = null, existingRoomNumbers = [], initialDraft = null }) {
+  const [data, setData] = useState(()=>type?editRoomType(type):initialDraft?.data||emptyRoomType());
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [step,setStep]=useState(0);
+  const [groups,setGroups]=useState(()=>[blankRoomGroup()]);
+  const [batchMode,setBatchMode]=useState(initialDraft?'MANUAL':'GROUPS');
+  const [rows,setRows]=useState(initialDraft?.rooms||[]);
+  const [batchErrors,setBatchErrors]=useState({rows:{},list:''});
   const request = useRef();
   const form = useRef();
   const filePicker = useRef();
+  const goTo=value=>{setStep(value);setError('');requestAnimationFrame(()=>{form.current?.closest('dialog')?.scrollTo({top:0,behavior:'instant'});});};
+  const changeRows=value=>{setRows(value);setBatchErrors(validateRoomDrafts(value,existingRoomNumbers));setError('');};
   const addPhotos = event => {
     const files=Array.from(event.target.files||[]);event.target.value='';
     const combined=[...data.photos];
@@ -38,14 +47,18 @@ export default function RoomTypeCreateModal({ property, onClose, onCreated, type
     const invalid = validateRoomType(data);
     setErrors(invalid); setError('');
     if (Object.keys(invalid).length) { requestAnimationFrame(()=>form.current?.querySelector('[aria-invalid="true"]')?.focus()); return; }
+    if(!type&&step===0){goTo(1);return;}
+    if(!type){const issues=validateRoomDrafts(rows,existingRoomNumbers);setBatchErrors(issues);if(issues.list||Object.keys(issues.rows).length){requestAnimationFrame(()=>form.current?.querySelector('[aria-invalid="true"]')?.focus());return;}}
     const controller = new AbortController(); request.current=controller; setBusy(true);
-    try { const created=await hostApi.saveRoomType(type?.roomTypeId??null,roomTypePayload(data,property.propertyId),data.photos,controller.signal); if(!controller.signal.aborted)onCreated(created); }
+    try { const payload=roomTypePayload(data,property.propertyId);const created=type?await hostApi.saveRoomType(type.roomTypeId,payload,data.photos,controller.signal):await hostApi.createRoomTypeWithRooms(payload,roomBatchPayload(rows),data.photos,controller.signal); if(!controller.signal.aborted)onCreated(created); }
     catch(failure) { if(!controller.signal.aborted){setError(failure.message);setErrors(failure.fields || {});} }
     finally { if(request.current===controller)request.current=null;if(!controller.signal.aborted)setBusy(false); }
   };
   return <Modal className="rt-create-modal" title={type?'Chỉnh sửa loại phòng':'Thêm loại phòng mới'} onClose={()=>{if(!busy)onClose();}}>
-    <p className="rt-modal-subtitle">{type?'Cập nhật':'Tạo'} cấu hình nhóm phòng cho “{property.name}”</p>
+    <p className="rt-modal-subtitle">{type?'Cập nhật cấu hình nhóm phòng':'Thông tin loại phòng và danh sách phòng'} cho “{property.name}”</p>
+    {!type&&<nav className="rt-wizard-steps" aria-label="Các bước thêm loại phòng">{['Thông tin loại phòng','Thiết lập danh sách phòng'].map((label,index)=><button key={label} type="button" disabled={busy||index>step} aria-current={index===step?'step':undefined} onClick={()=>goTo(index)}><span>{step>index?<Check size={13}/>:index+1}</span><div><small>BƯỚC {index+1}</small><strong>{label}</strong></div></button>)}</nav>}
     <form noValidate onSubmit={submit} ref={form} aria-busy={busy}>
+      {(type||step===0)&&<>
       <fieldset disabled={busy}><legend>1. Thông tin cơ bản &amp; Quy mô</legend>
         {field('roomType','Tên loại phòng',<input {...input('roomType')} autoFocus maxLength={100} placeholder="Ví dụ: Studio tiêu chuẩn ban công, Phòng đơn gác lửng..." required/>,true)}
         <div className="rt-form-grid three">{field('areaSqm','Diện tích (m²)',<div className="rt-input-unit"><input {...input('areaSqm')} inputMode="decimal" placeholder="25" required/><span>m²</span></div>,true)}
@@ -60,8 +73,10 @@ export default function RoomTypeCreateModal({ property, onClose, onCreated, type
       </fieldset>
       <fieldset disabled={busy}><legend>2. Tiện nghi trong phòng</legend><div className="rt-amenities">{ROOM_AMENITIES.map(([key,label])=><label key={key} className={data.amenities.includes(key)?'selected':''}><input type="checkbox" checked={data.amenities.includes(key)} onChange={event=>update('amenities',event.target.checked?[...data.amenities,key]:data.amenities.filter(value=>value!==key))}/>{label}</label>)}</div>{errors.amenities&&<p className="rt-error" role="alert">{errors.amenities}</p>}</fieldset>
       <fieldset disabled={busy}><legend>3. Chi phí dịch vụ khác (tùy chọn)</legend><div className="rt-form-grid four">{amount('electricityPrice','Tiền điện','đ/kWh')}{amount('waterPrice','Tiền nước','đ/m³')}{amount('internetPrice','Internet / Wifi','đ/phòng')}{amount('servicePrice','Dịch vụ chung','đ/người')}</div></fieldset>
+      </>}
+      {!type&&step===1&&<RoomBatchSetup data={data} groups={groups} setGroups={setGroups} rows={rows} setRows={changeRows} mode={batchMode} setMode={setBatchMode} errors={batchErrors} busy={busy} onEdit={()=>goTo(0)}/>}
       {error&&<p className="rt-submit-error" role="alert">{error}</p>}
-      <footer className="rt-modal-footer"><button type="button" className="p-button" disabled={busy} onClick={onClose}>Hủy</button><button type="submit" className="p-button primary" disabled={busy}>{busy?<><LoaderCircle className="spin" size={16}/>Đang lưu...</>:type?'Lưu thay đổi':'Tạo loại phòng'}</button></footer>
+      <footer className="rt-modal-footer">{!type&&step===1&&<button type="button" className="p-button rt-wizard-back" disabled={busy} onClick={()=>goTo(0)}><ArrowLeft size={14}/>Quay lại</button>}<button type="button" className="p-button" disabled={busy} onClick={onClose}>Hủy</button><button type="submit" className="p-button primary" disabled={busy}>{busy?<><LoaderCircle className="spin" size={16}/>Đang lưu...</>:type?'Lưu thay đổi':step===0?<>Tiếp theo: Thiết lập danh sách phòng<ArrowRight size={14}/></>:`Tạo loại phòng và ${rows.length} phòng`}</button></footer>
     </form>
   </Modal>;
 }
