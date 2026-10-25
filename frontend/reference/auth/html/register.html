@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HL_RCS | Đăng ký tài khoản hệ thống kết nối phòng trọ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    /* =========================================
+       KHUNG LẬT TRANG 3D (PAGE FLIP ANIMATION)
+       ========================================= */
+    .flip-viewport {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+      perspective: 2200px;
+      background-color: var(--slate-900);
+    }
+
+    .auth-flip-box {
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.45, 0.05, 0.25, 1);
+      will-change: transform;
+    }
+
+    /* Trạng thái lật sang trang đăng ký */
+    .auth-flip-box.is-flipped {
+      transform: rotateY(-180deg);
+    }
+
+    /* 2 MẶT CỦA KHUNG LẬT TRANG */
+    .flip-face {
+      width: 100%;
+      min-height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      background-color: var(--slate-50);
+      overflow-y: auto;
+    }
+
+    /* Mặt 1: Đăng nhập */
+    .flip-login-face {
+      z-index: 1;
+      transform: rotateY(0deg);
+    }
+
+    /* Mặt 2: Đăng ký */
+    .flip-register-face {
+      z-index: 2;
+      transform: rotateY(180deg);
+    }
+
+    /* BỐ CỤC 2 CỘT CHO MẶT ĐĂNG KÝ (FORM TRÁI - HÌNH PHẢI) */
+    .register-layout {
+      grid-template-columns: minmax(420px, 0.95fr) minmax(380px, 1.05fr);
+    }
+
+    /* HÌNH NỀN MẶT ĐĂNG NHẬP (BÊN TRÁI) */
+    .login-showcase-bg {
+      position: relative;
+      background-image: url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=85') !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      color: #ffffff !important;
+      padding: 44px clamp(28px, 4.5vw, 60px) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      overflow: hidden !important;
+    }
+
+    /* HÌNH NỀN MẶT ĐĂNG KÝ (BÊN PHẢI) - HÌNH ẢNH MỚI BẮC ÂU HIỆN ĐẠI */
+    .register-showcase-bg {
+      position: relative;
+      background-image: url('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=85') !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      color: #ffffff !important;
+      padding: 44px clamp(28px, 4.5vw, 60px) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      overflow: hidden !important;
+    }
+
+    /* Lớp phủ gradient sâu cho hình nền */
+    .page-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        160deg,
+        rgba(6, 26, 23, 0.88) 0%,
+        rgba(9, 44, 38, 0.80) 45%,
+        rgba(5, 18, 16, 0.94) 100%
+      );
+      backdrop-filter: blur(1.5px);
+      -webkit-backdrop-filter: blur(1.5px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      gap: 28px;
+    }
+
+    /* Thẻ kính mờ */
+    .glass-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 500px;
+      margin: 6px 0;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      transition: var(--transition);
+    }
+
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(94, 234, 212, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .glass-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .glass-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #5eead4;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    .glass-rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fef08a;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .star-icon {
+      color: #facc15;
+    }
+
+    .glass-room-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .glass-room-desc {
+      font-size: 12.5px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .glass-badge-pill {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #a7f3d0;
+      background: rgba(16, 185, 129, 0.2);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(94, 234, 212, 0.3);
+    }
+
+    .glass-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-md);
+      padding: 12px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: var(--transition);
+    }
+
+    .stat-box:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(94, 234, 212, 0.3);
+    }
+
+    .stat-number {
+      font-size: 17px;
+      font-weight: 800;
+      color: #5eead4;
+      letter-spacing: -0.02em;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #cbd5e1;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #5eead4;
+    }
+
+    /* Nút liên kết chuyển trang lật mượt mà */
+    .flip-trigger-btn {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: var(--transition);
+    }
+
+    .flip-trigger-btn:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+
+    .terms-text {
+      font-size: 12.5px;
+      color: var(--slate-600);
+      line-height: 1.4;
+    }
+
+    .terms-text a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .auth-wrapper, .register-layout {
+        grid-template-columns: 1fr !important;
+      }
+
+      .register-layout .form-side {
+        order: 1;
+      }
+
+      .register-layout .showcase-side {
+        order: 2;
+      }
+
+      .glass-cards-container {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .showcase-side {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- VIEWPORT CHỨA KHUNG LẬT TRANG 3D -->
+  <div class="flip-viewport">
+    <div class="auth-flip-box is-flipped" id="authFlipBox">
+      
+      <!-- =========================================
+           MẶT 1: GIAO DIỆN ĐĂNG NHẬP (HÌNH TRÁI - FORM PHẢI)
+           ========================================= -->
+      <div class="flip-face flip-login-face">
+        <div class="auth-wrapper">
+          <!-- Cột trái: Nền ảnh đăng nhập toàn khung -->
+          <aside class="showcase-side login-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <div class="page-overlay"></div>
+            <div class="page-content">
+              <!-- Header -->
+              <header class="showcase-header">
+                <a href="#" class="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                  </div>
+                  <div class="brand-text">
+                    <span class="brand-title">HL_RCS</span>
+                    <span class="brand-tagline">Rental Connection System</span>
+                  </div>
+                </a>
+                <span class="tag-pill">
+                  <span class="tag-dot"></span>
+                  Hòa Lạc Campus
+                </span>
+              </header>
+
+              <!-- Hero text -->
+              <div class="hero-block">
+                <div class="inline-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  Nền tảng kết nối phòng trọ thông minh
+                </div>
+                <h1 class="hero-title">Tìm trọ an tâm, quản lý dễ dàng tại Hòa Lạc</h1>
+                <p class="hero-desc">
+                  Kết nối trực tiếp sinh viên và người thuê với hệ thống nhà trọ chính chủ quanh khu vực ĐH FPT & Khu Công nghệ cao Hòa Lạc.
+                </p>
+              </div>
+
+              <!-- Thẻ kính mờ đăng nhập -->
+              <div class="glass-cards-container">
+                <div class="glass-card">
+                  <div class="glass-card-header">
+                    <div class="glass-card-badge">
+                      <span class="pulse-dot"></span>
+                      <span>Phòng trọ xác thực 100%</span>
+                    </div>
+                    <div class="glass-rating">
+                      <span class="star-icon">★</span>
+                      <span>4.9 / 5.0</span>
+                    </div>
+                  </div>
+                  <div class="glass-card-body">
+                    <h3 class="glass-room-title">Nhà trọ Tân Xã, Thạch Hòa & Bình Yên</h3>
+                    <p class="glass-room-desc">Hình ảnh thực tế • Giá điện nước minh bạch niêm yết • Cập nhật tình trạng phòng trống mỗi ngày</p>
+                  </div>
+                </div>
+
+                <div class="glass-stats-grid">
+                  <div class="stat-box">
+                    <span class="stat-number">1,200+</span>
+                    <span class="stat-label">Phòng đã kiểm duyệt</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-number">5,000+</span>
+                    <span class="stat-label">Người thuê tin dùng</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-number">0đ</span>
+                    <span class="stat-label">Phí môi giới trung gian</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer bên trái -->
+              <footer class="showcase-footer">
+                <p>© 2026 HL_RCS • Kết nối trực tiếp, minh bạch và an toàn.</p>
+              </footer>
+            </div>
+          </aside>
+
+          <!-- Cột phải: Form Đăng nhập -->
+          <main class="form-side" aria-label="Khu vực đăng nhập">
+            <div class="auth-card">
+              <!-- Mobile Logo -->
+              <div class="mobile-brand">
+                <div class="brand-icon small">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </div>
+                <span class="mobile-brand-name">HL_RCS</span>
+              </div>
+
+              <!-- Header Form -->
+              <div class="form-header">
+                <h2 class="form-title">Đăng nhập</h2>
+                <p class="form-subtitle">Chào mừng bạn trở lại! Vui lòng nhập tài khoản để vào hệ thống.</p>
+              </div>
+
+              <!-- Alert Banner -->
+              <div id="formMessageBox" class="alert-box" role="status" aria-live="polite">
+                <div class="alert-icon" id="alertIcon"></div>
+                <div class="alert-content">
+                  <p id="formMessage" class="form-message"></p>
+                </div>
+                <button type="button" class="alert-close" id="closeAlert" aria-label="Đóng thông báo">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Form đăng nhập -->
+              <form id="loginForm" novalidate>
+                <!-- Email / SĐT -->
+                <div class="form-group">
+                  <label for="identifier" class="field-label">Email hoặc Số điện thoại</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H17.5C20 5 22 7 22 9.5V17Z"/>
+                        <path d="m2 7 10 7 10-7"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="identifier" 
+                      name="identifier" 
+                      type="text" 
+                      class="form-input" 
+                      autocomplete="username" 
+                      placeholder="Nhập email hoặc số điện thoại"
+                      spellcheck="false"
+                    >
+                  </div>
+                  <p class="error-message" data-error-for="identifier"></p>
+                </div>
+
+                <!-- Mật khẩu -->
+                <div class="form-group">
+                  <label for="password" class="field-label">Mật khẩu</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="password" 
+                      name="password" 
+                      type="password" 
+                      class="form-input has-action" 
+                      autocomplete="current-password" 
+                      placeholder="Nhập mật khẩu"
+                    >
+                    <button 
+                      class="password-toggle-btn" 
+                      id="togglePassword" 
+                      type="button" 
+                      aria-label="Hiện mật khẩu" 
+                      title="Hiện mật khẩu"
+                    >
+                      <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="3" r="3"/>
+                      </svg>
+                      <svg class="eye-closed" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                        <line x1="2" y1="2" x2="22" y2="22"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="error-message" data-error-for="password"></p>
+                </div>
+
+                <!-- Ghi nhớ & Quên MK -->
+                <div class="form-options">
+                  <label class="custom-checkbox">
+                    <input id="remember" name="remember" type="checkbox">
+                    <span class="checkmark"></span>
+                    <span class="checkbox-text">Ghi nhớ đăng nhập</span>
+                  </label>
+                  <a href="#" class="forgot-link">Quên mật khẩu?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="submitBtn" class="primary-button" type="submit">
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                  <span class="btn-text">Đăng nhập</span>
+                  <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </form>
+
+              <!-- Chân trang liên kết lật sang Đăng ký -->
+              <div class="signup-prompt">
+                <span>Bạn chưa có tài khoản?</span>
+                <a href="register.html" class="flip-trigger-btn" id="toRegisterBtn">
+                  <span>Đăng ký ngay</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </a>
+              </div>
+
+              <div class="security-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Bảo mật SSL • Tự động nhận diện quyền truy cập tài khoản</span>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <!-- =========================================
+           MẶT 2: GIAO DIỆN ĐĂNG KÝ (FORM TRÁI - HÌNH PHẢI)
+           ========================================= -->
+      <div class="flip-face flip-register-face">
+        <div class="auth-wrapper register-layout">
+          <!-- Cột trái: Form Đăng ký (Đã bỏ chọn vai trò theo yêu cầu) -->
+          <main class="form-side" aria-label="Khu vực đăng ký tài khoản">
+            <div class="auth-card">
+              <!-- Mobile Logo -->
+              <div class="mobile-brand">
+                <div class="brand-icon small">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </div>
+                <span class="mobile-brand-name">HL_RCS</span>
+              </div>
+
+              <!-- Header Form -->
+              <div class="form-header">
+                <h2 class="form-title">Tạo tài khoản mới</h2>
+                <p class="form-subtitle">Chỉ mất 30 giây để bắt đầu trải nghiệm thuê trọ thông minh tại Hòa Lạc.</p>
+              </div>
+
+              <!-- Alert Banner Đăng ký -->
+              <div id="registerMessageBox" class="alert-box" role="status" aria-live="polite">
+                <div class="alert-icon" id="registerAlertIcon"></div>
+                <div class="alert-content">
+                  <p id="registerMessage" class="form-message"></p>
+                </div>
+                <button type="button" class="alert-close" id="registerCloseAlert" aria-label="Đóng thông báo">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Form đăng ký -->
+              <form id="registerForm" novalidate>
+                <!-- Họ và tên -->
+                <div class="form-group">
+                  <label for="fullName" class="field-label">Họ và tên</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="fullName" 
+                      name="fullName" 
+                      type="text" 
+                      class="form-input" 
+                      autocomplete="name" 
+                      placeholder="Ví dụ: Nguyễn Văn An"
+                      spellcheck="false"
+                    >
+                  </div>
+                  <p class="error-message" data-error-for="fullName"></p>
+                </div>
+
+                <!-- Email / SĐT -->
+                <div class="form-group">
+                  <label for="registerIdentifier" class="field-label">Email hoặc Số điện thoại</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H17.5C20 5 22 7 22 9.5V17Z"/>
+                        <path d="m2 7 10 7 10-7"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="registerIdentifier" 
+                      name="registerIdentifier" 
+                      type="text" 
+                      class="form-input" 
+                      autocomplete="username" 
+                      placeholder="vd: an.nguyen@gmail.com hoặc 0912345678"
+                      spellcheck="false"
+                    >
+                  </div>
+                  <p class="error-message" data-error-for="registerIdentifier"></p>
+                </div>
+
+                <!-- Mật khẩu -->
+                <div class="form-group">
+                  <label for="registerPassword" class="field-label">Mật khẩu</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="registerPassword" 
+                      name="registerPassword" 
+                      type="password" 
+                      class="form-input has-action" 
+                      autocomplete="new-password" 
+                      placeholder="Tối thiểu 8 ký tự"
+                    >
+                    <button 
+                      class="password-toggle-btn" 
+                      id="toggleRegisterPassword" 
+                      type="button" 
+                      aria-label="Hiện mật khẩu" 
+                      title="Hiện mật khẩu"
+                    >
+                      <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="3" r="3"/>
+                      </svg>
+                      <svg class="eye-closed" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                        <line x1="2" y1="2" x2="22" y2="22"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="error-message" data-error-for="registerPassword"></p>
+                </div>
+
+                <!-- Xác nhận mật khẩu -->
+                <div class="form-group">
+                  <label for="confirmPassword" class="field-label">Xác nhận mật khẩu</label>
+                  <div class="input-container">
+                    <div class="input-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="m9 12 2 2 4-4"/>
+                      </svg>
+                    </div>
+                    <input 
+                      id="confirmPassword" 
+                      name="confirmPassword" 
+                      type="password" 
+                      class="form-input" 
+                      autocomplete="new-password" 
+                      placeholder="Nhập lại mật khẩu phía trên"
+                    >
+                  </div>
+                  <p class="error-message" data-error-for="confirmPassword"></p>
+                </div>
+
+                <!-- Checkbox Điều khoản -->
+                <div class="form-options">
+                  <label class="custom-checkbox">
+                    <input id="agreeTerms" name="agreeTerms" type="checkbox">
+                    <span class="checkmark"></span>
+                    <span class="terms-text">
+                      Tôi đồng ý với <a href="#" target="_blank">Điều khoản dịch vụ</a> và <a href="#" target="_blank">Chính sách bảo mật</a> của HL_RCS.
+                    </span>
+                  </label>
+                </div>
+                <p class="error-message" data-error-for="agreeTerms"></p>
+
+                <!-- Nút Đăng ký -->
+                <button id="submitRegisterBtn" class="primary-button" type="submit">
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                  <span class="btn-text">Đăng ký tài khoản</span>
+                  <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </form>
+
+              <!-- Chân trang liên kết lật về Đăng nhập -->
+              <div class="signup-prompt">
+                <span>Đã có tài khoản?</span>
+                <a href="login.html" class="flip-trigger-btn" id="toLoginBtn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6"/>
+                  </svg>
+                  <span>Đăng nhập ngay</span>
+                </a>
+              </div>
+
+              <div class="security-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Bảo mật SSL 256-bit • Dữ liệu người dùng được bảo vệ tuyệt đối</span>
+              </div>
+            </div>
+          </main>
+
+          <!-- Cột phải: Hình ảnh minh họa mới cho Đăng ký -->
+          <aside class="showcase-side register-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <div class="page-overlay"></div>
+            <div class="page-content">
+              <!-- Header -->
+              <header class="showcase-header">
+                <a href="#" class="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                  </div>
+                  <div class="brand-text">
+                    <span class="brand-title">HL_RCS</span>
+                    <span class="brand-tagline">Rental Connection System</span>
+                  </div>
+                </a>
+                <span class="tag-pill">
+                  <span class="tag-dot"></span>
+                  Hòa Lạc Campus
+                </span>
+              </header>
+
+              <!-- Hero text -->
+              <div class="hero-block">
+                <div class="inline-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  Gia nhập cộng đồng HL_RCS
+                </div>
+                <h1 class="hero-title">Tìm trọ chuẩn xác, an tâm gắn bó lâu dài</h1>
+                <p class="hero-desc">
+                  Tạo tài khoản để mở khóa đầy đủ tính năng: lưu danh sách phòng yêu thích, nhận gợi ý phòng phù hợp và trao đổi trực tiếp với các chủ trọ uy tín.
+                </p>
+              </div>
+
+              <!-- Thẻ kính mờ đăng ký -->
+              <div class="glass-cards-container">
+                <div class="glass-card">
+                  <div class="glass-card-header">
+                    <div class="glass-card-badge">
+                      <span class="pulse-dot"></span>
+                      <span>Đặc quyền thành viên</span>
+                    </div>
+                    <span class="glass-badge-pill">Miễn phí 100%</span>
+                  </div>
+                  <div class="glass-card-body">
+                    <h3 class="glass-room-title">Lưu Wishlist & Nhận tin phòng trống mới</h3>
+                    <p class="glass-room-desc">Theo dõi biến động giá điện nước, phòng trống thực tế và kết nối Zalo/Hotline trực tiếp với chủ trọ trong 1 chạm.</p>
+                  </div>
+                </div>
+
+                <div class="glass-stats-grid">
+                  <div class="stat-box">
+                    <span class="stat-number">10,000+</span>
+                    <span class="stat-label">Lượt tìm kiếm / tháng</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Chính chủ không môi giới</span>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Hỗ trợ kiểm duyệt tin</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer bên phải -->
+              <footer class="showcase-footer">
+                <p>© 2026 HL_RCS • Rental Connection System. Đồng hành cùng sinh viên & người thuê Hòa Lạc.</p>
+              </footer>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/app.js"></script>
+  <script src="../js/register.js"></script>
+  <script>
+    // XỬ LÝ LẬT TRANG 3D MƯỢT MÀ
+    const authFlipBox = document.querySelector("#authFlipBox");
+    const toRegisterBtn = document.querySelector("#toRegisterBtn");
+    const toLoginBtn = document.querySelector("#toLoginBtn");
+
+    if (toRegisterBtn) {
+      toRegisterBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (authFlipBox) {
+          authFlipBox.classList.add("is-flipped");
+          window.history.pushState({ page: "register" }, "", "register.html");
+          document.title = "HL_RCS | Đăng ký tài khoản hệ thống kết nối phòng trọ";
+        }
+      });
+    }
+
+    if (toLoginBtn) {
+      toLoginBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (authFlipBox) {
+          authFlipBox.classList.remove("is-flipped");
+          window.history.pushState({ page: "login" }, "", "login.html");
+          document.title = "HL_RCS | Đăng nhập hệ thống kết nối phòng trọ";
+        }
+      });
+    }
+
+    // Lắng nghe nút Back/Forward trên trình duyệt
+    window.addEventListener("popstate", () => {
+      const isRegister = window.location.pathname.endsWith("register.html");
+      if (authFlipBox) {
+        if (isRegister) {
+          authFlipBox.classList.add("is-flipped");
+          document.title = "HL_RCS | Đăng ký tài khoản hệ thống kết nối phòng trọ";
+        } else {
+          authFlipBox.classList.remove("is-flipped");
+          document.title = "HL_RCS | Đăng nhập hệ thống kết nối phòng trọ";
+        }
+      }
+    });
+
+    // Mở trang register.html trực tiếp: Hiển thị ngay mặt đăng ký
+    if (authFlipBox) {
+      authFlipBox.classList.add("is-flipped");
+    }
+  </script>
+</body>
+</html>

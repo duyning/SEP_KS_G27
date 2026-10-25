@@ -1,0 +1,417 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Home,
+  Layers,
+  Plus,
+  RefreshCw,
+  MessagesSquare,
+} from 'lucide-react';
+import { hostApi } from '../../services/host.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { StateView, StatusBadge } from '../../components/PortalUI.jsx';
+import '../../styles/host-dashboard.css';
+
+const onboardingSteps = [
+  ['Thêm thông tin nhà trọ', 'Điền tên nhà trọ, địa chỉ thực tế và mức giá niêm yết minh bạch.'],
+  ['Cấu hình loại phòng & số phòng', 'Khởi tạo các phòng cụ thể (P.101, P.102,...) và đánh dấu phòng còn trống.'],
+  ['Gửi kiểm duyệt & nhận khách', 'Ban quản trị thẩm định trong 24h và tin đăng sẽ hiển thị công khai ngay.'],
+];
+const bookingLabels = { PENDING: 'Chờ xác nhận', APPROVED: 'Đã xác nhận', REJECTED: 'Đã từ chối', CANCELLED: 'Đã hủy' };
+const money = value => value == null ? 'Chưa có giá niêm yết' : `${new Intl.NumberFormat('vi-VN').format(value)} đ / tháng`;
+
+export function HostOnboarding() {
+  return (
+    <section id="newHostOnboardingState" className="new-host-onboarding">
+      <div className="onboarding-card">
+        <div className="onboarding-badge">Bắt đầu cùng HL_RCS</div>
+        <h2 className="onboarding-title">Chào mừng bạn đến với Mạng lưới Chủ trọ Hòa Lạc!</h2>
+        <p className="onboarding-desc">
+          Bạn chưa có nhà trọ nào trong hệ thống. Hãy thêm nhà trọ đầu tiên để bắt đầu quản lý phòng và tiếp cận hàng nghìn sinh viên ĐH FPT &amp; người đi làm tại Khu Công nghệ cao.
+        </p>
+
+        <div className="onboarding-steps-grid">
+          {onboardingSteps.map(([title, description], index) => (
+            <div className="step-card" key={title}>
+              <div className="step-num">{index + 1}</div>
+              <h4 className="step-title">{title}</h4>
+              <p className="step-desc">{description}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="onboarding-cta-wrap">
+          <Link to="/host/property/new" className="btn-onboarding-cta">
+            <Plus size={18} strokeWidth={2.5} />
+            <span>+ Đăng ký nhà trọ đầu tiên của bạn</span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HostDashboardContent({ data, onRefresh, loading }) {
+  const { user } = useAuth();
+  const [canRegister,setCanRegister] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    setCanRegister(false);
+    hostApi.registrationEligibility(controller.signal).then(policy=>{if(!controller.signal.aborted)setCanRegister(policy.canRegister);}).catch(()=>{});
+    return ()=>controller.abort();
+  },[user?.userId,data]);
+  const properties = data?.properties || [];
+  const roomTypeCount = data?.roomTypeCount ?? 0;
+  const pendingViewingCount = data?.pendingViewingCount ?? 0;
+  const pendingRegistrationCount = data?.pendingRegistrationCount ?? 0;
+  const recentViewings = data?.recentViewings || [];
+  const totalRoomCount = data?.totalRoomCount ?? 0;
+  const availableRoomCount = data?.availableRoomCount ?? 0;
+  const occupancyRate = data?.occupancyRate ?? '0%';
+  const activeListingCount = data?.activeListingCount ?? properties.filter(p => p.status === 'ACTIVE').length;
+  const hasProperty = properties.length > 0;
+
+  return (
+    <div className="dashboard-data-container">
+      {/* 1. Header greeting row */}
+      <section className="dashboard-header-row">
+        <div className="header-greeting-col">
+          <h2 className="dashboard-headline">Bảng điều khiển</h2>
+          <p className="dashboard-greeting-lead" style={{ margin: '0 0 4px', fontWeight: 700, color: 'var(--host-text-main)', fontSize: '15px' }}>
+            Xin chào, <span className="greeting-text" id="hostGreetingText" style={{ color: 'var(--host-primary)' }}>{user?.fullName || 'Chủ trọ mới (Test Onboarding)'}</span>
+          </p>
+          <p className="dashboard-subtext">
+            Tổng quan tình trạng nhà trọ, phòng trống và các yêu cầu cần xử lý.
+          </p>
+        </div>
+        <div className="header-cta-col">
+          {!hasProperty && canRegister && <Link to="/host/property/new" className="btn-add-property" id="btnTriggerAddProperty">
+            <Plus size={18} strokeWidth={2.5} id="headerCtaIcon" />
+            <span id="headerCtaText">Đăng ký nhà trọ</span>
+          </Link>}
+          <button
+            type="button"
+            className="btn-refresh-icon"
+            id="btnRefreshDashboard"
+            onClick={onRefresh}
+            title="Làm mới dữ liệu"
+            aria-label="Làm mới dữ liệu"
+            disabled={loading}
+          >
+            <RefreshCw size={16} />
+          </button>
+        </div>
+      </section>
+
+      {/* 2. 4 Primary KPI Cards */}
+      <section className="kpi-cards-grid" aria-label="Chỉ số hiệu quả chính">
+        <Link to="/host/property" className="kpi-card" id="kpiCardProperties" title="Bấm để xem danh sách nhà trọ">
+          <div className="kpi-card-top">
+            <span className="kpi-label">Nhà trọ</span>
+            <div className="kpi-icon-wrap teal">
+              <Home size={20} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-number" id="kpiPropertyCount">{properties.length}</span>
+          </div>
+          <div className="kpi-card-footer">
+            <span className="kpi-sub" id="kpiPropertySub">
+              {properties.length === 0 ? 'Chưa đăng ký' : 'Đang quản lý'}
+            </span>
+            <span className="kpi-arrow">→</span>
+          </div>
+        </Link>
+
+        <Link to="/host/rooms" className="kpi-card" id="kpiCardRooms" title="Bấm để xem tình trạng phòng">
+          <div className="kpi-card-top">
+            <span className="kpi-label">Phòng còn trống</span>
+            <div className="kpi-icon-wrap emerald">
+              <CheckCircle2 size={20} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-number text-emerald" id="kpiAvailableRoomCount">{availableRoomCount}</span>
+            <span className="kpi-derived-tag" id="kpiDerivedTag">AVAILABLE</span>
+          </div>
+          <div className="kpi-card-footer">
+            <span className="kpi-sub" id="kpiTotalRoomsSub">/ {totalRoomCount} tổng phòng</span>
+            <span className="kpi-arrow">→</span>
+          </div>
+        </Link>
+
+        <Link to="/host/viewings" className="kpi-card" id="kpiCardViewing" title="Bấm để xem lịch hẹn chờ xác nhận">
+          <div className="kpi-card-top">
+            <span className="kpi-label">Chờ xác nhận</span>
+            <div className="kpi-icon-wrap amber">
+              <Clock size={20} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-number text-amber" id="kpiPendingViewingCount">{pendingViewingCount}</span>
+          </div>
+          <div className="kpi-card-footer">
+            <span className="kpi-sub">Lịch xem phòng</span>
+            <span className="kpi-arrow">→</span>
+          </div>
+        </Link>
+
+        <Link to="/host/property" className="kpi-card" id="kpiCardPendingListing" title="Bấm để xem nhà trọ đang chờ duyệt">
+          <div className="kpi-card-top">
+            <span className="kpi-label">Chờ duyệt</span>
+            <div className="kpi-icon-wrap blue">
+              <FileText size={20} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-number text-blue" id="kpiPendingListingCount">{pendingRegistrationCount}</span>
+          </div>
+          <div className="kpi-card-footer">
+            <span className="kpi-sub">Hồ sơ nhà trọ</span>
+            <span className="kpi-arrow">→</span>
+          </div>
+        </Link>
+      </section>
+
+      {/* 3. Secondary Metrics Summary Strip */}
+      <section className="secondary-metrics-strip" aria-label="Tóm tắt bổ sung">
+        <div className="sec-metric-item">
+          <span className="sec-label">Tổng loại phòng:</span>
+          <strong className="sec-val" id="secRoomTypeCount">{roomTypeCount}</strong>
+        </div>
+        <span className="sec-divider">|</span>
+        <div className="sec-metric-item">
+          <span className="sec-label">Tổng phòng thực tế:</span>
+          <strong className="sec-val" id="secTotalRoomCount">{totalRoomCount}</strong>
+        </div>
+        <span className="sec-divider">|</span>
+        <div className="sec-metric-item">
+          <span className="sec-label">Tỷ lệ lấp đầy:</span>
+          <strong className="sec-val text-primary" id="secOccupancyRate">{occupancyRate}</strong>
+        </div>
+        <span className="sec-divider">|</span>
+        <div className="sec-metric-item">
+          <span className="sec-label">Tin đang hiển thị:</span>
+          <strong className="sec-val text-emerald" id="secActiveListingCount">{activeListingCount}</strong>
+        </div>
+      </section>
+
+      {/* 4. Quick Actions */}
+      <section className="quick-actions-bar" aria-label="Thao tác nhanh">
+        <span className="quick-actions-label">THAO TÁC NHANH:</span>
+        <div className="quick-actions-list">
+          {!hasProperty && canRegister && <Link to="/host/property/new" className="btn-quick-action" id="btnQuickAddProperty">
+            <Plus size={15} strokeWidth={2.5} />
+            <span id="quickAddPropertyText">Đăng ký nhà trọ</span>
+          </Link>}
+          <Link to="/host/rooms" className="btn-quick-action" id="btnQuickManageRooms">
+            <Layers size={15} />
+            <span>Quản lý phòng</span>
+          </Link>
+          <Link to="/host/rooms" className="btn-quick-action" id="btnQuickToggleAvailable">
+            <CheckCircle2 size={15} />
+            <span>Cập nhật phòng trống</span>
+          </Link>
+          <Link to="/host/viewings" className="btn-quick-action" id="btnQuickViewRequests">
+            <Calendar size={15} />
+            <span>Xem lịch hẹn</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* 5. Main Content Area */}
+      {!hasProperty ? (
+        canRegister ? <HostOnboarding /> : <section className="dashboard-section"><h3>Hồ sơ nhà trọ</h3><p>Kiểm tra trạng thái đăng ký và phản hồi xét duyệt tại Nhà trọ của tôi.</p><Link className="p-button" to="/host/property">Nhà trọ của tôi</Link></section>
+      ) : (
+        <div className="dashboard-split-grid">
+          <div className="split-col-left">
+            <section className="dashboard-section card-box" id="section-viewing-requests">
+              <div className="section-header-box">
+                <div>
+                  <h3 className="section-box-title">Yêu cầu xem phòng gần đây</h3>
+                  <p className="section-box-sub">Các yêu cầu xem phòng mới nhất từ người thuê.</p>
+                </div>
+                <Link to="/host/viewings" className="btn-link-action" id="btnViewAllBookings">
+                  Xem tất cả ({recentViewings.length}) →
+                </Link>
+              </div>
+
+              {recentViewings.length === 0 ? (
+                <div className="empty-feed-card">
+                  <div className="empty-feed-icon">
+                    <Calendar size={36} strokeWidth={1.8} color="#94a3b8" />
+                  </div>
+                  <h4 className="empty-feed-title">Chưa có yêu cầu xem phòng</h4>
+                  <p className="empty-feed-desc">Các yêu cầu xem phòng từ sinh viên và người thuê sẽ xuất hiện tại đây khi họ đặt lịch hẹn qua HL_RCS.</p>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="host-data-table" id="viewingRequestsTable" aria-label="Bảng yêu cầu xem phòng">
+                    <thead>
+                      <tr>
+                        <th scope="col">NGƯỜI YÊU CẦU</th>
+                        <th scope="col">THỜI GIAN XEM</th>
+                        <th scope="col">TRẠNG THÁI</th>
+                        <th scope="col" style={{ textAlign: 'right' }}>THAO TÁC</th>
+                      </tr>
+                    </thead>
+                    <tbody id="viewingRequestsTableBody">
+                      {recentViewings.map(v => (
+                        <tr key={v.bookingId}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{v.renterName}</div>
+                            <small style={{ color: '#64748b' }}>{v.propertyName} · {v.roomType}</small>
+                          </td>
+                          <td>{new Date(v.scheduledDate).toLocaleString('vi-VN')}</td>
+                          <td><StatusBadge>{bookingLabels[v.status] || v.status}</StatusBadge></td>
+                          <td style={{ textAlign: 'right' }}>
+                            <Link to="/host/viewings" className="btn-link-action">Chi tiết</Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section className="dashboard-section card-box" id="section-my-properties">
+              <div className="section-header-box">
+                <div>
+                  <h3 className="section-box-title">Nhà trọ của tôi</h3>
+                  <p className="section-box-sub">Các cơ sở lưu trú thuộc quyền quản lý trực tiếp của bạn.</p>
+                </div>
+                <Link to="/host/property" className="btn-link-action">Quản lý nhà trọ →</Link>
+              </div>
+              <div className="my-properties-list" id="myPropertiesList">
+                {properties.map(property => (
+                  <div className="my-prop-row" key={property.propertyId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
+                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
+                      <div style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <StatusBadge>{property.status === 'ACTIVE' ? 'Đang hoạt động' : property.status || 'Chưa cập nhật trạng thái'}</StatusBadge>
+                      <Link to={`/host/property?id=${property.propertyId}`} className="btn-quick-action">Chi tiết</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <div className="split-col-right">
+            <section className="dashboard-section card-box" id="section-room-overview">
+              <div className="section-header-box">
+                <div>
+                  <h3 className="section-box-title">Tình trạng phòng</h3>
+                  <p className="section-box-sub">Tổng quan tình trạng phòng và tỷ lệ lấp đầy.</p>
+                </div>
+              </div>
+              <div className="dash-room-summary-card" id="dashRoomSummaryCard">
+                <div className="dash-summary-stats-grid">
+                  <div className="dash-summary-stat-item">
+                    <span className="dash-summary-stat-label">Tổng số phòng</span>
+                    <strong className="dash-summary-stat-val" id="chipTotalCount">{totalRoomCount}</strong>
+                  </div>
+                  <div className="dash-summary-stat-item avail">
+                    <span className="dash-summary-stat-label">Còn trống</span>
+                    <strong className="dash-summary-stat-val" id="chipAvailableCount">{availableRoomCount}</strong>
+                  </div>
+                  <div className="dash-summary-stat-item">
+                    <span className="dash-summary-stat-label">Đã có người thuê</span>
+                    <strong className="dash-summary-stat-val" id="chipOccupiedCount">{Math.max(0, totalRoomCount - availableRoomCount)}</strong>
+                  </div>
+                  <div className="dash-summary-stat-item stale">
+                    <span className="dash-summary-stat-label">Chờ xác nhận</span>
+                    <strong className="dash-summary-stat-val" id="chipStaleCount">{pendingViewingCount}</strong>
+                  </div>
+                </div>
+                <div className="dash-occ-summary-box">
+                  <div className="dash-occ-summary-head">
+                    <span>Tỷ lệ lấp đầy</span>
+                    <strong className="text-primary" id="dashOccupancyRate">{occupancyRate}</strong>
+                  </div>
+                  <div className="dash-occ-summary-bar" id="dashOccupancyBar">
+                    <div className="dash-occ-summary-fill" id="dashOccupancyFill" style={{ width: occupancyRate }} />
+                  </div>
+                </div>
+                <Link to="/host/rooms" className="btn-dash-rooms-cta" id="btnGoToRoomsList">
+                  Xem danh sách phòng →
+                </Link>
+              </div>
+            </section>
+
+            <section className="dashboard-section card-box staff-assistance-card">
+              <div className="staff-card-header">
+                <div className="staff-icon-wrap">
+                  <MessagesSquare size={22} />
+                </div>
+                <div>
+                  <h4 className="staff-card-title">Cần hỗ trợ vận hành?</h4>
+                  <p className="staff-card-sub">Đội ngũ hỗ trợ HL_RCS sẵn sàng đồng hành cùng bạn.</p>
+                </div>
+              </div>
+              <p className="staff-card-desc">
+                Bạn có thể gửi yêu cầu Staff hỗ trợ kiểm định phòng, cập nhật thông tin biểu phí điện nước hoặc tư vấn tối ưu tỷ lệ lấp đầy.
+              </p>
+              <Link to="/host/support" className="btn-staff-request" id="btnOpenStaffModal">
+                Yêu cầu hỗ trợ
+              </Link>
+            </section>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function HostDashboardPage() {
+  const { user } = useAuth();
+  const [state, setState] = useState({ loading: true, data: null, error: '' });
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setState({ loading: true, data: null, error: '' });
+    hostApi.dashboard(controller.signal).then(data => {
+      if (!controller.signal.aborted) setState({ loading: false, data, error: '' });
+    }).catch(error => {
+      if (!controller.signal.aborted) setState({ loading: false, data: null, error: error.message });
+    });
+    return () => controller.abort();
+  }, [user?.userId, revision]);
+
+  const handleRefresh = () => setRevision(v => v + 1);
+
+  if (state.loading) {
+    return (
+      <div className="host-dashboard-page">
+        <StateView kind="loading" />
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <div className="host-dashboard-page">
+        <StateView kind="error" message={state.error}>
+          <button className="p-button primary" onClick={handleRefresh}>
+            Thử lại
+          </button>
+        </StateView>
+      </div>
+    );
+  }
+
+  return (
+    <div className="host-dashboard-page">
+      <HostDashboardContent data={state.data} onRefresh={handleRefresh} loading={state.loading} />
+    </div>
+  );
+}

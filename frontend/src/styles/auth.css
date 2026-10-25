@@ -1,0 +1,829 @@
+/* ==========================================================================
+   HL_RCS | AUTHENTICATION 3D PAGE FLIP & SHOWCASE STYLES (auth.css)
+   ========================================================================== */
+
+:root {
+  --auth-primary: #0d9488;
+  --auth-primary-hover: #0f766e;
+  --auth-primary-light: #f0fdfa;
+  --auth-teal-glow: #5eead4;
+}
+
+/* =========================================
+   1. KHUNG LẬT TRANG 3D (PAGE FLIP ANIMATION)
+   ========================================= */
+.flip-viewport {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  perspective: 2200px;
+  background-color: var(--slate-900, #0f172a);
+}
+
+.auth-flip-box {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.45, 0.05, 0.25, 1);
+  will-change: transform;
+}
+
+/* Trạng thái lật sang trang đăng ký */
+.auth-flip-box.is-flipped {
+  transform: rotateY(-180deg);
+}
+
+/* 2 MẶT CỦA KHUNG LẬT TRANG */
+.flip-face {
+  width: 100%;
+  min-height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background-color: #f8fafc;
+  overflow-y: auto;
+}
+
+/* Mặt 1: Đăng nhập */
+.flip-login-face {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+/* Mặt 2: Đăng ký (Góc 180deg để khi lật sẽ quay về mặt chính diện) */
+.flip-register-face {
+  z-index: 1;
+  transform: rotateY(180deg);
+}
+
+/* BỐ CỤC 2 CỘT */
+.auth-wrapper {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.08fr) minmax(400px, 0.92fr);
+  min-height: 100vh;
+}
+
+.register-layout {
+  grid-template-columns: minmax(400px, 0.92fr) minmax(380px, 1.08fr);
+}
+
+/* =========================================
+   2. CỘT SHOWCASE HÌNH ẢNH & THÔNG TIN
+   ========================================= */
+.showcase-side {
+  position: relative;
+  color: #ffffff;
+  padding: 44px clamp(28px, 4.5vw, 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+/* Nền ảnh mặt đăng nhập */
+.login-showcase-bg {
+  background-image: url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=85');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* Nền ảnh mặt đăng ký */
+.register-showcase-bg {
+  background-image: url('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=85');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* Lớp phủ gradient sâu cho hình nền */
+.page-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(6, 26, 23, 0.88) 0%,
+    rgba(9, 44, 38, 0.80) 45%,
+    rgba(5, 18, 16, 0.94) 100%
+  );
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 28px;
+}
+
+/* Header showcase */
+.showcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--auth-teal-glow);
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.brand-tagline {
+  font-size: 11.5px;
+  color: #99f6e4;
+  margin-top: 1px;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(13, 148, 136, 0.22);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  font-size: 12px;
+  color: var(--auth-teal-glow);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--auth-teal-glow);
+}
+
+/* Hero text */
+.hero-block {
+  margin: 16px 0;
+}
+
+.inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  font-size: 12px;
+  color: #a7f3d0;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  font-size: clamp(24px, 2.4vw, 33px);
+  font-weight: 800;
+  line-height: 1.28;
+  color: #ffffff;
+  margin: 0 0 14px;
+  letter-spacing: -0.02em;
+  max-width: 560px;
+}
+
+.hero-desc {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  margin: 0;
+  max-width: 520px;
+}
+
+/* Thẻ kính mờ (Glass card) */
+.glass-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 520px;
+  margin: 4px 0;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(94, 234, 212, 0.4);
+  transform: translateY(-2px);
+}
+
+.glass-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.glass-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--auth-teal-glow);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.glass-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fef08a;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.star-icon {
+  color: #facc15;
+}
+
+.glass-badge-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.22);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+.glass-room-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.glass-room-desc {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Thống kê 3 ô */
+.glass-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-box:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(94, 234, 212, 0.3);
+}
+
+.stat-number {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--auth-teal-glow);
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 10.5px;
+  color: #cbd5e1;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+/* Footer showcase */
+.showcase-footer {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.showcase-footer p {
+  margin: 0;
+}
+
+/* =========================================
+   3. CỘT FORM ĐĂNG NHẬP / ĐĂNG KÝ
+   ========================================= */
+.form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  min-width: 0;
+  background-color: #f8fafc;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 30px 28px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04);
+}
+
+.mobile-brand {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mobile-brand-name {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.form-header {
+  margin-bottom: 18px;
+}
+
+.form-header h2 {
+  font-size: 25px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.form-header p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.form-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  color: #9f1239;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.form-alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Fields */
+.form-group {
+  margin-bottom: 13px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 5px;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  height: 42px;
+  padding: 8px 14px 8px 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-input.has-action {
+  padding-right: 42px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.form-input.invalid {
+  border-color: #e11d48;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #475569;
+}
+
+.error-message {
+  font-size: 11px;
+  color: #e11d48;
+  margin-top: 3px;
+  min-height: 14px;
+  line-height: 1.3;
+}
+
+/* Options */
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 16px;
+  font-size: 12.5px;
+}
+
+.custom-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12.5px;
+}
+
+.custom-checkbox input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #0d9488;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.forgot-link {
+  color: #0d9488;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 12.5px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  color: #0f766e;
+}
+
+/* Buttons */
+.primary-button {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0d9488;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #0f766e;
+  box-shadow: 0 4px 8px rgba(13, 148, 136, 0.3);
+}
+
+.primary-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Prompts & Switchers */
+.signup-prompt {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.flip-trigger-btn {
+  color: #0d9488;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.flip-trigger-btn:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+.security-badge {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.terms-text {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.terms-text button,
+.terms-text a {
+  color: #0d9488;
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.terms-text button:hover,
+.terms-text a:hover {
+  text-decoration: underline;
+}
+
+.register-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.register-consent input[type="checkbox"] {
+  display: block;
+  appearance: auto;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 20px;
+  margin: 3px 0 0;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
+.register-consent input:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 3px;
+}
+
+.register-consent .terms-text {
+  min-width: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.register-consent .terms-text button {
+  font-size: inherit;
+}
+
+/* =========================================
+   4. TÀI KHOẢN KIỂM THỬ (DEMO LOGIN)
+   ========================================= */
+.demo-accounts {
+  margin-top: 18px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+}
+
+.demo-accounts summary {
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.demo-grid button {
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  min-width: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.demo-grid button:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+
+.demo-grid strong {
+  display: block;
+  font-size: 11.5px;
+  color: #0f172a;
+}
+
+.demo-grid span {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+  overflow-wrap: anywhere;
+  margin-top: 2px;
+}
+
+/* =========================================
+   5. RESPONSIVE
+   ========================================= */
+@media (max-width: 960px) {
+  .auth-wrapper,
+  .register-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .register-layout .form-side {
+    order: 1;
+  }
+
+  .register-layout .showcase-side {
+    order: 2;
+  }
+
+  .glass-cards-container {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .showcase-side {
+    display: none !important;
+  }
+
+  .mobile-brand {
+    display: flex;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .form-side {
+    padding: 16px;
+    background: #ffffff;
+  }
+
+  .form-input {
+    font-size: 16px; /* Avoid iOS zoom */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-flip-box {
+    transition: none !important;
+  }
+  .pulse-dot {
+    animation: none !important;
+  }
+}

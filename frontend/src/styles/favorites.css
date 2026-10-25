@@ -1,0 +1,1373 @@
+/* ==========================================================================
+   FAVORITES / NHÀ TRỌ ĐÃ LƯU - HL_RCS (HOÀ LẠC RENTAL CONNECTION SYSTEM)
+   Kế thừa 100% Design System: Teal (#0D9488), Slate neutral scale, Plus Jakarta Sans
+   ========================================================================== */
+
+/* Breadcrumb Bar */
+.fav-breadcrumb-bar {
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 12px 0;
+}
+
+.fav-breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fav-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  font-size: 13.5px;
+}
+
+.fav-breadcrumb-list a {
+  color: var(--slate-600);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.fav-breadcrumb-list a:hover {
+  color: var(--primary);
+}
+
+.fav-breadcrumb-sep {
+  color: var(--slate-400);
+  font-size: 12px;
+}
+
+.fav-breadcrumb-active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.fav-breadcrumb-meta {
+  font-size: 12.5px;
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Page Header */
+.fav-header-section {
+  background: linear-gradient(180deg, var(--slate-50) 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 36px 0 28px;
+}
+
+.fav-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.fav-title-group {
+  max-width: 650px;
+}
+
+.fav-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--primary-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 10px;
+  border: 1px solid var(--primary-border);
+}
+
+.fav-eyebrow svg {
+  color: var(--rose);
+  fill: var(--rose);
+}
+
+.fav-main-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--slate-900);
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+
+.fav-subtitle {
+  font-size: 15px;
+  color: var(--slate-600);
+  line-height: 1.55;
+}
+
+/* Quick Action Toolbar */
+.fav-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.fav-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fav-counter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-800);
+  background: var(--slate-100);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+}
+
+.fav-counter-chip strong {
+  color: var(--primary);
+  font-size: 15px;
+}
+
+.fav-counter-chip svg {
+  color: var(--rose);
+  fill: var(--rose);
+}
+
+.fav-toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Sort Select */
+.fav-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fav-sort-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-600);
+  white-space: nowrap;
+}
+
+.fav-sort-select {
+  padding: 7px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--slate-800);
+  background: #ffffff;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.fav-sort-select:hover,
+.fav-sort-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+/* Buttons in Toolbar */
+.btn-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.btn-toolbar-danger {
+  background: #ffffff;
+  border: 1px solid #fecdd3;
+  color: var(--rose);
+}
+
+.btn-toolbar-danger:hover {
+  background: var(--rose-light);
+  border-color: var(--rose);
+}
+
+.btn-toolbar-primary {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #ffffff;
+}
+
+.btn-toolbar-primary:hover {
+  background: var(--primary-hover);
+}
+
+/* Main Content Area */
+.fav-content-section {
+  padding: 40px 0 70px;
+  background: #ffffff;
+  min-height: 480px;
+}
+
+/* Grid danh sách card */
+.fav-rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  transition: opacity 0.25s ease;
+}
+
+/* Card Animation khi xóa */
+.room-card.fav-card {
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.22s ease,
+              border-color 0.22s ease;
+}
+
+.room-card.fav-card.card-removing {
+  opacity: 0 !important;
+  transform: scale(0.92) translateY(14px) !important;
+  pointer-events: none;
+}
+
+/* Tooltip trên nút Heart */
+.btn-card-wishlist.active {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff !important;
+  color: var(--rose) !important;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.25);
+  display: grid;
+  place-items: center;
+  border: none;
+  cursor: pointer;
+  z-index: 4;
+  transition: var(--transition);
+}
+
+.btn-card-wishlist.active svg {
+  fill: var(--rose);
+}
+
+.btn-card-wishlist.active:hover {
+  transform: scale(1.15);
+  background: var(--rose-light) !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+/* Out of stock badge on card */
+.room-badge-avail.out {
+  background: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+/* EMPTY STATE */
+.fav-empty-state {
+  display: none;
+  text-align: center;
+  padding: 64px 24px;
+  background: var(--slate-50);
+  border: 2px dashed var(--slate-300);
+  border-radius: var(--radius-xl);
+  max-width: 680px;
+  margin: 20px auto 0;
+  animation: fadeInEmpty 0.35s ease-out;
+}
+
+.fav-empty-state.show {
+  display: block;
+}
+
+@keyframes fadeInEmpty {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-icon-wrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--rose-light);
+  border: 2px solid #fecdd3;
+  color: var(--rose);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 22px;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.12);
+}
+
+.empty-icon-wrap svg {
+  animation: heartPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes heartPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.empty-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--slate-900);
+  margin-bottom: 10px;
+}
+
+.empty-desc {
+  font-size: 15px;
+  color: var(--slate-600);
+  max-width: 480px;
+  margin: 0 auto 28px;
+  line-height: 1.6;
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-empty-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14.5px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+  transition: var(--transition);
+}
+
+.btn-empty-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.4);
+}
+
+.btn-empty-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: #ffffff;
+  color: var(--slate-700);
+  font-weight: 600;
+  font-size: 14.5px;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.btn-empty-secondary:hover {
+  background: var(--slate-100);
+  border-color: var(--slate-400);
+  color: var(--slate-900);
+}
+
+/* Quick Tips Banner */
+.fav-tips-card {
+  margin-top: 48px;
+  padding: 22px 28px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.fav-tips-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.fav-tips-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.fav-tips-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-bottom: 4px;
+}
+
+.fav-tips-desc {
+  font-size: 13.5px;
+  color: var(--slate-600);
+  line-height: 1.5;
+}
+
+/* Skeleton Loading */
+.fav-skeleton-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--slate-200);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.fav-skeleton-thumb {
+  height: 220px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+}
+
+.fav-skeleton-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fav-skeleton-line {
+  height: 14px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: skeletonShimmer 1.5s infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Confirmation Modal (Xóa tất cả) */
+.fav-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease;
+}
+
+.fav-modal-backdrop.open {
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fav-modal-box {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  max-width: 440px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: var(--shadow-hover);
+  text-align: center;
+  animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fav-modal-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--rose-light);
+  color: var(--rose);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+}
+
+.fav-modal-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--slate-900);
+  margin-bottom: 8px;
+}
+
+.fav-modal-desc {
+  font-size: 14px;
+  color: var(--slate-600);
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+
+.fav-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-modal-cancel {
+  flex: 1;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--slate-100);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  color: var(--slate-700);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-modal-cancel:hover {
+  background: var(--slate-200);
+}
+
+.btn-modal-confirm {
+  flex: 1;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  background: var(--rose);
+  border: 1px solid var(--rose);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  transition: var(--transition);
+}
+
+.btn-modal-confirm:hover {
+  background: #dc2626;
+}
+
+/* Toast Notifications with Undo */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.search-toast {
+  pointer-events: auto;
+  min-width: 320px;
+  max-width: 440px;
+  background: var(--slate-900);
+  color: #ffffff;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: toastSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 4px solid var(--primary);
+}
+
+.search-toast.success {
+  border-left-color: var(--emerald);
+}
+
+.search-toast.info {
+  border-left-color: var(--primary);
+}
+
+.search-toast.rose {
+  border-left-color: var(--rose);
+}
+
+.toast-msg-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-btn-undo {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.toast-btn-undo:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+@keyframes toastSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+@media (max-width: 1024px) {
+  .fav-rooms-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .fav-main-title {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 768px) {
+  .fav-header-section {
+    padding: 24px 0 20px;
+  }
+  .fav-header-top {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .fav-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px;
+  }
+  .fav-toolbar-left,
+  .fav-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .fav-sort-select {
+    flex: 1;
+  }
+  .fav-rooms-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .fav-tips-card {
+    padding: 18px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+  .search-toast {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   7. PHẦN SO SÁNH PHÒNG TRỌ (PROPERTY COMPARISON SYSTEM)
+   ========================================================================== */
+
+/* Nút chọn so sánh trên thẻ phòng trọ */
+.room-card-compare-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--slate-50);
+  border-top: 1px solid var(--slate-100);
+  border-bottom: 1px solid var(--slate-100);
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+}
+
+.compare-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+
+.compare-check-label input[type="checkbox"] {
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--slate-400);
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: var(--transition);
+}
+
+.compare-check-label input[type="checkbox"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.compare-check-label input[type="checkbox"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 5px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.btn-card-quick-compare {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.btn-card-quick-compare:hover {
+  background: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* Nút So sánh trên Toolbar */
+.btn-toolbar-compare {
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+}
+
+.btn-toolbar-compare:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn-toolbar-compare.has-selected {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+}
+
+/* Thanh Floating so sánh cố định dưới đáy màn hình */
+.compare-floating-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(140%);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 45px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  z-index: 1050;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 480px;
+  max-width: 90%;
+}
+
+.compare-floating-bar.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.compare-floating-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.compare-avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-slot {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compare-slot.filled {
+  border-style: solid;
+  border-color: var(--primary-border);
+  overflow: hidden;
+}
+
+.compare-slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compare-slot-remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--rose);
+  color: #ffffff;
+  font-size: 11px;
+  border: 1px solid #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.compare-slot-remove:hover {
+  transform: scale(1.15);
+}
+
+.compare-status-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-status-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.compare-status-sub {
+  font-size: 12px;
+  color: var(--slate-400);
+}
+
+.compare-floating-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-floating-compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+}
+
+.btn-floating-compare:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-floating-compare:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-floating-clear {
+  background: none;
+  border: none;
+  color: var(--slate-300);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.btn-floating-clear:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal bảng so sánh chi tiết */
+.compare-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: modalFadeIn 0.25s ease;
+}
+
+.compare-modal-backdrop.open {
+  display: flex;
+}
+
+.compare-modal-window {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  max-width: 1240px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: modalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.compare-modal-header {
+  padding: 20px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--slate-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.compare-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compare-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+}
+
+.compare-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--slate-900);
+}
+
+.compare-modal-sub {
+  font-size: 13.5px;
+  color: var(--slate-600);
+}
+
+.compare-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.toggle-diff-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  cursor: pointer;
+  background: var(--slate-100);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  user-select: none;
+  transition: var(--transition);
+}
+
+.toggle-diff-label:hover {
+  background: var(--slate-200);
+}
+
+.toggle-diff-label input {
+  accent-color: var(--primary);
+}
+
+.btn-close-compare-modal {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--slate-200);
+  background: var(--slate-50);
+  color: var(--slate-600);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-close-compare-modal:hover {
+  background: var(--slate-200);
+  color: var(--slate-900);
+}
+
+/* Khung cuộn bảng so sánh */
+.compare-table-wrapper {
+  overflow: auto;
+  flex: 1;
+  padding: 0;
+  background: #ffffff;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* Header hàng phòng trọ */
+.compare-table thead th {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding: 20px;
+  border-bottom: 2px solid var(--slate-200);
+  vertical-align: top;
+  z-index: 10;
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.compare-table th.criteria-col {
+  width: 220px;
+  min-width: 200px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--slate-50);
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  border-right: 1px solid var(--slate-200);
+}
+
+.compare-room-header-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  min-width: 260px;
+}
+
+.compare-room-header-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.compare-room-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--slate-900);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.compare-room-header-title a,
+.compare-room-header-title a:link,
+.compare-room-header-title a:visited {
+  color: var(--slate-900) !important;
+  text-decoration: none !important;
+  transition: var(--transition);
+}
+
+.compare-room-header-title a:hover,
+.compare-room-header-title a:focus {
+  color: var(--primary) !important;
+  text-decoration: underline !important;
+}
+
+.compare-room-header-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.btn-remove-from-compare {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #ffffff;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-remove-from-compare:hover {
+  background: var(--rose);
+  transform: scale(1.1);
+}
+
+/* Các hàng tiêu chí */
+.compare-category-row td {
+  background: var(--slate-100);
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--slate-800);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid var(--slate-300);
+  border-bottom: 1px solid var(--slate-300);
+}
+
+.compare-row {
+  border-bottom: 1px solid var(--slate-200);
+  transition: background 0.15s ease;
+}
+
+.compare-row:hover {
+  background: #f8fafc;
+}
+
+.compare-row td {
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--slate-700);
+  vertical-align: middle;
+}
+
+.compare-row td.criteria-label {
+  font-weight: 600;
+  color: var(--slate-900);
+  background: var(--slate-50);
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right: 1px solid var(--slate-200);
+}
+
+/* Badge giá tốt nhất / khoảng cách gần nhất */
+.highlight-best {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--emerald-light);
+  color: var(--emerald);
+  border: 1px solid #a7f3d0;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+/* Checklist icon Có / Không */
+.check-yes {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--emerald);
+  font-weight: 700;
+}
+
+.check-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--slate-400);
+  font-weight: 500;
+}
+
+/* Action Footer trong bảng so sánh */
+.compare-action-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px !important;
+}
+
+.btn-compare-detail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.btn-compare-detail:hover {
+  background: var(--primary-hover);
+}
+
+.btn-compare-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--slate-100);
+  color: var(--slate-700);
+  border: 1px solid var(--slate-200);
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.btn-compare-call:hover {
+  background: var(--slate-200);
+  color: var(--slate-900);
+}
+
+/* Ẩn các hàng giống nhau khi bật toggle-diff */
+.compare-table.hide-identical .compare-row.is-identical {
+  display: none;
+}
+
+/* Responsive cho phần so sánh */
+@media (max-width: 768px) {
+  .compare-floating-bar {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    transform: translateY(140%);
+    min-width: unset;
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .compare-floating-bar.show {
+    transform: translateY(0);
+  }
+  .compare-floating-left,
+  .compare-floating-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .compare-modal-window {
+    max-height: 94vh;
+    border-radius: var(--radius-lg);
+  }
+  .compare-table th.criteria-col,
+  .compare-row td.criteria-label {
+    width: 140px;
+    min-width: 130px;
+    font-size: 12.5px;
+    padding: 10px;
+  }
+}

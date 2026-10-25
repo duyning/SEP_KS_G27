@@ -1,5 +1,7 @@
 HELP.md
 target/
+data/
+logs/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -31,3 +33,11 @@ build/
 
 ### VS Code ###
 .vscode/
+config/mysql-local.properties
+sql/setup-local-connection.sql
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*
+!frontend/.env.example

@@ -1,0 +1,27 @@
+[
+  {
+    "source": "Code/html/login.html",
+    "preserved": "html/login.html",
+    "sha256": "24366C1A652541AD3126B31DA53D46FBD93DC24A9842E3068544FB10BB10DE59"
+  },
+  {
+    "source": "Code/html/register.html",
+    "preserved": "html/register.html",
+    "sha256": "DEB06843FC6D377ED2D34F52ADC33A6A2DDFBA6DCA63140653987BE9F8C07F5F"
+  },
+  {
+    "source": "Code/css/styles.css",
+    "preserved": "css/styles.css",
+    "sha256": "9CD5A97381420D8DEE5D2038981D27E0D0849EDBCED44F72A1150AAB925C05CD"
+  },
+  {
+    "source": "Code/js/app.js",
+    "preserved": "js/app.js",
+    "sha256": "94015B1D6FFF4B721D80EA088E968F84C7C961AE764C8296AD88D192529BB6B7"
+  },
+  {
+    "source": "Code/js/register.js",
+    "preserved": "js/register.js",
+    "sha256": "0F64DBFC1B944D986EBA035790D498EB8C4B0612CA22068CE3DF36A1CE0D2CBE"
+  }
+]
