@@ -1,0 +1,11 @@
+/* Bindings and small-screen fixes; desktop geometry comes from the original CSS. */
+.prototype-profile button,.prototype-profile input { font-family:inherit; }
+.prototype-profile #sidebarBecomeHostItem .profile-nav-btn { justify-content:flex-start;text-align:left; }
+.prototype-profile .profile-nav-item-left > svg { flex-shrink:0; }
+.prototype-profile .profile-api-error { padding:14px 18px;background:#fef2f2;border:1px solid #fecdd3;color:#be123c;border-radius:10px;margin-bottom:18px; }
+.prototype-profile button:disabled { opacity:.6;cursor:wait; }
+.prototype-profile .profile-nav-btn:focus-visible,.prototype-profile input:focus-visible { outline:3px solid #99f6e4;outline-offset:2px; }
+@media(max-width:768px){
+ .prototype-profile .profile-layout-grid,.prototype-profile .profile-content-area,.prototype-profile .profile-sidebar { min-width:0; }
+ .prototype-profile .profile-nav-menu { max-width:100%; }
+}

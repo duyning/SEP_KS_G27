@@ -1,0 +1,16 @@
+.prototype-become-host button,.prototype-become-host input,.prototype-become-host select,.prototype-become-host textarea { font-family:inherit; }
+.prototype-become-host button:disabled { opacity:.6;cursor:not-allowed; }
+.prototype-become-host .bh-account-grid,.prototype-become-host .bh-form-group { min-width:0; }
+.prototype-become-host .bh-acc-val { overflow-wrap:anywhere; }
+.bh-confirm-modal { max-width:520px;font-family:'Plus Jakarta Sans',sans-serif; }
+.bh-confirm-modal > header h2 { font-size:19px; }
+.bh-confirm-modal p { color:#475569;font-size:14.5px;line-height:1.55; }
+.bh-confirm-modal aside { background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin:16px 0 20px;font-size:13px;color:#475569;line-height:1.5; }
+.bh-confirm-modal footer { display:flex;justify-content:flex-end;gap:12px; }
+@media(max-width:560px){.bh-confirm-modal footer{flex-wrap:wrap;}}
+.prototype-become-host #becomeHostForm { display:block;gap:normal; }
+
+.prototype-become-host .bh-review-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px 18px;margin:0 0 24px;font-size:13px;color:#9a3412;}
+.prototype-become-host .bh-review-note p{white-space:pre-wrap;line-height:1.8;margin-top:8px;}
+.prototype-become-host [data-requested="true"]{border-color:#f59e0b;background:#fffbeb;}
+.prototype-become-host .bh-form-group:has([data-requested="true"]) .bh-form-label:after,.prototype-become-host .bh-acc-field:has([data-requested="true"]) .bh-acc-label:after{content:'Cần bổ sung';display:inline-block;font-size:10px;color:#b45309;background:#fef3c7;padding:3px 7px;border-radius:5px;margin-left:8px;}

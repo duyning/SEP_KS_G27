@@ -33,6 +33,7 @@ class HostDashboardTests {
     @Autowired RoomTypeImageRepository typeImages;
     @Autowired WishlistRepository wishlists;
     @Autowired RoomRepository physicalRooms;
+    @Autowired HostApplicationRepository hostApplications;
     private final HttpClient client = HttpClient.newHttpClient();
 
     private HttpResponse<String> propertyEdit(String token,int id) throws Exception {
@@ -839,5 +840,97 @@ class HostDashboardTests {
         assertEquals(403, dashboard(token(account(UserRole.USER)), "").statusCode());
         assertEquals(403, dashboard(token(account(UserRole.STAFF)), "").statusCode());
         assertEquals(200, dashboard(token(account(UserRole.ADMIN)), "").statusCode());
+    }
+
+    private HttpResponse<String> profileUpdate(String token, Map<String,Object> fields) throws Exception {
+        var request = HttpRequest.newBuilder(uri("/api/auth/profile")).header("Content-Type", "application/json");
+        if (token != null) request.header("Authorization", "Bearer " + token);
+        return client.send(request.PUT(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(fields))).build(), HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void profileFieldsAndAvatarPersistOnlyForAuthenticatedUser() throws Exception {
+        var owner = account(UserRole.USER);var other = account(UserRole.USER);var jwt = token(owner);
+        String image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1WQAAAAASUVORK5CYII=";
+        var response = profileUpdate(jwt, Map.of("fullName","Updated profile","phoneNumber","0981234098","organization"," FPT Campus ","preferredArea"," Tan Xa ","avatar",image));
+        assertEquals(200,response.statusCode(),response.body());
+        var body=json.readTree(response.body()).path("data");
+        assertEquals("FPT Campus",body.path("organization").asString());
+        assertEquals("Tan Xa",body.path("preferredArea").asString());
+        assertEquals(image,body.path("avatar").asString());
+        var reloaded=users.findById(owner.getUserId()).orElseThrow();
+        assertEquals("FPT Campus",reloaded.getOrganization());assertEquals(image,reloaded.getAvatar());
+        assertNull(users.findById(other.getUserId()).orElseThrow().getOrganization());
+        var me=client.send(HttpRequest.newBuilder(uri("/api/auth/me")).header("Authorization","Bearer "+jwt).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals("Tan Xa",json.readTree(me.body()).path("data").path("preferredArea").asString());
+        assertEquals(200,profileUpdate(jwt,Map.of("fullName","Legacy client update")).statusCode());
+        assertEquals(image,users.findById(owner.getUserId()).orElseThrow().getAvatar());
+    }
+    @Test void profileRejectsUnsafeAvatarAndInvalidFieldsWithoutSaving() throws Exception {
+        var owner=account(UserRole.USER);var jwt=token(owner);
+        assertEquals(400,profileUpdate(jwt,Map.of("fullName","Changed","phoneNumber","not-a-phone")).statusCode());
+        assertEquals(400,profileUpdate(jwt,Map.of("fullName","Changed","organization","a".repeat(256))).statusCode());
+        assertEquals(400,profileUpdate(jwt,Map.of("fullName","Changed","avatar","data:image/svg+xml;base64,PHN2Zz4=" )).statusCode());
+        assertEquals(400,profileUpdate(jwt,Map.of("fullName","Changed","avatar","data:image/png;base64,bm90LWFuLWltYWdl" )).statusCode());
+        assertEquals(owner.getFullName(),users.findById(owner.getUserId()).orElseThrow().getFullName());
+        assertEquals(401,profileUpdate(null,Map.of("fullName","Anonymous update")).statusCode());
+    }
+
+    private HttpResponse<String> hostApplicationPost(String token,String path,Map<String,Object> fields) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host-applications"+path)).header("Content-Type","application/json");
+        if(token!=null)request.header("Authorization","Bearer "+token);
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(fields))).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    private HttpResponse<String> hostApplicationGet(String token,String path) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host-applications"+path));if(token!=null)request.header("Authorization","Bearer "+token);
+        return client.send(request.GET().build(),HttpResponse.BodyHandlers.ofString());
+    }
+    private User applicant(){var user=account(UserRole.USER);user.setPhoneNumber(String.format("09%08d",Math.floorMod(System.nanoTime(),100000000)));return users.save(user);}
+    private Map<String,Object> hostApplicationFields(){return new java.util.HashMap<>(Map.of("targetCommune","Tân Xã","expectedScale","5 - 15 phòng","introduction","Tôi muốn quản lý nhà trọ và cập nhật thông tin phòng cho sinh viên tại Hòa Lạc.","agreementAccepted",true));}
+    @Test void hostApplicationIsOwnedPersistedValidatedAndNeverSelfGrantsRole() throws Exception {
+        var owner=applicant();var jwt=token(owner);var other=token(applicant());
+        assertEquals(401,hostApplicationGet(null,"/current").statusCode());
+        assertTrue(json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").isNull());
+        var invalid=hostApplicationFields();invalid.put("agreementAccepted",false);assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        invalid=hostApplicationFields();invalid.put("targetCommune","Invalid area");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        var response=hostApplicationPost(jwt,"",hostApplicationFields());assertEquals(200,response.statusCode(),response.body());
+        assertEquals("PENDING_REVIEW",json.readTree(response.body()).path("data").path("status").asString());
+        assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());
+        assertEquals(409,hostApplicationPost(jwt,"",hostApplicationFields()).statusCode());
+        assertEquals(403,hostApplicationGet(jwt,"").statusCode());
+        assertTrue(json.readTree(hostApplicationGet(other,"/current?userId="+owner.getUserId()).body()).path("data").isNull());
+        assertEquals("Tân Xã",hostApplications.findByUser_UserId(owner.getUserId()).orElseThrow().getTargetCommune());
+        int id=json.readTree(response.body()).path("data").path("id").asInt();var staff=token(account(UserRole.STAFF));
+        assertEquals(403,hostApplicationGet(other,"/"+id).statusCode());
+        var detail=json.readTree(hostApplicationGet(staff,"/"+id).body()).path("data");assertEquals(owner.getUserId(),detail.path("application").path("userId").asInt());
+        assertEquals(hostApplicationFields().get("introduction"),detail.path("application").path("introduction").asString());
+        var queue=json.readTree(hostApplicationGet(staff,"?search=HREG-"+id+"&size=1&sort=NAME_ASC").body()).path("data");
+        assertEquals(1,queue.path("totalElements").asInt());assertEquals(id,queue.path("content").get(0).path("id").asInt());assertTrue(queue.path("stats").path("pending").asLong()>=1);
+        assertEquals(400,hostApplicationGet(staff,"?status=INVALID").statusCode());
+
+    }
+    @Test void hostApplicationSupplementAndRejectionEnforceVersionAndResubmissionRules() throws Exception {
+        var owner=applicant();var jwt=token(owner);var reviewer=token(account(UserRole.STAFF));
+        var first=json.readTree(hostApplicationPost(jwt,"",hostApplicationFields()).body()).path("data");int id=first.path("id").asInt();long version=first.path("version").asLong();
+        assertEquals(403,hostApplicationPost(jwt,"/"+id+"/review",Map.of("decision","APPROVED","version",version)).statusCode());
+        assertEquals(400,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","version",version)).statusCode());
+        assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","note","Vui lòng mô tả rõ kinh nghiệm quản lý.","version",version,"requestedFields",java.util.List.of("introduction"))).statusCode());
+        var fields=hostApplicationFields();fields.put("version",version);assertEquals(409,hostApplicationPost(jwt,"",fields).statusCode());
+        var current=json.readTree(hostApplicationGet(jwt,"/current").body()).path("data");fields.put("version",current.path("version").asLong());
+        assertEquals("introduction",current.path("requestedFields").get(0).asString());
+        var resubmitted=hostApplicationPost(jwt,"",fields);assertEquals(200,resubmitted.statusCode(),resubmitted.body());
+        var pending=json.readTree(resubmitted.body()).path("data");assertEquals(id,pending.path("id").asInt());
+        assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","REJECTED","note","Thông tin không hợp lệ.","allowResubmit",false,"version",pending.path("version").asLong())).statusCode());
+        fields.put("version",json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("version").asLong());assertEquals(409,hostApplicationPost(jwt,"",fields).statusCode());
+    }
+    @Test void hostApplicationApprovalGrantsHostAccessOnlyAfterStaffReview() throws Exception {
+        var owner=applicant();var jwt=token(owner);var reviewer=token(account(UserRole.STAFF));
+        var application=json.readTree(hostApplicationPost(jwt,"",hostApplicationFields()).body()).path("data");int id=application.path("id").asInt();
+        assertEquals(403,dashboard(jwt,"").statusCode());
+        var fields=Map.<String,Object>of("decision","APPROVED","version",application.path("version").asLong());
+        var result=hostApplicationPost(reviewer,"/"+id+"/review",fields);assertEquals(200,result.statusCode(),result.body());
+        assertEquals(UserRole.ROOM_HOST,users.findById(owner.getUserId()).orElseThrow().getRole());
+        assertEquals(200,dashboard(jwt,"").statusCode());
+        assertEquals(409,hostApplicationPost(reviewer,"/"+id+"/review",fields).statusCode());
+        assertEquals(403,hostApplicationPost(jwt,"",hostApplicationFields()).statusCode());
+        assertEquals(200,hostApplicationGet(reviewer,"?status=PENDING_REVIEW").statusCode());
     }
 }

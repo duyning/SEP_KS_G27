@@ -34,10 +34,16 @@ export function AuthProvider({ children }) {
     if (version === sessionVersion.current && getToken()) setUser(data);
     return data;
   };
+  const refreshUser = async () => {
+    const version = sessionVersion.current;
+    const data = await authApi.me();
+    if (version === sessionVersion.current && getToken()) setUser(data);
+    return data;
+  };
   const logout = async () => {
     sessionVersion.current++;
     try { await authApi.logout(); } finally { sessionVersion.current++; clearToken(); setUser(null); setSessionError(''); }
   };
-  return <AuthContext.Provider value={{ user, loading, sessionError, login, register, updateProfile, logout, retry: () => setReload(value => value + 1) }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, sessionError, login, register, updateProfile, refreshUser, logout, retry: () => setReload(value => value + 1) }}>{children}</AuthContext.Provider>;
 }
 export const useAuth = () => useContext(AuthContext);

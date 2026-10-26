@@ -42,6 +42,15 @@ public class User {
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
+    @Column(name = "organization", length = 255)
+    private String organization;
+
+    @Column(name = "preferred_area", length = 255)
+    private String preferredArea;
+
+    @Column(name = "avatar", columnDefinition = "MEDIUMTEXT")
+    private String avatar;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -8,9 +8,10 @@ export function PublicListingImage({src,name,className=''}){
  const [failed,setFailed]=useState(false);useEffect(()=>setFailed(false),[src]);
  return src&&!failed?<img className={className} src={src} alt={name} loading="lazy" onError={()=>setFailed(true)}/>:<div className={`hl-image-placeholder ${className}`}><ImageOff size={32}/><span>Chưa có hình ảnh</span></div>;
 }
-export function PublicPropertyDetail({property,onClose}){
+export function PublicPropertyDetail({property,onClose,contactNotice=false}){
  const [photo,setPhoto]=useState(property.photos[0]);
  return <Modal className="hl-property-modal" title={property.name} onClose={onClose}>
+  {contactNotice&&<p role="status" className="hl-contact-notice">Nhà trọ chưa cung cấp số điện thoại liên hệ trên trang công khai. Bạn có thể xem thông tin và các loại phòng bên dưới.</p>}
   <p className="hl-address"><MapPin size={15}/>{property.address}</p><PublicListingImage src={photo} name={property.name} className="hl-detail-photo"/>
   {property.photos.length>1&&<div className="hl-detail-thumbs">{property.photos.map((src,index)=><button type="button" key={src} aria-label={`Xem ảnh ${index+1}`} aria-pressed={photo===src} onClick={()=>setPhoto(src)}><PublicListingImage src={src} name={`Ảnh nhà trọ ${index+1}`}/></button>)}</div>}
   <div className="hl-detail-summary"><span><Building2 size={17}/>{property.roomTypes.length} loại phòng</span><span><House size={17}/>{property.totalRooms} phòng thực tế</span><span><CheckCircle2 size={17}/>{property.vacantRooms} phòng trống</span></div>

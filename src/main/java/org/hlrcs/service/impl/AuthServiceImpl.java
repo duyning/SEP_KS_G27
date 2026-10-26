@@ -125,8 +125,12 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .organization(user.getOrganization())
+                .preferredArea(user.getPreferredArea())
+                .avatar(user.getAvatar())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
                 .capabilities(capabilities)
                 .build();
     }
@@ -184,6 +188,9 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .organization(user.getOrganization())
+                .preferredArea(user.getPreferredArea())
+                .avatar(user.getAvatar())
                 .role(user.getRole())
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
@@ -208,6 +215,12 @@ public class AuthServiceImpl implements AuthService {
             user.setPhoneNumber(newPhone);
         }
 
+        if (request.getOrganization() != null) user.setOrganization(request.getOrganization().trim());
+        if (request.getPreferredArea() != null) user.setPreferredArea(request.getPreferredArea().trim());
+        if (request.getAvatar() != null) {
+            validateAvatar(request.getAvatar());
+            user.setAvatar(request.getAvatar());
+        }
         User updatedUser = userRepository.save(user);
 
         List<String> capabilities = userCapabilityRepository.findByUser_UserIdAndStatus(updatedUser.getUserId(), "ACTIVE")
@@ -221,11 +234,33 @@ public class AuthServiceImpl implements AuthService {
                 .email(updatedUser.getEmail())
                 .fullName(updatedUser.getFullName())
                 .phoneNumber(updatedUser.getPhoneNumber())
+                .organization(updatedUser.getOrganization())
+                .preferredArea(updatedUser.getPreferredArea())
+                .avatar(updatedUser.getAvatar())
                 .role(updatedUser.getRole())
                 .status(updatedUser.getStatus())
                 .createdAt(updatedUser.getCreatedAt())
                 .capabilities(capabilities)
                 .build();
+    }
+
+    private void validateAvatar(String avatar) {
+        if (avatar.isEmpty()) return;
+        if (!avatar.matches("^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$")) {
+            throw new BadRequestException("Ảnh đại diện phải là JPG, PNG hoặc WebP hợp lệ");
+        }
+        try {
+            byte[] bytes = java.util.Base64.getDecoder().decode(avatar.substring(avatar.indexOf(',') + 1));
+            if (bytes.length > 2621440) throw new BadRequestException("Ảnh đại diện tối đa 2.5 MB");
+            boolean valid = bytes.length >= 12 && (
+                avatar.startsWith("data:image/png;") && bytes[0] == (byte) 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G' && bytes[4] == 13 && bytes[5] == 10 && bytes[6] == 26 && bytes[7] == 10 ||
+                avatar.startsWith("data:image/jpeg;") && bytes[0] == (byte) 0xff && bytes[1] == (byte) 0xd8 && bytes[2] == (byte) 0xff ||
+                avatar.startsWith("data:image/webp;") && new String(bytes, 0, 4, java.nio.charset.StandardCharsets.US_ASCII).equals("RIFF") && new String(bytes, 8, 4, java.nio.charset.StandardCharsets.US_ASCII).equals("WEBP")
+            );
+            if (!valid) throw new BadRequestException("Nội dung ảnh đại diện không hợp lệ");
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Nội dung ảnh đại diện không hợp lệ");
+        }
     }
 
     @Override

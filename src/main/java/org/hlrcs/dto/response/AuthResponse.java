@@ -22,6 +22,10 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private String phoneNumber;
+    private String organization;
+    private String preferredArea;
+    private String avatar;
+    private java.time.LocalDateTime createdAt;
     private UserRole role;
     private UserStatus status;
     private List<String> capabilities;

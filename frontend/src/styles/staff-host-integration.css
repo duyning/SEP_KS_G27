@@ -1,0 +1,76 @@
+/* Complete the prototype's missing detail/modal rules and align the real table columns. */
+.hr-staff{min-height:100vh;font-family:'Plus Jakarta Sans',sans-serif;color:var(--staff-text-main);background:var(--staff-bg);}
+.hr-staff button,.hr-staff input,.hr-staff select,.hr-staff textarea{font-family:inherit;}
+.hr-staff .staff-content,.hr-staff .staff-main-container{min-width:0;}
+.hr-staff .hr-reviewer{display:block;color:var(--staff-text-muted);font-size:11px;margin-top:4px;}
+.hr-staff .host-reg-table{table-layout:auto;min-width:1050px;}
+.hr-staff .host-reg-table td{vertical-align:middle;}
+.hr-staff .shr-contact-cell{display:flex;flex-direction:column;gap:6px;max-width:210px;overflow-wrap:anywhere;}
+.hr-staff .shr-scope-cell{display:flex;flex-direction:column;gap:6px;}
+.hr-staff .shr-btn-view{white-space:nowrap;}
+.hr-staff .table-responsive{overflow-x:auto;}
+.hr-staff .host-reg-mobile-cards{display:none;}
+.hr-staff .hr-loading{padding:10px 28px;color:#64748b;font-size:13px;}
+.hr-staff .pagination-controls{gap:12px;align-items:center;}
+.hr-staff .detail-top-nav-bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+.hr-staff .applicant-profile-card{padding:20px;background:#f8fafc;border:1px solid var(--staff-border);border-radius:12px;}
+.hr-staff .applicant-profile-header,.hr-staff .applicant-name-row,.hr-staff .applicant-meta-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.hr-staff .applicant-avatar-box{width:54px;height:54px;background:#0d9488;color:#fff;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:800;flex-shrink:0;}
+.hr-staff .applicant-name-text{font-size:18px;font-weight:800;color:#0f172a;}
+.hr-staff .badge-role-tag,.hr-staff .host-role-badge,.hr-staff .verif-type-pill{padding:4px 9px;border-radius:20px;background:#f0fdfa;color:#0d9488;font-size:11px;font-weight:600;}
+.hr-staff .applicant-meta-row{font-size:12px;color:#64748b;margin-top:8px;}
+.hr-staff .applicant-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.hr-staff .contact-box-label{font-size:12px;color:#64748b;margin-bottom:6px;}
+.hr-staff .contact-box-value{font-size:14px;font-weight:700;overflow-wrap:anywhere;}
+.hr-staff .profile-sync-note{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.7;color:#64748b;border-top:1px solid #e2e8f0;padding-top:16px;margin-top:20px;}
+.hr-staff .profile-sync-note svg{flex-shrink:0;margin-top:4px;}
+.hr-staff .app-intro-item{margin-top:24px;}
+.hr-staff .app-field-sub{display:block;font-size:11px;color:#64748b;margin-top:8px;}
+.hr-staff .boundary-callout-box{display:flex;align-items:flex-start;gap:12px;font-size:13px;line-height:1.7;margin-top:20px;}
+.hr-staff .callout-title{font-weight:700;margin-bottom:5px;}
+.hr-staff .sidebar-summary-card,.hr-staff .sidebar-guidance-card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:22px;box-shadow:0 1px 3px #0f172a08;}
+.hr-staff .summary-card-header,.hr-staff .guidance-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-weight:700;}
+.hr-staff .summary-card-title,.hr-staff .guidance-title{font-size:15px;}
+.hr-staff .sidebar-summary-card .metric-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:14px 0;font-size:12px;}
+.hr-staff .metric-label{color:#64748b;}
+.hr-staff .metric-value{text-align:right;font-size:12px;}
+.hr-staff .guidance-list{padding-left:17px;color:#64748b;font-size:12px;line-height:1.8;}
+.hr-staff .guidance-list li+li{margin-top:9px;}
+.hr-staff .hr-preserve-lines,.hr-staff .shrd-timeline-note{white-space:pre-wrap;overflow-wrap:anywhere;}
+.hr-staff .hr-stale{position:fixed;bottom:20px;right:20px;max-width:min(480px,90vw);background:#fffbeb;border:1px solid #fcd34d;padding:15px;border-radius:12px;z-index:10000;}
+.hr-staff .hr-native-modal{width:min(760px,calc(100vw - 32px));max-width:none;max-height:90vh;border:0;padding:0;border-radius:20px;background:white;margin:auto;box-shadow:0 24px 90px #0f172a40;overflow:auto;}
+.hr-staff .hr-native-modal::backdrop{background:#0f172a80;backdrop-filter:blur(4px);}
+.hr-staff .staff-modal-box{display:flex;flex-direction:column;max-height:88vh;}
+.hr-staff .staff-modal-header{display:flex;align-items:center;gap:13px;padding:24px 26px;border-bottom:1px solid #e2e8f0;}
+.hr-staff .modal-title{font-size:19px;font-weight:800;line-height:1.4;color:#0f172a;}
+.hr-staff .modal-sub{font-size:12px;color:#64748b;margin-top:5px;}
+.hr-staff .modal-icon-badge{width:38px;height:38px;border-radius:10px;background:#f0fdfa;color:#0d9488;display:grid;place-items:center;flex-shrink:0;}
+.hr-staff .btn-close-modal{margin-left:auto;align-self:flex-start;background:#f1f5f9;color:#64748b;border:0;border-radius:50%;height:28px;width:28px;font-size:22px;cursor:pointer;flex-shrink:0;}
+.hr-staff .staff-modal-body{padding:24px 26px;overflow:auto;min-height:0;}
+.hr-staff .modal-applicant-summary{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:18px;}
+.hr-staff .modal-form-group{margin:18px 0;}
+.hr-staff .modal-label{display:block;font-size:13px;font-weight:700;margin-bottom:9px;}
+.hr-staff .modal-textarea{display:block;box-sizing:border-box;width:100%;min-height:90px;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-size:13px;line-height:1.6;resize:vertical;}
+.hr-staff .modal-textarea:focus{outline:2px solid #99f6e4;border-color:#0d9488;}
+.hr-staff .staff-modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:20px 26px;border-top:1px solid #e2e8f0;background:#f8fafc;}
+.hr-staff .btn-modal-secondary,.hr-staff .btn-modal-confirm{padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid #dce5ef;}
+.hr-staff .btn-modal-secondary{background:white;color:#334155;}
+.hr-staff .btn-modal-confirm{color:white;background:#0d9488;border-color:transparent;}
+.hr-staff .btn-modal-confirm.danger-btn{background:#e11d48;}
+.hr-staff .btn-modal-confirm.warning-btn{background:#d97706;}
+.hr-staff .modal-error-text,.hr-staff .hr-modal-error{color:#be123c;font-size:12px;margin-top:10px;}
+.hr-staff .alert-text{font-size:12px;line-height:1.7;color:#64748b;}
+.hr-staff .hr-instruction-visible{display:block;}
+.hr-staff .shrd-field-curr-val small{display:block;margin-top:5px;color:#64748b;}
+.hr-staff .shrd-field-checkbox-row input,.hr-staff #chkAllowResubmit{width:16px;height:16px;accent-color:#0d9488;flex-shrink:0;}
+.hr-staff .selected-count-tag{color:#d97706;font-weight:700;font-size:12px;}
+.hr-staff button:disabled{opacity:.55;cursor:not-allowed;}
+.hr-staff .staff-user-name{max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:900px){.hr-staff .table-responsive{display:none;}.hr-staff .host-reg-mobile-cards{display:grid;gap:12px;}.hr-staff .host-reg-mobile-card{border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;overflow-wrap:anywhere;}.hr-staff .host-reg-mobile-card header{display:flex;align-items:center;justify-content:space-between;gap:10px;}.hr-staff .shrd-detail-grid{grid-template-columns:1fr;}.hr-staff .verif-toolbar{flex-wrap:wrap;}.hr-staff .verif-search-box{min-width:0;width:100%;}.hr-staff .staff-content{overflow-wrap:anywhere;}}
+@media(max-width:640px){.hr-staff .staff-topbar .topbar-status-chip,.hr-staff .staff-topbar .btn-view-public-site{display:none;}.hr-staff .staff-topbar .topbar-title{font-size:14px;}.hr-staff .topbar-left,.hr-staff .topbar-title-wrap,.hr-staff .shrd-detail-main,.hr-staff .shrd-detail-sidebar{min-width:0;}.hr-staff .staff-content{padding:20px 14px;}.hr-staff .applicant-contact-grid{grid-template-columns:1fr;}.hr-staff .staff-modal-header,.hr-staff .staff-modal-body,.hr-staff .staff-modal-footer{padding:18px;}.hr-staff .staff-modal-footer{flex-wrap:wrap;}.hr-staff .modal-title{font-size:16px;}.hr-staff .verif-pagination{flex-wrap:wrap;gap:14px;}}
+
+.hr-staff .decision-actions-intro{font-size:13px;color:#64748b;line-height:1.7;margin-bottom:4px;}
+.hr-staff .decision-card-title{font-size:15px;}
+.hr-staff .hr-instruction-visible textarea{display:block;width:100%;box-sizing:border-box;}
+
+.hr-staff .staff-sidebar .nav-link > span:not([class]){white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;flex:1;}

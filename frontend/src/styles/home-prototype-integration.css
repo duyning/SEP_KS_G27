@@ -1,0 +1,22 @@
+/* React/DB bindings only; visual rules remain in the scoped prototype stylesheet. */
+.prototype-home { min-height:100vh; }
+.prototype-home button,.prototype-home select { font-family:inherit; }
+.prototype-home button { cursor:pointer; }
+.prototype-home .home-image-button { display:block;width:100%;height:100%;border:0;padding:0;background:none; }
+.prototype-home .home-title-button { font:inherit;font-weight:inherit;line-height:inherit;letter-spacing:inherit;text-align:left;border:0;padding:0;background:none;color:inherit; }
+.prototype-home .room-actions button { display:inline-flex;align-items:center;justify-content:center;font-family:inherit; }
+.prototype-home .room-thumb-wrap .hl-image-placeholder { width:100%;height:100%; }
+.prototype-home .home-list-state { grid-column:1 / -1;text-align:center;padding:48px 20px;border:1px dashed #cbd5e1;border-radius:16px;background:white; }
+.prototype-home .home-list-state h3 { font-size:18px;color:#0f172a; }
+.prototype-home .home-list-state p { color:#64748b;margin:6px 0 16px;font-size:14px; }
+.prototype-home .load-more-wrap:empty { display:none; }
+.prototype-home #services-highlight a:hover { border-color:var(--primary) !important;transform:translateY(-2px); }
+.prototype-home .nav-menu a:focus-visible,.prototype-home button:focus-visible,.prototype-home select:focus-visible { outline:3px solid #99f6e4;outline-offset:3px; }
+@media(max-width:560px) {
+  .prototype-home .navbar-container { gap:8px; }
+  .prototype-home .nav-actions { gap:8px;min-width:0; }
+  .prototype-home .nav-actions > .btn-ghost { display:none; }
+  .prototype-home .user-nav-meta { display:none; }
+  .prototype-home .nav-actions > .btn-wishlist-top:has(+ .btn-primary-sm + .user-nav-pill) { display:none; }
+}
+.hl-property-modal .hl-contact-notice { padding:12px 16px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:8px; }

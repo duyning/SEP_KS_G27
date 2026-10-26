@@ -1,0 +1,1226 @@
+/* Original become-host.css scoped to the React page. */
+/**
+ * HL_RCS | BECOME A HOST STYLESHEET (become-host.css)
+ * Hệ thống giao diện đăng ký làm chủ trọ:
+ * 1. Breadcrumb & Page Header
+ * 2. Host Benefits Cards (Quyền lợi chủ trọ)
+ * 3. 4-Stage Lifecycle Stepper (Tiến trình xét duyệt)
+ * 4. Registration Form (Thông tin tài khoản chỉ đọc, Thông tin đăng ký, Textarea counter)
+ * 5. Multi-State Cards (Pending, Needs Changes, Rejected, Approved, Already Host, Auth Guard)
+ * 6. In-place Field Instruction Badges & Highlights
+ * 7. Preview Switcher Toolbar (Chế độ xem trước giao diện)
+ * 8. Confirmation Modals & Toasts
+ * 9. Responsive layout (Zero horizontal scroll across 1440px, 1366px, 768px, 390px)
+ */
+
+/* ==========================================================================
+   1. PREVIEW SWITCHER TOOLBAR (CHẾ ĐỘ XEM TRƯỚC GIAO DIỆN)
+   ========================================================================== */
+.prototype-become-host .bh-preview-toolbar {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 10px 0;
+  font-size: 13px;
+  border-bottom: 2px solid #0d9488;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.prototype-become-host .bh-preview-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.prototype-become-host .bh-preview-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #5eead4;
+}
+
+.prototype-become-host .bh-preview-badge {
+  background: rgba(20, 184, 166, 0.2);
+  color: #5eead4;
+  border: 1px solid rgba(20, 184, 166, 0.4);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prototype-become-host .bh-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prototype-become-host .bh-preview-actions span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.prototype-become-host .bh-preview-select {
+  padding: 5px 10px;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.prototype-become-host .bh-preview-select:focus {
+  border-color: #0d9488;
+}
+
+.prototype-become-host .bh-preview-btn-reset {
+  padding: 5px 12px;
+  background: #334155;
+  color: #f1f5f9;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.prototype-become-host .bh-preview-btn-reset:hover {
+  background: #475569;
+}
+
+/* ==========================================================================
+   2. BREADCRUMB BAR
+   ========================================================================== */
+.prototype-become-host .bh-breadcrumb-bar {
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 12px 0;
+}
+
+.prototype-become-host .bh-breadcrumb-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.prototype-become-host .bh-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  font-size: 13.5px;
+}
+
+.prototype-become-host .bh-breadcrumb-list a {
+  color: var(--slate-600);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.prototype-become-host .bh-breadcrumb-list a:hover {
+  color: var(--primary);
+}
+
+.prototype-become-host .bh-breadcrumb-sep {
+  color: var(--slate-400);
+  font-size: 12px;
+}
+
+.prototype-become-host .bh-breadcrumb-active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.prototype-become-host .bh-breadcrumb-meta {
+  font-size: 12.5px;
+  color: var(--slate-500);
+}
+
+/* ==========================================================================
+   3. HERO & PAGE HEADER
+   ========================================================================== */
+.prototype-become-host .bh-hero-section {
+  background: linear-gradient(180deg, var(--slate-50) 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--slate-200);
+  padding: 40px 0 32px;
+  text-align: center;
+}
+
+.prototype-become-host .bh-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 14px;
+}
+
+.prototype-become-host .bh-hero-title {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800;
+  color: var(--slate-900);
+  letter-spacing: -0.025em;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.prototype-become-host .bh-hero-desc {
+  font-size: 16px;
+  color: var(--slate-600);
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   4. HOST BENEFITS CARDS (3 QUYỀN LỢI NỔI BẬT)
+   ========================================================================== */
+.prototype-become-host .bh-benefits-wrapper {
+  padding: 32px 0 20px;
+}
+
+.prototype-become-host .bh-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.prototype-become-host .bh-benefit-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prototype-become-host .bh-benefit-card:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.prototype-become-host .bh-benefit-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.prototype-become-host .bh-benefit-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--slate-900);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.prototype-become-host .bh-benefit-desc {
+  font-size: 13.5px;
+  color: var(--slate-600);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ==========================================================================
+   5. PROCESS LIFECYCLE STEPPER (TIẾN TRÌNH XÉT DUYỆT 4 BƯỚC)
+   ========================================================================== */
+.prototype-become-host .bh-stepper-wrapper {
+  max-width: 860px;
+  margin: 10px auto 36px;
+  padding: 0 10px;
+}
+
+.prototype-become-host .bh-stepper-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.prototype-become-host .bh-stepper-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prototype-become-host .bh-stepper-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  gap: 12px;
+}
+
+/* Connector line */
+.prototype-become-host .bh-stepper-steps::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: var(--slate-200);
+  z-index: 1;
+}
+
+.prototype-become-host .bh-step-item {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.prototype-become-host .bh-step-node {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--slate-300);
+  color: var(--slate-500);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: var(--transition);
+  margin-bottom: 8px;
+}
+
+.prototype-become-host .bh-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-600);
+  line-height: 1.3;
+}
+
+.prototype-become-host .bh-step-sub {
+  font-size: 11px;
+  color: var(--slate-400);
+  margin-top: 2px;
+}
+
+/* Step States */
+.prototype-become-host .bh-step-item.active .bh-step-node {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px var(--primary-ring);
+}
+
+.prototype-become-host .bh-step-item.active .bh-step-label {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.prototype-become-host .bh-step-item.completed .bh-step-node {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: #ffffff;
+}
+
+.prototype-become-host .bh-step-item.completed .bh-step-label {
+  color: var(--slate-800);
+  font-weight: 700;
+}
+
+.prototype-become-host .bh-step-item.warning .bh-step-node {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.prototype-become-host .bh-step-item.warning .bh-step-label {
+  color: #b45309;
+  font-weight: 800;
+}
+
+.prototype-become-host .bh-step-item.rejected .bh-step-node {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.prototype-become-host .bh-step-item.rejected .bh-step-label {
+  color: var(--rose);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   6. MAIN WORKSPACE / STATE CONTAINER
+   ========================================================================== */
+.prototype-become-host .bh-main-content {
+  padding: 0 0 80px;
+}
+
+.prototype-become-host .bh-container-narrow {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ==========================================================================
+   7. REGISTRATION FORM (STATE A: UNREGISTERED / FORM)
+   ========================================================================== */
+.prototype-become-host .bh-form-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-sm);
+}
+
+.prototype-become-host .bh-form-header {
+  border-bottom: 1px solid var(--slate-200);
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+
+.prototype-become-host .bh-form-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--slate-900);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.prototype-become-host .bh-form-desc {
+  font-size: 14.5px;
+  color: var(--slate-600);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Form Sections */
+.prototype-become-host .bh-form-section {
+  margin-bottom: 30px;
+}
+
+.prototype-become-host .bh-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.prototype-become-host .bh-section-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.prototype-become-host .bh-section-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin: 0;
+}
+
+/* Readonly Account Info Box */
+.prototype-become-host .bh-account-summary-box {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.prototype-become-host .bh-account-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.prototype-become-host .bh-acc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prototype-become-host .bh-acc-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prototype-become-host .bh-acc-val {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--slate-800);
+  word-break: break-all;
+}
+
+.prototype-become-host .bh-acc-val.role {
+  color: var(--primary);
+}
+
+.prototype-become-host .bh-account-tip {
+  font-size: 12.5px;
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prototype-become-host .bh-account-tip a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.prototype-become-host .bh-account-tip a:hover {
+  text-decoration: underline;
+}
+
+/* Missing Contact Warning Callout */
+.prototype-become-host .bh-missing-contact-warning {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-left: 4px solid #d97706;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  color: #92400e;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.prototype-become-host .bh-missing-contact-warning a {
+  color: #b45309;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Inputs & Form Groups */
+.prototype-become-host .bh-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.prototype-become-host .bh-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.prototype-become-host .bh-form-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--slate-800);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prototype-become-host .bh-req-star {
+  color: var(--rose);
+}
+
+.prototype-become-host .bh-char-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--slate-400);
+}
+
+.prototype-become-host .bh-form-select,
+.prototype-become-host .bh-form-input,
+.prototype-become-host .bh-form-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--slate-900);
+  background: #ffffff;
+  border: 1.5px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: var(--transition);
+}
+
+.prototype-become-host .bh-form-select:focus,
+.prototype-become-host .bh-form-input:focus,
+.prototype-become-host .bh-form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3.5px var(--primary-ring);
+}
+
+.prototype-become-host .bh-form-textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.5;
+}
+
+.prototype-become-host .bh-field-hint {
+  font-size: 12px;
+  color: var(--slate-500);
+  line-height: 1.4;
+}
+
+.prototype-become-host .bh-field-error {
+  font-size: 12.5px;
+  color: var(--rose);
+  font-weight: 600;
+  display: none;
+  margin-top: 2px;
+}
+
+.prototype-become-host .bh-field-error.show {
+  display: block;
+}
+
+.prototype-become-host .bh-form-group.has-error .bh-form-select,
+.prototype-become-host .bh-form-group.has-error .bh-form-input,
+.prototype-become-host .bh-form-group.has-error .bh-form-textarea {
+  border-color: var(--rose);
+  background: var(--rose-light);
+}
+
+/* Agreement Checkbox Card */
+.prototype-become-host .bh-agreement-card {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-top: 24px;
+  margin-bottom: 28px;
+}
+
+.prototype-become-host .bh-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--slate-700);
+  line-height: 1.5;
+  user-select: none;
+}
+
+.prototype-become-host .bh-checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary);
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Form Actions Row */
+.prototype-become-host .bh-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-top: 24px;
+  border-top: 1px solid var(--slate-200);
+  flex-wrap: wrap;
+}
+
+.prototype-become-host .bh-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 22px;
+  background: var(--slate-100);
+  color: var(--slate-700);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.prototype-become-host .bh-btn-cancel:hover {
+  background: var(--slate-200);
+  color: var(--slate-900);
+}
+
+.prototype-become-host .bh-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 26px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+}
+
+.prototype-become-host .bh-btn-submit:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+}
+
+.prototype-become-host .bh-btn-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   8. STATE CARDS (PENDING, NEEDS CHANGES, REJECTED, APPROVED, ALREADY HOST)
+   ========================================================================== */
+.prototype-become-host .bh-state-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xl);
+  padding: 40px 32px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  animation: fadeInState 0.3s ease-out;
+}
+
+@keyframes fadeInState {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.prototype-become-host .bh-state-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+}
+
+.prototype-become-host .bh-state-icon-wrap.pending {
+  background: #fffbeb;
+  border: 2px solid #fde68a;
+  color: #d97706;
+}
+
+.prototype-become-host .bh-state-icon-wrap.warning {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  color: #ea580c;
+}
+
+.prototype-become-host .bh-state-icon-wrap.rejected {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  color: #dc2626;
+}
+
+.prototype-become-host .bh-state-icon-wrap.approved {
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  color: #059669;
+}
+
+.prototype-become-host .bh-state-icon-wrap.already {
+  background: var(--primary-light);
+  border: 2px solid var(--primary-border);
+  color: var(--primary);
+}
+
+.prototype-become-host .bh-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prototype-become-host .bh-status-pill .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.prototype-become-host .bh-status-pill.pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.prototype-become-host .bh-status-pill.pending .dot {
+  background: #d97706;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.3);
+  animation: pulseDot 1.8s infinite;
+}
+
+.prototype-become-host .bh-status-pill.warning {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.prototype-become-host .bh-status-pill.warning .dot {
+  background: #ea580c;
+}
+
+.prototype-become-host .bh-status-pill.rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.prototype-become-host .bh-status-pill.rejected .dot {
+  background: #dc2626;
+}
+
+.prototype-become-host .bh-status-pill.approved {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.prototype-become-host .bh-status-pill.approved .dot {
+  background: #059669;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.prototype-become-host .bh-state-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--slate-900);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.prototype-become-host .bh-state-desc {
+  font-size: 15px;
+  color: var(--slate-600);
+  max-width: 580px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+/* Submitted Info Box (Used in Pending & Review) */
+.prototype-become-host .bh-submitted-info-card {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 660px;
+  margin: 0 auto 28px;
+  text-align: left;
+}
+
+.prototype-become-host .bh-sic-header {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--slate-700);
+  border-bottom: 1px solid var(--slate-200);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prototype-become-host .bh-sic-meta {
+  font-size: 12px;
+  color: var(--slate-400);
+  font-weight: 500;
+}
+
+.prototype-become-host .bh-sic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.prototype-become-host .bh-sic-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prototype-become-host .bh-sic-item.full {
+  grid-column: 1 / -1;
+}
+
+.prototype-become-host .bh-sic-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+}
+
+.prototype-become-host .bh-sic-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.prototype-become-host .bh-sic-intro-text {
+  background: #ffffff;
+  border: 1px dashed var(--slate-300);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--slate-700);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* Staff Feedback Notice Banner (For Needs Changes / Rejected) */
+.prototype-become-host .bh-feedback-banner {
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 0 auto 24px;
+  max-width: 660px;
+  text-align: left;
+  line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.prototype-become-host .bh-feedback-banner.warning {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-left: 5px solid #d97706;
+  color: #92400e;
+}
+
+.prototype-become-host .bh-feedback-banner.rejected {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  color: #991b1b;
+}
+
+.prototype-become-host .bh-fb-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.prototype-become-host .bh-fb-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.prototype-become-host .bh-fb-desc {
+  font-size: 13.5px;
+  margin-bottom: 8px;
+}
+
+.prototype-become-host .bh-fb-meta {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* In-place Field Highlighting when needs changes */
+.prototype-become-host .field-needs-change {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.18) !important;
+  background: #fffaf0 !important;
+}
+
+.prototype-become-host .staff-instruction-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3.5px solid #d97706;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #92400e;
+  line-height: 1.45;
+}
+
+.prototype-become-host .staff-instruction-badge strong {
+  color: #b45309;
+}
+
+/* State Action Buttons */
+.prototype-become-host .bh-state-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.prototype-become-host .bh-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+}
+
+.prototype-become-host .bh-btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+}
+
+.prototype-become-host .bh-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 24px;
+  background: var(--slate-100);
+  color: var(--slate-700);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--slate-300);
+}
+
+.prototype-become-host .bh-btn-secondary:hover {
+  background: var(--slate-200);
+  color: var(--slate-900);
+}
+
+/* ==========================================================================
+   9. SKELETON LOADING STATE
+   ========================================================================== */
+.prototype-become-host .bh-skeleton-card {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-sm);
+}
+
+.prototype-become-host .bh-sk-line {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: bhShimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes bhShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.prototype-become-host .bh-sk-title { height: 28px; width: 45%; margin-bottom: 14px; }
+.prototype-become-host .bh-sk-sub { height: 16px; width: 70%; margin-bottom: 32px; }
+.prototype-become-host .bh-sk-box { height: 110px; width: 100%; margin-bottom: 24px; }
+.prototype-become-host .bh-sk-input { height: 44px; width: 100%; margin-bottom: 18px; }
+.prototype-become-host .bh-sk-textarea { height: 120px; width: 100%; margin-bottom: 24px; }
+.prototype-become-host .bh-sk-actions { height: 48px; width: 220px; margin-left: auto; }
+
+/* ==========================================================================
+   10. AUTH GUARD STATE (CHƯA ĐĂNG NHẬP)
+   ========================================================================== */
+.prototype-become-host .bh-auth-guard {
+  background: #ffffff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xl);
+  padding: 56px 32px;
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.prototype-become-host .bh-guard-icon-wrap {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--slate-100);
+  color: var(--slate-600);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+}
+
+.prototype-become-host .bh-guard-demo-box {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-top: 24px;
+  font-size: 13.5px;
+  color: var(--slate-600);
+}
+
+.prototype-become-host .bh-guard-demo-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.prototype-become-host .bh-guard-demo-btn:hover {
+  color: var(--primary-hover);
+}
+
+/* ==========================================================================
+   11. RESPONSIVE BREAKPOINTS (ZERO HORIZONTAL SCROLL)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .prototype-become-host .bh-benefits-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .prototype-become-host .bh-benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .prototype-become-host .bh-stepper-steps::before {
+    display: none;
+  }
+
+  .prototype-become-host .bh-stepper-steps {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .prototype-become-host .bh-step-item {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 14px;
+  }
+
+  .prototype-become-host .bh-step-node {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .prototype-become-host .bh-form-card,
+  .prototype-become-host .bh-state-card {
+    padding: 28px 20px;
+  }
+
+  .prototype-become-host .bh-form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .prototype-become-host .bh-account-grid,
+  .prototype-become-host .bh-sic-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .prototype-become-host .bh-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .prototype-become-host .bh-btn-cancel,
+  .prototype-become-host .bh-btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .prototype-become-host .bh-preview-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 390px) {
+  .prototype-become-host .bh-hero-title {
+    font-size: 24px;
+  }
+
+  .prototype-become-host .bh-form-card,
+  .prototype-become-host .bh-state-card {
+    padding: 24px 16px;
+  }
+}

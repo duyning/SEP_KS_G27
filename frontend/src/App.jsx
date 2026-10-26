@@ -3,6 +3,7 @@ import { LoaderCircle, ShieldAlert } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import BecomeHostPage from './pages/BecomeHostPage.jsx';
 import PortalScreens from './pages/PortalScreens.jsx';
 import PortalLayout from './layouts/PortalLayout.jsx';
 import { ToastProvider } from './components/PortalUI.jsx';
@@ -17,7 +18,7 @@ function ScreenRoute({ screen }) {
   }
   if (screen.kind === 'redirect') return <Navigate to={`${screen.to}${location.search}${location.hash}`} replace />;
   if (screen.kind === 'auth') return <AuthPage registerMode={screen.path === '/register'} />;
-  return <PortalLayout screen={screen}>{screen.kind === 'profile' ? <ProfilePage /> : <PortalScreens screen={screen} />}</PortalLayout>;
+  return <PortalLayout screen={screen}>{screen.kind === 'profile' ? <ProfilePage /> : screen.kind === 'becomeHost' ? <BecomeHostPage /> : <PortalScreens screen={screen} />}</PortalLayout>;
 }
 function LegacyRedirect({ screen }) {
   const location = useLocation();

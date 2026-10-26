@@ -32,11 +32,16 @@ import StaffCommunityModerationDetailPage from './staff/StaffCommunityModeration
 import StaffAssistanceRequestsPage from './staff/StaffAssistanceRequestsPage.jsx';
 import StaffAssistanceRequestDetailPage from './staff/StaffAssistanceRequestDetailPage.jsx';
 
+import StaffHostRegistrationsPage from './staff/StaffHostRegistrationsPage.jsx';
+import StaffHostRegistrationDetailPage from './staff/StaffHostRegistrationDetailPage.jsx';
+
 // Admin Pages
 import AdminDashboardPage from './admin/AdminDashboardPage.jsx';
 
 export default function PortalScreens({ screen }) {
   switch (screen.path) {
+    case '/staff/host-registrations': return <StaffHostRegistrationsPage />;
+    case '/staff/host-registrations/detail': return <StaffHostRegistrationDetailPage />;
     // Public & Member Routes
     case '/':
       return <HomePage />;

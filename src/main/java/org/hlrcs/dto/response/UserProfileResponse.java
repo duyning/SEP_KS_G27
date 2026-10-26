@@ -20,6 +20,9 @@ public class UserProfileResponse {
     private String fullName;
     private String email;
     private String phoneNumber;
+    private String organization;
+    private String preferredArea;
+    private String avatar;
     private UserRole role;
     private UserStatus status;
     private LocalDateTime createdAt;
