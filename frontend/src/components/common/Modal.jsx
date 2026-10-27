@@ -1,14 +1,15 @@
 import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
-export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px' }) {
+export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px',
+  closeOnBackdrop = true, closeOnEscape = true, className = '', footer }) {
   const titleId = useId();
   const overlayRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && closeOnEscape) {
         e.preventDefault();
         onClose?.();
       }
@@ -21,19 +22,19 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = prevOverflow;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEscape]);
 
   if (!isOpen) return null;
 
   return (
     <div
       ref={overlayRef}
-      className="modal-overlay"
+      className={`modal-overlay ${className}`.trim()}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose?.();
+        if (closeOnBackdrop && e.target === overlayRef.current) onClose?.();
       }}
       style={{
         position: 'fixed',
@@ -71,6 +72,7 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexShrink: 0,
           }}
         >
           <h3 id={titleId} style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
@@ -96,9 +98,10 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body" style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+        <div className="modal-body" style={{ padding: '20px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {children}
         </div>
+        {footer && <div className="modal-footer" style={{ flexShrink: 0 }}>{footer}</div>}
       </div>
     </div>
   );

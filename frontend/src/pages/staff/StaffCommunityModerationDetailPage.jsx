@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -13,22 +13,29 @@ import {
   DollarSign,
   Clock
 } from 'lucide-react';
-import DemoNoticeBanner from '../../components/common/DemoNoticeBanner.jsx';
 import Modal from '../../components/common/Modal.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
-import { MOCK_COMMUNITY_POSTS } from '../../fixtures/mockCommunityData.js';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useCommunityLoad } from '../../components/CommunityUI.jsx';
+import { communityApi } from '../../services/community.js';
 import { useToast } from '../../components/PortalUI.jsx';
 
 export default function StaffCommunityModerationDetailPage() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const notify = useToast();
-  const postId = params.get('id') || 'POST-2026-001';
-
-  const [posts, setPosts] = useState(MOCK_COMMUNITY_POSTS);
-  const currentPost = posts.find(p => p.id === postId) || posts[0];
+  const postId = params.get('id');
+  const state = useCommunityLoad('detail', postId);
+  const currentPost = state.data?.post;
+  const [busy, setBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const activeReview = useRef(null);
+  useEffect(() => {
+    setReviewError('');
+    setBusy(false);
+    setIsApproveOpen(false);
+    setIsChangesOpen(false);
+    setIsRejectOpen(false);
+    return () => { activeReview.current?.abort(); activeReview.current = null; };
+  }, [postId]);
 
   // Modals
   const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -36,10 +43,12 @@ export default function StaffCommunityModerationDetailPage() {
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [decisionNote, setDecisionNote] = useState('');
 
-  if (!currentPost) {
+  if (state.loading) return <p role="status">Đang tải chi tiết bài viết...</p>;
+  if (state.error || !currentPost) {
     return (
       <div className="portal-page-container staff-content" style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <h2>Không tìm thấy bài viết cộng đồng</h2>
+        <h2 role="alert">{state.error || 'Không tìm thấy bài viết cộng đồng'}</h2>
+        <button className="p-button" onClick={state.reload}>Thử lại</button>
         <Link to="/staff/community" className="p-button primary">
           Quay lại danh sách
         </Link>
@@ -47,52 +56,41 @@ export default function StaffCommunityModerationDetailPage() {
     );
   }
 
-  const isTerminal = currentPost.status === 'APPROVED' || currentPost.status === 'REJECTED';
-
-  const updatePostStatus = (newStatus, statusLabel, note) => {
-    const updated = {
-      ...currentPost,
-      status: newStatus,
-      statusLabel,
-      decisionNote: note,
-      reviewedBy: user?.fullName || 'Nguyễn Văn An (Staff)',
-      reviewedAt: new Date().toISOString()
-    };
-    setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
-    setDecisionNote('');
-  };
-
-  const handleApprove = () => {
-    updatePostStatus('APPROVED', 'Đã duyệt', 'Nội dung phù hợp quy chuẩn cộng đồng.');
-    setIsApproveOpen(false);
-    notify(`Đã phê duyệt bài viết "${currentPost.title}"! Bài viết hiện đã công khai.`, 'success');
-  };
-
-  const handleRequestChanges = () => {
-    if (!decisionNote.trim()) {
-      notify('Vui lòng nhập hướng dẫn chỉnh sửa cho người đăng', 'error');
+  const isTerminal = currentPost.status !== 'PENDING';
+  const review = async decision => {
+    if (activeReview.current) return;
+    const note = decisionNote.trim();
+    if (note.length > 2000 || (decision !== 'APPROVE' && note.length < 10)) {
+      setReviewError('Lý do / hướng dẫn chỉnh sửa cần từ 10 đến 2000 ký tự.');
       return;
     }
-    updatePostStatus('NEED_CHANGES', 'Cần chỉnh sửa', decisionNote);
-    setIsChangesOpen(false);
-    notify('Đã gửi yêu cầu chỉnh sửa tới tác giả bài viết', 'info');
-  };
-
-  const handleReject = () => {
-    if (!decisionNote.trim()) {
-      notify('Vui lòng nhập lý do từ chối bài viết', 'error');
-      return;
+    const controller = new AbortController();
+    activeReview.current = controller;
+    setBusy(true);
+    setReviewError('');
+    try {
+      const data = await communityApi.review(postId, decision, note, controller.signal);
+      if (controller.signal.aborted) return;
+      state.replace(data);
+      setIsApproveOpen(false);
+      setIsChangesOpen(false);
+      setIsRejectOpen(false);
+      setDecisionNote('');
+      window.dispatchEvent(new Event('hlrcs:staff-updated'));
+      notify?.(decision === 'APPROVE' ? 'Đã duyệt bài viết. Bài viết hiện được hiển thị công khai.' : decision === 'REQUEST_CHANGES' ? 'Đã lưu yêu cầu chỉnh sửa. Tác giả xem phản hồi tại Bài viết của tôi.' : 'Đã từ chối bài viết và lưu lý do.', 'success');
+    } catch (error) {
+      if (!controller.signal.aborted) setReviewError(error.fields?.note || error.message);
+    } finally {
+      if (activeReview.current === controller) { activeReview.current = null; setBusy(false); }
     }
-    updatePostStatus('REJECTED', 'Từ chối', decisionNote);
-    setIsRejectOpen(false);
-    notify('Đã từ chối đăng bài viết này', 'info');
   };
+  const handleApprove = () => review('APPROVE');
+  const handleRequestChanges = () => review('REQUEST_CHANGES');
+  const handleReject = () => review('REJECT');
 
   return (
     <div className="portal-page-container staff-content">
-      <DemoNoticeBanner
-        message="Thẩm định chi tiết bài viết cộng đồng. Quyết định duyệt sẽ đưa bài viết hiển thị công khai trên trang Cộng đồng của người thuê."
-      />
+      <p style={{ color: '#64748b', fontSize: 13 }}>Thẩm định bài viết trước khi công khai. Quyết định và lý do được lưu vào lịch sử kiểm duyệt.</p>
 
       {/* Back Link & Header */}
       <div style={{ marginBottom: '16px' }}>
@@ -112,7 +110,7 @@ export default function StaffCommunityModerationDetailPage() {
               {currentPost.title}
             </h1>
           </div>
-          <StatusBadge status={currentPost.status}>{currentPost.statusLabel}</StatusBadge>
+          <StatusBadge status={currentPost.status} label={currentPost.statusLabel} />
         </div>
       </div>
 
@@ -174,12 +172,21 @@ export default function StaffCommunityModerationDetailPage() {
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '12px', color: '#64748b' }}>Họ và tên:</span>
                 <div style={{ fontWeight: '700', color: '#0f172a' }}>{currentPost.authorName}</div>
+                <small>Tài khoản đăng: {state.data.accountName}</small>
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '12px', color: '#64748b' }}>Số điện thoại liên hệ:</span>
                 <div style={{ fontWeight: '700', color: '#0d9488' }}>{currentPost.authorPhone}</div>
               </div>
             </div>
+          </section>
+          <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 22 }}>
+            <h2 style={{ fontSize: 16 }}>Lịch sử kiểm duyệt</h2>
+            {!state.data.history.length && <p>Chưa có quyết định kiểm duyệt.</p>}
+            {state.data.history.map(item => <div key={item.id} style={{ borderTop: '1px solid #e2e8f0', padding: '10px 0' }}>
+              <strong>{item.staffName}: {({ APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', NEED_CHANGES: 'Yêu cầu chỉnh sửa' })[item.action] || item.action}</strong>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{item.note}</p><small>{new Date(item.createdAt).toLocaleString('vi-VN')}</small>
+            </div>)}
           </section>
         </div>
 
@@ -193,7 +200,7 @@ export default function StaffCommunityModerationDetailPage() {
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái hiện tại:</span>
               <div style={{ marginTop: '4px' }}>
-                <StatusBadge status={currentPost.status}>{currentPost.statusLabel}</StatusBadge>
+                <StatusBadge status={currentPost.status} label={currentPost.statusLabel} />
               </div>
             </div>
 
@@ -210,7 +217,7 @@ export default function StaffCommunityModerationDetailPage() {
                   type="button"
                   className="p-button primary"
                   style={{ background: '#10b981', borderColor: '#10b981', padding: '10px' }}
-                  onClick={() => setIsApproveOpen(true)}
+                  onClick={() => { setDecisionNote(''); setReviewError(''); setIsApproveOpen(true); }}
                 >
                   <CheckCircle2 size={16} /> Duyệt bài viết (Công khai)
                 </button>
@@ -218,7 +225,7 @@ export default function StaffCommunityModerationDetailPage() {
                   type="button"
                   className="p-button"
                   style={{ color: '#ea580c', borderColor: '#fdba74', padding: '10px' }}
-                  onClick={() => setIsChangesOpen(true)}
+                  onClick={() => { setDecisionNote(''); setReviewError(''); setIsChangesOpen(true); }}
                 >
                   <AlertCircle size={16} /> Yêu cầu chỉnh sửa
                 </button>
@@ -226,7 +233,7 @@ export default function StaffCommunityModerationDetailPage() {
                   type="button"
                   className="p-button"
                   style={{ color: '#ef4444', borderColor: '#fca5a5', padding: '10px' }}
-                  onClick={() => setIsRejectOpen(true)}
+                  onClick={() => { setDecisionNote(''); setReviewError(''); setIsRejectOpen(true); }}
                 >
                   <XCircle size={16} /> Từ chối bài viết
                 </button>
@@ -234,7 +241,7 @@ export default function StaffCommunityModerationDetailPage() {
             ) : (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#166534' }}>
                 <div style={{ fontSize: '24px', marginBottom: '4px' }}>✓</div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '700' }}>Bài viết đã được kiểm duyệt</h4>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '700' }}>{currentPost.status === 'NEED_CHANGES' ? 'Đang chờ tác giả chỉnh sửa và gửi lại' : 'Bài viết đã được kiểm duyệt'}</h4>
                 <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
                   Xử lý bởi: <strong>{currentPost.reviewedBy || 'Staff'}</strong>
                 </p>
@@ -249,15 +256,16 @@ export default function StaffCommunityModerationDetailPage() {
       {isApproveOpen && (
         <Modal
           isOpen={true}
-          onClose={() => setIsApproveOpen(false)}
+          onClose={() => { if (!busy) setIsApproveOpen(false); }}
           title="Xác nhận Duyệt bài viết"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {reviewError && <p role="alert" style={{ color: '#b91c1c' }}>{reviewError}</p>}
             <p style={{ margin: 0, fontSize: '14px', color: '#334155' }}>
               Bạn có chắc chắn muốn phê duyệt bài viết <strong>"{currentPost.title}"</strong> để xuất hiện công khai trên trang Cộng đồng?
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
-              <button type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
+              <button disabled={busy} type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
                 Hủy
               </button>
               <button
@@ -265,8 +273,9 @@ export default function StaffCommunityModerationDetailPage() {
                 className="p-button primary"
                 style={{ background: '#10b981', borderColor: '#10b981' }}
                 onClick={handleApprove}
+                disabled={busy}
               >
-                Đồng ý duyệt
+                {busy ? 'Đang lưu...' : 'Đồng ý duyệt'}
               </button>
             </div>
           </div>
@@ -277,7 +286,7 @@ export default function StaffCommunityModerationDetailPage() {
       {isChangesOpen && (
         <Modal
           isOpen={true}
-          onClose={() => setIsChangesOpen(false)}
+          onClose={() => { if (!busy) setIsChangesOpen(false); }}
           title="Yêu cầu chỉnh sửa bài viết"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -286,13 +295,17 @@ export default function StaffCommunityModerationDetailPage() {
             </p>
             <textarea
               rows={4}
+              aria-label="Hướng dẫn chỉnh sửa (10–2000 ký tự)"
+              maxLength={2000}
+              disabled={busy}
               placeholder="Nhập yêu cầu chỉnh sửa..."
               value={decisionNote}
               onChange={e => setDecisionNote(e.target.value)}
               style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
+            {reviewError && <p role="alert" style={{ color: '#b91c1c' }}>{reviewError}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
+              <button disabled={busy} type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
                 Hủy
               </button>
               <button
@@ -300,8 +313,9 @@ export default function StaffCommunityModerationDetailPage() {
                 className="p-button primary"
                 style={{ background: '#ea580c', borderColor: '#ea580c' }}
                 onClick={handleRequestChanges}
+                disabled={busy}
               >
-                Gửi yêu cầu chỉnh sửa
+                {busy ? 'Đang lưu...' : 'Gửi yêu cầu chỉnh sửa'}
               </button>
             </div>
           </div>
@@ -312,7 +326,7 @@ export default function StaffCommunityModerationDetailPage() {
       {isRejectOpen && (
         <Modal
           isOpen={true}
-          onClose={() => setIsRejectOpen(false)}
+          onClose={() => { if (!busy) setIsRejectOpen(false); }}
           title="Từ chối đăng bài viết"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -321,13 +335,17 @@ export default function StaffCommunityModerationDetailPage() {
             </p>
             <textarea
               rows={4}
+              aria-label="Lý do từ chối (10–2000 ký tự)"
+              maxLength={2000}
+              disabled={busy}
               placeholder="Nhập lý do từ chối..."
               value={decisionNote}
               onChange={e => setDecisionNote(e.target.value)}
               style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
+            {reviewError && <p role="alert" style={{ color: '#b91c1c' }}>{reviewError}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
+              <button disabled={busy} type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
                 Hủy
               </button>
               <button
@@ -335,8 +353,9 @@ export default function StaffCommunityModerationDetailPage() {
                 className="p-button primary"
                 style={{ background: '#ef4444', borderColor: '#ef4444' }}
                 onClick={handleReject}
+                disabled={busy}
               >
-                Xác nhận từ chối
+                {busy ? 'Đang lưu...' : 'Xác nhận từ chối'}
               </button>
             </div>
           </div>

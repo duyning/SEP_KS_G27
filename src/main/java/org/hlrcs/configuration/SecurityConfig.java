@@ -86,6 +86,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/posts").permitAll()
                         .requestMatchers(
                                 "/",
                                 "/index.html",

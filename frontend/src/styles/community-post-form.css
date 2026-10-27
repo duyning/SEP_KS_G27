@@ -1,0 +1,39 @@
+.community-post-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.community-post-form-grid > div { min-width: 0; }
+.community-post-form-hint,
+.community-post-form-error,
+.community-post-form-content,
+.community-post-form-row { grid-column: 1 / -1; }
+
+.community-post-form-hint { margin: 0; color: #64748b; font-size: 12px; line-height: 1.45; }
+.community-post-form-error { margin: 0; color: #b91c1c; font-size: 13px; }
+.community-post-form-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.community-post-form-grid textarea { display: block; height: 82px; min-height: 70px; max-height: 130px; resize: vertical; }
+.community-post-form-grid input,
+.community-post-form-grid select,
+.community-post-form-grid textarea { box-sizing: border-box; font: inherit; font-size: 14px; line-height: 1.35; }
+.community-post-form-grid small { display: block; font-size: 11px; line-height: 1.4; margin-top: 4px; }
+.community-post-form-grid [aria-invalid="true"] { border-color: #dc2626 !important; }
+
+.community-post-form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid #e2e8f0; background: #fff; }
+
+@media (max-width: 600px) {
+  .community-post-form-category,
+  .community-post-form-title { grid-column: 1 / -1; }
+  .community-post-form-grid { gap: 10px; }
+  .community-post-form-row { gap: 10px; }
+}
+
+@media (max-height: 740px) {
+  .community-post-form-grid { gap: 8px 14px; }
+  .community-post-form-grid textarea { height: 70px; }
+}

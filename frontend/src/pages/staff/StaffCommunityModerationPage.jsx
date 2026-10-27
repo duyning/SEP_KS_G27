@@ -11,15 +11,13 @@ import {
   Eye,
   FileText
 } from 'lucide-react';
-import DemoNoticeBanner from '../../components/common/DemoNoticeBanner.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 import Pagination from '../../components/common/Pagination.jsx';
-import { MOCK_COMMUNITY_POSTS } from '../../fixtures/mockCommunityData.js';
-import { useToast } from '../../components/PortalUI.jsx';
+import { useCommunityLoad } from '../../components/CommunityUI.jsx';
 
 export default function StaffCommunityModerationPage() {
-  const notify = useToast();
-  const [posts, setPosts] = useState(MOCK_COMMUNITY_POSTS);
+  const state = useCommunityLoad('moderation');
+  const posts = state.data || [];
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -40,7 +38,8 @@ export default function StaffCommunityModerationPage() {
     return posts
       .filter(item => {
         if (categoryFilter !== 'ALL' && item.type !== categoryFilter) return false;
-        if (statusFilter !== 'ALL' && item.status !== statusFilter) return false;
+        if (statusFilter === 'PROCESSED' && !['APPROVED', 'REJECTED'].includes(item.status)) return false;
+        if (!['ALL', 'PROCESSED'].includes(statusFilter) && item.status !== statusFilter) return false;
         if (search) {
           const q = search.toLowerCase();
           const matchTitle = item.title?.toLowerCase().includes(q);
@@ -57,13 +56,15 @@ export default function StaffCommunityModerationPage() {
   }, [posts, categoryFilter, statusFilter, search, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPosts.length / pageSize));
-  const paginatedItems = filteredPosts.slice((page - 1) * pageSize, page * pageSize);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedItems = filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  if (state.loading) return <p role="status">Đang tải danh sách bài viết...</p>;
+  if (state.error) return <div role="alert"><p>{state.error}</p><button className="p-button" onClick={state.reload}>Thử lại</button></div>;
 
   return (
     <div className="portal-page-container staff-content">
-      <DemoNoticeBanner
-        message="Kiểm duyệt bài viết cộng đồng trước khi công khai. Chỉ các bài viết Đã duyệt mới xuất hiện trên trang người thuê."
-      />
+      <p style={{ color: '#64748b', fontSize: 13 }}>Chỉ các bài viết đã duyệt mới xuất hiện công khai. Mỗi quyết định được lưu vào lịch sử kiểm duyệt.</p>
 
       {/* Header */}
       <section className="dashboard-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -76,10 +77,7 @@ export default function StaffCommunityModerationPage() {
         <button
           type="button"
           className="p-button"
-          onClick={() => {
-            setPosts(MOCK_COMMUNITY_POSTS);
-            notify('Đã làm mới danh sách bài viết cộng đồng', 'info');
-          }}
+          onClick={state.reload}
         >
           <RotateCcw size={15} /> Làm mới
         </button>
@@ -142,8 +140,8 @@ export default function StaffCommunityModerationPage() {
           className="kpi-card"
           tabIndex={0}
           role="button"
-          style={{ background: '#fff', border: statusFilter === 'APPROVED' ? '2px solid #10b981' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
-          onClick={() => { setStatusFilter('APPROVED'); setPage(1); }}
+          style={{ background: '#fff', border: statusFilter === 'PROCESSED' ? '2px solid #10b981' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
+          onClick={() => { setStatusFilter('PROCESSED'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Đã xử lý</span>
@@ -210,6 +208,7 @@ export default function StaffCommunityModerationPage() {
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">Chờ kiểm duyệt</option>
               <option value="NEED_CHANGES">Cần chỉnh sửa</option>
+              <option value="PROCESSED">Đã xử lý (duyệt / từ chối)</option>
               <option value="APPROVED">Đã phê duyệt</option>
               <option value="REJECTED">Đã từ chối</option>
             </select>
@@ -289,7 +288,7 @@ export default function StaffCommunityModerationPage() {
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td style={{ padding: '14px' }}>
-                      <StatusBadge status={item.status}>{item.statusLabel}</StatusBadge>
+                      <StatusBadge status={item.status} label={item.statusLabel} />
                     </td>
                     <td style={{ padding: '14px', textAlign: 'right' }}>
                       <Link
@@ -310,7 +309,7 @@ export default function StaffCommunityModerationPage() {
         {/* Pagination */}
         <div style={{ marginTop: '16px' }}>
           <Pagination
-            currentPage={page}
+            currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setPage}
             totalItems={filteredPosts.length}
