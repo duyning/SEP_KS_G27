@@ -72,7 +72,7 @@ CREATE TABLE `property_registrations` (
     `address` VARCHAR(500) NULL,
     `contact_info` VARCHAR(255) NULL,
     `google_map_link` VARCHAR(500) NULL,
-    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED',
+    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, NEED_CHANGES, APPROVED, REJECTED',
     `reviewed_by` INT NULL,
     `reason_note` TEXT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -228,6 +228,9 @@ CREATE TABLE `post_media` (
     `post_id` INT NOT NULL,
     `media_type` VARCHAR(50) NOT NULL COMMENT 'IMAGE, VIDEO',
     `media_url` VARCHAR(500) NOT NULL,
+    `file_name` VARCHAR(200) NULL,
+    `content_type` VARCHAR(255) NULL,
+    `file_content` LONGBLOB NULL,
     CONSTRAINT `fk_pm_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`post_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

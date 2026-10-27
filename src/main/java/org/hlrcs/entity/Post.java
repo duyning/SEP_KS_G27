@@ -54,7 +54,8 @@ public class Post {
     private String reviewNote;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false, length = 50)
     private PostStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)

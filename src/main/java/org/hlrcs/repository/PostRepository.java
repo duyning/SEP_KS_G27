@@ -22,4 +22,24 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Post p where p.postId = :id")
     Optional<Post> findForReview(@Param("id") Integer id);
+
+    @Modifying
+    @Query("delete from Comment c where c.post.postId = :id")
+    void deleteCommentsForPost(@Param("id") Integer id);
+
+    @Modifying
+    @Query("delete from PostMedia m where m.post.postId = :id")
+    void deleteMediaForPost(@Param("id") Integer id);
+
+    @Modifying
+    @Query("delete from RoommatePostDetail d where d.postId = :id")
+    void deleteRoommateDetailForPost(@Param("id") Integer id);
+
+    @Modifying
+    @Query("delete from PassRoomPostDetail d where d.postId = :id")
+    void deleteRoomTransferDetailForPost(@Param("id") Integer id);
+
+    @Modifying
+    @Query("delete from PassItemPostDetail d where d.postId = :id")
+    void deleteItemDetailForPost(@Param("id") Integer id);
 }

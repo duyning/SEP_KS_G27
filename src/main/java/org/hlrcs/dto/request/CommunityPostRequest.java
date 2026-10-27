@@ -2,6 +2,7 @@ package org.hlrcs.dto.request;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 /** The fields exposed by the existing community form; identity/status come from the server. */
 public record CommunityPostRequest(
@@ -26,7 +27,11 @@ public record CommunityPostRequest(
         String authorName,
         @NotBlank(message = "Vui lòng nhập số điện thoại liên hệ.")
         @Pattern(regexp = "(?:0|\\+84)[35789]\\d{8}", message = "Số điện thoại Việt Nam không hợp lệ (ví dụ 0912345678 hoặc +84912345678).")
-        String authorPhone
+        String authorPhone,
+        @Size(max = 6, message = "Mỗi bài viết được tối đa 6 ảnh.")
+        List<@NotNull @Positive Integer> retainedImageIds,
+        @Size(max = 1, message = "Mỗi bài viết được tối đa 1 video.")
+        List<@NotNull @Positive Integer> retainedVideoIds
 ) {
     public CommunityPostRequest {
         type = clean(type);

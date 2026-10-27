@@ -41,6 +41,10 @@ export function editPostPrice(previous, raw, caret = raw.length) {
 
 export function hasPostDraftChanges(values, initial, editing = false) {
   if (!initial) return false;
+  if (values.photos?.length) return true;
+  if (values.videos?.length) return true;
+  if (values.retainedImageIds && JSON.stringify(values.retainedImageIds) !== JSON.stringify(initial.retainedImageIds || [])) return true;
+  if (values.retainedVideoIds && JSON.stringify(values.retainedVideoIds) !== JSON.stringify(initial.retainedVideoIds || [])) return true;
   if (values.type !== initial.type) return true;
   return ['title', 'content', 'price', 'location', 'authorName', 'authorPhone'].some(field => {
     const current = String(values[field] ?? '');
@@ -82,6 +86,8 @@ export function postPayload(values) {
     type: values.type, title: clean(values.title), content: clean(values.content),
     price: parsePostPrice(values.price), location: clean(values.location),
     authorName: clean(values.authorName), authorPhone: clean(values.authorPhone).replace(/[\s.-]/g, ''),
+    ...(values.retainedImageIds ? { retainedImageIds: values.retainedImageIds } : {}),
+    ...(values.retainedVideoIds ? { retainedVideoIds: values.retainedVideoIds } : {}),
   };
 }
 
@@ -91,8 +97,16 @@ function post(data) {
       || !(data.price === null || typeof data.price === 'number' && Number.isFinite(data.price) && data.price >= 0)) {
     throw new ApiError('Phản hồi bài viết không hợp lệ. Vui lòng tải lại.', 502);
   }
+  const images = data.images ?? [];
+  if (!Array.isArray(images) || images.some(image => !image || !Number.isInteger(image.id) || image.id < 1 || typeof image.fileName !== 'string')) {
+    throw new ApiError('Danh sách ảnh bài viết không hợp lệ.', 502);
+  }
+  const videos = data.videos ?? [];
+  if (!Array.isArray(videos) || videos.length > 1 || videos.some(video => !video || !Number.isInteger(video.id) || video.id < 1 || typeof video.fileName !== 'string')) {
+    throw new ApiError('Danh sách video bài viết không hợp lệ.', 502);
+  }
   const suffix = data.type === 'SECOND_HAND' ? ' đ' : data.type === 'ROOMMATE' ? ' đ/người/tháng' : ' đ/tháng';
-  return { ...data, typeLabel: postTypes[data.type], statusLabel: postStatuses[data.status],
+  return { ...data, images, videos, typeLabel: postTypes[data.type], statusLabel: postStatuses[data.status],
     priceDisplay: data.price === null ? 'Thỏa thuận' : `${new Intl.NumberFormat('vi-VN').format(data.price)}${suffix}` };
 }
 
@@ -117,11 +131,21 @@ export const communityApi = {
     return posts;
   },
   async mine(signal) { return list(await request('/mine', { basePath, signal })); },
-  async submit(data, signal, postId = null) {
-    const saved = post(await request(postId == null ? '' : `/${id(postId)}`, { basePath, method: postId == null ? 'POST' : 'PUT', body: data, signal }));
+  async remove(postId, signal) { return request(`/${id(postId)}`, { basePath, method: 'DELETE', signal }); },
+  async submit(data, signal, postId = null, photos = [], videos = []) {
+    let body = data;
+    if (photos.length || videos.length) {
+      body = new FormData();
+      body.append('details', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+      for (const photo of photos) body.append('photos', photo, photo.name);
+      for (const video of videos) body.append('videos', video, video.name);
+    }
+    const saved = post(await request(postId == null ? '' : `/${id(postId)}`, { basePath, method: postId == null ? 'POST' : 'PUT', body, signal }));
     if (saved.status !== 'PENDING') throw new ApiError('Chưa xác nhận được trạng thái chờ duyệt. Vui lòng kiểm tra Bài viết của tôi.', 502);
     return saved;
   },
+  async image(postId, imageId, signal) { return request(`/${id(postId)}/images/${id(imageId)}`, { basePath, signal, responseType: 'blob' }); },
+  async video(postId, videoId, signal) { return request(`/${id(postId)}/videos/${id(videoId)}`, { basePath, signal, responseType: 'blob' }); },
   async moderation(signal) { return list(await request('', { basePath: staffPath, signal })); },
   async detail(signal, postId) { return detail(await request(`/${id(postId)}`, { basePath: staffPath, signal })); },
   async review(postId, decision, note, signal) {

@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,8 @@ public class CommunityService {
     private final PostRepository posts;
     private final ModerationLogRepository logs;
     private final AuthService auth;
+    private final CommunityImageService images;
+    private final CommunityVideoService videos;
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> published() {
@@ -38,13 +42,38 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostResponse submit(CommunityPostRequest request) {
+        return submit(request, List.of());
+    }
+
+    @Transactional
+    public CommunityPostResponse submit(CommunityPostRequest request, List<org.springframework.web.multipart.MultipartFile> photos) {
+        return submit(request, photos, List.of());
+    }
+
+    @Transactional
+    public CommunityPostResponse submit(CommunityPostRequest request, List<org.springframework.web.multipart.MultipartFile> photos,
+                                        List<org.springframework.web.multipart.MultipartFile> clips) {
         Post post = Post.builder().author(auth.getCurrentUser()).status(PostStatus.PENDING).build();
         apply(post, request);
+        posts.saveAndFlush(post);
+        images.replace(post, request.retainedImageIds(), photos);
+        videos.replace(post, request.retainedVideoIds(), clips);
         return response(posts.saveAndFlush(post), true);
     }
 
     @Transactional
     public CommunityPostResponse resubmit(Integer id, CommunityPostRequest request) {
+        return resubmit(id, request, List.of());
+    }
+
+    @Transactional
+    public CommunityPostResponse resubmit(Integer id, CommunityPostRequest request, List<org.springframework.web.multipart.MultipartFile> photos) {
+        return resubmit(id, request, photos, List.of());
+    }
+
+    @Transactional
+    public CommunityPostResponse resubmit(Integer id, CommunityPostRequest request, List<org.springframework.web.multipart.MultipartFile> photos,
+                                          List<org.springframework.web.multipart.MultipartFile> clips) {
         Post post = locked(id);
         if (!post.getAuthor().getUserId().equals(auth.getCurrentUser().getUserId())) {
             throw new ResourceNotFoundException("Không tìm thấy bài viết của bạn.");
@@ -52,12 +81,34 @@ public class CommunityService {
         if (post.getStatus() != PostStatus.NEED_CHANGES) {
             throw new AppException("Chỉ được sửa và gửi lại bài đang được yêu cầu chỉnh sửa.", HttpStatus.CONFLICT);
         }
+        if (!hasRevisionChanges(post, request, photos, clips)) {
+            throw new BadRequestException("Bạn cần chỉnh sửa nội dung hoặc tệp đính kèm theo yêu cầu của nhân viên trước khi gửi lại.");
+        }
         apply(post, request);
+        images.replace(post, request.retainedImageIds(), photos);
+        videos.replace(post, request.retainedVideoIds(), clips);
         post.setStatus(PostStatus.PENDING);
         post.setReviewer(null);
         post.setReviewedAt(null);
         post.setReviewNote(null);
         return response(posts.saveAndFlush(post), true);
+    }
+
+    @Transactional
+    public void delete(Integer id) {
+        Post post = locked(id);
+        if (!post.getAuthor().getUserId().equals(auth.getCurrentUser().getUserId())) {
+            throw new ResourceNotFoundException("Không tìm thấy bài viết của bạn.");
+        }
+        // Use the same lock as moderation; authors may delete in every status.
+        // Remove dependent rows even in databases created by Hibernate without ON DELETE CASCADE.
+        posts.deleteCommentsForPost(id);
+        posts.deleteMediaForPost(id);
+        posts.deleteRoommateDetailForPost(id);
+        posts.deleteRoomTransferDetailForPost(id);
+        posts.deleteItemDetailForPost(id);
+        posts.delete(post);
+        posts.flush();
     }
 
     @Transactional(readOnly = true)
@@ -107,6 +158,26 @@ public class CommunityService {
         return posts.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết."));
     }
 
+    private boolean hasRevisionChanges(Post post, CommunityPostRequest request,
+                                       List<org.springframework.web.multipart.MultipartFile> photos,
+                                       List<org.springframework.web.multipart.MultipartFile> clips) {
+        if (photos != null && !photos.isEmpty() || clips != null && !clips.isEmpty()) return true;
+        String type = switch (post.getPostType()) { case PASS_ROOM -> "ROOM_TRANSFER"; case ROOMMATE -> "ROOMMATE"; case PASS_ITEM -> "SECOND_HAND"; };
+        boolean samePrice = post.getPrice() == null ? request.price() == null
+                : request.price() != null && post.getPrice().compareTo(request.price()) == 0;
+        if (!type.equals(request.type()) || !Objects.equals(post.getTitle(), request.title())
+                || !Objects.equals(post.getDescription(), request.content()) || !samePrice
+                || !Objects.equals(post.getLocation(), request.location()) || !Objects.equals(post.getContactName(), request.authorName())
+                || !Objects.equals(post.getContactPhone(), request.authorPhone())) return true;
+        var imageIds = images.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
+        var videoIds = videos.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
+        return retainedChanged(request.retainedImageIds(), imageIds) || retainedChanged(request.retainedVideoIds(), videoIds);
+    }
+
+    private boolean retainedChanged(List<Integer> requested, List<Integer> existing) {
+        return requested != null && (requested.size() != existing.size() || !new HashSet<>(requested).equals(new HashSet<>(existing)));
+    }
+
     private void apply(Post post, CommunityPostRequest request) {
         if (request.price() != null && request.price().signum() == 0 && !"SECOND_HAND".equals(request.type())) {
             throw new FieldValidationException("price", "Giá thuê phải lớn hơn 0; để trống nếu thỏa thuận.");
@@ -141,6 +212,6 @@ public class CommunityService {
                 post.getContactPhone(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,
                 privateView && post.getReviewer() != null ? post.getReviewer().getFullName() : null,
-                privateView ? post.getReviewedAt() : null);
+                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()));
     }
 }

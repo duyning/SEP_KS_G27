@@ -32,6 +32,46 @@ test('closing only warns for remaining draft changes, not erased input or price 
   assert.equal(hasPostDraftChanges({ ...existing, price: '120000' }, existing, true), false);
   assert.equal(hasPostDraftChanges({ ...existing, title: '' }, existing, true), true);
   assert.equal(hasPostDraftChanges({ ...existing }, existing, true), false);
+  assert.equal(hasPostDraftChanges({ ...initial, photos: [new File(['photo'], 'a.png')] }, initial), true);
+  assert.equal(hasPostDraftChanges({ ...initial, photos: [], retainedImageIds: [] }, initial), false);
+  assert.equal(hasPostDraftChanges({ ...existing, retainedImageIds: [] }, { ...existing, retainedImageIds: [4] }, true), true);
+  assert.equal(hasPostDraftChanges({ ...initial, videos: [new File(['video'], 'a.mp4')] }, initial), true);
+  assert.equal(hasPostDraftChanges({ ...existing, retainedVideoIds: [] }, { ...existing, retainedVideoIds: [5] }, true), true);
+});
+
+test('submission sends photos as multipart and preserves retained image IDs on edits', async () => {
+  const photo = new File(['image-content'], 'test.png', { type: 'image/png' });
+  const values = { ...valid, retainedImageIds: [3] };
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12');
+    assert.equal(options.method, 'PUT');
+    assert.equal(options.headers['Content-Type'], undefined, 'Browser must choose the multipart boundary');
+    assert.ok(options.body instanceof FormData);
+    assert.deepEqual(JSON.parse(await options.body.get('details').text()), postPayload(values));
+    assert.equal(options.body.getAll('photos').length, 1);
+    assert.equal(options.body.get('photos').name, 'test.png');
+    return reply({ ...saved, images: [{ id: 3, fileName: 'test.png' }] });
+  };
+  assert.equal((await communityApi.submit(postPayload(values), undefined, 12, [photo])).images[0].id, 3);
+});
+
+test('video-only and mixed submissions use multipart videos and preserve video IDs', async () => {
+  const video = new File(['video-content'], 'clip.mp4', { type: 'video/mp4' });
+  const photo = new File(['photo'], 'photo.png', { type: 'image/png' });
+  for (const photos of [[], [photo]]) {
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, '/api/community/posts');
+      assert.equal(options.method, 'POST');
+      assert.ok(options.body instanceof FormData);
+      assert.equal(options.headers['Content-Type'], undefined);
+      assert.equal(options.body.getAll('videos').length, 1);
+      assert.equal(options.body.get('videos').name, 'clip.mp4');
+      assert.equal(options.body.getAll('photos').length, photos.length);
+      assert.deepEqual(JSON.parse(await options.body.get('details').text()).retainedVideoIds, []);
+      return reply({ ...saved, videos: [{ id: 8, fileName: 'clip.mp4' }] });
+    };
+    assert.equal((await communityApi.submit(postPayload({ ...valid, retainedVideoIds: [] }), undefined, null, photos, [video])).videos[0].id, 8);
+  }
 });
 
 test('VND parsing accepts whole grouped amounts without silently altering decimals', () => {
@@ -112,4 +152,23 @@ test('author resubmission and staff reviews use the actual record and preserve s
   for (const id of [null, 'abc', '0', '-1', 'POST-2026-001']) await assert.rejects(communityApi.detail(undefined, id), error => error.status === 400);
   globalThis.fetch = async () => new Response(JSON.stringify({ success: false, message: 'Invalid', data: { authorPhone: 'SĐT không hợp lệ.' } }), { status: 400 });
   await assert.rejects(communityApi.submit(postPayload(valid)), error => error.fields.authorPhone === 'SĐT không hợp lệ.');
+});
+
+test('deletion uses the authenticated post endpoint and propagates denied or failed requests', async () => {
+  const controller = new AbortController();
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12');
+    assert.equal(options.method, 'DELETE');
+    assert.equal(options.headers.Authorization, 'Bearer user-token');
+    assert.equal(options.signal, controller.signal);
+    assert.equal(options.body, undefined);
+    return reply(null);
+  };
+  assert.equal(await communityApi.remove(12, controller.signal), null);
+  globalThis.fetch = async () => { throw new Error('Invalid IDs must not issue requests'); };
+  for (const id of [null, 'abc', '0', '-1']) await assert.rejects(communityApi.remove(id), error => error.status === 400);
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: false, message: 'Không tìm thấy bài viết của bạn.' }), { status: 404 });
+  await assert.rejects(communityApi.remove(12), error => error.status === 404 && error.message === 'Không tìm thấy bài viết của bạn.');
+  globalThis.fetch = async () => { throw new TypeError('Network unavailable'); };
+  await assert.rejects(communityApi.remove(12), error => error.status === 0);
 });
