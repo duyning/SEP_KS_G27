@@ -141,7 +141,46 @@ File `config/mysql-local.properties` la tuy chon va chi dung tren may; khong com
 User MySQL can quyen truy cap va cap nhat cac bang trong database hlrcs.
 Ket noi thanh cong hay khong phu thuoc thong tin tai khoan MySQL tren may.
 
+### MySQL local da thiet lap tren may nay
+
+MySQL Community Server 8.4.13 duoc cai rieng trong `.local/mysql-8.4.13-winx64/`.
+Du lieu nam trong `.local/mysql-data/`; toan bo `.local/` duoc Git bo qua.
+Khong xoa thu muc nay neu can giu database. Ban cai nay chi lang nghe tren `127.0.0.1:3306`,
+khong cai Windows Service va can bat lai sau khi khoi dong Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-mysql.ps1
+```
+
+De bat ca MySQL va backend bang mot lenh:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-local.ps1
+```
+
+Script tim JDK 17+ tren may va dung thu muc `.local/java-tmp/` cho Java Unix socket,
+tranh loi loopback khi chay tu moi truong ung dung Windows dong goi.
+Hoac chay backend bang cau hinh IntelliJ `HL-RCS MySQL (Maven)` sau khi da bat MySQL.
+Database la `hlrcs`, user ung dung la `hlrcs_app`; mat khau ngau nhien duoc luu trong
+`config/mysql-local.properties` tai `DB_PASSWORD`. JWT secret cung nam trong file nay.
+Day la database local moi; backend tu tao bang va tai khoan demo khi khoi dong.
+
+De ket noi Workbench, tao ket noi TCP/IP toi `127.0.0.1`, port `3306`, user `hlrcs_app`,
+default schema `hlrcs`, va nhap mat khau `DB_PASSWORD` tu file local.
+Tai khoan `root` co mat khau rieng trong `.local/mysql-admin.cnf`, khong dung cho backend.
+
+De tat MySQL sau khi da dung backend:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\stop-local-mysql.ps1
+```
+
+Binary va mat khau local khong duoc commit. Tren may khac, can cai MySQL Server va tao
+file cau hinh local theo huong dan ben tren.
+
 ## Build va kiem thu
+
+Chuc nang danh sach nha tro cong khai: xem [API, dieu kien hien thi va kiem thu](docs/accommodations.md).
 
 Tu thu muc chua pom.xml:
 

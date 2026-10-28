@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { paginationRange } from '../../services/pagination.js';
 
 export default function Pagination({
   currentPage = 1,
@@ -53,7 +54,7 @@ export default function Pagination({
           <ChevronLeft size={16} />
         </button>
 
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+        {paginationRange(currentPage, totalPages).map((p) => typeof p === 'string' ? <span key={p} aria-hidden="true">…</span> : (
           <button
             key={p}
             type="button"

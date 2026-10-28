@@ -12,8 +12,8 @@ export function saveToken(token, remember) {
 export class ApiError extends Error {
   constructor(message, status, fields) { super(message); this.status = status; this.fields = fields || {}; }
 }
-export async function request(path, { method = 'GET', body, signal, basePath = '/api/auth', responseType = 'json' } = {}) {
-  const token = getToken();
+export async function request(path, { method = 'GET', body, signal, basePath = '/api/auth', responseType = 'json', authenticated = true } = {}) {
+  const token = authenticated ? getToken() : null;
   const multipart = typeof FormData !== 'undefined' && body instanceof FormData;
   let response;
   try {
