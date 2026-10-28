@@ -8,6 +8,7 @@ import org.hlrcs.entity.enums.PostStatus;
 import org.hlrcs.entity.enums.PostType;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "posts")
@@ -37,8 +38,24 @@ public class Post {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "price", precision = 12, scale = 0)
+    private BigDecimal price;
+
+    @Column(name = "location", length = 255)
+    private String location;
+
+    @Column(name = "contact_name", length = 100)
+    private String contactName;
+
+    @Column(name = "contact_phone", length = 20)
+    private String contactPhone;
+
+    @Column(name = "review_note", length = 2000)
+    private String reviewNote;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false, length = 50)
     private PostStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)

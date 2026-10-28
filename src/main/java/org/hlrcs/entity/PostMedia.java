@@ -28,4 +28,13 @@ public class PostMedia {
 
     @Column(name = "media_url", nullable = false)
     private String mediaUrl;
+
+    @Column(length = 200)
+    private String fileName;
+
+    private String contentType;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] fileContent;
 }

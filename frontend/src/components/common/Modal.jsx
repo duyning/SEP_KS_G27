@@ -3,15 +3,17 @@ import { X } from 'lucide-react';
 import { motion, useIsPresent } from 'motion/react';
 import { AnimatePresence, useSurfaceMotion } from '../motion/MotionUI.jsx';
 
-export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px' }) {
-  return <AnimatePresence propagate>{isOpen && <ModalBody {...{ title, onClose, children, maxWidth }} />}</AnimatePresence>;
+export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px', closeOnBackdrop = true, closeOnEscape = true, className = '', footer }) {
+  return <AnimatePresence propagate>{isOpen && <ModalBody {...{ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer }} />}</AnimatePresence>;
 }
 
-function ModalBody({ title, onClose, children, maxWidth }) {
+function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer }) {
   const titleId = useId();
   const overlayRef = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const escapeRef = useRef(closeOnEscape);
+  escapeRef.current = closeOnEscape;
   const present = useIsPresent();
   const surface = useSurfaceMotion();
 
@@ -22,7 +24,7 @@ function ModalBody({ title, onClose, children, maxWidth }) {
     const focusable = () => [...overlay.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length);
     focusable()[0]?.focus({ preventScroll: true });
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && escapeRef.current) {
         e.preventDefault();
         closeRef.current?.();
       }
@@ -46,14 +48,14 @@ function ModalBody({ title, onClose, children, maxWidth }) {
   return (
     <div
       ref={overlayRef}
-      className="modal-overlay"
+      className={`modal-overlay ${className}`.trim()}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
       inert={!present || undefined}
       aria-hidden={!present || undefined}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose?.();
+        if (closeOnBackdrop && e.target === overlayRef.current) onClose?.();
       }}
       style={{
         position: 'fixed',
@@ -92,6 +94,7 @@ function ModalBody({ title, onClose, children, maxWidth }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexShrink: 0,
           }}
         >
           <h3 id={titleId} style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
@@ -117,9 +120,10 @@ function ModalBody({ title, onClose, children, maxWidth }) {
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body" style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+        <div className="modal-body" style={{ padding: '20px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {children}
         </div>
+        {footer && <div className="modal-footer" style={{ flexShrink: 0 }}>{footer}</div>}
       </motion.div>
     </div>
   );

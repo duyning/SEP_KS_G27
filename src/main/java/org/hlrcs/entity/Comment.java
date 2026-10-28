@@ -7,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "comments", indexes = @Index(name = "idx_comment_thread", columnList = "post_id,parent_comment_id,created_at,comment_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,6 +30,16 @@ public class Comment {
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    // Replies are grouped under one root; replyToId keeps the actual reply target.
+    @Column(name = "parent_comment_id")
+    private Integer parentCommentId;
+
+    @Column(name = "reply_to_comment_id")
+    private Integer replyToCommentId;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

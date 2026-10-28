@@ -255,6 +255,9 @@ CREATE TABLE `post_media` (
     `post_id` INT NOT NULL,
     `media_type` VARCHAR(50) NOT NULL COMMENT 'IMAGE, VIDEO',
     `media_url` VARCHAR(500) NOT NULL,
+    `file_name` VARCHAR(200) NULL,
+    `content_type` VARCHAR(255) NULL,
+    `file_content` LONGBLOB NULL,
     CONSTRAINT `fk_pm_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`post_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -357,6 +360,10 @@ CREATE TABLE `comments` (
     `author_id` INT NOT NULL,
     `content` TEXT NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NULL,
+    `parent_comment_id` INT NULL,
+    `reply_to_comment_id` INT NULL,
+    INDEX `idx_comment_thread` (`post_id`, `parent_comment_id`, `created_at`, `comment_id`),
     CONSTRAINT `fk_cm_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`post_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_cm_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

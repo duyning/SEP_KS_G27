@@ -126,7 +126,7 @@ public class StaffService {
         }
         for (var row : reportRows) if (row.getStatus() == ReportStatus.PENDING) queue.add(new QueueItem("REPORT-" + row.getReportId(), "REPORT", "Báo cáo #" + row.getReportId(), row.getReporter().getFullName(), row.getReason(), row.getStatus().name(), row.getCreatedAt(), null));
         for (var row : supportRows) if (row.getStatus() != SupportStatus.COMPLETED) queue.add(new QueueItem("SUPPORT-" + row.getRequestId(), "SUPPORT", row.getRequestType(), row.getRequester().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));
-        for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));
+        for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), "/staff/community/detail?id=" + row.getPostId()));
         queue.sort(Comparator.comparing(QueueItem::createdAt, Comparator.nullsLast(Comparator.naturalOrder())));
         var activityRows = logs.findAllByOrderByCreatedAtDesc();
         long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
