@@ -106,7 +106,8 @@ function post(data) {
     throw new ApiError('Danh sách video bài viết không hợp lệ.', 502);
   }
   const suffix = data.type === 'SECOND_HAND' ? ' đ' : data.type === 'ROOMMATE' ? ' đ/người/tháng' : ' đ/tháng';
-  return { ...data, images, videos, typeLabel: postTypes[data.type], statusLabel: postStatuses[data.status],
+  if (data.commentCount != null && (!Number.isSafeInteger(data.commentCount) || data.commentCount < 0)) throw new ApiError('Số bình luận không hợp lệ.', 502);
+  return { ...data, commentCount: data.commentCount ?? 0, images, videos, typeLabel: postTypes[data.type], statusLabel: postStatuses[data.status],
     priceDisplay: data.price === null ? 'Thỏa thuận' : `${new Intl.NumberFormat('vi-VN').format(data.price)}${suffix}` };
 }
 
@@ -122,6 +123,15 @@ function detail(data) {
   if (!data || !Array.isArray(data.history) || typeof data.accountName !== 'string') throw new ApiError('Chi tiết kiểm duyệt không hợp lệ.', 502);
   return { ...data, post: post(data.post) };
 }
+function commentPage(result) {
+  if (!result || !Array.isArray(result.content) || !Number.isSafeInteger(result.totalElements) || result.totalElements < 0
+    || !Number.isInteger(result.page) || !Number.isInteger(result.totalPages)
+    || result.content.some(item => !item || !Number.isInteger(item.id) || typeof item.content !== 'string' || typeof item.authorName !== 'string')) {
+    throw new ApiError('Danh sách bình luận không hợp lệ.', 502);
+  }
+  return { ...result, commentCount: result.commentCount ?? result.totalElements,
+    content: result.content.map(item => ({ replyCount: 0, parentId: null, ...item })) };
+}
 const basePath = '/api/community/posts';
 const staffPath = '/api/staff/community/posts';
 export const communityApi = {
@@ -132,6 +142,19 @@ export const communityApi = {
   },
   async mine(signal) { return list(await request('/mine', { basePath, signal })); },
   async remove(postId, signal) { return request(`/${id(postId)}`, { basePath, method: 'DELETE', signal }); },
+  async comments(postId, page = 0, signal) {
+    return commentPage(await request(`/${id(postId)}/comments?page=${page}&size=20`, { basePath, signal }));
+  },
+  async addComment(postId, content, signal) { return request(`/${id(postId)}/comments`, { basePath, method: 'POST', body: { content }, signal }); },
+  async updateComment(postId, commentId, content, signal) {
+    return request(`/${id(postId)}/comments/${id(commentId)}`, { basePath, method: 'PUT', body: { content }, signal });
+  },
+  async replies(postId, commentId, page = 0, signal) {
+    return commentPage(await request(`/${id(postId)}/comments/${id(commentId)}/replies?page=${page}&size=20`, { basePath, signal }));
+  },
+  async reply(postId, commentId, content, signal) {
+    return request(`/${id(postId)}/comments/${id(commentId)}/replies`, { basePath, method: 'POST', body: { content }, signal });
+  },
   async submit(data, signal, postId = null, photos = [], videos = []) {
     let body = data;
     if (photos.length || videos.length) {

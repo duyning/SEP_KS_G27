@@ -26,18 +26,17 @@ public class CommunityService {
     private final AuthService auth;
     private final CommunityImageService images;
     private final CommunityVideoService videos;
+    private final CommentRepository comments;
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> published() {
         // No client-supplied status can broaden the public feed.
-        return posts.findByStatusOrderByCreatedAtDescPostIdDesc(PostStatus.APPROVED).stream()
-                .map(post -> response(post, false)).toList();
+        return responses(posts.findByStatusOrderByCreatedAtDescPostIdDesc(PostStatus.APPROVED), false);
     }
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> mine() {
-        return posts.findByAuthor_UserIdOrderByCreatedAtDescPostIdDesc(auth.getCurrentUser().getUserId())
-                .stream().map(post -> response(post, true)).toList();
+        return responses(posts.findByAuthor_UserIdOrderByCreatedAtDescPostIdDesc(auth.getCurrentUser().getUserId()), true);
     }
 
     @Transactional
@@ -113,7 +112,7 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> moderationList() {
-        return posts.findAllByOrderByCreatedAtDescPostIdDesc().stream().map(post -> response(post, true)).toList();
+        return responses(posts.findAllByOrderByCreatedAtDescPostIdDesc(), true);
     }
 
     @Transactional(readOnly = true)
@@ -197,6 +196,17 @@ public class CommunityService {
     }
 
     private CommunityPostResponse response(Post post, boolean privateView) {
+        return response(post, privateView, comments.countByPost_PostId(post.getPostId()));
+    }
+
+    private List<CommunityPostResponse> responses(List<Post> values, boolean privateView) {
+        if (values.isEmpty()) return List.of();
+        var counts = comments.countForPosts(values.stream().map(Post::getPostId).toList()).stream()
+                .collect(java.util.stream.Collectors.toMap(CommentRepository.PostCount::getPostId, CommentRepository.PostCount::getTotal));
+        return values.stream().map(post -> response(post, privateView, counts.getOrDefault(post.getPostId(), 0L))).toList();
+    }
+
+    private CommunityPostResponse response(Post post, boolean privateView, long commentCount) {
         String type = switch (post.getPostType()) {
             case PASS_ROOM -> "ROOM_TRANSFER";
             case ROOMMATE -> "ROOMMATE";
@@ -212,6 +222,6 @@ public class CommunityService {
                 post.getContactPhone(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,
                 privateView && post.getReviewer() != null ? post.getReviewer().getFullName() : null,
-                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()));
+                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()), commentCount);
     }
 }

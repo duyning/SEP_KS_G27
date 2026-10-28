@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, MapPin, Search, X, ImagePlus, Video, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../../services/community.js';
 import { PostFieldError, useCommunityLoad } from '../../components/CommunityUI.jsx';
@@ -8,12 +8,21 @@ import CommunityPostImage, { LocalPostImage } from '../../components/CommunityPo
 import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-images.js';
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
+import CommunityPostMedia from '../../components/CommunityPostMedia.jsx';
+import CommunityPostFooter from '../../components/CommunityPostFooter.jsx';
 import Modal from '../../components/common/Modal.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 import { useToast } from '../../components/PortalUI.jsx';
 import '../../styles/community-post-form.css';
+import '../../styles/community-feed.css';
+
+const feedCategories = [
+  ['ALL', 'Tất cả bài viết'], ['ROOM_TRANSFER', 'Nhượng phòng'],
+  ['ROOMMATE', 'Tìm người ở ghép'], ['SECOND_HAND', 'Đồ cũ sinh viên'],
+];
 
 export default function CommunityPage() {
+  const [search, setSearch] = useState('');
   const [params, setParams] = useSearchParams();
   const notify = useToast();
   const navigate = useNavigate();
@@ -147,9 +156,12 @@ export default function CommunityPage() {
     authorName, authorPhone, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
   }, initialDraft.current, true);
 
-  const filteredPosts = selectedCategory === 'ALL'
+  const categoryPosts = selectedCategory === 'ALL'
     ? posts
     : posts.filter((p) => p.type === selectedCategory);
+  const searchText = search.trim().toLocaleLowerCase('vi-VN');
+  const filteredPosts = categoryPosts.filter(post => !searchText ||
+    `${post.title} ${post.location || ''}`.toLocaleLowerCase('vi-VN').includes(searchText));
 
   const openForm = (post = null) => {
     if (!user) { navigate('/login', { state: { from: '/community' } }); return; }
@@ -276,10 +288,52 @@ export default function CommunityPage() {
     }
   };
 
+  useEffect(() => {
+    if (!isCreateModalOpen) return;
+    const dialog = document.querySelector('.community-post-modal .modal-container');
+    if (!dialog) return;
+    const previous = document.activeElement;
+    dialog.querySelector('#postType')?.focus();
+    const closeOtherRules = event => {
+      dialog.querySelectorAll('details[open]').forEach(details => {
+        if (!details.contains(event.target)) details.open = false;
+      });
+    };
+    const keyboard = event => {
+      if (event.key === 'Escape') {
+        dialog.querySelectorAll('details[open]').forEach(details => { details.open = false; });
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,a[href]')]
+        .filter(element => element.getClientRects().length > 0);
+      const first = focusable[0], last = focusable.at(-1);
+      if (!first) return;
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    dialog.addEventListener('click', closeOtherRules);
+    dialog.addEventListener('keydown', keyboard);
+    return () => {
+      dialog.removeEventListener('click', closeOtherRules);
+      dialog.removeEventListener('keydown', keyboard);
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [isCreateModalOpen]);
+
+  useEffect(() => {
+    if (!isCreateModalOpen || !Object.keys(errors).length) return;
+    const fields = { type: '#postType', title: '#postTitle', content: '#postContent', price: '#postPrice', location: '#postLocation',
+      authorName: '#authorName', authorPhone: '#authorPhone', images: '.community-post-form-images > button', videos: '.community-post-form-videos > button' };
+    document.querySelector(fields[Object.keys(errors)[0]])?.focus();
+  }, [errors, isCreateModalOpen]);
+
   return (
-    <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="community-feed-page">
       {/* Heading Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="community-feed-heading">
         <div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
             Cộng đồng Cư dân & Sinh viên Hòa Lạc
@@ -312,28 +366,30 @@ export default function CommunityPage() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <button className={`p-button ${!mine ? 'primary' : ''}`} onClick={() => setParams({})}>Bài viết công khai</button>
-        {user && <button className={`p-button ${mine ? 'primary' : ''}`} onClick={() => setParams({ view: 'mine' })}>Bài viết của tôi</button>}
+      <div className="community-feed-views" role="group" aria-label="Chế độ xem bài viết">
+        <button aria-pressed={!mine} className={`p-button ${!mine ? 'primary' : ''}`} onClick={() => setParams({})}>Bài viết công khai</button>
+        {user && <button aria-pressed={mine} className={`p-button ${mine ? 'primary' : ''}`} onClick={() => setParams({ view: 'mine' })}>Bài viết của tôi</button>}
         <button className="p-button" onClick={state.reload} disabled={state.loading}>Làm mới</button>
       </div>
-      <p style={{ color: '#64748b', fontSize: 13 }}>{mine ? 'Chỉ bạn nhìn thấy các bài đang chờ duyệt, cần chỉnh sửa hoặc bị từ chối của mình.' : 'Chỉ những bài đã được nhân viên phê duyệt mới hiển thị công khai.'}</p>
+      <p className="community-feed-hint">{mine ? 'Chỉ bạn nhìn thấy các bài đang chờ duyệt, cần chỉnh sửa hoặc bị từ chối của mình.' : 'Chỉ những bài đã được nhân viên phê duyệt mới hiển thị công khai.'}</p>
       {state.loading && <p role="status">Đang tải bài viết...</p>}
       {state.error && <p role="alert" style={{ color: '#b91c1c' }}>{state.error} <button className="p-button" onClick={state.reload}>Thử lại</button></p>}
 
+      <div className="community-feed-layout">
+      <div className="community-feed-main">
+      <div className="community-feed-results" aria-live="polite">
+        <strong>{state.loading ? 'Đang tải...' : `${filteredPosts.length} bài viết`}</strong>
+        <span>{feedCategories.find(([key]) => key === selectedCategory)?.[1] || 'Tất cả bài viết'}</span>
+      </div>
       {/* Category Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
-        {[
-          ['ALL', 'Tất cả bài viết'],
-          ['ROOM_TRANSFER', 'Nhượng phòng'],
-          ['ROOMMATE', 'Tìm người ở ghép'],
-          ['SECOND_HAND', 'Đồ cũ sinh viên'],
-        ].map(([key, label]) => {
+      <div className="community-feed-filters" role="group" aria-label="Lọc theo loại bài viết">
+        {feedCategories.map(([key, label]) => {
           const active = selectedCategory === key;
           return (
             <button
               key={key}
               type="button"
+              aria-pressed={active}
               onClick={() => setParams({ ...(mine ? { view: 'mine' } : {}), ...(key === 'ALL' ? {} : { category: key }) })}
               style={{
                 padding: '8px 18px',
@@ -354,25 +410,26 @@ export default function CommunityPage() {
       </div>
 
       {/* Posts Feed */}
-      {!state.loading && !state.error && !filteredPosts.length && <p>{mine ? 'Bạn chưa có bài viết nào trong chuyên mục này.' : 'Chưa có bài viết được duyệt trong chuyên mục này.'}</p>}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {!state.loading && !state.error && !filteredPosts.length && <section className="community-feed-empty" role="status">
+        <Search size={28} aria-hidden="true" />
+        <h2>{searchText ? 'Không tìm thấy bài phù hợp' : 'Chưa có bài viết'}</h2>
+        <p>{searchText ? <>Không có kết quả cho “{search.trim()}”. Hãy thử từ khóa ngắn hơn hoặc chọn chuyên mục khác.</>
+          : mine ? 'Bạn chưa có bài viết trong chuyên mục này.' : 'Chuyên mục này chưa có bài viết được duyệt.'}</p>
+        {(searchText || selectedCategory !== 'ALL') && <button className="p-button" type="button" onClick={() => { setSearch(''); setParams(mine ? { view: 'mine' } : {}); }}>Xóa bộ lọc</button>}
+      </section>}
+      <div className="community-feed-posts">
         {filteredPosts.map((post) => (
           <article
             key={post.id}
             id={`post-${post.id}`}
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '20px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
-            }}
+            className="community-feed-card"
           >
             {/* Post Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+            <div className="community-feed-card-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
                   width: '42px',
+                  flexShrink: 0,
                   height: '42px',
                   borderRadius: '50%',
                   backgroundColor: '#f1f5f9',
@@ -387,62 +444,43 @@ export default function CommunityPage() {
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{post.authorName}</div>
-                  <time dateTime={post.createdAt} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '12px', color: '#64748b' }}>
-                    <span>{new Date(post.createdAt).toLocaleTimeString('vi-VN')}</span>
+                  <time dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('vi-VN')} className="community-feed-time">
+                    <span>{new Date(post.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                     <span aria-hidden="true">•</span>
                     <span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
                   </time>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  backgroundColor: post.type === 'ROOM_TRANSFER' ? '#f0fdfa' : post.type === 'ROOMMATE' ? '#eff6ff' : '#fffbeb',
-                  color: post.type === 'ROOM_TRANSFER' ? '#0d9488' : post.type === 'ROOMMATE' ? '#1e40af' : '#b45309',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                }}>
-                  {post.typeLabel}
-                </span>
-                <StatusBadge status={post.status} label={post.statusLabel} />
+              <div className="community-feed-badges">
+                <span className="community-feed-category">{post.typeLabel}</span>
+                {mine && <StatusBadge status={post.status} label={post.statusLabel} />}
               </div>
             </div>
 
             {/* Post Content */}
-            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px' }}>
+            <div className={`community-feed-body${post.images?.length || post.videos?.length ? ' community-feed-body--media' : ''}`}>
+            <div className="community-feed-copy">
+            <h2 className="community-feed-title">
               {post.title}
-            </h3>
-            <p style={{ fontSize: '14px', color: '#334155', lineHeight: 1.6, margin: '0 0 14px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-              {post.content}
-            </p>
-
-            {/* Price Chip & Images */}
+            </h2>
+            <p className="community-feed-description">{post.content}</p>
+            <dl className="community-feed-facts">
             {post.priceDisplay && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#64748b' }}>Chi phí: </span>
-                <strong style={{ fontSize: '16px', color: '#0d9488' }}>{post.priceDisplay}</strong>
+              <div className="community-feed-price">
+                <dt>{post.type === 'SECOND_HAND' ? 'Giá bán' : post.type === 'ROOM_TRANSFER' ? 'Giá thuê' : 'Chi phí ở ghép'}</dt>
+                <dd>{post.priceDisplay}</dd>
               </div>
             )}
-
-            <div style={{ display: 'grid', gap: '6px', marginBottom: '16px', fontSize: '13px', color: '#64748b', overflowWrap: 'anywhere' }}>
-              {post.location && <div>Địa chỉ: <strong style={{ color: '#334155' }}>{post.location}</strong></div>}
-              {post.authorPhone && <div>Số điện thoại: <strong style={{ color: '#334155' }}>{post.authorPhone}</strong></div>}
+              {post.location && <div><dt>Địa chỉ</dt><dd><MapPin size={16} aria-hidden="true" /> {post.location}</dd></div>}
+              {post.authorPhone && <div><dt>Số điện thoại</dt><dd><a href={`tel:${post.authorPhone}`}>{post.authorPhone}</a></dd></div>}
+            </dl>
             </div>
 
-            {post.images?.length > 0 && (
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', overflowX: 'auto' }}>
-                {post.images.map(img => (
-                  <div key={img.id} style={{ width: 180, height: 130, flexShrink: 0, borderRadius: 10, overflow: 'hidden' }}>
-                    <CommunityPostImage postId={post.id} image={img} images={post.images} />
-                  </div>
-                ))}
-              </div>
-            )}
+            {(post.images?.length > 0 || post.videos?.length > 0) && <CommunityPostMedia post={post} />}
+            </div>
 
             {/* Post Footer Actions */}
-            {post.videos?.map(video => <div key={video.id} style={{ marginBottom: 16 }}><CommunityPostVideo postId={post.id} video={video} /></div>)}
             {mine && post.status === 'NEED_CHANGES' && <section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên">
               <strong>Nhân viên yêu cầu chỉnh sửa</strong>
               <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{post.decisionNote || 'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p>
@@ -450,38 +488,33 @@ export default function CommunityPage() {
               <p>Sửa bài theo yêu cầu rồi gửi lại. Bài chỉ công khai sau khi được nhân viên duyệt lại.</p>
               <button type="button" className="p-button primary" onClick={() => openForm(post)}>Chỉnh sửa và gửi duyệt lại</button>
             </section>}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              flexWrap: 'wrap',
-              gap: '12px',
-              paddingTop: '12px',
-              borderTop: '1px solid #f1f5f9',
-              fontSize: '13px',
-              color: '#64748b',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              {mine && <button
-                type="button"
-                className="p-button"
-                disabled={deleting}
-                onClick={() => { setPostToDelete(post); setDeleteError(''); }}
-                style={{ color: '#b91c1c', borderColor: '#fecaca', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              >
-                <Trash2 size={16} aria-hidden="true" /> Xóa bài viết
-              </button>}
-              {post.status === 'APPROVED' && <button
-                type="button"
-                onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/community#post-${post.id}`); notify?.('Đã sao chép liên kết bài viết', 'success'); } catch { notify?.('Không thể sao chép liên kết. Vui lòng thử lại.', 'error'); } }}
-                style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: 600, cursor: 'pointer' }}
-              >
-                Chia sẻ bài viết
-              </button>}
-              </div>
-            </div>
+            <CommunityPostFooter post={post} mine={mine} deleting={deleting}
+              onDelete={() => { setPostToDelete(post); setDeleteError(''); }} />
           </article>
         ))}
+      </div>
+      </div>
+      <aside className="community-feed-sidebar" aria-label="Bộ lọc và hướng dẫn cộng đồng">
+        <section className="community-feed-sidebar-panel">
+          <h2>Tìm bài phù hợp</h2>
+          <label htmlFor="community-feed-search">Tiêu đề hoặc khu vực</label>
+          <input id="community-feed-search" type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Ví dụ: Hòa Lạc, bàn học..." />
+          {(searchText || selectedCategory !== 'ALL') && <button type="button" className="community-feed-clear" onClick={() => { setSearch(''); setParams(mine ? { view: 'mine' } : {}); }}><X size={14} aria-hidden="true" /> Xóa bộ lọc</button>}
+          <h3>Chuyên mục</h3>
+          <div className="community-feed-quick-filters">
+            {feedCategories.map(([key, label]) => <button type="button" key={key} aria-pressed={selectedCategory === key}
+              onClick={() => setParams({ ...(mine ? { view: 'mine' } : {}), ...(key === 'ALL' ? {} : { category: key }) })}>
+              <span>{label}</span><span>{key === 'ALL' ? posts.length : posts.filter(post => post.type === key).length}</span>
+            </button>)}
+          </div>
+          <p>Số lượng tính trên danh sách {mine ? 'bài của bạn' : 'bài công khai'} đã tải.</p>
+        </section>
+        <section className="community-feed-sidebar-panel community-feed-guidance">
+          <h2>Đăng bài dễ được duyệt</h2>
+          <ul><li>Ghi rõ nhu cầu, mức giá và khu vực.</li><li>Dùng ảnh, video liên quan đến nội dung.</li><li>Cung cấp số điện thoại liên hệ chính xác.</li></ul>
+          <button type="button" className="p-button primary" onClick={() => openForm()}><Plus size={16} aria-hidden="true" /> Đăng bài viết</button>
+        </section>
+      </aside>
       </div>
 
       {postToDelete && (
@@ -506,26 +539,30 @@ export default function CommunityPage() {
       {/* Create Post Modal */}
       {isCreateModalOpen && (
         <Modal
-          title={editingId ? 'Chỉnh sửa và gửi duyệt lại' : 'Đăng bài viết mới vào Cộng đồng'}
+          title={editingId ? 'Chỉnh sửa bài viết' : 'Đăng bài viết mới'}
           onClose={requestCloseForm}
           closeOnBackdrop={false}
           closeOnEscape={false}
-          maxWidth="860px"
+          maxWidth="1160px"
           className="community-post-modal"
           footer={<div className="community-post-form-actions">
+            <span className="community-post-form-policy"><ShieldCheck size={16} aria-hidden="true" /> Bài viết sẽ được kiểm duyệt trước khi công khai.</span>
             <button type="button" className="p-button" disabled={busy || checkingMedia} onClick={requestCloseForm}>Hủy</button>
             <button type="submit" form="community-post-form" className="p-button primary" disabled={busy || checkingMedia || !revisionChanged}>{busy ? 'Đang gửi...' : checkingMedia ? 'Đang kiểm tra tệp...' : editingId ? 'Gửi lại để kiểm duyệt' : 'Gửi bài kiểm duyệt'}</button>
           </div>}
         >
           <form id="community-post-form" noValidate onSubmit={handleCreatePost}>
           <fieldset disabled={busy || checkingMedia} className="community-post-form-grid">
-            <p className="community-post-form-hint">Tiêu đề 10–200 ký tự; nội dung 30–5000 ký tự. Bài chỉ công khai sau khi được duyệt.</p>
+            <p className="community-post-form-hint">Điền thông tin bài viết và cách liên hệ. Các mục có dấu <strong>*</strong> là bắt buộc.</p>
             {editingId && <div className="community-revision-note" style={{ gridColumn: '1 / -1' }}>
               <strong>Yêu cầu từ nhân viên</strong>
               <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{revisionNote}</p>
               <small>Hãy chỉnh sửa nội dung hoặc tệp đính kèm, sau đó chọn “Gửi lại để kiểm duyệt”.</small>
             </div>}
             {submitError && <p className="community-post-form-error" role="alert">{submitError}</p>}
+            <div className="community-post-form-layout">
+              <section className="community-post-form-section community-post-form-main" aria-labelledby="post-content-heading">
+                <h4 id="post-content-heading">Nội dung bài viết</h4>
             <div className="community-post-form-category">
               <label htmlFor="postType" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Chuyên mục bài viết *
@@ -542,10 +579,9 @@ export default function CommunityPage() {
               </select>
               <PostFieldError name="type" errors={errors} />
             </div>
-
             <div className="community-post-form-title">
               <label htmlFor="postTitle" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Tiêu đề bài viết *
+                Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/200</span>
               </label>
               <input
                 id="postTitle"
@@ -561,10 +597,9 @@ export default function CommunityPage() {
               />
               <PostFieldError name="title" errors={errors} />
             </div>
-
             <div className="community-post-form-content">
               <label htmlFor="postContent" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Nội dung chi tiết *
+                Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/5.000</span>
               </label>
               <textarea
                 id="postContent"
@@ -579,49 +614,12 @@ export default function CommunityPage() {
                 style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
               <PostFieldError name="content" errors={errors} />
+              <small>Mô tả 30–5.000 ký tự; tiêu đề 10–200 ký tự.</small>
             </div>
-
-            <div className="community-post-form-images">
-              <label htmlFor="postImages" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Hình ảnh đính kèm (không bắt buộc) — {retainedImages.length + photos.length}/6 ảnh</label>
-              <input ref={imagePicker} id="postImages" type="file" multiple accept={POST_IMAGE_ACCEPT} onChange={addPhotos} style={{ display: 'none' }} />
-              <button type="button" className="p-button" onClick={() => imagePicker.current?.click()}
-                aria-invalid={Boolean(errors.images)} aria-describedby="post-images-help images-error">Chọn ảnh JPG/PNG</button>
-              <small id="post-images-help">Chấp nhận: JPG/JPEG (.jpg, .jpeg), PNG (.png). Tối đa 6 ảnh, 5 MB/ảnh; tối đa 20 megapixel và 10.000 px mỗi chiều.<br />Từ chối: WEBP, GIF, HEIC/HEIF, SVG, BMP, PDF, tệp rỗng/hỏng hoặc đổi đuôi giả. Video chọn ở mục bên dưới.</small>
-              {checkingImages && <p role="status">Đang kiểm tra ảnh...</p>}
-              <PostFieldError name="images" errors={errors} />
-              <div className="community-image-previews">
-                {retainedImages.map(image => <figure key={image.id}>
-                  <div><CommunityPostImage postId={editingId} image={image} images={retainedImages} /></div>
-                  <figcaption title={image.fileName}>{image.fileName}</figcaption>
-                  <button type="button" className="p-button" aria-label={`Bỏ ảnh ${image.fileName}`} onClick={() => { setRetainedImages(items => items.filter(item => item.id !== image.id)); setErrors(previous => ({ ...previous, images: undefined })); }}>Bỏ ảnh</button>
-                </figure>)}
-                {photos.map((file, index) => <figure key={`${file.name}-${file.size}-${file.lastModified}`}>
-                  <div><LocalPostImage file={file} /></div>
-                  <figcaption title={file.name}>{file.name}</figcaption>
-                  <button type="button" className="p-button" aria-label={`Bỏ ảnh ${file.name}`} onClick={() => { setPhotos(items => items.filter((_, position) => position !== index)); setErrors(previous => ({ ...previous, images: undefined })); }}>Bỏ ảnh</button>
-                </figure>)}
-              </div>
-            </div>
-
-            <div className="community-post-form-videos">
-              <label htmlFor="postVideos" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Video đính kèm (không bắt buộc) — {retainedVideos.length + videos.length}/1 video</label>
-              <input ref={videoPicker} id="postVideos" type="file" accept={POST_VIDEO_ACCEPT} onChange={addVideos} style={{ display: 'none' }} />
-              <button type="button" className="p-button" onClick={() => videoPicker.current?.click()} aria-invalid={Boolean(errors.videos)} aria-describedby="post-videos-help videos-error">Chọn video MP4</button>
-              <small id="post-videos-help">Chấp nhận: MP4 (.mp4), video H.264/AVC và âm thanh AAC (nếu có). Tối đa 1 video, 50 MB, dài hơn 0 giây và không quá 3 phút, Full HD (1920×1080 hoặc 1080×1920).<br />Từ chối: MOV, AVI, MKV, WEBM, HEVC/H.265, tệp rỗng/hỏng hoặc đổi đuôi giả.</small>
-              {checkingVideos && <p role="status">Đang kiểm tra video...</p>}
-              <PostFieldError name="videos" errors={errors} />
-              {retainedVideos.map(video => <figure className="community-video-preview" key={video.id}>
-                <CommunityPostVideo postId={editingId} video={video} />
-                <figcaption>{video.fileName}</figcaption>
-                <button type="button" className="p-button" aria-label={`Bỏ video ${video.fileName}`} onClick={() => { setRetainedVideos([]); setErrors(previous => ({ ...previous, videos: undefined })); }}>Bỏ video</button>
-              </figure>)}
-              {videos.map(file => <figure className="community-video-preview" key={`${file.name}-${file.lastModified}`}>
-                <LocalPostVideo file={file} />
-                <figcaption>{file.name}</figcaption>
-                <button type="button" className="p-button" aria-label={`Bỏ video ${file.name}`} onClick={() => { setVideos([]); setErrors(previous => ({ ...previous, videos: undefined })); }}>Bỏ video</button>
-              </figure>)}
-            </div>
-
+              </section>
+              <div className="community-post-form-sidebar">
+                <section className="community-post-form-section community-post-form-details" aria-labelledby="post-contact-heading">
+                  <h4 id="post-contact-heading">Giá & thông tin liên hệ</h4>
             <div className="community-post-form-row">
               <div>
                 <label htmlFor="postPrice" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
@@ -647,7 +645,7 @@ export default function CommunityPage() {
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
                 {priceImeActive && postPrice.trim() && !Number.isNaN(parsePostPrice(postPrice)) && <output htmlFor="postPrice" aria-live="polite" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0d9488', marginTop: 4 }}>Số tiền: {new Intl.NumberFormat('vi-VN').format(parsePostPrice(postPrice))} đ</output>}
-                <small id="price-help" style={{ color: '#64748b' }}>Số nguyên đồng; để trống nếu thỏa thuận. Đồ cũ có thể để 0 đồng.</small>
+                <small id="price-help" style={{ color: '#64748b' }}>Để trống nếu thỏa thuận.{postType === 'SECOND_HAND' ? ' Có thể để 0 đồng.' : ''}</small>
                 <PostFieldError name="price" errors={errors} />
               </div>
               <div>
@@ -669,7 +667,6 @@ export default function CommunityPage() {
                 <PostFieldError name="location" errors={errors} />
               </div>
             </div>
-
             <div className="community-post-form-row">
               <div>
                 <label htmlFor="authorName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
@@ -708,7 +705,55 @@ export default function CommunityPage() {
                 <PostFieldError name="authorPhone" errors={errors} />
               </div>
             </div>
-
+                </section>
+                <section className="community-post-form-section community-post-form-attachments" aria-labelledby="post-media-heading">
+                  <h4 id="post-media-heading">Ảnh & video <span>Không bắt buộc</span></h4>
+                  <div className="community-post-form-media-grid">
+            <div className="community-post-form-images">
+              <label htmlFor="postImages" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Hình ảnh <span>{retainedImages.length + photos.length}/6</span></label>
+              <input ref={imagePicker} id="postImages" type="file" multiple accept={POST_IMAGE_ACCEPT} onChange={addPhotos} style={{ display: 'none' }} />
+              <button type="button" className="p-button" onClick={() => imagePicker.current?.click()}
+                aria-invalid={Boolean(errors.images)} aria-describedby="post-images-help images-error"><ImagePlus size={19} aria-hidden="true" /> Chọn ảnh</button>
+              <small id="post-images-help">JPG/PNG · Tối đa 6 ảnh · 5 MB/ảnh</small>
+              <details className="community-post-file-rules"><summary>Định dạng & giới hạn</summary><div>Chấp nhận JPG/JPEG và PNG, tối đa 20 megapixel và 10.000 px mỗi chiều.<br />Từ chối WEBP, GIF, HEIC/HEIF, SVG, BMP, PDF, tệp rỗng/hỏng hoặc đổi đuôi giả.</div></details>
+              {checkingImages && <p role="status">Đang kiểm tra ảnh...</p>}
+              <PostFieldError name="images" errors={errors} />
+              <div className="community-image-previews">
+                {retainedImages.map(image => <figure key={image.id}>
+                  <div><CommunityPostImage postId={editingId} image={image} images={retainedImages} /></div>
+                  <figcaption title={image.fileName}>{image.fileName}</figcaption>
+                  <button type="button" className="p-button" aria-label={`Bỏ ảnh ${image.fileName}`} onClick={() => { setRetainedImages(items => items.filter(item => item.id !== image.id)); setErrors(previous => ({ ...previous, images: undefined })); }}>Bỏ ảnh</button>
+                </figure>)}
+                {photos.map((file, index) => <figure key={`${file.name}-${file.size}-${file.lastModified}`}>
+                  <div><LocalPostImage file={file} /></div>
+                  <figcaption title={file.name}>{file.name}</figcaption>
+                  <button type="button" className="p-button" aria-label={`Bỏ ảnh ${file.name}`} onClick={() => { setPhotos(items => items.filter((_, position) => position !== index)); setErrors(previous => ({ ...previous, images: undefined })); }}>Bỏ ảnh</button>
+                </figure>)}
+              </div>
+            </div>
+            <div className="community-post-form-videos">
+              <label htmlFor="postVideos" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Video <span>{retainedVideos.length + videos.length}/1</span></label>
+              <input ref={videoPicker} id="postVideos" type="file" accept={POST_VIDEO_ACCEPT} onChange={addVideos} style={{ display: 'none' }} />
+              <button type="button" className="p-button" onClick={() => videoPicker.current?.click()} aria-invalid={Boolean(errors.videos)} aria-describedby="post-videos-help videos-error"><Video size={19} aria-hidden="true" /> Chọn video</button>
+              <small id="post-videos-help">MP4 · Tối đa 1 video · 50 MB · 3 phút</small>
+              <details className="community-post-file-rules"><summary>Định dạng & giới hạn</summary><div>MP4 với video H.264/AVC, âm thanh AAC (nếu có), dài hơn 0 giây, tối đa Full HD 1920×1080 hoặc 1080×1920.<br />Từ chối MOV, AVI, MKV, WEBM, HEVC/H.265, tệp rỗng/hỏng hoặc đổi đuôi giả.</div></details>
+              {checkingVideos && <p role="status">Đang kiểm tra video...</p>}
+              <PostFieldError name="videos" errors={errors} />
+              {retainedVideos.map(video => <figure className="community-video-preview" key={video.id}>
+                <CommunityPostVideo postId={editingId} video={video} />
+                <figcaption>{video.fileName}</figcaption>
+                <button type="button" className="p-button" aria-label={`Bỏ video ${video.fileName}`} onClick={() => { setRetainedVideos([]); setErrors(previous => ({ ...previous, videos: undefined })); }}>Bỏ video</button>
+              </figure>)}
+              {videos.map(file => <figure className="community-video-preview" key={`${file.name}-${file.lastModified}`}>
+                <LocalPostVideo file={file} />
+                <figcaption>{file.name}</figcaption>
+                <button type="button" className="p-button" aria-label={`Bỏ video ${file.name}`} onClick={() => { setVideos([]); setErrors(previous => ({ ...previous, videos: undefined })); }}>Bỏ video</button>
+              </figure>)}
+            </div>
+                  </div>
+                </section>
+              </div>
+            </div>
           </fieldset>
           </form>
         </Modal>

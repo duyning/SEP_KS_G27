@@ -10,6 +10,51 @@ const valid = { type: 'ROOM_TRANSFER', title: 'Nhượng phòng gần Đại h�
 const saved = { ...postPayload(valid), id: 12, status: 'PENDING', createdAt: '2026-10-27T09:00:00', decisionNote: null };
 const reply = data => new Response(JSON.stringify({ success: true, data }));
 
+test('reply and edit calls preserve the targeted post and comment IDs', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12/comments/5/replies');
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(JSON.parse(options.body), { content: 'Mình nhận nhé.' });
+    return reply({ id: 6, parentId: 5, content: 'Mình nhận nhé.' });
+  };
+  assert.equal((await communityApi.reply(12, 5, 'Mình nhận nhé.')).parentId, 5);
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12/comments/6');
+    assert.equal(options.method, 'PUT');
+    return reply({ id: 6, content: 'Chiều mai nhé.', updatedAt: '2026-10-28T15:00:00' });
+  };
+  assert.ok((await communityApi.updateComment(12, 6, 'Chiều mai nhé.')).updatedAt);
+  globalThis.fetch = async url => {
+    assert.equal(url, '/api/community/posts/12/comments/5/replies?page=1&size=20');
+    return reply({ content: [], page: 1, totalElements: 21, totalPages: 2, commentCount: 25 });
+  };
+  const replies = await communityApi.replies(12, 5, 1);
+  assert.equal(replies.commentCount, 25);
+  assert.equal(replies.totalElements, 21);
+});
+
+test('published posts retain backend comment counts and reject invalid totals', async () => {
+  globalThis.fetch = async () => reply([{ ...saved, status: 'APPROVED', commentCount: 7 }]);
+  assert.equal((await communityApi.published())[0].commentCount, 7);
+  globalThis.fetch = async () => reply([{ ...saved, status: 'APPROVED', commentCount: -1 }]);
+  await assert.rejects(communityApi.published(), /Số bình luận không hợp lệ/);
+});
+
+test('comments are paged per post and submission sends only comment text', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12/comments?page=1&size=20');
+    return reply({ content: [], page: 1, totalElements: 21, totalPages: 2 });
+  };
+  assert.equal((await communityApi.comments(12, 1)).totalElements, 21);
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12/comments');
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(JSON.parse(options.body), { content: 'Bàn còn không?' });
+    return reply({ id: 1, content: 'Bàn còn không?' });
+  };
+  assert.equal((await communityApi.addComment(12, 'Bàn còn không?')).id, 1);
+});
+
 test('all categories require usable content and contact information', () => {
   for (const type of ['ROOM_TRANSFER', 'ROOMMATE', 'SECOND_HAND']) assert.deepEqual(validatePost({ ...valid, type }), {});
   const errors = validatePost({ type: 'OTHER', title: '   ', content: 'Short', location: '', authorName: '', authorPhone: '123', price: '-10' });
