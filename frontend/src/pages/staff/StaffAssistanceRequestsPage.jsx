@@ -1,3 +1,4 @@
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -70,7 +71,7 @@ export default function StaffAssistanceRequestsPage() {
             Xem, tiếp nhận và giải quyết các yêu cầu hỗ trợ được phân công cho bạn từ các Chủ trọ đối tác.
           </p>
         </div>
-        <button
+        <MotionButton
           type="button"
           className="p-button"
           onClick={() => {
@@ -79,7 +80,7 @@ export default function StaffAssistanceRequestsPage() {
           }}
         >
           <RotateCcw size={15} /> Làm mới
-        </button>
+        </MotionButton>
       </section>
 
       {/* KPI Cards */}
@@ -207,7 +208,7 @@ export default function StaffAssistanceRequestsPage() {
               <option value="UPDATED">Cập nhật gần nhất</option>
             </select>
 
-            <button
+            <MotionButton
               type="button"
               className="p-button"
               onClick={() => {
@@ -219,7 +220,7 @@ export default function StaffAssistanceRequestsPage() {
               }}
             >
               <RotateCcw size={14} /> Đặt lại
-            </button>
+            </MotionButton>
           </div>
         </div>
 

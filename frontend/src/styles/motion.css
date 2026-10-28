@@ -1,0 +1,29 @@
+/* Small controls share Animate UI transition.color at app tempo .85.
+   No layout properties, global route entrances, or delayed focus rings. */
+:root {
+  --ui-motion-color: 170ms ease;
+  --ui-motion-menu: 187ms cubic-bezier(.215,.61,.355,1);
+}
+[data-slot="button"] {
+  transition: background-color var(--ui-motion-color), color var(--ui-motion-color), border-color var(--ui-motion-color), box-shadow var(--ui-motion-color);
+}
+[data-ui-motion] { animation:none !important; transition:none !important; }
+.spin { animation:ui-loading-spin 1s linear infinite; }
+@keyframes ui-loading-spin { to { transform:rotate(360deg); } }
+/* Login/register still use their original static faces; no full-screen flip wait. */
+.auth-flip-box { transition:none; }
+:is(.portal-tabs,.hr-view-switch,.rt-view-toggle,.hr-status-row,.profile-sidebar,.portal-nav-group) :is(button,a),
+input[type="checkbox"],input[type="radio"],select {
+  transition:background-color var(--ui-motion-color),color var(--ui-motion-color),border-color var(--ui-motion-color);
+}
+:is(button,a,input,textarea,select):focus-visible { outline:2px solid #0d9488;outline-offset:3px; }
+/* Native dialogs retain their backdrop; CSS does not also transform the surface. */
+dialog[data-ui-motion="dialog"]::backdrop { background:rgb(15 23 42 / .5); }
+@media (prefers-reduced-motion: reduce) {
+  #root *,#root *::before,#root *::after {
+    scroll-behavior:auto !important;
+    animation:none !important;
+    transition-property:background-color,color,border-color,opacity !important;
+  }
+  /* Loading remains textual and announced; no perpetual rotation is needed. */
+}

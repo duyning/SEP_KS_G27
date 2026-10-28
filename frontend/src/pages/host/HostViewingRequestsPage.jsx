@@ -1,3 +1,4 @@
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Eye, RefreshCw, Search } from 'lucide-react';
@@ -34,7 +35,7 @@ function ViewingList({ data, propertyId, onRefresh }) {
 
   return <section className="host-viewings-list">
     <HostPropertySelector properties={data.properties} allowAll/>
-    <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><button className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></button></div>
+    <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><MotionButton className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></MotionButton></div>
     <div className="host-viewings-counts"><span>Tổng yêu cầu <strong>{ownedRequests.length}</strong></span>{Object.entries(statuses).map(([key, label]) => <span key={key}>{label} <strong>{ownedRequests.filter(item => item.status === key).length}</strong></span>)}</div>
     {ownedRequests.length === 0 ? <StateView kind="empty" message="Chưa có yêu cầu xem phòng từ khách thuê. Yêu cầu mới sẽ hiển thị tại đây." /> : <>
       <div className="host-viewings-filters">
@@ -42,13 +43,13 @@ function ViewingList({ data, propertyId, onRefresh }) {
         <select aria-label="Trạng thái" value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">Tất cả trạng thái</option>{Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
         <input type="date" aria-label="Ngày xem phòng" value={date} onChange={event => setDate(event.target.value)} />
         <select aria-label="Sắp xếp" value={sort} onChange={event => setSort(event.target.value)}><option value="NEWEST">Mới nhất trước</option><option value="APPOINTMENT">Lịch hẹn gần nhất</option></select>
-        <button className="p-icon" title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc" onClick={() => { setSearch(''); setStatus('ALL'); setDate(''); setSort('NEWEST'); }}><RefreshCw size={17} /></button>
+        <MotionButton className="p-icon" title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc" onClick={() => { setSearch(''); setStatus('ALL'); setDate(''); setSort('NEWEST'); }}><RefreshCw size={17} /></MotionButton>
       </div>
-      <div className="portal-table-wrap"><table className="portal-table"><thead><tr><th>Khách thuê</th><th>Nhà trọ / Loại phòng</th><th>Lịch hẹn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{filtered.map(item => <tr key={item.bookingId}><td><strong>{item.renterName}</strong><br />{item.renterPhone || 'Chưa có số điện thoại'}</td><td>{item.propertyName}<br />{item.roomType}</td><td>{formatDate(item.scheduledDate)}</td><td><StatusBadge tone={item.status === 'APPROVED' ? 'success' : item.status === 'PENDING' ? 'warning' : 'neutral'}>{statuses[item.status] || item.status}</StatusBadge></td><td><button className="p-button" onClick={() => setSelected(item)}><Eye size={16} />Chi tiết</button></td></tr>)}</tbody></table></div>
+      <div className="portal-table-wrap"><table className="portal-table"><thead><tr><th>Khách thuê</th><th>Nhà trọ / Loại phòng</th><th>Lịch hẹn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{filtered.map(item => <tr key={item.bookingId}><td><strong>{item.renterName}</strong><br />{item.renterPhone || 'Chưa có số điện thoại'}</td><td>{item.propertyName}<br />{item.roomType}</td><td>{formatDate(item.scheduledDate)}</td><td><StatusBadge tone={item.status === 'APPROVED' ? 'success' : item.status === 'PENDING' ? 'warning' : 'neutral'}>{statuses[item.status] || item.status}</StatusBadge></td><td><MotionButton className="p-button" onClick={() => setSelected(item)}><Eye size={16} />Chi tiết</MotionButton></td></tr>)}</tbody></table></div>
       {filtered.length === 0 && <StateView kind="empty" message="Không có yêu cầu phù hợp với bộ lọc." />}
       <p className="host-viewings-result" role="status">Hiển thị {filtered.length} / {ownedRequests.length} yêu cầu</p>
     </>}
-    {selected && <Modal title={`Yêu cầu xem phòng #${selected.bookingId}`} onClose={() => setSelected(null)}><dl className="host-viewings-details">{[['Khách thuê', selected.renterName], ['Số điện thoại', selected.renterPhone], ['Nhà trọ', selected.propertyName], ['Loại phòng', selected.roomType], ['Lịch hẹn', formatDate(selected.scheduledDate)], ['Trạng thái', statuses[selected.status] || selected.status], ['Ghi chú', selected.note]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Chưa có thông tin'}</dd></div>)}</dl><p>Chức năng xác nhận và từ chối chưa được máy chủ hỗ trợ.</p><div className="portal-actions"><UnsupportedButton>Xác nhận</UnsupportedButton><UnsupportedButton>Từ chối</UnsupportedButton></div></Modal>}
+    <AnimatePresence>{selected && <Modal title={`Yêu cầu xem phòng #${selected.bookingId}`} onClose={() => setSelected(null)}><dl className="host-viewings-details">{[['Khách thuê', selected.renterName], ['Số điện thoại', selected.renterPhone], ['Nhà trọ', selected.propertyName], ['Loại phòng', selected.roomType], ['Lịch hẹn', formatDate(selected.scheduledDate)], ['Trạng thái', statuses[selected.status] || selected.status], ['Ghi chú', selected.note]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Chưa có thông tin'}</dd></div>)}</dl><p>Chức năng xác nhận và từ chối chưa được máy chủ hỗ trợ.</p><div className="portal-actions"><UnsupportedButton>Xác nhận</UnsupportedButton><UnsupportedButton>Từ chối</UnsupportedButton></div></Modal>}</AnimatePresence>
   </section>;
 }
 
@@ -78,5 +79,5 @@ export default function HostViewingRequestsPage() {
     return () => controller.abort();
   }, [user?.userId, revision]);
   const refresh = () => setRevision(value => value + 1);
-  return <div className="host-viewings-page">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><button className="p-button primary" onClick={refresh}>Thử lại</button></StateView> : <ViewingsContent data={state.data} propertyId={propertyId} onRefresh={refresh} />}</div>;
+  return <div className="host-viewings-page">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><MotionButton className="p-button primary" onClick={refresh}>Thử lại</MotionButton></StateView> : <ViewingsContent data={state.data} propertyId={propertyId} onRefresh={refresh} />}</div>;
 }

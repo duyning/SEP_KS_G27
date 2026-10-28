@@ -283,7 +283,6 @@
 }
 
 .btn-card-wishlist.active:hover {
-  transform: scale(1.15);
   background: var(--rose-light) !important;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
@@ -305,14 +304,14 @@
   border-radius: var(--radius-xl);
   max-width: 680px;
   margin: 20px auto 0;
-  animation: fadeInEmpty 0.35s ease-out;
+  animation: hl-favorites-fadeInEmpty 0.35s ease-out;
 }
 
 .fav-empty-state.show {
   display: block;
 }
 
-@keyframes fadeInEmpty {
+@keyframes hl-favorites-fadeInEmpty {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -337,16 +336,7 @@
 }
 
 .empty-icon-wrap svg {
-  animation: heartPulse 2.2s infinite ease-in-out;
-}
-
-@keyframes heartPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
+  animation: none;
 }
 
 .empty-title {
@@ -389,7 +379,6 @@
 
 .btn-empty-primary:hover {
   background: var(--primary-hover);
-  transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(13, 148, 136, 0.4);
 }
 
@@ -472,7 +461,7 @@
   height: 220px;
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s infinite;
+  animation: none;
 }
 
 .fav-skeleton-body {
@@ -487,16 +476,7 @@
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   border-radius: 4px;
-  animation: skeletonShimmer 1.5s infinite;
-}
-
-@keyframes skeletonShimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  animation: none;
 }
 
 /* Confirmation Modal (Xóa tất cả) */
@@ -510,14 +490,14 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: modalFadeIn 0.25s ease;
+  animation: hl-favorites-modalFadeIn 0.25s ease;
 }
 
 .fav-modal-backdrop.open {
   display: flex;
 }
 
-@keyframes modalFadeIn {
+@keyframes hl-favorites-modalFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -530,10 +510,10 @@
   padding: 28px;
   box-shadow: var(--shadow-hover);
   text-align: center;
-  animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: hl-favorites-modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes modalPop {
+@keyframes hl-favorites-modalPop {
   from {
     transform: scale(0.92);
     opacity: 0;
@@ -640,7 +620,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  animation: toastSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: hl-favorites-toastSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-left: 4px solid var(--primary);
 }
 
@@ -680,7 +660,7 @@
   border-color: var(--primary);
 }
 
-@keyframes toastSlideUp {
+@keyframes hl-favorites-toastSlideUp {
   from {
     transform: translateY(20px);
     opacity: 0;
@@ -920,7 +900,6 @@
 }
 
 .compare-slot-remove:hover {
-  transform: scale(1.15);
 }
 
 .compare-status-text {
@@ -963,7 +942,6 @@
 
 .btn-floating-compare:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-1px);
 }
 
 .btn-floating-compare:disabled {
@@ -1000,7 +978,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  animation: modalFadeIn 0.25s ease;
+  animation: hl-favorites-modalFadeIn 0.25s ease;
 }
 
 .compare-modal-backdrop.open {
@@ -1017,7 +995,7 @@
   flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  animation: modalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: hl-favorites-modalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .compare-modal-header {
@@ -1213,7 +1191,6 @@
 
 .btn-remove-from-compare:hover {
   background: var(--rose);
-  transform: scale(1.1);
 }
 
 /* Các hàng tiêu chí */

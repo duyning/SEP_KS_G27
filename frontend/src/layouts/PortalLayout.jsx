@@ -1,3 +1,4 @@
+import { AnimatePresence, MotionMenu, MotionButton } from '../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronDown, ChevronRight, ClipboardCheck, ExternalLink, Flag, Globe, Heart, History, House, Layers, LayoutDashboard, LogOut, Menu, MessagesSquare, PanelTop, PlusCircle, Shield, Star, UserRound, Users, Wrench, X } from 'lucide-react';
@@ -6,6 +7,7 @@ import { landingFor, roleLabels } from '../routing/screens.js';
 import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
+import { staffHostApi } from '../services/staff-host-applications.js';
 
 const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
@@ -28,7 +30,7 @@ const menus = {
       ['Xem trang khách thuê', '/', Globe]
     ]]
   ],
-  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Đăng ký làm chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
+  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
   admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Phân công nhân viên', '/admin?view=assignment', ClipboardCheck]]], ['HỆ THỐNG', [['Nhật ký hoạt động', '/admin?view=activity', History]]]],
 };
 export function Brand({ portal = 'public', onClick }) {
@@ -64,6 +66,7 @@ export default function PortalLayout({ screen, children }) {
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
   const topbarTitle = screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
+  const [pendingHostApplications, setPendingHostApplications] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
   useEffect(() => {
     if (portal !== 'host') return;
@@ -82,11 +85,17 @@ export default function PortalLayout({ screen, children }) {
   useEffect(() => {
     if (portal !== 'staff') return;
     const controller = new AbortController();
-    staffApi.dashboard(controller.signal).then(data => { if (!controller.signal.aborted) setStaffCounts(data); })
-      .catch(() => { if (!controller.signal.aborted) setStaffCounts(null); });
+    Promise.allSettled([
+      staffApi.dashboard(controller.signal),
+      staffHostApi.list({ size: 1 }, controller.signal),
+    ]).then(([dashboard, applications]) => {
+      if (controller.signal.aborted) return;
+      setStaffCounts(dashboard.status === 'fulfilled' ? dashboard.value : null);
+      setPendingHostApplications(applications.status === 'fulfilled' ? applications.value.stats.pending : null);
+    });
     return () => controller.abort();
   }, [portal, user?.userId, location.pathname, staffRevision]);
-  const staffBadges = staffCounts ? { '/staff/verifications': staffCounts.pendingVerifications, '/staff?view=content-moderation': staffCounts.pendingReports, '/staff/community': staffCounts.pendingCommunity, '/staff?view=feedback-verification': staffCounts.pendingFeedback, '/staff/assistance': staffCounts.pendingSupport } : {};
+  const staffBadges = { '/staff/host-registrations': pendingHostApplications, '/staff/verifications': staffCounts?.pendingVerifications, '/staff?view=content-moderation': staffCounts?.pendingReports, '/staff/community': staffCounts?.pendingCommunity, '/staff?view=feedback-verification': staffCounts?.pendingFeedback, '/staff/assistance': staffCounts?.pendingSupport };
   const closeMenu = () => { setOpen(false); toggle.current?.focus(); };
 
   useEffect(() => {
@@ -103,7 +112,9 @@ export default function PortalLayout({ screen, children }) {
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    const keydown = event => { if (event.key === 'Escape') { event.preventDefault(); setUserMenuOpen(false); popoverRef.current?.querySelector('#btnHostUserDropdown')?.focus(); } };
+    document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('mousedown', handleOutsideClick); document.removeEventListener('keydown', keydown); };
   }, [userMenuOpen]);
 
   useEffect(() => {
@@ -141,7 +152,7 @@ export default function PortalLayout({ screen, children }) {
 
   const account = user ? (
     <div className="host-user-menu-wrapper" ref={popoverRef}>
-      <button
+      <MotionButton
         type="button"
         className="host-user-btn"
         id="btnHostUserDropdown"
@@ -155,10 +166,10 @@ export default function PortalLayout({ screen, children }) {
           <span className="host-user-role">{userRoleText}</span>
         </div>
         <ChevronDown size={14} className="chevron-icon" />
-      </button>
+      </MotionButton>
 
-      {userMenuOpen && (
-        <div className="host-user-popover" id="hostUserPopover">
+      <AnimatePresence>{userMenuOpen && (
+        <MotionMenu className="host-user-popover" id="hostUserPopover">
           <div className="popover-header">
             <div className="popover-name">{user.fullName || 'Người dùng'}</div>
             <div className="popover-phone">{user.phoneNumber || user.email}</div>
@@ -185,7 +196,7 @@ export default function PortalLayout({ screen, children }) {
             )}
             <li className="popover-divider" />
             <li>
-              <button
+              <MotionButton
                 type="button"
                 id="btnPopoverLogout"
                 className="btn-popover-logout"
@@ -196,11 +207,11 @@ export default function PortalLayout({ screen, children }) {
                 disabled={leaving}
               >
                 <LogOut size={15} /> {leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}
-              </button>
+              </MotionButton>
             </li>
           </ul>
-        </div>
-      )}
+        </MotionMenu>
+      )}</AnimatePresence>
     </div>
   ) : (
     <div className="portal-auth-links">
@@ -210,7 +221,7 @@ export default function PortalLayout({ screen, children }) {
   );
 
   const sidebarLogoutButton = (
-    <button
+    <MotionButton
       type="button"
       id="btnSidebarLogout"
       className="portal-nav-link btn-logout-sidebar"
@@ -219,11 +230,11 @@ export default function PortalLayout({ screen, children }) {
     >
       <LogOut size={18} />
       <span>{leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-    </button>
+    </MotionButton>
   );
 
   const topbarLogoutButton = user && (
-    <button
+    <MotionButton
       type="button"
       id="btnHostLogout"
       className="btn-topbar-logout"
@@ -234,10 +245,9 @@ export default function PortalLayout({ screen, children }) {
     >
       <LogOut size={16} />
       <span className="btn-logout-label">{leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-    </button>
+    </MotionButton>
   );
 
-  if (location.pathname.startsWith('/staff/host-registrations')) return children;
   if (portal === 'public' && ['/', '/profile', '/become-host'].includes(location.pathname)) return children;
 
   return (
@@ -253,17 +263,17 @@ export default function PortalLayout({ screen, children }) {
               {location.pathname==='/'?<><a href="#nha-tro">Tìm phòng trọ</a><a href="#khu-vuc">Khu vực Hòa Lạc</a><a href="#loi-the">Lợi thế HL_RCS</a><a href="#chu-tro">Dành cho Chủ trọ</a></>:publicLinks.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
             <div className="public-account">{account}</div>
-            <button ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
+            <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={23} />
-            </button>
+            </MotionButton>
           </div>
         </header>
       ) : (
         <header className="portal-topbar">
           <div className="portal-topbar-left">
-            <button ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
+            <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={22} />
-            </button>
+            </MotionButton>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1>{screen.path === '/host/property/new' ? <><span className="registration-topbar-parent"><Link to="/host">Bảng điều khiển</Link> / <Link to="/host/property">Nhà trọ của tôi</Link> / </span>Đăng ký nhà trọ</> : topbarTitle}</h1>
               {portal === 'staff' && staffCounts && <div className="topbar-status-chip hide-mobile"><span className="live-dot-green" /><span>{screen.path.startsWith('/staff/verifications') ? 'Thẩm định hồ sơ' : 'Hệ thống trực tuyến'}</span></div>}
@@ -288,14 +298,14 @@ export default function PortalLayout({ screen, children }) {
         </header>
       )}
 
-      {open && <button type="button" className="portal-backdrop" aria-label="Đóng menu" onClick={closeMenu} tabIndex={-1} />}
+      {open && <MotionButton type="button" className="portal-backdrop" aria-label="Đóng menu" onClick={closeMenu} tabIndex={-1} />}
 
       <aside ref={sidebar} id="portal-navigation" className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label="Điều hướng portal" aria-modal={open ? true : undefined} role={open ? 'dialog' : undefined}>
         <div className="portal-sidebar-brand">
           <Brand portal={portal} />
-          <button type="button" className="p-icon portal-close-menu" title="Đóng menu" aria-label="Đóng menu" onClick={closeMenu}>
+          <MotionButton type="button" className="p-icon portal-close-menu" title="Đóng menu" aria-label="Đóng menu" onClick={closeMenu}>
             <X size={20} />
-          </button>
+          </MotionButton>
         </div>
         <nav>
           {(portal === 'public' ? [['KHÁM PHÁ', publicLinks]] : menus[portal]).map(([group, links]) => (
@@ -305,7 +315,7 @@ export default function PortalLayout({ screen, children }) {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
                 const selectedPropertyId = new URLSearchParams(location.search).get('propertyId');
                 const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
-                const active = location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
+                const active = to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (
                   <Link key={to} to={scopedLink} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
                     <Icon size={19} />

@@ -1,0 +1,264 @@
+✔ remember me selects exactly one token store (4.2288ms)
+✔ profile and password use existing DTOs and PUT endpoints (74.795ms)
+✔ 401 expires current session; 403 does not claim logout (4.4487ms)
+✔ validation, server and network failures are not fake success (2.0078ms)
+✔ a late 401 from a previous token cannot clear a newer session (1.0589ms)
+✔ AuthPage implements 3D book-flip architecture with Login and Register faces (5.3486ms)
+✔ auth.css contains 3D page flip transforms and preserve-3d properties (1.639ms)
+✔ batch room creation sends preview and photos together and verifies linked database response (75.4469ms)
+✔ eligibility is authoritative and malformed data never grants access (1.9901ms)
+✔ creating room type uses actual POST and rejects unconfirmed success (2.7805ms)
+✔ room type update uploads only selected images and retains explicitly owned image IDs (1.9001ms)
+✔ detail, image and deletion calls are scoped to the actual room type (18.4984ms)
+✔ property details use the owned endpoint and never replace errors with empty records (3.6791ms)
+✔ property image requests carry authentication and validate the returned image type (5.6791ms)
+✔ registration sends actual multipart files and accepts only a persisted pending record (1.8622ms)
+✔ registration status distinguishes no pending record from errors and invalid success (4.7745ms)
+✔ viewings loads the authenticated owner endpoint without sample fallback (1.0103ms)
+✔ invalid viewing payloads and failures never become no-property data (2.6287ms)
+✔ dashboard calls the implemented authenticated host endpoint (0.9398ms)
+✔ invalid and failed responses never become empty dashboard data (2.2514ms)
+✔ room type list uses the real owner-scoped endpoint and selected property (0.8809ms)
+✔ invalid room type response or failed server response is not no-property data (1.8001ms)
+✔ invalid property filters are rejected without issuing an API request (0.6144ms)
+✔ PortalLayout contains all host logout mechanisms matching prototype (6.4335ms)
+✖ ProfilePage contains host / user account logout button (5.6769ms)
+✔ portal.css defines styling for all logout and user popover elements (1.0924ms)
+✔ property overview shows at most six records and handles invalid page input (2.2626ms)
+✔ search works with Vietnamese diacritics, addresses and independent status filters (5.0787ms)
+✔ sorting is deterministic, does not modify DB records, and distinguishes pending IDs (0.714ms)
+✔ unregistered hosts retain registration navigation (65.9772ms)
+✔ registered hosts can still register another property (17.255ms)
+✔ unknown ownership retains navigation without claiming no property exists (12.6859ms)
+✔ paste lookup accepts address text, Zalo labels and exact coordinate links (7.2105ms)
+✔ viewport centers, short links and arbitrary URLs never become fake exact pins (1.0973ms)
+✔ Google result supplies actual address and coordinates without fabricating unknown commune (1.2636ms)
+✔ Edit draft restores only authorized fields at matching server version and never restores consent (5.797ms)
+✔ Resubmission accepts retained mandatory attachments and requires new consent (4.1591ms)
+✔ registration starts without sample pictures, documents or selected amenities (4.0279ms)
+✔ basic information rejects empty, short and oversized fields (1.6024ms)
+✔ phone validation supports Vietnam domestic and international forms (0.3836ms)
+✔ location requires real address and explicit paired bounded coordinates (0.8497ms)
+✔ coordinate parsing never converts missing or malformed input to a map pin (0.4331ms)
+✔ draft restores exact selected coordinates without inventing a default pin (0.7235ms)
+✔ every upload and consent step is validated before submission (0.5475ms)
+✔ file validation enforces size, MIME type and nonempty input (0.3991ms)
+✔ draft stores only text fields, restores safely and never restores files or consent (2.0609ms)
+✔ amenity and house rule values are restricted to supported choices (0.9547ms)
+✔ Public listing filters use actual location, price and room amenities (4.0405ms)
+✔ Home makes anonymous API requests and never falls back to fixtures (4.1882ms)
+✔ new groups contain no generated sample rooms (8.0601ms)
+✔ groups generate ordered editable room drafts and preserve zero padding (4.9949ms)
+✔ empty lists, excessive batches and invalid numeric configuration are blocked (0.5536ms)
+✔ duplicate preview and existing database room names are blocked case insensitively (0.409ms)
+✔ only the final edited preview becomes the API payload (0.3936ms)
+✔ downloaded template has empty input sheets, guidance and Excel validation (113.6016ms)
+✔ filled XLSX roundtrip preserves text room numbers, decimals, null fees and supported amenities (56.7846ms)
+✔ valid prefixed SpreadsheetML from exported files imports without changing data (58.8589ms)
+✔ errors identify exact Excel cells for invalid values and missing room fields (15.7859ms)
+✔ Excel cannot import duplicate type names or existing and duplicate room numbers (18.583ms)
+✔ formula cached values, hyperlinks and wrong template structure are never accepted as input (16.7554ms)
+✔ missing sheets, excess rows and duplicate type fields are rejected (18.0444ms)
+✔ wrong extensions, empty, oversized and corrupt files fail with useful messages (0.9586ms)
+✔ room type starts without sample content and requires name, area, capacity and price (9.3159ms)
+✔ room type bounds, integer money, HTTPS image and amenities are validated (2.801ms)
+✔ payload preserves optional unknown fees as null, not invented free fees (0.6144ms)
+✔ multi-image validation limits size, count, type and never serializes files into JSON (1.6199ms)
+✔ room creation must select an existing linked type and has no sample room number (6.6565ms)
+✔ room fields and optional integer custom prices are validated (1.638ms)
+✔ room list, save and delete use real owner endpoints (72.6854ms)
+✔ invalid filters and server failures never become empty room data (3.1844ms)
+✖ every source page has one explicit React migration target (8.4183ms)
+✔ role guards match backend host/staff/admin permissions (0.906ms)
+✔ availability merges into rooms rather than a duplicate module (0.5589ms)
+✖ actor landing routes and unsupported modules are explicit (1.3184ms)
+✖ active source contains no prototype storage identities or unsafe HTML (25.6579ms)
+✔ staff detail and binary files use authenticated implemented routes (76.5443ms)
+✔ staff reviews are POSTed, not local fake mutations (1.8368ms)
+✔ invalid IDs and malformed/error responses never fall back to sample records (4.0418ms)
+✔ supplement requests persist via review API and accept the new status (2.2007ms)
+✔ Checklist shows submitted values and never invents missing values (5.1969ms)
+✔ Only selected checklist items and trimmed notes reach the owner (1.5008ms)
+✔ staff map uses only explicit valid coordinates, never a default neighborhood pin (7.3068ms)
+✔ map links encode untrusted address text as a query rather than opening supplied URLs (0.5047ms)
+✔ file sizes reflect actual persisted bytes and keep missing legacy metadata unknown (31.0373ms)
+ℹ tests 84
+ℹ suites 0
+ℹ pass 80
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22180.5742
+
+✖ failing tests:
+
+test at tests\host-logout.test.js:25:1
+✖ ProfilePage contains host / user account logout button (5.6769ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /id="btnSidebarLogout"/. Input:
+
+  "import { MotionButton, AnimatePresence } from '../components/motion/MotionUI.jsx';\n" +
+    "import {useEffect, useState} from 'react';\n" +
+    "import {Link, useNavigate, useSearchParams} from 'react-router-dom';\n" +
+    "import {Heart, LogOut} from 'lucide-react';\n" +
+    "import {useAuth} from '../context/AuthContext.jsx';\n" +
+    "import {authApi} from '../services/auth.js';\n" +
+    "import {landingFor, roleLabels} from '../routing/screens.js';\n" +
+    "import {Modal, useToast} from '../components/PortalUI.jsx';\n" +
+    "import ProfilePrototype from './ProfilePrototype.jsx';\n" +
+    "import '../styles/home-prototype.css';\n" +
+    "import '../styles/home-prototype-integration.css';\n" +
+    "import '../styles/profile-prototype.css';\n" +
+    "import '../styles/profile-prototype-integration.css';\n" +
+    '\n' +
+    "const profileValues=user=>({fullName:user?.fullName||'',phoneNumber:user?.phoneNumber||'',organization:user?.organization||'',preferredArea:user?.preferredArea||''});\n" +
+    "const ids={fullName:'editFullName',phoneNumber:'editPhone',organization:'editOrganization',preferredArea:'editAddress',oldPassword:'currentPassword',newPassword:'newPassword',confirmPassword:'confirmNewPassword'};\n" +
+    "const emptyPasswords={oldPassword:'',newPassword:'',confirmPassword:''};\n" +
+    "const tabs=['info','favorites','appointments','reports','security'];\n" +
+    'export default function ProfilePage() {\n' +
+    ' const {user,updateProfile,logout}=useAuth();\n' +
+    ' const notify=useToast(), navigate=useNavigate();\n' +
+    ' const [params,setParams]=useSearchParams();\n' +
+    " const tab=tabs.includes(params.get('tab'))?params.get('tab'):'info';\n" +
+    " const [values,setValues]=useState(()=>profileValues(user)),[passwords,setPasswords]=useState(emptyPasswords),[eyes,setEyes]=useState({}),[editing,setEditing]=useState(false),[errors,setErrors]=useState({}),[alert,setAlert]=useState(''),[busy,setBusy]=useState(false),[confirming,setConfirming]=useState(false),[mobileOpen,setMobileOpen]=useState(false);\n" +
+    ' useEffect(()=>{if(!editing)setValues(profileValues(user));},[user,editing]);\n' +
+    " const roleLabel=roleLabels[user?.role]||'Thành viên';\n" +
+    " const isOperator=['STAFF','ADMIN'].includes(user?.role), isHost=user?.role==='ROOM_HOST';\n" +
+    " const perks={title:isOperator?'Đặc quyền Chuyên viên vận hành Staff Portal':isHost?'Đặc quyền Chủ trọ đối tác HL_RCS':'Quyền lợi thành viên Sinh viên FPT & Người thuê',description:isOperator?'Tài khoản của bạn được cấp quyền thẩm định hồ sơ nhà trọ, kiểm duyệt tin đăng vi phạm, xác minh đánh giá và điều phối hỗ trợ đối tác.':isHost?'Tài khoản của bạn được cấp quyền đăng tải nhà trọ, kiểm soát số lượng phòng trống và nhận liên hệ trực tiếp từ sinh viên.':'Bạn được quyền lưu trữ và so sánh không giới hạn các phòng trọ, xem thông tin điện nước minh bạch và đặt lịch xem phòng miễn phí.'};\n" +
+    ' function showErrors(next){setErrors(next);const key=Object.keys(next)[0];if(key){requestAnimationFrame(()=>document.getElementById(ids[key])?.focus());return true;}return false;}\n' +
+    " function fail(error){setAlert(error.message||'Không thể lưu thay đổi. Vui lòng thử lại.');setErrors(error.fields||{});}\n" +
+    ' async function saveProfile(){\n' +
+    '  if(busy)return;\n' +
+    "  const payload={...values,fullName:values.fullName.trim(),phoneNumber:values.phoneNumber.trim().replace(/[\\s.-]/g,'')};\n" +
+    '  const next={};\n' +
+    "  if(!payload.fullName)next.fullName='Vui lòng nhập họ và tên.';\n" +
+    "  else if(payload.fullName.length>100)next.fullName='Họ và tên tối đa 100 ký tự.';\n" +
+    "  if(!/^(0|\\+84)[35789]\\d{8}$/.test(payload.phoneNumber))next.phoneNumber='Số điện thoại Việt Nam không hợp lệ.';\n" +
+    '  if(showErrors(next))return;\n' +
+    "  setBusy(true);setAlert('');\n" +
+    "  try{await updateProfile(payload);setEditing(false);notify('Đã cập nhật thông tin cá nhân.');}catch(error){fail(error);}finally{setBusy(false);}\n" +
+    ' }\n' +
+    ' async function uploadAvatar(file){\n' +
+    '  if(!file||busy)return;\n' +
+    "  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){notify('Vui lòng chọn ảnh JPG, PNG hoặc WebP.','error');return;}\n" +
+    "  if(file.size>2621440){notify('Kích thước ảnh tối đa 2.5 MB.','error');return;}\n" +
+    "  setBusy(true);setAlert('');\n" +
+    '  try{\n' +
+    "   const avatar=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Không thể đọc ảnh. Vui lòng chọn lại.'));reader.readAsDataURL(file);});\n" +
+    "   await updateProfile({...profileValues(user),avatar});notify('Cập nhật ảnh đại diện thành công!');\n" +
+    '  }catch(error){fail(error);}finally{setBusy(false);}\n' +
+    ' }\n' +
+    ' function validatePassword(){\n' +
+    '  if(busy)return;\n' +
+    '  const next={};\n' +
+    "  if(!passwords.oldPassword)next.oldPassword='Vui lòng nhập mật khẩu hiện tại.';\n" +
+    "  if(passwords.newPassword.length<6)next.newPassword='Mật khẩu mới cần ít nhất 6 ký tự.';\n" +
+    "  else if(passwords.newPassword===passwords.oldPassword)next.newPassword='Mật khẩu mới phải khác mật khẩu hiện tại.';\n" +
+    "  if(!passwords.confirmPassword||passwords.confirmPassword!==passwords.newPassword)next.confirmPassword='Mật khẩu xác nhận chưa khớp.';\n" +
+    '  if(!showErrors(next))setConfirming(true);\n' +
+    ' }\n' +
+    ' async function changePassword(){\n' +
+    "  if(busy)return;setBusy(true);setAlert('');\n" +
+    "  try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});setPasswords(emptyPasswords);setEyes({});setErrors({});notify('Đã đổi mật khẩu thành công.');}catch(error){fail(error);}finally{setBusy(false);setConfirming(false);}\n" +
+    ' }\n' +
+    " async function signOut(){if(busy)return;setBusy(true);try{await logout();}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{navigate('/login',{replace:true});setBusy(false);}}\n" +
+    " function selectTab(key){if(busy)return;setParams(key==='info'?{}:{tab:key});setErrors({});setAlert('');}\n" +
+    ' function onClick(event){\n' +
+    '  const target=event.target;\n' +
+    "  const tabButton=target.closest('[data-tab]');if(tabButton)selectTab(tabButton.dataset.tab);\n" +
+    "  if(target.closest('#headerApptBox'))selectTab('appointments');\n" +
+    "  if(target.closest('#btnStartEditProfile')){setValues(profileValues(user));setEditing(true);setErrors({});setAlert('');}\n" +
+    "  if(target.closest('#btnCancelEditProfile')&&!busy){setEditing(false);setValues(profileValues(user));setErrors({});setAlert('');}\n" +
+    "  if(target.closest('#btnTriggerAvatarUpload'))document.getElementById('avatarFileInput')?.click();\n" +
+    "  if(target.closest('#btnSidebarLogout'))signOut();\n" +
+    "  if(target.closest('#mobileMenuBtn'))setMobileOpen(value=>!value);\n" +
+    "  if(target.closest('.nav-menu a'))setMobileOpen(false);\n" +
+    "  const eye=target.closest('.btn-toggle-eye');if(eye){const key={currentPassword:'oldPassword',newPassword:'newPassword',confirmNewPassword:'confirmPassword'}[eye.dataset.target];setEyes(previous=>({...previous,[key]:!previous[key]}));}\n" +
+    ' }\n' +
+    ' function onChange(event){\n' +
+    "  if(event.target.id==='avatarFileInput'){uploadAvatar(event.target.files?.[0]);event.target.value='';return;}\n" +
+    '  const {name,value}=event.target;if(!name)return;\n' +
+    '  if(Object.hasOwn(emptyPasswords,name))setPasswords(previous=>({...previous,[name]:value}));else setValues(previous=>({...previous,[name]:value}));\n' +
+    "  setErrors(previous=>({...previous,[name]:undefined}));setAlert('');\n" +
+    ' }\n' +
+    " function onSubmit(event){event.preventDefault();if(event.target.id==='profileEditForm')saveProfile();else if(event.target.id==='changePasswordForm')validatePassword();}\n" +
+    ` const account=<><Link to="/favorites" className="btn-wishlist-top" aria-label="Danh sách phòng yêu thích"><Heart size={18}/><span className="wishlist-count">0</span></Link>{user?.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user?.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user?.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user?.fullName}</span><span className="user-nav-role">{roleLabel}</span></div></Link><MotionButton className="user-nav-logout" onClick={signOut} disabled={busy} aria-label="Đăng xuất"><LogOut size={15}/></MotionButton></div></>;\n` +
+    ` return <><ProfilePrototype {...{user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,account,onClick,onSubmit,onChange,alert}}/><AnimatePresence>{confirming&&<Modal title="Xác nhận đổi mật khẩu" onClose={()=>{if(!busy)setConfirming(false);}}><p>Bạn muốn cập nhật mật khẩu đăng nhập mới?</p><div className="p-actions"><MotionButton className="p-button" disabled={busy} onClick={()=>setConfirming(false)}>Hủy bỏ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={changePassword}>{busy?'Đang cập nhật...':'Xác nhận đổi mật khẩu'}</MotionButton></div></Modal>}</AnimatePresence></>;\n` +
+    '}\r\n'
+
+      at TestContext.<anonymous> (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/host-logout.test.js:27:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `import { MotionButton, AnimatePresence } from '../components/motion/MotionUI.jsx';\nimport {useEffect, useState} from 'react';\nimport {Link, useNavigate, useSearchParams} from 'react-router-dom';\nimport {Heart, LogOut} from 'lucide-react';\nimport {useAuth} from '../context/AuthContext.jsx';\nimport {authApi} from '../services/auth.js';\nimport {landingFor, roleLabels} from '../routing/screens.js';\nimport {Modal, useToast} from '../components/PortalUI.jsx';\nimport ProfilePrototype from './ProfilePrototype.jsx';\nimport '../styles/home-prototype.css';\nimport '../styles/home-prototype-integration.css';\nimport '../styles/profile-prototype.css';\nimport '../styles/profile-prototype-integration.css';\n\nconst profileValues=user=>({fullName:user?.fullName||'',phoneNumber:user?.phoneNumber||'',organization:user?.organization||'',preferredArea:user?.preferredArea||''});\nconst ids={fullName:'editFullName',phoneNumber:'editPhone',organization:'editOrganization',preferredArea:'editAddress',oldPassword:'currentPassword',newPassword:'newPassword',confirmPassword:'confirmNewPassword'};\nconst emptyPasswords={oldPassword:'',newPassword:'',confirmPassword:''};\nconst tabs=['info','favorites','appointments','reports','security'];\nexport default function ProfilePage() {\n const {user,updateProfile,logout}=useAuth();\n const notify=useToast(), navigate=useNavigate();\n const [params,setParams]=useSearchParams();\n const tab=tabs.includes(params.get('tab'))?params.get('tab'):'info';\n const [values,setValues]=useState(()=>profileValues(user)),[passwords,setPasswords]=useState(emptyPasswords),[eyes,setEyes]=useState({}),[editing,setEditing]=useState(false),[errors,setErrors]=useState({}),[alert,setAlert]=useState(''),[busy,setBusy]=useState(false),[confirming,setConfirming]=useState(false),[mobileOpen,setMobileOpen]=useState(false);\n useEffect(()=>{if(!editing)setValues(profileValues(user));},[user,editing]);\n const roleLabel=roleLabels[user?.role]||'Thành viên';\n const isOperator=['STAFF','ADMIN'].includes(user?.role), isHost=user?.role==='ROOM_HOST';\n const perks={title:isOperator?'Đặc quyền Chuyên viên vận hành Staff Portal':isHost?'Đặc quyền Chủ trọ đối tác HL_RCS':'Quyền lợi thành viên Sinh viên FPT & Người thuê',description:isOperator?'Tài khoản của bạn được cấp quyền thẩm định hồ sơ nhà trọ, kiểm duyệt tin đăng vi phạm, xác minh đánh giá và điều phối hỗ trợ đối tác.':isHost?'Tài khoản của bạn được cấp quyền đăng tải nhà trọ, kiểm soát số lượng phòng trống và nhận liên hệ trực tiếp từ sinh viên.':'Bạn được quyền lưu trữ và so sánh không giới hạn các phòng trọ, xem thông tin điện nước minh bạch và đặt lịch xem phòng miễn phí.'};\n function showErrors(next){setErrors(next);const key=Object.keys(next)[0];if(key){requestAnimationFrame(()=>document.getElementById(ids[key])?.focus());return true;}return false;}\n function fail(error){setAlert(error.message||'Không thể lưu thay đổi. Vui lòng thử lại.');setErrors(error.fields||{});}\n async function saveProfile(){\n  if(busy)return;\n  const payload={...values,fullName:values.fullName.trim(),phoneNumber:values.phoneNumber.trim().replace(/[\\s.-]/g,'')};\n  const next={};\n  if(!payload.fullName)next.fullName='Vui lòng nhập họ và tên.';\n  else if(payload.fullName.length>100)next.fullName='Họ và tên tối đa 100 ký tự.';\n  if(!/^(0|\\+84)[35789]\\d{8}$/.test(payload.phoneNumber))next.phoneNumber='Số điện thoại Việt Nam không hợp lệ.';\n  if(showErrors(next))return;\n  setBusy(true);setAlert('');\n  try{await updateProfile(payload);setEditing(false);notify('Đã cập nhật thông tin cá nhân.');}catch(error){fail(error);}finally{setBusy(false);}\n }\n async function uploadAvatar(file){\n  if(!file||busy)return;\n  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){notify('Vui lòng chọn ảnh JPG, PNG hoặc WebP.','error');return;}\n  if(file.size>2621440){notify('Kích thước ảnh tối đa 2.5 MB.','error');return;}\n  setBusy(true);setAlert('');\n  try{\n   const avatar=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Không thể đọc ảnh. Vui lòng chọn lại.'));reader.readAsDataURL(file);});\n   await updateProfile({...profileValues(user),avatar});notify('Cập nhật ảnh đại diện thành công!');\n  }catch(error){fail(error);}finally{setBusy(false);}\n }\n function validatePassword(){\n  if(busy)return;\n  const next={};\n  if(!passwords.oldPassword)next.oldPassword='Vui lòng nhập mật khẩu hiện tại.';\n  if(passwords.newPassword.length<6)next.newPassword='Mật khẩu mới cần ít nhất 6 ký tự.';\n  else if(passwords.newPassword===passwords.oldPassword)next.newPassword='Mật khẩu mới phải khác mật khẩu hiện tại.';\n  if(!passwords.confirmPassword||passwords.confirmPassword!==passwords.newPassword)next.confirmPassword='Mật khẩu xác nhận chưa khớp.';\n  if(!showErrors(next))setConfirming(true);\n }\n async function changePassword(){\n  if(busy)return;setBusy(true);setAlert('');\n  try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});setPasswords(emptyPasswords);setEyes({});setErrors({});notify('Đã đổi mật khẩu thành công.');}catch(error){fail(error);}finally{setBusy(false);setConfirming(false);}\n }\n async function signOut(){if(busy)return;setBusy(true);try{await logout();}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{navigate('/login',{replace:true});setBusy(false);}}\n function selectTab(key){if(busy)return;setParams(key==='info'?{}:{tab:key});setErrors({});setAlert('');}\n function onClick(event){\n  const target=event.target;\n  const tabButton=target.closest('[data-tab]');if(tabButton)selectTab(tabButton.dataset.tab);\n  if(target.closest('#headerApptBox'))selectTab('appointments');\n  if(target.closest('#btnStartEditProfile')){setValues(profileValues(user));setEditing(true);setErrors({});setAlert('');}\n  if(target.closest('#btnCancelEditProfile')&&!busy){setEditing(false);setValues(profileValues(user));setErrors({});setAlert('');}\n  if(target.closest('#btnTriggerAvatarUpload'))document.getElementById('avatarFileInput')?.click();\n  if(target.closest('#btnSidebarLogout'))signOut();\n  if(target.closest('#mobileMenuBtn'))setMobileOpen(value=>!value);\n  if(target.closest('.nav-menu a'))setMobileOpen(false);\n  const eye=target.closest('.btn-toggle-eye');if(eye){const key={currentPassword:'oldPassword',newPassword:'newPassword',confirmNewPassword:'confirmPassword'}[eye.dataset.target];setEyes(previous=>({...previous,[key]:!previous[key]}));}\n }\n function onChange(event){\n  if(event.target.id==='avatarFileInput'){uploadAvatar(event.target.files?.[0]);event.target.value='';return;}\n  const {name,value}=event.target;if(!name)return;\n  if(Object.hasOwn(emptyPasswords,name))setPasswords(previous=>({...previous,[name]:value}));else setValues(previous=>({...previous,[name]:value}));\n  setErrors(previous=>({...previous,[name]:undefined}));setAlert('');\n }\n function onSubmit(event){event.preventDefault();if(event.target.id==='profileEditForm')saveProfile();else if(event.target.id==='changePasswordForm')validatePassword();}\n const account=<><Link to="/favorites" className="btn-wishlist-top" aria-label="Danh sách phòng yêu thích"><Heart size={18}/><span className="wishlist-count">0</span></Link>{user?.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user?.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user?.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user?.fullName}</span><span className="user-nav-role">{roleLabel}</span></div></Link><MotionButton className="user-nav-logout" onClick={signOut} disabled={busy} aria-label="Đăng xuất"><LogOut size={15}/></MotionButton></div></>;\n return <><ProfilePrototype {...{user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,account,onClick,onSubmit,onChange,alert}}/><AnimatePresence>{confirming&&<Modal title="Xác nhận đổi mật khẩu" onClose={()=>{if(!busy)setConfirming(false);}}><p>Bạn muốn cập nhật mật khẩu đăng nhập mới?</p><div className="p-actions"><MotionButton className="p-button" disabled={busy} onClick={()=>setConfirming(false)}>Hủy bỏ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={changePassword}>{busy?'Đang cập nhật...':'Xác nhận đổi mật khẩu'}</MotionButton></div></Modal>}</AnimatePresence></>;\n}\r\n`,
+    expected: /id="btnSidebarLogout"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\routing.test.js:6:1
+✖ every source page has one explicit React migration target (8.4183ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  35 !== 32
+
+      at TestContext.<anonymous> (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/routing.test.js:8:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 35,
+    expected: 32,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\routing.test.js:34:1
+✖ actor landing routes and unsupported modules are explicit (1.3184ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'connected'
+  - 'blocked'
+
+      at TestContext.<anonymous> (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/routing.test.js:39:107)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'connected',
+    expected: 'blocked',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\routing.test.js:41:1
+✖ active source contains no prototype storage identities or unsafe HTML (25.6579ms)
+  AssertionError [ERR_ASSERTION]: BecomeHostPrototype.jsx
+      at inspect (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/routing.test.js:50:16)
+      at inspect (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/routing.test.js:46:32)
+      at TestContext.<anonymous> (file:///C:/Users/ADMIN/Downloads/KS_G27/Code/HL-RCS/HL-RCS/frontend/tests/routing.test.js:54:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'import { MotionButton } from \'../components/motion/MotionUI.jsx\';\n// Original user-facing markup from Code/giao_dien/html/become-host.html.\r\nimport {Link} from \'react-router-dom\';\r\nexport default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {\r\nreturn <div className="prototype-home prototype-become-host" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>\r\n<header className="navbar-wrapper">\r\n    <div className="top-announcement">\r\n      <div className="container top-announcement-inner">\r\n        <div className="announcement-left">\r\n          <span className="badge-tag">Hòa Lạc Campus</span>\r\n          <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>\r\n        </div>\r\n        <div className="announcement-right">\r\n          <a href="tel:0912345678" className="contact-link">\r\n            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>\r\n            <span>Hotline hỗ trợ: 0912 345 678</span>\r\n          </a>\r\n          <span className="sep">•</span>\r\n          <span className="status-live"><span className="live-dot"></span>Cập nhật phòng trống hôm nay</span>\r\n        </div>\r\n      </div>\r\n    </div>\r\n\r\n    <nav className="main-navbar">\r\n      <div className="container navbar-container">\r\n\r\n        <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">\r\n          <div className="brand-logo-icon">\r\n            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">\r\n              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>\r\n              <polyline points="9 22 9 12 15 12 15 22"></polyline>\r\n            </svg>\r\n          </div>\r\n          <div className="brand-title-wrap">\r\n            <span className="brand-name">HL_RCS</span>\r\n            <span className="brand-sub">Rental Connection System</span>\r\n          </div>\r\n        </Link>\r\n\r\n\r\n        <ul id="navMenu" className={`nav-menu ${mobileOpen ? "show" : ""}`}>\r\n          <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>\r\n          <li><Link className="nav-item" to="/map">Bản đồ</Link></li>\r\n          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">0</span>)</Link></li>\r\n          <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>\r\n          <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>\r\n          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>\r\n          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>\r\n        </ul>\r\n\r\n\r\n        <div className="nav-actions">{account}</div>\r\n\r\n\r\n        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>\r\n          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>\r\n        </MotionButton>\r\n      </div>\r\n    </nav>\r\n  </header>\r\n\r\n\r\n  <div className="bh-breadcrumb-bar">\r\n    <div className="container bh-breadcrumb-inner">\r\n      <ul className="bh-breadcrumb-list">\r\n        <li><Link to="/">Trang chủ</Link></li>\r\n        <li><span className="bh-breadcrumb-sep">/</span></li>\r\n        <li><Link to="/profile">Hồ sơ cá nhân</Link></li>\r\n        <li><span className="bh-breadcrumb-sep">/</span></li>\r\n        <li><span className="bh-breadcrumb-active">Đăng ký làm chủ trọ</span></li>\r\n      </ul>\r\n      <span className="bh-breadcrumb-meta">Hợp tác đối tác nhà trọ sinh viên Hòa Lạc</span>\r\n    </div>\r\n  </div>\r\n\r\n\r\n  <section className="bh-hero-section">\r\n    <div className="container">\r\n      <span className="bh-hero-eyebrow">\r\n        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>\r\n        Hợp tác đối tác lưu trú\r\n      </span>\r\n      <h1 className="bh-hero-title">Đăng ký trở thành Chủ trọ HL-RCS</h1>\r\n      <p className="bh-hero-desc">\r\n        Gia nhập mạng lưới chủ nhà trọ đối tác uy tín tại Đô thị vệ tinh Hòa Lạc. Tiếp cận hơn 20.000 sinh viên FPT và ĐHQG, số hóa quy trình quản lý phòng và tiếp nhận lịch xem phòng trực tiếp, minh bạch.\r\n      </p>\r\n    </div>\r\n  </section>\r\n\r\n\r\n  <section className="bh-benefits-wrapper">\r\n    <div className="container">\r\n      <div className="bh-benefits-grid">\r\n        <div className="bh-benefit-card">\r\n          <div className="bh-benefit-icon-wrap">\r\n            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>\r\n          </div>\r\n          <h2 className="bh-benefit-title">Tiếp cận 20.000+ sinh viên</h2>\r\n          <p className="bh-benefit-desc">\r\n            Nhà trọ của bạn xuất hiện nổi bật trước hàng chục ngàn sinh viên ĐH FPT và ĐHQG Hà Nội đang tìm phòng trọ tại Thạch Hòa, Tân Xã, Bình Yên.\r\n          </p>\r\n        </div>\r\n\r\n        <div className="bh-benefit-card">\r\n          <div className="bh-benefit-icon-wrap">\r\n            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>\r\n          </div>\r\n          <h2 className="bh-benefit-title">Quản lý số hóa tiện lợi</h2>\r\n          <p className="bh-benefit-desc">\r\n            Bảng điều khiển chuyên nghiệp giúp theo dõi phòng trống, quản lý loại phòng, tiếp nhận lịch hẹn xem phòng và nhận tin nhắn trực tiếp không qua trung gian.\r\n          </p>\r\n        </div>\r\n\r\n        <div className="bh-benefit-card">\r\n          <div className="bh-benefit-icon-wrap">\r\n            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>\r\n          </div>\r\n          <h2 className="bh-benefit-title">Hỗ trợ xác minh uy tín</h2>\r\n          <p className="bh-benefit-desc">\r\n            Được đội ngũ Staff HL-RCS hỗ trợ xác thực thông tin cơ sở, gắn huy hiệu phòng trọ uy tín, gia tăng độ tin cậy và tỷ lệ lấp đầy phòng nhanh chóng.\r\n          </p>\r\n        </div>\r\n      </div>\r\n    </div>\r\n  </section>\r\n\r\n\r\n  <section className="bh-stepper-wrapper">\r\n    <div className="bh-stepper-card" id="bhStepperCard">\r\n      <div className="bh-stepper-title">\r\n        <span>Tiến trình xét duyệt quyền đối tác</span>\r\n        <span style={{"fontSize": "11.5px", "fontWeight": "600", "color": "var(--slate-400)"}}>HL-RCS Verification Process</span>\r\n      </div>\r\n      <div className="bh-stepper-steps">\r\n        <div data-step="1" className={`bh-step-item ${stepClass(1)}`}>\r\n          <div className="bh-step-node">{stepLabel(1)}</div>\r\n          <span className="bh-step-label">Điền thông tin</span>\r\n          <span className="bh-step-sub">Đăng ký nguyện vọng</span>\r\n        </div>\r\n\r\n        <div data-step="2" className={`bh-step-item ${stepClass(2)}`}>\r\n          <div className="bh-step-node">{stepLabel(2)}</div>\r\n          <span className="bh-step-label">Gửi hồ sơ</span>\r\n          <span className="bh-step-sub">Chuyển tiếp BQT</span>\r\n        </div>\r\n\r\n        <div data-step="3" className={`bh-step-item ${stepClass(3)}`}>\r\n          <div className="bh-step-node">{stepLabel(3)}</div>\r\n          <span className="bh-step-label">Staff thẩm định</span>\r\n          <span className="bh-step-sub">Đối soát thông tin</span>\r\n        </div>\r\n\r\n        <div data-step="4" className={`bh-step-item ${stepClass(4)}`}>\r\n          <div className="bh-step-node">{stepLabel(4)}</div>\r\n          <span className="bh-step-label">Cấp quyền Chủ trọ</span>\r\n          <span className="bh-step-sub">Bắt đầu đăng tin</span>\r\n        </div>\r\n      </div>\r\n    </div>\r\n  </section>\r\n\r\n\r\n  <main className="bh-main-content" id="bhMainContent">\r\n    <div className="bh-container-narrow">\r\n\r\n\r\n      <div id="stateLoading" style={{display:state === "loading" ? "block" : "none"}}>\r\n        <div className="bh-skeleton-card">\r\n          <div className="bh-sk-line bh-sk-title"></div>\r\n          <div className="bh-sk-line bh-sk-sub"></div>\r\n          <div className="bh-sk-line bh-sk-box"></div>\r\n          <div className="bh-sk-line bh-sk-input"></div>\r\n          <div className="bh-sk-line bh-sk-input"></div>\r\n          <div className="bh-sk-line bh-sk-textarea"></div>\r\n          <div className="bh-sk-line bh-sk-actions"></div>\r\n        </div>\r\n      </div>\r\n\r\n\r\n      <div id="stateAuthGuard" style={{display:state === "not_logged_in" ? "block" : "none"}}>\r\n        <div className="bh-auth-guard">\r\n          <div className="bh-guard-icon-wrap">\r\n            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>\r\n          </div>\r\n          <h2 className="bh-state-title">Yêu cầu đăng nhập tài khoản</h2>\r\n          <p className="bh-state-desc">\r\n            Bạn cần đăng nhập tài khoản người dùng trên hệ thống HL-RCS trước khi gửi hồ sơ đăng ký làm chủ trọ để chúng tô'... 27599 more characters,
+    expected: /href=["']#['"]/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }

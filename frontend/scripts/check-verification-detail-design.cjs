@@ -7,7 +7,8 @@ async function main(){const browser=await chromium.launch({channel:'msedge',head
  await page.route('https://tile.openstreetmap.org/**',route=>route.fulfill({contentType:'image/png',body:png}));
  await page.route('**/api/**',async route=>{const req=route.request(),url=new URL(req.url()).pathname;let data;
   if(url==='/api/auth/me')data={userId:1,fullName:'Staff kiểm thử',role:'STAFF'};
-  else if(url==='/api/staff/dashboard')data={pendingVerifications:1,pendingReports:0,pendingSupport:0,pendingCommunity:0,activeProperties:0,processedTasks:0,queue:[],activities:[]};
+  else if(url==='/api/host-applications')data={content:[],totalElements:0,totalPages:0,number:0,size:1,stats:{total:0,pending:0,needsChanges:0,approved:0,rejected:0}};
+      else if(url==='/api/staff/dashboard')data={pendingVerifications:1,pendingReports:0,pendingSupport:0,pendingCommunity:0,activeProperties:0,processedTasks:0,queue:[],activities:[]};
   else if(url==='/api/staff/verifications/12')data=detail;
   else if(url==='/api/staff/verifications/12/review'){
    reviews++;const value=req.postDataJSON();detail.summary.status=value.decision==='APPROVE'?'APPROVED':value.decision==='REJECT'?'REJECTED':'NEEDS_SUPPLEMENT';detail.summary.reviewedAt='2026-10-25T10:00:00';detail.summary.reviewerName='Staff kiểm thử';detail.reasonNote=value.note;detail.history.push({logId:reviews,staffName:'Staff kiểm thử',action:value.decision==='APPROVE'?'APPROVED':value.decision==='REJECT'?'REJECTED':'REQUESTED_SUPPLEMENT',note:value.note,createdAt:'2026-10-25T10:00:00'});data=detail;

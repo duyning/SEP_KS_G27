@@ -1,3 +1,4 @@
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -206,30 +207,30 @@ export default function StaffCommunityModerationDetailPage() {
 
             {!isTerminal ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <button
+                <MotionButton
                   type="button"
                   className="p-button primary"
                   style={{ background: '#10b981', borderColor: '#10b981', padding: '10px' }}
                   onClick={() => setIsApproveOpen(true)}
                 >
                   <CheckCircle2 size={16} /> Duyệt bài viết (Công khai)
-                </button>
-                <button
+                </MotionButton>
+                <MotionButton
                   type="button"
                   className="p-button"
                   style={{ color: '#ea580c', borderColor: '#fdba74', padding: '10px' }}
                   onClick={() => setIsChangesOpen(true)}
                 >
                   <AlertCircle size={16} /> Yêu cầu chỉnh sửa
-                </button>
-                <button
+                </MotionButton>
+                <MotionButton
                   type="button"
                   className="p-button"
                   style={{ color: '#ef4444', borderColor: '#fca5a5', padding: '10px' }}
                   onClick={() => setIsRejectOpen(true)}
                 >
                   <XCircle size={16} /> Từ chối bài viết
-                </button>
+                </MotionButton>
               </div>
             ) : (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#166534' }}>
@@ -246,7 +247,7 @@ export default function StaffCommunityModerationDetailPage() {
       </div>
 
       {/* MODAL: APPROVE */}
-      {isApproveOpen && (
+      <AnimatePresence>{isApproveOpen && (
         <Modal
           isOpen={true}
           onClose={() => setIsApproveOpen(false)}
@@ -257,24 +258,24 @@ export default function StaffCommunityModerationDetailPage() {
               Bạn có chắc chắn muốn phê duyệt bài viết <strong>"{currentPost.title}"</strong> để xuất hiện công khai trên trang Cộng đồng?
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
-              <button type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
+              <MotionButton type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </MotionButton>
+              <MotionButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#10b981', borderColor: '#10b981' }}
                 onClick={handleApprove}
               >
                 Đồng ý duyệt
-              </button>
+              </MotionButton>
             </div>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
       {/* MODAL: REQUEST CHANGES */}
-      {isChangesOpen && (
+      <AnimatePresence>{isChangesOpen && (
         <Modal
           isOpen={true}
           onClose={() => setIsChangesOpen(false)}
@@ -292,24 +293,24 @@ export default function StaffCommunityModerationDetailPage() {
               style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
+              <MotionButton type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </MotionButton>
+              <MotionButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#ea580c', borderColor: '#ea580c' }}
                 onClick={handleRequestChanges}
               >
                 Gửi yêu cầu chỉnh sửa
-              </button>
+              </MotionButton>
             </div>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
       {/* MODAL: REJECT */}
-      {isRejectOpen && (
+      <AnimatePresence>{isRejectOpen && (
         <Modal
           isOpen={true}
           onClose={() => setIsRejectOpen(false)}
@@ -327,21 +328,21 @@ export default function StaffCommunityModerationDetailPage() {
               style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
+              <MotionButton type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </MotionButton>
+              <MotionButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#ef4444', borderColor: '#ef4444' }}
                 onClick={handleReject}
               >
                 Xác nhận từ chối
-              </button>
+              </MotionButton>
             </div>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
     </div>
   );

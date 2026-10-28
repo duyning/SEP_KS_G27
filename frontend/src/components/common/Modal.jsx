@@ -1,16 +1,35 @@
 import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
+import { motion, useIsPresent } from 'motion/react';
+import { AnimatePresence, useSurfaceMotion } from '../motion/MotionUI.jsx';
 
 export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px' }) {
+  return <AnimatePresence propagate>{isOpen && <ModalBody {...{ title, onClose, children, maxWidth }} />}</AnimatePresence>;
+}
+
+function ModalBody({ title, onClose, children, maxWidth }) {
   const titleId = useId();
   const overlayRef = useRef(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const present = useIsPresent();
+  const surface = useSurfaceMotion();
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!present) return;
+    const trigger = document.activeElement;
+    const overlay = overlayRef.current;
+    const focusable = () => [...overlay.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length);
+    focusable()[0]?.focus({ preventScroll: true });
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose?.();
+        closeRef.current?.();
+      }
+      if (e.key === 'Tab') {
+        const items = focusable(), first = items[0], last = items.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -20,10 +39,9 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = prevOverflow;
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  }, [present]);
 
   return (
     <div
@@ -32,6 +50,8 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      inert={!present || undefined}
+      aria-hidden={!present || undefined}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose?.();
       }}
@@ -47,8 +67,10 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
         padding: '16px',
       }}
     >
-      <div
+      <motion.div
         className="modal-container"
+        {...surface}
+        data-ui-motion="dialog"
         style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -60,7 +82,6 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
           border: '1px solid #e2e8f0',
           overflow: 'hidden',
-          animation: 'fadeIn 0.15s ease-out',
         }}
       >
         <div
@@ -99,7 +120,7 @@ export default function Modal({ title, isOpen = true, onClose, children, maxWidt
         <div className="modal-body" style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -246,7 +247,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Create Post Modal */}
-      {isCreateModalOpen && (
+      <AnimatePresence>{isCreateModalOpen && (
         <Modal title="Đăng bài viết mới vào Cộng đồng" onClose={() => setIsCreateModalOpen(false)}>
           <form onSubmit={handleCreatePost} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
@@ -370,7 +371,7 @@ export default function CommunityPage() {
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -212,7 +213,7 @@ export default function ServiceDetailPage() {
       </section>
 
       {/* Booking Dialog */}
-      {isContactModalOpen && (
+      <AnimatePresence>{isContactModalOpen && (
         <Modal title={`Đặt dịch vụ: ${selectedService?.name || provider.name}`} onClose={() => setIsContactModalOpen(false)}>
           <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
@@ -291,7 +292,7 @@ export default function ServiceDetailPage() {
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

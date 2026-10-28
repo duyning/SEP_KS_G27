@@ -73,7 +73,12 @@
 .btn-back-link:hover {
   background: #ccfbf1;
   color: var(--primary-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-back-link:hover {
   transform: translateX(-2px);
+  }
 }
 
 /* =========================================
@@ -133,7 +138,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--emerald);
-  animation: pulseLive 2s infinite;
+  animation: none;
 }
 
 .badge-featured-pill {
@@ -249,11 +254,16 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform var(--ui-motion-menu);
 }
 
 .gallery-item:hover img {
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gallery-item:hover img {
   transform: scale(1.04);
+  }
 }
 
 .gallery-item.main-item {
@@ -284,7 +294,6 @@
 
 .gallery-btn-all:hover {
   background: #ffffff;
-  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
   color: var(--primary);
 }
@@ -799,7 +808,6 @@
 
 .btn-host-call:hover {
   background: var(--primary-hover);
-  transform: translateY(-1px);
 }
 
 .btn-host-zalo {
@@ -818,7 +826,6 @@
 
 .btn-host-zalo:hover {
   background: #0369a1;
-  transform: translateY(-1px);
 }
 
 /* =========================================
@@ -1078,7 +1085,6 @@
 
 .btn-book-primary:hover {
   background: var(--primary-hover);
-  transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35);
 }
 
@@ -1194,7 +1200,12 @@
 
 .lightbox-close-btn:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lightbox-close-btn:hover {
   transform: rotate(90deg);
+  }
 }
 
 .lightbox-main-viewport {
@@ -1235,7 +1246,6 @@
 
 .lightbox-nav-btn:hover {
   background: rgba(255, 255, 255, 0.4);
-  transform: translateY(-50%) scale(1.08);
 }
 
 .lightbox-nav-btn.prev {
@@ -1319,10 +1329,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hl-detail-modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalEnter {
+@keyframes hl-detail-modalEnter {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
@@ -1870,10 +1880,10 @@
 
 /* Loading Spinner */
 .animate-spin {
-  animation: spin 1s linear infinite;
+  animation: hl-detail-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes hl-detail-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
@@ -1924,10 +1934,10 @@
   font-size: 13.5px;
   font-weight: 600;
   box-shadow: var(--shadow-lg);
-  animation: toastIn 0.3s ease;
+  animation: hl-detail-toastIn 0.3s ease;
 }
 
-@keyframes toastIn {
+@keyframes hl-detail-toastIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
@@ -2216,7 +2226,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hl-detail-modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Report Modal Header */
@@ -2397,7 +2407,7 @@
   border: 1.5px solid var(--slate-200);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
   user-select: none;
 }
 
@@ -2660,7 +2670,6 @@
 
 .btn-report-primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-1px);
 }
 
 .btn-report-primary:disabled {
@@ -2772,7 +2781,6 @@
 
 .btn-view-my-reports:hover {
   background: var(--slate-800);
-  transform: translateY(-1px);
 }
 
 @media (max-width: 640px) {

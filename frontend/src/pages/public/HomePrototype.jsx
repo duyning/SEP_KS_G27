@@ -1,3 +1,4 @@
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Layout and static content preserved from Code/giao_dien/html/home.html.
 import {Link} from 'react-router-dom';
 export default function HomePrototype({listings,more,account,filters,savedCount,mobileOpen,onClick,onSubmit,onChange}) {
@@ -60,9 +61,9 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
         </>}</div>
 
 
-        <button className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+        </MotionButton>
       </div>
     </nav>
   </header>
@@ -142,21 +143,21 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
 
 
           <div className="search-action">
-            <button type="submit" className="btn-search-submit">
+            <MotionButton type="submit" className="btn-search-submit">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
               <span>Tìm phòng ngay</span>
-            </button>
+            </MotionButton>
           </div>
         </form>
 
 
         <div className="quick-tags-row">
           <span className="quick-tags-title">Gợi ý lọc nhanh:</span>
-          <button type="button" className={`tag-chip ${filters.chip === "all" ? "active" : ""}`} aria-pressed={filters.chip === "all"} data-chip="all">Tất cả</button>
-          <button type="button" className={`tag-chip ${filters.chip === "dieu-hoa" ? "active" : ""}`} aria-pressed={filters.chip === "dieu-hoa"} data-chip="dieu-hoa">Có điều hòa</button>
-          <button type="button" className={`tag-chip ${filters.chip === "tu-do" ? "active" : ""}`} aria-pressed={filters.chip === "tu-do"} data-chip="tu-do">Giờ tự do</button>
-          <button type="button" className={`tag-chip ${filters.chip === "ban-cong" ? "active" : ""}`} aria-pressed={filters.chip === "ban-cong"} data-chip="ban-cong">Có ban công</button>
-          <button type="button" className={`tag-chip ${filters.chip === "gan-fpt" ? "active" : ""}`} aria-pressed={filters.chip === "gan-fpt"} data-chip="gan-fpt">Cách ĐH FPT &lt; 1km</button>
+          <MotionButton type="button" className={`tag-chip ${filters.chip === "all" ? "active" : ""}`} aria-pressed={filters.chip === "all"} data-chip="all">Tất cả</MotionButton>
+          <MotionButton type="button" className={`tag-chip ${filters.chip === "dieu-hoa" ? "active" : ""}`} aria-pressed={filters.chip === "dieu-hoa"} data-chip="dieu-hoa">Có điều hòa</MotionButton>
+          <MotionButton type="button" className={`tag-chip ${filters.chip === "tu-do" ? "active" : ""}`} aria-pressed={filters.chip === "tu-do"} data-chip="tu-do">Giờ tự do</MotionButton>
+          <MotionButton type="button" className={`tag-chip ${filters.chip === "ban-cong" ? "active" : ""}`} aria-pressed={filters.chip === "ban-cong"} data-chip="ban-cong">Có ban công</MotionButton>
+          <MotionButton type="button" className={`tag-chip ${filters.chip === "gan-fpt" ? "active" : ""}`} aria-pressed={filters.chip === "gan-fpt"} data-chip="gan-fpt">Cách ĐH FPT &lt; 1km</MotionButton>
         </div>
       </div>
     </div>
@@ -197,10 +198,10 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
           <p className="section-desc">Tất cả phòng đều được xác minh hình ảnh, tiện nghi và tình trạng thực tế trước khi hiển thị.</p>
         </div>
         <div className="filter-tabs" role="tablist">
-          <button type="button" className={`tab-btn ${filters.tab === "all" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "all"} data-tab="all">Tất cả phòng</button>
-          <button type="button" className={`tab-btn ${filters.tab === "tan-xa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "tan-xa"} data-tab="tan-xa">Tân Xã</button>
-          <button type="button" className={`tab-btn ${filters.tab === "thach-hoa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "thach-hoa"} data-tab="thach-hoa">Thạch Hòa</button>
-          <button type="button" className={`tab-btn ${filters.tab === "studio" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "studio"} data-tab="studio">Studio cao cấp</button>
+          <MotionButton type="button" className={`tab-btn ${filters.tab === "all" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "all"} data-tab="all">Tất cả phòng</MotionButton>
+          <MotionButton type="button" className={`tab-btn ${filters.tab === "tan-xa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "tan-xa"} data-tab="tan-xa">Tân Xã</MotionButton>
+          <MotionButton type="button" className={`tab-btn ${filters.tab === "thach-hoa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "thach-hoa"} data-tab="thach-hoa">Thạch Hòa</MotionButton>
+          <MotionButton type="button" className={`tab-btn ${filters.tab === "studio" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "studio"} data-tab="studio">Studio cao cấp</MotionButton>
         </div>
       </div>
 

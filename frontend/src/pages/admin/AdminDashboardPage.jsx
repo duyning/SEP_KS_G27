@@ -1,3 +1,5 @@
+import '../../styles/admin-dashboard.css';
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -225,7 +227,7 @@ export default function AdminDashboardPage() {
             {currentView === 'activity' && 'Toàn bộ lịch sử thao tác kiểm định, quyết định và phân công trên hệ thống.'}
           </p>
         </div>
-        <button
+        <MotionButton
           type="button"
           className="p-button"
           onClick={() => {
@@ -234,18 +236,18 @@ export default function AdminDashboardPage() {
           }}
         >
           <RotateCcw size={15} /> Làm mới
-        </button>
+        </MotionButton>
       </div>
 
       {/* Navigation View Tabs */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
+      <div className="admin-view-tabs" style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
         {[
           ['overview', 'Tổng quan', LayoutDashboard],
           ['accounts', 'Tài khoản hệ thống', Users],
           ['assignment', 'Phân công nhân viên', UserCheck],
           ['activity', 'Nhật ký hoạt động', History]
         ].map(([key, label, Icon]) => (
-          <button
+          <MotionButton
             key={key}
             type="button"
             onClick={() => setView(key)}
@@ -264,7 +266,7 @@ export default function AdminDashboardPage() {
             }}
           >
             <Icon size={16} /> {label}
-          </button>
+          </MotionButton>
         ))}
       </div>
 
@@ -317,7 +319,7 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Operational Split Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+          <div className="admin-summary-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
             {/* Workload breakdown */}
             <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 14px 0' }}>
@@ -348,13 +350,13 @@ export default function AdminDashboardPage() {
                 <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
                   Phân bổ hỗ trợ nhân viên
                 </h3>
-                <button
+                <MotionButton
                   type="button"
                   onClick={() => setView('assignment')}
                   style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                 >
                   Phân công →
-                </button>
+                </MotionButton>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {DEFAULT_STAFFS.map(staff => {
@@ -463,13 +465,13 @@ export default function AdminDashboardPage() {
           <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Hoạt động gần đây</h3>
-              <button
+              <MotionButton
                 type="button"
                 onClick={() => setView('activity')}
                 style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
               >
                 Xem toàn bộ nhật ký →
-              </button>
+              </MotionButton>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {activities.slice(0, 4).map(act => (
@@ -600,14 +602,14 @@ export default function AdminDashboardPage() {
                       </select>
                     </td>
                     <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                      <button
+                      <MotionButton
                         type="button"
                         className="p-button primary"
                         style={{ padding: '6px 12px', fontSize: '12px' }}
                         onClick={() => handleSaveAssignment(item.id)}
                       >
                         Lưu phân công
-                      </button>
+                      </MotionButton>
                     </td>
                   </tr>
                 ))}

@@ -126,7 +126,7 @@ a, a:visited {
   height: 6px;
   border-radius: 50%;
   background: #34d399;
-  animation: pulse 1.8s infinite;
+  animation: none;
 }
 
 .svc-page-title {
@@ -219,7 +219,7 @@ a, a:visited {
   font-weight: 600;
   color: var(--slate-600);
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   white-space: nowrap;
 }
 
@@ -304,7 +304,7 @@ a, a:visited {
   font-size: 13.5px;
   color: var(--slate-800);
   outline: none;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .svc-search-input:focus {
@@ -430,8 +430,13 @@ a, a:visited {
 
 .svc-card:hover {
   box-shadow: var(--shadow-hover);
-  transform: translateY(-3px);
   border-color: var(--primary-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .svc-card:hover {
+  transform: translateY(-3px);
+  }
 }
 
 /* Card Image */
@@ -448,11 +453,16 @@ a, a:visited {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform var(--ui-motion-menu);
 }
 
 .svc-card:hover .svc-card-img {
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .svc-card:hover .svc-card-img {
   transform: scale(1.05);
+  }
 }
 
 /* Placeholder khi không có ảnh */
@@ -634,7 +644,7 @@ a, a:visited {
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   text-decoration: none;
 }
 
@@ -670,7 +680,7 @@ a, a:visited {
   aspect-ratio: 16 / 9;
   background: linear-gradient(90deg, var(--slate-100) 25%, var(--slate-50) 50%, var(--slate-100) 75%);
   background-size: 200% 100%;
-  animation: skeletonShimmer 1.4s infinite;
+  animation: none;
 }
 
 .svc-skeleton-body {
@@ -684,18 +694,13 @@ a, a:visited {
   border-radius: 6px;
   background: linear-gradient(90deg, var(--slate-100) 25%, var(--slate-50) 50%, var(--slate-100) 75%);
   background-size: 200% 100%;
-  animation: skeletonShimmer 1.4s infinite;
+  animation: none;
 }
 
 .svc-skeleton-line.w-full { height: 18px; width: 100%; }
 .svc-skeleton-line.w-3-4 { height: 14px; width: 75%; }
 .svc-skeleton-line.w-1-2 { height: 13px; width: 50%; }
 .svc-skeleton-line.w-btn { height: 40px; width: 100%; border-radius: var(--radius-md); margin-top: 4px; }
-
-@keyframes skeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 
 /* Empty state */
 .svc-empty-state {
@@ -750,7 +755,7 @@ a, a:visited {
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   text-decoration: none;
 }
 
@@ -797,7 +802,7 @@ a, a:visited {
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   margin-top: 12px;
 }
 
@@ -874,7 +879,7 @@ a, a:visited {
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -882,7 +887,6 @@ a, a:visited {
 .svc-btn-cta-primary:hover {
   background: var(--primary-hover);
   box-shadow: 0 4px 16px rgba(13,148,136,0.4);
-  transform: translateY(-1px);
 }
 
 .svc-btn-cta-secondary {
@@ -898,7 +902,7 @@ a, a:visited {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -933,15 +937,20 @@ a, a:visited {
   border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
 }
 
 .svc-cat-quick-card:hover {
   background: #ffffff;
   border-color: var(--primary);
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .svc-cat-quick-card:hover {
+  transform: translateY(-2px);
+  }
 }
 
 .svc-cat-quick-card.active {
@@ -962,7 +971,6 @@ a, a:visited {
 }
 
 .svc-cat-quick-card:hover .svc-cat-quick-icon {
-  transform: scale(1.08);
 }
 
 .svc-cat-quick-icon.truck-icon {
@@ -1032,7 +1040,7 @@ a, a:visited {
   gap: 6px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .svc-btn-geo:hover {
@@ -1123,10 +1131,10 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: modalFadeIn 0.2s ease;
+  animation: hl-services-modalFadeIn 0.2s ease;
 }
 
-@keyframes modalFadeIn {
+@keyframes hl-services-modalFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -1140,10 +1148,10 @@ a, a:visited {
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hl-services-modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalSlideUp {
+@keyframes hl-services-modalSlideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
@@ -1163,7 +1171,7 @@ a, a:visited {
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.15s, transform 0.15s;
 }
 
 .svc-modal-close:hover {
@@ -1320,13 +1328,18 @@ a, a:visited {
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   text-decoration: none;
-  transition: all 0.15s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.15s, transform 0.15s;
 }
 
 .svc-modal-service-item:hover {
   background: #ffffff;
   border-color: var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .svc-modal-service-item:hover {
   transform: translateX(3px);
+  }
 }
 
 .svc-modal-service-name {

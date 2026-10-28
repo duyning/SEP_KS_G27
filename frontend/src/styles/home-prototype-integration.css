@@ -10,7 +10,7 @@
 .prototype-home .home-list-state h3 { font-size:18px;color:#0f172a; }
 .prototype-home .home-list-state p { color:#64748b;margin:6px 0 16px;font-size:14px; }
 .prototype-home .load-more-wrap:empty { display:none; }
-.prototype-home #services-highlight a:hover { border-color:var(--primary) !important;transform:translateY(-2px); }
+.prototype-home #services-highlight a:hover { border-color:var(--primary) !important; }
 .prototype-home .nav-menu a:focus-visible,.prototype-home button:focus-visible,.prototype-home select:focus-visible { outline:3px solid #99f6e4;outline-offset:3px; }
 @media(max-width:560px) {
   .prototype-home .navbar-container { gap:8px; }

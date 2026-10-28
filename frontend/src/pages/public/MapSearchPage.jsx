@@ -103,7 +103,7 @@ export default function MapSearchPage() {
                   display: 'flex',
                   gap: '12px',
                   boxShadow: isSelected ? '0 4px 6px -1px rgba(13, 148, 136, 0.15)' : 'none',
-                  transition: 'all 0.15s ease',
+                  transition: 'background-color var(--ui-motion-color), color var(--ui-motion-color), border-color var(--ui-motion-color), box-shadow var(--ui-motion-color)',
                 }}
               >
                 <img
@@ -214,7 +214,7 @@ export default function MapSearchPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color var(--ui-motion-color), color var(--ui-motion-color), border-color var(--ui-motion-color), box-shadow var(--ui-motion-color)',
                   }}
                 >
                   <MapPin size={12} />

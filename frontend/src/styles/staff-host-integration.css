@@ -74,3 +74,7 @@
 .hr-staff .hr-instruction-visible textarea{display:block;width:100%;box-sizing:border-box;}
 
 .hr-staff .staff-sidebar .nav-link > span:not([class]){white-space:normal;overflow:visible;text-overflow:clip;line-height:1.5;flex:1;}
+
+/* These screens use the same PortalLayout navigation as the Staff dashboard. */
+.hr-staff.hr-staff-content-only{min-height:0;background:transparent;}
+.hr-staff-content-only .staff-content{padding:0;max-width:none;}

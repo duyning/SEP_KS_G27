@@ -12,6 +12,7 @@ async function main(){
   });
   let mode='allowed',hold=false,held=[],checks=0,writes=0;
   await page.route('**/api/**',async route=>{
+   if(new URL(route.request().url()).hostname!=='127.0.0.1')return route.abort();
    const url=new URL(route.request().url()).pathname;let data;
    if(route.request().method()!=='GET')writes++;
    if(url==='/api/auth/me')data={userId:1,fullName:'Test owner',role:'ROOM_HOST'};

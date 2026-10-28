@@ -1,3 +1,4 @@
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -93,7 +94,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
             <Plus size={18} strokeWidth={2.5} id="headerCtaIcon" />
             <span id="headerCtaText">Đăng ký nhà trọ</span>
           </Link>}
-          <button
+          <MotionButton
             type="button"
             className="btn-refresh-icon"
             id="btnRefreshDashboard"
@@ -103,7 +104,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
             disabled={loading}
           >
             <RefreshCw size={16} />
-          </button>
+          </MotionButton>
         </div>
       </section>
 
@@ -401,9 +402,9 @@ export default function HostDashboardPage() {
     return (
       <div className="host-dashboard-page">
         <StateView kind="error" message={state.error}>
-          <button className="p-button primary" onClick={handleRefresh}>
+          <MotionButton className="p-button primary" onClick={handleRefresh}>
             Thử lại
-          </button>
+          </MotionButton>
         </StateView>
       </div>
     );

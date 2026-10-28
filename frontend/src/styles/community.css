@@ -133,13 +133,7 @@ a, a:visited {
   background-color: #2dd4bf;
   border-radius: 50%;
   box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.7);
-  animation: pulseGreen 1.8s infinite;
-}
-
-@keyframes pulseGreen {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(45, 212, 191, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); }
+  animation: none;
 }
 
 .community-hero-title {
@@ -188,12 +182,11 @@ a, a:visited {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
-  transition: all 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
 }
 
 .btn-create-post:hover {
   background: #0f766e;
-  transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(13, 148, 136, 0.5);
 }
 
@@ -209,14 +202,13 @@ a, a:visited {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   backdrop-filter: blur(8px);
 }
 
 .btn-my-posts-quick:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-2px);
 }
 
 /* =========================================
@@ -258,7 +250,7 @@ a, a:visited {
   color: #64748b;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .category-tab-btn .tab-icon {
@@ -272,7 +264,7 @@ a, a:visited {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .category-tab-btn:hover {
@@ -331,7 +323,7 @@ a, a:visited {
   color: #0f172a;
   outline: none;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .community-search-input:focus {
@@ -353,7 +345,7 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .clear-search-btn:hover {
@@ -493,13 +485,7 @@ a, a:visited {
   height: 7px;
   background-color: #10b981;
   border-radius: 50%;
-  animation: pulseDot 1.5s infinite;
-}
-
-@keyframes pulseDot {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
+  animation: none;
 }
 
 /* =========================================
@@ -521,13 +507,18 @@ a, a:visited {
   gap: 18px;
   position: relative;
   box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
-  transition: all 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
 }
 
 .post-card:hover {
-  transform: translateY(-3px);
   border-color: #cbd5e1;
   box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.08);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .post-card:hover {
+  transform: translateY(-3px);
+  }
 }
 
 /* Post Image Box */
@@ -548,7 +539,12 @@ a, a:visited {
 }
 
 .post-card:hover .post-card-img {
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .post-card:hover .post-card-img {
   transform: scale(1.04);
+  }
 }
 
 .post-media-count {
@@ -793,7 +789,7 @@ a, a:visited {
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 700;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-quick-call:hover {
@@ -812,7 +808,7 @@ a, a:visited {
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 700;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-quick-zalo:hover {
@@ -832,7 +828,7 @@ a, a:visited {
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-view-detail:hover {
@@ -855,7 +851,7 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-owner-menu:hover {
@@ -1015,14 +1011,19 @@ a, a:visited {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
   text-align: left;
 }
 
 .zone-quick-item:hover {
   background: #f0fdfa;
   border-color: #99f6e4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .zone-quick-item:hover {
   transform: translateX(3px);
+  }
 }
 
 .zone-item-info {
@@ -1184,13 +1185,8 @@ a, a:visited {
   height: 160px;
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s infinite;
+  animation: none;
   border-radius: 14px;
-}
-
-@keyframes skeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 .feed-loadmore-wrap {
@@ -1210,7 +1206,7 @@ a, a:visited {
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-feed-loadmore:hover {
@@ -1231,10 +1227,10 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: modalFadeIn 0.25s ease;
+  animation: hl-community-modalFadeIn 0.25s ease;
 }
 
-@keyframes modalFadeIn {
+@keyframes hl-community-modalFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -1246,12 +1242,12 @@ a, a:visited {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hl-community-modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
 }
 
-@keyframes modalSlideUp {
+@keyframes hl-community-modalSlideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
@@ -1323,7 +1319,7 @@ a, a:visited {
   justify-content: center;
   color: #64748b;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .modal-close-btn:hover {
@@ -1589,7 +1585,7 @@ a, a:visited {
   border-radius: 12px;
   padding: 14px 12px;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   background: #ffffff;
   height: 100%;
   display: flex;
@@ -1670,7 +1666,7 @@ a, a:visited {
   color: #0f172a;
   outline: none;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
   box-sizing: border-box;
 }
 
@@ -1756,7 +1752,7 @@ a, a:visited {
   border: 2px solid #e2e8f0;
   padding: 0;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .preset-thumb-btn img {
@@ -1843,7 +1839,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-form-submit:hover:not(:disabled) {
@@ -1861,10 +1857,10 @@ a, a:visited {
   border: 2px solid #ffffff;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: hl-community-spin 0.6s linear infinite;
 }
 
-@keyframes spin {
+@keyframes hl-community-spin {
   to { transform: rotate(360deg); }
 }
 
@@ -2005,7 +2001,7 @@ a, a:visited {
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.2s;
 }
 
 .btn-quick-demo-user:hover {

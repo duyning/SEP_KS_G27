@@ -1,3 +1,4 @@
+import { AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -210,7 +211,7 @@ export default function ServicesPage() {
       </div>
 
       {/* Provider Registration Modal */}
-      {isRegisterModalOpen && (
+      <AnimatePresence>{isRegisterModalOpen && (
         <Modal title="Đăng ký nhà cung cấp dịch vụ quanh trọ" onClose={() => setIsRegisterModalOpen(false)}>
           <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
@@ -292,7 +293,7 @@ export default function ServicesPage() {
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

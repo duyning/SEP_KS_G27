@@ -1,3 +1,4 @@
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -148,7 +149,7 @@ export default function HostSupportPage() {
           <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Gửi và theo dõi các yêu cầu hỗ trợ kỹ thuật, kiểm định và vận hành từ HL_RCS.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
+          <MotionButton
             type="button"
             className="p-button"
             onClick={() => {
@@ -157,14 +158,14 @@ export default function HostSupportPage() {
             }}
           >
             <RotateCcw size={16} /> Làm mới
-          </button>
-          <button
+          </MotionButton>
+          <MotionButton
             type="button"
             className="p-button primary"
             onClick={() => setIsCreateOpen(true)}
           >
             <Plus size={16} /> Gửi yêu cầu hỗ trợ
-          </button>
+          </MotionButton>
         </div>
       </div>
 
@@ -299,60 +300,60 @@ export default function HostSupportPage() {
             </select>
 
             <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-              <button
+              <MotionButton
                 type="button"
                 onClick={() => setViewMode('table')}
                 style={{ padding: '8px 12px', border: 'none', background: viewMode === 'table' ? '#0d9488' : '#fff', color: viewMode === 'table' ? '#fff' : '#64748b', cursor: 'pointer' }}
                 title="Xem dạng bảng"
               >
                 <List size={16} />
-              </button>
-              <button
+              </MotionButton>
+              <MotionButton
                 type="button"
                 onClick={() => setViewMode('cards')}
                 style={{ padding: '8px 12px', border: 'none', borderLeft: '1px solid #cbd5e1', background: viewMode === 'cards' ? '#0d9488' : '#fff', color: viewMode === 'cards' ? '#fff' : '#64748b', cursor: 'pointer' }}
                 title="Xem dạng thẻ"
               >
                 <LayoutGrid size={16} />
-              </button>
+              </MotionButton>
             </div>
           </div>
         </div>
 
         {/* Status Tabs */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
+          <MotionButton
             type="button"
             className={`p-button ${statusFilter === 'ALL' ? 'primary' : ''}`}
             style={{ padding: '6px 14px', fontSize: '13px' }}
             onClick={() => setStatusFilter('ALL')}
           >
             Tất cả ({totalCount})
-          </button>
-          <button
+          </MotionButton>
+          <MotionButton
             type="button"
             className={`p-button ${statusFilter === 'PENDING' ? 'primary' : ''}`}
             style={{ padding: '6px 14px', fontSize: '13px' }}
             onClick={() => setStatusFilter('PENDING')}
           >
             Chờ tiếp nhận ({pendingCount})
-          </button>
-          <button
+          </MotionButton>
+          <MotionButton
             type="button"
             className={`p-button ${statusFilter === 'IN_PROGRESS' ? 'primary' : ''}`}
             style={{ padding: '6px 14px', fontSize: '13px' }}
             onClick={() => setStatusFilter('IN_PROGRESS')}
           >
             Đang xử lý ({inProgressCount})
-          </button>
-          <button
+          </MotionButton>
+          <MotionButton
             type="button"
             className={`p-button ${statusFilter === 'RESOLVED' ? 'primary' : ''}`}
             style={{ padding: '6px 14px', fontSize: '13px' }}
             onClick={() => setStatusFilter('RESOLVED')}
           >
             Đã hoàn tất ({resolvedCount})
-          </button>
+          </MotionButton>
         </div>
       </section>
 
@@ -362,13 +363,13 @@ export default function HostSupportPage() {
           <div style={{ fontSize: '36px', marginBottom: '12px' }}>💬</div>
           <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 6px 0' }}>Chưa có yêu cầu hỗ trợ nào</h3>
           <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>Nếu gặp vấn đề khi quản lý nhà trọ, bạn có thể tạo phiếu yêu cầu mới.</p>
-          <button
+          <MotionButton
             type="button"
             className="p-button primary"
             onClick={() => setIsCreateOpen(true)}
           >
             + Gửi yêu cầu hỗ trợ ngay
-          </button>
+          </MotionButton>
         </div>
       ) : viewMode === 'table' ? (
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
@@ -413,14 +414,14 @@ export default function HostSupportPage() {
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <button
+                      <MotionButton
                         type="button"
                         className="p-button"
                         style={{ padding: '6px 10px', fontSize: '12px' }}
                         onClick={() => setSelectedRequest(item)}
                       >
                         <Eye size={14} /> Chi tiết
-                      </button>
+                      </MotionButton>
                     </td>
                   </tr>
                 ))}
@@ -446,14 +447,14 @@ export default function HostSupportPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                 <span>{item.categoryLabel}</span>
-                <button
+                <MotionButton
                   type="button"
                   className="p-button"
                   style={{ padding: '6px 10px', fontSize: '12px' }}
                   onClick={() => setSelectedRequest(item)}
                 >
                   <Eye size={14} /> Chi tiết
-                </button>
+                </MotionButton>
               </div>
             </div>
           ))}
@@ -461,7 +462,7 @@ export default function HostSupportPage() {
       )}
 
       {/* MODAL 1: CREATE SUPPORT REQUEST */}
-      {isCreateOpen && (
+      <AnimatePresence>{isCreateOpen && (
         <Modal
           isOpen={true}
           onClose={() => setIsCreateOpen(false)}
@@ -523,19 +524,19 @@ export default function HostSupportPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
-              <button type="button" className="p-button" onClick={() => setIsCreateOpen(false)}>
+              <MotionButton type="button" className="p-button" onClick={() => setIsCreateOpen(false)}>
                 Hủy
-              </button>
-              <button type="submit" className="p-button primary">
+              </MotionButton>
+              <MotionButton type="submit" className="p-button primary">
                 Gửi yêu cầu
-              </button>
+              </MotionButton>
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
       {/* MODAL 2: REQUEST DETAILS & THREAD */}
-      {selectedRequest && (
+      <AnimatePresence>{selectedRequest && (
         <Modal
           isOpen={true}
           onClose={() => setSelectedRequest(null)}
@@ -609,24 +610,24 @@ export default function HostSupportPage() {
                   onKeyDown={e => { if (e.key === 'Enter') handleSendReply(); }}
                   style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
                 />
-                <button
+                <MotionButton
                   type="button"
                   className="p-button primary"
                   onClick={handleSendReply}
                 >
                   <Send size={15} /> Gửi
-                </button>
+                </MotionButton>
               </div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
-              <button type="button" className="p-button" onClick={() => setSelectedRequest(null)}>
+              <MotionButton type="button" className="p-button" onClick={() => setSelectedRequest(null)}>
                 Đóng
-              </button>
+              </MotionButton>
             </div>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -192,7 +193,7 @@ export default function DetailPage() {
                   cursor: 'pointer',
                   border: activeImageIdx === idx ? '3px solid #0d9488' : '1px solid #cbd5e1',
                   opacity: activeImageIdx === idx ? 1 : 0.7,
-                  transition: 'all 0.15s ease',
+                  transition: 'background-color var(--ui-motion-color), color var(--ui-motion-color), border-color var(--ui-motion-color), box-shadow var(--ui-motion-color)',
                 }}
               />
             ))}
@@ -404,7 +405,7 @@ export default function DetailPage() {
       </div>
 
       {/* Booking Appointment Modal */}
-      {isBookingModalOpen && (
+      <AnimatePresence>{isBookingModalOpen && (
         <Modal title="Đặt lịch hẹn xem phòng trực tiếp" onClose={() => setIsBookingModalOpen(false)}>
           <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: '13px' }}>
@@ -506,10 +507,10 @@ export default function DetailPage() {
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
       {/* Report Modal */}
-      {isReportModalOpen && (
+      <AnimatePresence>{isReportModalOpen && (
         <Modal title="Báo cáo tin đăng phòng trọ" onClose={() => setIsReportModalOpen(false)}>
           <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
@@ -562,7 +563,7 @@ export default function DetailPage() {
             </div>
           </form>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

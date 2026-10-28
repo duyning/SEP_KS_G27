@@ -1,3 +1,4 @@
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -201,13 +202,13 @@ export default function StaffAssistanceRequestDetailPage() {
                   />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                  <button
+                  <MotionButton
                     type="button"
                     className="p-button primary"
                     onClick={handleSendReply}
                   >
                     <Send size={15} /> Gửi phản hồi
-                  </button>
+                  </MotionButton>
                 </div>
               </div>
             )}
@@ -268,31 +269,31 @@ export default function StaffAssistanceRequestDetailPage() {
             {currentReq.status !== 'RESOLVED' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {currentReq.status === 'PENDING' && (
-                  <button
+                  <MotionButton
                     type="button"
                     className="p-button primary"
                     style={{ background: '#2563eb', borderColor: '#2563eb', padding: '10px' }}
                     onClick={() => { setActionModal('IN_PROGRESS'); setActionNote(''); }}
                   >
                     Tiếp nhận xử lý yêu cầu
-                  </button>
+                  </MotionButton>
                 )}
-                <button
+                <MotionButton
                   type="button"
                   className="p-button"
                   style={{ color: '#d97706', borderColor: '#fde68a', padding: '10px' }}
                   onClick={() => { setActionModal('WAITING_FOR_HOST'); setActionNote(''); }}
                 >
                   Yêu cầu Host bổ sung thông tin
-                </button>
-                <button
+                </MotionButton>
+                <MotionButton
                   type="button"
                   className="p-button primary"
                   style={{ background: '#10b981', borderColor: '#10b981', padding: '10px' }}
                   onClick={() => { setActionModal('RESOLVED'); setActionNote(''); }}
                 >
                   Hoàn tất / Giải quyết yêu cầu
-                </button>
+                </MotionButton>
               </div>
             ) : (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#166534' }}>
@@ -309,7 +310,7 @@ export default function StaffAssistanceRequestDetailPage() {
       </div>
 
       {/* MODAL: ACTION CONFIRMATION */}
-      {actionModal && (
+      <AnimatePresence>{actionModal && (
         <Modal
           isOpen={true}
           onClose={() => setActionModal(null)}
@@ -339,20 +340,20 @@ export default function StaffAssistanceRequestDetailPage() {
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setActionModal(null)}>
+              <MotionButton type="button" className="p-button" onClick={() => setActionModal(null)}>
                 Hủy
-              </button>
-              <button
+              </MotionButton>
+              <MotionButton
                 type="button"
                 className="p-button primary"
                 onClick={handleExecuteAction}
               >
                 Xác nhận
-              </button>
+              </MotionButton>
             </div>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
 
     </div>
   );

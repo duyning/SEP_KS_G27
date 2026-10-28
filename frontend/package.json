@@ -11,10 +11,12 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@animate-ui/react": "^2.3.0",
     "exceljs": "4.4.0",
     "jszip": "3.10.1",
     "leaflet": "1.9.4",
     "lucide-react": "^0.468.0",
+    "motion": "^14.6.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.4"

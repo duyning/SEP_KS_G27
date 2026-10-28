@@ -124,7 +124,7 @@
   cursor: pointer;
   text-decoration: none;
   outline: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .step-circle {
@@ -140,7 +140,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .step-label {
@@ -269,10 +269,10 @@
 
 .step-pane.active {
   display: block;
-  animation: fadeInPane 0.25s ease;
+  animation: hl-host-property-create-fadeInPane 0.25s ease;
 }
 
-@keyframes fadeInPane {
+@keyframes hl-host-property-create-fadeInPane {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
@@ -400,7 +400,7 @@
   background: #ffffff;
   border: 1.5px solid var(--host-border);
   border-radius: var(--host-radius-md);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   font-family: inherit;
   outline: none;
 }
@@ -510,7 +510,7 @@
   background: #ffffff;
   color: var(--host-text-main);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .mpt-preset-btn:hover {
@@ -581,7 +581,7 @@
   border-radius: var(--host-radius-md);
   background: #ffffff;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   user-select: none;
 }
 
@@ -618,7 +618,7 @@
   text-align: center;
   background: #f8fafc;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   margin-bottom: 18px;
 }
 
@@ -666,7 +666,7 @@
   border: 1.5px solid var(--host-primary);
   border-radius: var(--host-radius-md);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-browse-files:hover {
@@ -703,7 +703,7 @@
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-load-sample-photos:hover {
@@ -726,7 +726,7 @@
   border: 1.5px solid var(--host-border);
   background: #f1f5f9;
   box-shadow: var(--host-shadow-sm);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .image-preview-card img {
@@ -775,7 +775,7 @@
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-set-cover {
@@ -811,7 +811,7 @@
   border-radius: var(--host-radius-md);
   padding: 18px 20px;
   background: #ffffff;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .doc-upload-item:hover {
@@ -904,7 +904,7 @@
   border: 1.5px solid var(--host-primary);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-upload-doc:hover {
@@ -969,7 +969,7 @@
   padding: 4px 12px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-rc-edit:hover {
@@ -1070,7 +1070,7 @@
   font-weight: 700;
   border-radius: var(--host-radius-md);
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   border: none;
   outline: none;
 }
@@ -1376,7 +1376,7 @@
   color: #ffffff;
   border-radius: var(--host-radius-md);
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .btn-success-primary:hover {
@@ -1392,7 +1392,7 @@
   border: 1.5px solid var(--host-border);
   border-radius: var(--host-radius-md);
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .btn-success-secondary:hover {
@@ -1602,7 +1602,7 @@
   font-weight: 700;
   font-size: 14px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   border: none;
   cursor: pointer;
 }
@@ -1623,7 +1623,7 @@
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
 

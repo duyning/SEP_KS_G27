@@ -1,3 +1,4 @@
+import { MotionButton } from './motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Check, LoaderCircle } from 'lucide-react';
 import { Modal } from './PortalUI.jsx';
@@ -32,6 +33,6 @@ export default function RoomEditorModal({types,defaultTypeId,room,onClose,onSave
       <fieldset className="hr-status-field"><legend>Tình trạng thực tế hiện tại</legend><div className="hr-status-options">{[['VACANT','Còn trống','Phòng sẵn sàng đón khách thuê vào ở ngay'],['OCCUPIED','Đã có người thuê','Đang có khách lưu trú ổn định']].map(([value,label,hint])=><label key={value} className={data.status===value?'selected':''}><input type="radio" name="room-status" checked={data.status===value} onChange={()=>update('status',value)}/><span><strong>{label}</strong><small>{hint}</small></span></label>)}</div>{error('status')}</fieldset>
       <label className="hr-custom-toggle"><input type="checkbox" checked={data.overridePrice} onChange={event=>update('overridePrice',event.target.checked)}/>Tùy chỉnh giá thuê riêng cho phòng này (mặc định lấy theo Loại phòng)</label>
       {data.overridePrice&&<div className="hr-field"><label htmlFor="room-customPrice">Giá thuê riêng (đ/tháng) <b>*</b></label><input {...input('customPrice')} inputMode="numeric" placeholder="Ví dụ: 2400000"/>{error('customPrice')}</div>}{!data.overridePrice&&error('customPrice')}
-    </fieldset>{failure&&<p className="hr-error" role="alert">{failure}</p>}<footer className="hr-modal-footer"><button type="button" className="p-button" disabled={busy} onClick={onClose}>Hủy bỏ</button><button type="submit" className="p-button primary" disabled={busy}>{busy?<><LoaderCircle size={15} className="spin"/>Đang lưu...</>:'Lưu phòng'}</button></footer></form>
+    </fieldset>{failure&&<p className="hr-error" role="alert">{failure}</p>}<footer className="hr-modal-footer"><MotionButton type="button" className="p-button" disabled={busy} onClick={onClose}>Hủy bỏ</MotionButton><MotionButton type="submit" className="p-button primary" disabled={busy}>{busy?<><LoaderCircle size={15} className="spin"/>Đang lưu...</>:'Lưu phòng'}</MotionButton></footer></form>
   </Modal>;
 }

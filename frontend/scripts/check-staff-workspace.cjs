@@ -87,7 +87,7 @@ async function main() {
       await page.getByRole('button',{name:'Thử lại',exact:true}).click();
       await page.getByRole('button',{name:'Từ chối hồ sơ',exact:true}).click();
       await page.getByRole('button',{name:'Xác nhận quyết định',exact:true}).click();
-      await page.getByText('Vui lòng nhập nội dung từ 10 đến 2000 ký tự.',{exact:true}).waitFor();
+      await page.getByText('Nội dung yêu cầu và ghi chú cần từ 10 đến 2000 ký tự. Vui lòng rút gọn ghi chú nếu quá dài.',{exact:true}).waitFor();
       assert.equal(reviewCount,0);
       await page.locator('#staff-review-note').fill('Test-only rejection note, no database write.');
       await page.getByRole('button',{name:'Xác nhận quyết định',exact:true}).click();

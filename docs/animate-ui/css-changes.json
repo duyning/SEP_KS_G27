@@ -1,0 +1,182 @@
+[
+  {
+    "file": "src\\styles\\auth.css",
+    "transitionAll": 6,
+    "decorativeLoops": 1,
+    "hoverRepairs": 1
+  },
+  {
+    "file": "src\\styles\\become-host-prototype.css",
+    "transitionAll": 0,
+    "decorativeLoops": 2,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\bookings.css",
+    "transitionAll": 3,
+    "decorativeLoops": 0,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\community.css",
+    "transitionAll": 19,
+    "decorativeLoops": 3,
+    "hoverRepairs": 5
+  },
+  {
+    "file": "src\\styles\\detail.css",
+    "transitionAll": 1,
+    "decorativeLoops": 1,
+    "hoverRepairs": 10
+  },
+  {
+    "file": "src\\styles\\favorites.css",
+    "transitionAll": 0,
+    "decorativeLoops": 3,
+    "hoverRepairs": 5
+  },
+  {
+    "file": "src\\styles\\home-landing.css",
+    "transitionAll": 0,
+    "decorativeLoops": 0,
+    "hoverRepairs": 1
+  },
+  {
+    "file": "src\\styles\\home-prototype-integration.css",
+    "transitionAll": 0,
+    "decorativeLoops": 0,
+    "hoverRepairs": 1
+  },
+  {
+    "file": "src\\styles\\home-prototype.css",
+    "transitionAll": 4,
+    "decorativeLoops": 1,
+    "hoverRepairs": 10
+  },
+  {
+    "file": "src\\styles\\home.css",
+    "transitionAll": 4,
+    "decorativeLoops": 1,
+    "hoverRepairs": 10
+  },
+  {
+    "file": "src\\styles\\host-dashboard.css",
+    "transitionAll": 25,
+    "decorativeLoops": 1,
+    "hoverRepairs": 4
+  },
+  {
+    "file": "src\\styles\\host-notifications.css",
+    "transitionAll": 6,
+    "decorativeLoops": 0,
+    "hoverRepairs": 1
+  },
+  {
+    "file": "src\\styles\\host-property-create.css",
+    "transitionAll": 18,
+    "decorativeLoops": 0,
+    "hoverRepairs": 0
+  },
+  {
+    "file": "src\\styles\\host-property.css",
+    "transitionAll": 6,
+    "decorativeLoops": 0,
+    "hoverRepairs": 0
+  },
+  {
+    "file": "src\\styles\\host-room-availability.css",
+    "transitionAll": 4,
+    "decorativeLoops": 0,
+    "hoverRepairs": 0
+  },
+  {
+    "file": "src\\styles\\host-room-types.css",
+    "transitionAll": 13,
+    "decorativeLoops": 3,
+    "hoverRepairs": 5
+  },
+  {
+    "file": "src\\styles\\host-rooms.css",
+    "transitionAll": 24,
+    "decorativeLoops": 1,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\host-support.css",
+    "transitionAll": 11,
+    "decorativeLoops": 0,
+    "hoverRepairs": 2
+  },
+  {
+    "file": "src\\styles\\host-viewing-requests.css",
+    "transitionAll": 16,
+    "decorativeLoops": 3,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\map-search.css",
+    "transitionAll": 19,
+    "decorativeLoops": 2,
+    "hoverRepairs": 6
+  },
+  {
+    "file": "src\\styles\\notifications.css",
+    "transitionAll": 11,
+    "decorativeLoops": 2,
+    "hoverRepairs": 1
+  },
+  {
+    "file": "src\\styles\\portal.css",
+    "transitionAll": 3,
+    "decorativeLoops": 0,
+    "hoverRepairs": 0
+  },
+  {
+    "file": "src\\styles\\profile-prototype.css",
+    "transitionAll": 0,
+    "decorativeLoops": 0,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\profile.css",
+    "transitionAll": 0,
+    "decorativeLoops": 0,
+    "hoverRepairs": 3
+  },
+  {
+    "file": "src\\styles\\search.css",
+    "transitionAll": 1,
+    "decorativeLoops": 1,
+    "hoverRepairs": 2
+  },
+  {
+    "file": "src\\styles\\service-detail.css",
+    "transitionAll": 6,
+    "decorativeLoops": 0,
+    "hoverRepairs": 4
+  },
+  {
+    "file": "src\\styles\\services.css",
+    "transitionAll": 11,
+    "decorativeLoops": 3,
+    "hoverRepairs": 6
+  },
+  {
+    "file": "src\\styles\\staff-dashboard.css",
+    "transitionAll": 26,
+    "decorativeLoops": 0,
+    "hoverRepairs": 6
+  },
+  {
+    "file": "src\\styles\\staff-host-prototype.css",
+    "transitionAll": 44,
+    "decorativeLoops": 1,
+    "hoverRepairs": 11
+  },
+  {
+    "file": "src\\styles\\styles.css",
+    "transitionAll": 4,
+    "decorativeLoops": 1,
+    "hoverRepairs": 3
+  }
+]

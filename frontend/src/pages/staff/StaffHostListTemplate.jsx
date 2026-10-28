@@ -1,6 +1,7 @@
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Preserved from Code/giao_dien/html/staff-host-registrations.html and staff-host-registration-detail.html.
 import {Link} from 'react-router-dom';
-export default function StaffHostListTemplate(props){return <div className="hr-content-fragment" onClick={props.onClick} onChange={props.onChange}><main className="staff-content" role="main">
+export default function StaffHostListTemplate(props){return <div className="hr-content-fragment" onClick={props.onClick} onChange={props.onChange}><section className="staff-content">
 
 
         <nav className="dashboard-breadcrumbs" aria-label="Đường dẫn">
@@ -20,12 +21,12 @@ export default function StaffHostListTemplate(props){return <div className="hr-c
             </p>
           </div>
           <div className="header-actions-col">
-            <button type="button" className="btn-refresh-dashboard" id="btnRefreshList" title="Làm mới danh sách">
+            <MotionButton type="button" className="btn-refresh-dashboard" id="btnRefreshList" title="Làm mới danh sách">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
               </svg>
               <span>Làm mới</span>
-            </button>
+            </MotionButton>
           </div>
         </section>
 
@@ -110,7 +111,7 @@ export default function StaffHostListTemplate(props){return <div className="hr-c
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
               <input type="text" id="searchHostReg" className="verif-search-input" placeholder="Tìm theo tên người nộp, số điện thoại, email hoặc mã HREG-..." autoComplete="off" value={props.filters.search}/>
-              <button type="button" id="btnClearSearch" className="btn-clear-search" title="Xóa tìm kiếm" style={{display:props.filters.search ? "block" : "none"}}>✕</button>
+              <MotionButton type="button" id="btnClearSearch" className="btn-clear-search" title="Xóa tìm kiếm" style={{display:props.filters.search ? "block" : "none"}}>✕</MotionButton>
             </div>
 
 
@@ -137,13 +138,13 @@ export default function StaffHostListTemplate(props){return <div className="hr-c
             </div>
 
 
-            <button type="button" id="btnResetFilter" className="btn-reset-filters" title="Xóa các bộ lọc về mặc định">
+            <MotionButton type="button" id="btnResetFilter" className="btn-reset-filters" title="Xóa các bộ lọc về mặc định">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="1 4 1 10 7 10"></polyline>
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
               </svg>
               <span>Đặt lại</span>
-            </button>
+            </MotionButton>
 
 
             <div className="verif-results-count" id="resultCountText">{'Hiển thị: ' + props.data.totalElements + ' hồ sơ'}</div>
@@ -170,9 +171,9 @@ export default function StaffHostListTemplate(props){return <div className="hr-c
             <p id="emptyStateDesc" style={{"color": "var(--staff-text-muted)", "fontSize": "13.5px", "margin": "0 0 16px"}}>
               Không có hồ sơ nào khớp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
             </p>
-            <button type="button" className="btn-queue-action" id="btnEmptyReset" style={{"margin": "0 auto"}}>
+            <MotionButton type="button" className="btn-queue-action" id="btnEmptyReset" style={{"margin": "0 auto"}}>
               Xóa bộ lọc &amp; Tải lại tất cả
-            </button>
+            </MotionButton>
           </div>
 
 
@@ -183,4 +184,4 @@ export default function StaffHostListTemplate(props){return <div className="hr-c
 
         </section>
 
-      </main></div>;}
+      </section></div>;}

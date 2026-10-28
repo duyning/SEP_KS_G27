@@ -1,3 +1,4 @@
+import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
 export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,account,onClick,onSubmit,onChange,alert}) {
@@ -53,9 +54,9 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
         <div className="nav-actions">{account}</div>
 
 
-        <button className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+        </MotionButton>
       </div>
     </nav>
   </header>
@@ -81,9 +82,9 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
           <div className="profile-avatar-wrapper">
             <img alt="Avatar" className="profile-avatar-img" id="profileAvatarImg" src={user.avatar || undefined} style={{display:user.avatar ? "block" : "none"}}/>
             <div className="profile-avatar-fallback" id="profileAvatarFallback" style={{display:user.avatar ? "none" : "grid"}}>{(user.fullName || 'U').charAt(0).toUpperCase()}</div>
-            <button type="button" className="btn-avatar-camera" id="btnTriggerAvatarUpload" title="Thay đổi ảnh đại diện" disabled={busy}>
+            <MotionButton type="button" className="btn-avatar-camera" id="btnTriggerAvatarUpload" title="Thay đổi ảnh đại diện" disabled={busy}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            </button>
+            </MotionButton>
             <input type="file" id="avatarFileInput" accept="image/*" style={{"display": "none"}}/>
           </div>
 
@@ -155,30 +156,30 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
               </Link>
             </li>
             <li>
-              <button type="button" data-tab="info" id="navBtnInfo" className={`profile-nav-btn ${tab === "info" ? "active" : ""}`} aria-selected={tab === "info"}>
+              <MotionButton type="button" data-tab="info" id="navBtnInfo" className={`profile-nav-btn ${tab === "info" ? "active" : ""}`} aria-selected={tab === "info"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <span>Thông tin cá nhân</span>
                 </span>
-              </button>
+              </MotionButton>
             </li>
             <li>
-              <button type="button" data-tab="favorites" id="navBtnFavorites" className={`profile-nav-btn ${tab === "favorites" ? "active" : ""}`} aria-selected={tab === "favorites"}>
+              <MotionButton type="button" data-tab="favorites" id="navBtnFavorites" className={`profile-nav-btn ${tab === "favorites" ? "active" : ""}`} aria-selected={tab === "favorites"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
                   <span>Nhà trọ đã lưu</span>
                 </span>
                 <span className="profile-nav-badge" id="sidebarFavBadge">0</span>
-              </button>
+              </MotionButton>
             </li>
             <li>
-              <button type="button" data-tab="appointments" id="navBtnAppointments" className={`profile-nav-btn ${tab === "appointments" ? "active" : ""}`} aria-selected={tab === "appointments"}>
+              <MotionButton type="button" data-tab="appointments" id="navBtnAppointments" className={`profile-nav-btn ${tab === "appointments" ? "active" : ""}`} aria-selected={tab === "appointments"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                   <span>Lịch xem phòng</span>
                 </span>
                 <span className="profile-nav-badge" id="sidebarApptBadge">0</span>
-              </button>
+              </MotionButton>
             </li>
             <li>
               <Link className="profile-nav-btn" style={{"textDecoration": "none"}} id="navBtnServices" title="Xem dịch vụ hỗ trợ quanh trọ" to="/services">
@@ -190,32 +191,32 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
               </Link>
             </li>
             <li>
-              <button type="button" data-tab="reports" id="navBtnReports" title="Báo cáo nhà trọ bạn đã gửi" className={`profile-nav-btn ${tab === "reports" ? "active" : ""}`} aria-selected={tab === "reports"}>
+              <MotionButton type="button" data-tab="reports" id="navBtnReports" title="Báo cáo nhà trọ bạn đã gửi" className={`profile-nav-btn ${tab === "reports" ? "active" : ""}`} aria-selected={tab === "reports"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
                   <span>Báo cáo của tôi</span>
                 </span>
                 <span className="profile-nav-badge" id="sidebarReportBadge">0</span>
-              </button>
+              </MotionButton>
             </li>
             <li>
-              <button type="button" data-tab="security" id="navBtnSecurity" className={`profile-nav-btn ${tab === "security" ? "active" : ""}`} aria-selected={tab === "security"}>
+              <MotionButton type="button" data-tab="security" id="navBtnSecurity" className={`profile-nav-btn ${tab === "security" ? "active" : ""}`} aria-selected={tab === "security"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                   <span>Bảo mật &amp; Mật khẩu</span>
                 </span>
-              </button>
+              </MotionButton>
             </li>
 
             <li className="profile-nav-divider"></li>
 
             <li>
-              <button type="button" className="profile-nav-btn btn-logout" id="btnSidebarLogout" disabled={busy}>
+              <MotionButton type="button" className="profile-nav-btn btn-logout" id="btnSidebarLogout" disabled={busy}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                   <span>Đăng xuất tài khoản</span>
                 </span>
-              </button>
+              </MotionButton>
             </li>
           </ul>
         </aside>
@@ -232,10 +233,10 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
                   <h2>Thông tin tài khoản</h2>
                   <p>Thông tin cơ bản được sử dụng để xác minh danh tính và liên hệ đặt phòng tại Hòa Lạc.</p>
                 </div>
-                <button type="button" className="btn-secondary" id="btnStartEditProfile" style={{display:editing ? "none" : "inline-flex"}}>
+                <MotionButton type="button" className="btn-secondary" id="btnStartEditProfile" style={{display:editing ? "none" : "inline-flex"}}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                   <span>Chỉnh sửa thông tin</span>
-                </button>
+                </MotionButton>
               </div>
 
 
@@ -307,11 +308,11 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
                 </div>
 
                 <div className="form-actions-row">
-                  <button type="button" className="btn-secondary" id="btnCancelEditProfile">Hủy bỏ</button>
-                  <button type="submit" className="btn-primary-action" id="btnSaveProfile" disabled={busy}>
+                  <MotionButton type="button" className="btn-secondary" id="btnCancelEditProfile">Hủy bỏ</MotionButton>
+                  <MotionButton type="submit" className="btn-primary-action" id="btnSaveProfile" disabled={busy}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     <span>Lưu thay đổi</span>
-                  </button>
+                  </MotionButton>
                 </div>
               </form>
 
@@ -402,9 +403,9 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
                     <label htmlFor="currentPassword">Mật khẩu hiện tại <span style={{"color": "var(--rose)"}}>*</span></label>
                     <div className="password-input-wrap">
                       <input id="currentPassword" className="form-input" placeholder="Nhập mật khẩu hiện tại" required maxLength="128" autoComplete="current-password" name="oldPassword" value={passwords.oldPassword} aria-invalid={!!errors.oldPassword} type={eyes.oldPassword ? "text" : "password"}/>
-                      <button type="button" className="btn-toggle-eye" data-target="currentPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+                      <MotionButton type="button" className="btn-toggle-eye" data-target="currentPassword" aria-label="Hiện hoặc ẩn mật khẩu">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      </button>
+                      </MotionButton>
                     </div>
                     <span id="errCurrentPassword" className={`field-error ${errors.oldPassword || '' ? "show" : ""}`} role="alert">{errors.oldPassword || ''}</span>
                   </div>
@@ -413,9 +414,9 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
                     <label htmlFor="newPassword">Mật khẩu mới <span style={{"color": "var(--rose)"}}>*</span></label>
                     <div className="password-input-wrap">
                       <input id="newPassword" className="form-input" placeholder="Tối thiểu 6 ký tự" required maxLength="128" autoComplete="new-password" name="newPassword" value={passwords.newPassword} aria-invalid={!!errors.newPassword} type={eyes.newPassword ? "text" : "password"}/>
-                      <button type="button" className="btn-toggle-eye" data-target="newPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+                      <MotionButton type="button" className="btn-toggle-eye" data-target="newPassword" aria-label="Hiện hoặc ẩn mật khẩu">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      </button>
+                      </MotionButton>
                     </div>
                     <span id="errNewPassword" className={`field-error ${errors.newPassword || '' ? "show" : ""}`} role="alert">{errors.newPassword || ''}</span>
                   </div>
@@ -424,18 +425,18 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
                     <label htmlFor="confirmNewPassword">Xác nhận mật khẩu mới <span style={{"color": "var(--rose)"}}>*</span></label>
                     <div className="password-input-wrap">
                       <input id="confirmNewPassword" className="form-input" placeholder="Nhập lại mật khẩu mới" required maxLength="128" autoComplete="new-password" name="confirmPassword" value={passwords.confirmPassword} aria-invalid={!!errors.confirmPassword} type={eyes.confirmPassword ? "text" : "password"}/>
-                      <button type="button" className="btn-toggle-eye" data-target="confirmNewPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+                      <MotionButton type="button" className="btn-toggle-eye" data-target="confirmNewPassword" aria-label="Hiện hoặc ẩn mật khẩu">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      </button>
+                      </MotionButton>
                     </div>
                     <span id="errConfirmNewPassword" className={`field-error ${errors.confirmPassword || '' ? "show" : ""}`} role="alert">{errors.confirmPassword || ''}</span>
                   </div>
 
                   <div>
-                    <button type="submit" className="btn-primary-action" id="btnSubmitChangePassword" disabled={busy}>
+                    <MotionButton type="submit" className="btn-primary-action" id="btnSubmitChangePassword" disabled={busy}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                       <span>Cập nhật mật khẩu mới</span>
-                    </button>
+                    </MotionButton>
                   </div>
 
                 </div>

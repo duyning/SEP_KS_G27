@@ -121,7 +121,6 @@
 
 .prototype-profile .btn-avatar-camera:hover {
   background: var(--primary);
-  transform: scale(1.1);
 }
 
 /* User Info Headline */
@@ -208,7 +207,6 @@
 
 .prototype-profile .profile-stat-box:hover {
   border-color: var(--primary-border);
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
@@ -349,14 +347,14 @@
 
 .prototype-profile .profile-tab-panel {
   display: none;
-  animation: fadeInPanel 0.25s ease-out;
+  animation: hl-profile-prototype-fadeInPanel 0.25s ease-out;
 }
 
 .prototype-profile .profile-tab-panel.active {
   display: block;
 }
 
-@keyframes fadeInPanel {
+@keyframes hl-profile-prototype-fadeInPanel {
   from {
     opacity: 0;
     transform: translateY(8px);
@@ -547,7 +545,6 @@
 
 .prototype-profile .btn-primary-action:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-1px);
 }
 
 .prototype-profile .btn-primary-action:disabled {

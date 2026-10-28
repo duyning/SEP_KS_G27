@@ -20,6 +20,7 @@ async function main() {
       const url = new URL(route.request().url()).pathname;
       let data;
       if (url === '/api/auth/me') data = { userId: 1, fullName: 'Browser staff', role: 'STAFF' };
+      else if(url==='/api/host-applications')data={content:[],totalElements:0,totalPages:0,number:0,size:1,stats:{total:0,pending:0,needsChanges:0,approved:0,rejected:0}};
       else if (url === '/api/staff/dashboard') data = { pendingVerifications: 1, pendingReports: 0, pendingSupport: 0, pendingCommunity: 0, activeProperties: 0, processedTasks: 0, queue: [], activities: [] };
       else if (url === '/api/staff/verifications/12/review') {
         requests++;
@@ -48,12 +49,12 @@ async function main() {
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Yêu cầu bổ sung', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    const input = page.getByLabel('Nội dung yêu cầu bổ sung', { exact: false });
+    const input = page.locator('#staff-review-note');
     await dialog.waitFor();
     await page.getByRole('button', { name: 'Gửi yêu cầu bổ sung', exact: true }).click();
     await page.getByRole('alert').waitFor();
     assert.equal(requests, 0);
-    await input.fill('Vui lòng chụp lại rõ nét giấy tờ quyền sở hữu và căn cước.');
+    await dialog.locator('input[type=checkbox]').first().check();await input.fill('Vui lòng chụp lại rõ nét giấy tờ quyền sở hữu và căn cước.');
     for (const width of [1536, 390]) {
       await page.setViewportSize({ width, height: 900 });
       assert.ok(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth + 1));
@@ -67,7 +68,7 @@ async function main() {
     fail = false;
     await page.getByRole('button', { name: 'Gửi yêu cầu bổ sung', exact: true }).click();
     await dialog.waitFor({ state: 'detached' });
-    await page.getByText('Đã gửi yêu cầu bổ sung cho chủ trọ. Hồ sơ chưa được phê duyệt.', { exact: true }).waitFor();
+    await page.getByText('Đã gửi yêu cầu bổ sung. Chủ trọ có thể xem nội dung tại Nhà trọ của tôi.', { exact: true }).waitFor();
     assert.equal(requests, 2);
     assert.equal(await page.getByRole('button', { name: 'Yêu cầu bổ sung', exact: true }).isDisabled(), true);
     assert.deepEqual(errors, []);

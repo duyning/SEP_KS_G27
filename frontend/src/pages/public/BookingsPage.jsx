@@ -1,3 +1,4 @@
+import { AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -253,7 +254,7 @@ export default function BookingsPage() {
       </div>
 
       {/* Cancel Dialog */}
-      {cancellingBooking && (
+      <AnimatePresence>{cancellingBooking && (
         <Modal title="Xác nhận hủy lịch hẹn" onClose={() => setCancellingBooking(null)}>
           <p style={{ fontSize: '14px', color: '#475569', marginBottom: '20px' }}>
             Bạn có chắc chắn muốn hủy lịch hẹn xem <strong>{cancellingBooking.roomTitle}</strong> vào lúc {cancellingBooking.time} ngày {cancellingBooking.date}?
@@ -275,7 +276,7 @@ export default function BookingsPage() {
             </button>
           </div>
         </Modal>
-      )}
+      )}</AnimatePresence>
     </div>
   );
 }

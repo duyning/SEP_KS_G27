@@ -1,3 +1,4 @@
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Check, Download, Eye, FilePenLine, FileText, LoaderCircle, RefreshCw, ShieldCheck, X } from 'lucide-react';
@@ -55,7 +56,7 @@ export default function StaffPropertyVerificationDetailPage() {
   const supplement=decision==='REQUEST_SUPPLEMENT';
   return <div className="sw-page svd-page">
     <nav className="svd-breadcrumbs" aria-label="Đường dẫn hồ sơ"><Link to="/staff">HL_RCS</Link><span>/</span><Link to="/staff/verifications">Xác minh nhà trọ</Link><span>/</span><strong>HS-{summary.registrationId} · {summary.name}</strong></nav>
-    <header className="sw-page-heading svd-page-toolbar"><Link className="sw-back" to="/staff/verifications"><ArrowLeft size={15}/>Quay lại danh sách xác minh</Link><div className="sw-heading-actions"><span className="svd-record-code">HS-{summary.registrationId}</span><StaffStatus status={summary.status}/><button className="p-icon" title="Tải lại hồ sơ" aria-label="Tải lại hồ sơ" onClick={state.reload}><RefreshCw size={16}/></button></div></header>
+    <header className="sw-page-heading svd-page-toolbar"><Link className="sw-back" to="/staff/verifications"><ArrowLeft size={15}/>Quay lại danh sách xác minh</Link><div className="sw-heading-actions"><span className="svd-record-code">HS-{summary.registrationId}</span><StaffStatus status={summary.status}/><MotionButton className="p-icon" title="Tải lại hồ sơ" aria-label="Tải lại hồ sơ" onClick={state.reload}><RefreshCw size={16}/></MotionButton></div></header>
     <div className="sw-detail-layout svd-grid"><div className="svd-main">
       <VerificationChangeComparison previous={state.data.publishedSubmission} current={form} propertyId={summary.targetPropertyId}/>
       <VerificationPropertyInfo summary={summary} submission={form} photos={photos} onOpen={openFile}/>
@@ -67,24 +68,24 @@ export default function StaffPropertyVerificationDetailPage() {
       <div className="svd-current-status"><span>Trạng thái hồ sơ:</span><StaffStatus status={summary.status}/></div>
       <VerificationFields rows={[['Mã hồ sơ',`HS-${summary.registrationId}`],['Ngày nộp ban đầu',staffDate(summary.createdAt)],['Gửi lại gần nhất',staffDate(summary.submittedAt||summary.createdAt)],['Cập nhật xét duyệt',staffDate(summary.reviewedAt||summary.createdAt)],['Người xử lý',summary.reviewerName||'Chưa có người xử lý']]}/>
       <h4 className="svd-label">Lựa chọn quyết định</h4><div className="sw-review-actions">
-        <button className="sw-primary" disabled={!editable||busy} onClick={()=>{setDecision('APPROVE');setNote('');setReviewError('');}}><Check size={16}/>Phê duyệt hồ sơ</button>
-        <button className="sw-amber-outline" disabled={summary.status!=='PENDING'||busy} onClick={()=>{setDecision('REQUEST_SUPPLEMENT');setSelectedFields([]);setNote('');setReviewError('');}}><FilePenLine size={16}/>Yêu cầu bổ sung</button>
-        <button className="sw-danger" disabled={!editable||busy} onClick={()=>{setDecision('REJECT');setNote('');setReviewError('');}}><X size={16}/>Từ chối hồ sơ</button>
+        <MotionButton className="sw-primary" disabled={!editable||busy} onClick={()=>{setDecision('APPROVE');setNote('');setReviewError('');}}><Check size={16}/>Phê duyệt hồ sơ</MotionButton>
+        <MotionButton className="sw-amber-outline" disabled={summary.status!=='PENDING'||busy} onClick={()=>{setDecision('REQUEST_SUPPLEMENT');setSelectedFields([]);setNote('');setReviewError('');}}><FilePenLine size={16}/>Yêu cầu bổ sung</MotionButton>
+        <MotionButton className="sw-danger" disabled={!editable||busy} onClick={()=>{setDecision('REJECT');setNote('');setReviewError('');}}><X size={16}/>Từ chối hồ sơ</MotionButton>
       </div>
       {reasonNote&&<div className="svd-review-note"><strong>Phản hồi xét duyệt</strong><p>{reasonNote}</p></div>}
       {summary.status==='NEEDS_SUPPLEMENT'&&<p className="sw-private-note">Đã gửi yêu cầu bổ sung cho chủ trọ. Hồ sơ chưa được phê duyệt.</p>}
       {!editable&&<p className="sw-private-note"><ShieldCheck size={14}/>Hồ sơ đã có quyết định; không thể xử lý lại.</p>}
     </section></aside></div>
-    {preview&&<Modal title={preview.name} onClose={closePreview}>{preview.type==='application/pdf'?<iframe className="sw-document-preview" src={preview.url} title="Xem tài liệu PDF" sandbox="allow-same-origin"/>:<img className="sw-image-preview" src={preview.url} alt={preview.name}/>}<a className="sw-outline" href={preview.url} download={preview.name}><Download size={16}/>Tải tài liệu</a></Modal>}
-    {decision&&<Modal className={`sw-review-modal ${supplement?'sw-supplement-modal':''}`} title={supplement?<><FilePenLine size={24}/>Yêu cầu Chủ trọ Bổ sung thông tin / Hồ sơ</>:decision==='APPROVE'?'Phê duyệt hồ sơ nhà trọ':'Từ chối hồ sơ nhà trọ'} onClose={()=>{if(!busy)setDecision(null);}}>
+    <AnimatePresence>{preview&&<Modal title={preview.name} onClose={closePreview}>{preview.type==='application/pdf'?<iframe className="sw-document-preview" src={preview.url} title="Xem tài liệu PDF" sandbox="allow-same-origin"/>:<img className="sw-image-preview" src={preview.url} alt={preview.name}/>}<a className="sw-outline" href={preview.url} download={preview.name}><Download size={16}/>Tải tài liệu</a></Modal>}</AnimatePresence>
+    <AnimatePresence>{decision&&<Modal className={`sw-review-modal ${supplement?'sw-supplement-modal':''}`} title={supplement?<><FilePenLine size={24}/>Yêu cầu Chủ trọ Bổ sung thông tin / Hồ sơ</>:decision==='APPROVE'?'Phê duyệt hồ sơ nhà trọ':'Từ chối hồ sơ nhà trọ'} onClose={()=>{if(!busy)setDecision(null);}}>
       <form onSubmit={review} noValidate aria-busy={busy}>
         {supplement?<SupplementRequestFields detail={state.data} selected={selectedFields} onChange={value=>{setSelectedFields(value);setReviewError('');}} note={note} onNoteChange={value=>{setNote(value);setReviewError('');}} busy={busy} error={reviewError}/>:<div className="sw-review-body"><p>{decision==='APPROVE'?'Xác nhận đã kiểm tra đầy đủ thông tin và tài liệu. Nếu là đề nghị thay đổi, bản mới sẽ được áp dụng cho nhà trọ hiện tại sau khi phê duyệt.':'Lý do từ chối sẽ được lưu và hiển thị cho chủ trọ.'}</p>
           <label className="sw-review-label" htmlFor="staff-review-note">{supplement?'Nội dung yêu cầu bổ sung':decision==='REJECT'?'Lý do từ chối':'Ghi chú xét duyệt (tùy chọn)'}{decision!=='APPROVE'&&<span className="sw-required"> *</span>}</label>
           <textarea id="staff-review-note" autoFocus rows={4} maxLength={2000} required={decision!=='APPROVE'} aria-invalid={Boolean(reviewError)} aria-describedby={reviewError?'staff-review-error':'staff-review-count'} placeholder={supplement?'Ví dụ: Vui lòng chụp lại rõ nét giấy tờ quyền sử dụng đất và bổ sung biên bản nghiệm thu PCCC có mộc đỏ...':decision==='REJECT'?'Nêu rõ lý do hồ sơ chưa đáp ứng yêu cầu...':'Nhập ghi chú xét duyệt...'} value={note} disabled={busy} onChange={event=>{setNote(event.target.value);setReviewError('');}}/>
           <small id="staff-review-count">{note.trim().length}/2000 ký tự{decision!=='APPROVE'?' · Tối thiểu 10 ký tự':''}</small>{reviewError&&<p id="staff-review-error" className="sw-error" role="alert">{reviewError}</p>}
         </div>}
-        <footer className="sw-review-footer"><button type="button" className="p-button" disabled={busy} onClick={()=>setDecision(null)}>Hủy bỏ</button><button type="submit" className={supplement?'sw-amber':decision==='APPROVE'?'sw-primary':'sw-danger'} disabled={busy}>{busy?<><LoaderCircle size={16} className="spin"/>Đang lưu...</>:supplement?'Gửi yêu cầu bổ sung':'Xác nhận quyết định'}</button></footer>
+        <footer className="sw-review-footer"><MotionButton type="button" className="p-button" disabled={busy} onClick={()=>setDecision(null)}>Hủy bỏ</MotionButton><MotionButton type="submit" className={supplement?'sw-amber':decision==='APPROVE'?'sw-primary':'sw-danger'} disabled={busy}>{busy?<><LoaderCircle size={16} className="spin"/>Đang lưu...</>:supplement?'Gửi yêu cầu bổ sung':'Xác nhận quyết định'}</MotionButton></footer>
       </form>
-    </Modal>}
+    </Modal>}</AnimatePresence>
   </div>;
 }

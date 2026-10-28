@@ -15,6 +15,7 @@ export default function KpiCard({ title, value, subtext, icon: Icon, tone = 'tea
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick(event); } } : undefined}
       className={`kpi-card ${tone} ${active ? 'active' : ''}`}
       style={{
         backgroundColor: '#ffffff',
@@ -27,7 +28,7 @@ export default function KpiCard({ title, value, subtext, icon: Icon, tone = 'tea
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'all 0.15s ease',
+        transition: 'background-color var(--ui-motion-color), color var(--ui-motion-color), border-color var(--ui-motion-color), box-shadow var(--ui-motion-color)',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

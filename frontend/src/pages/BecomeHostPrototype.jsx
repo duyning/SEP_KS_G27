@@ -1,3 +1,4 @@
+import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original user-facing markup from Code/giao_dien/html/become-host.html.
 import {Link} from 'react-router-dom';
 export default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {
@@ -51,9 +52,9 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
         <div className="nav-actions">{account}</div>
 
 
-        <button className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+        </MotionButton>
       </div>
     </nav>
   </header>
@@ -194,9 +195,9 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
 
           <div className="bh-guard-demo-box">
             <span>Trải nghiệm nhanh cho đánh giá / thẩm định: </span>
-            <button type="button" id="btnGuardDemoLogin" className="bh-guard-demo-btn">
+            <MotionButton type="button" id="btnGuardDemoLogin" className="bh-guard-demo-btn">
               Đăng nhập tự động với tài khoản Sinh viên FPT (Nguyễn Minh Anh)
-            </button>
+            </MotionButton>
           </div>
         </div>
       </div>
@@ -336,14 +337,14 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
 
 
             <div className="bh-form-actions">
-              <button type="button" id="btnCancelForm" className="bh-btn-cancel" disabled={busy || false}>
+              <MotionButton type="button" id="btnCancelForm" className="bh-btn-cancel" disabled={busy || false}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 <span>Hủy bỏ</span>
-              </button>
-              <button type="submit" id="btnSubmitForm" className="bh-btn-submit" disabled={busy || missingContact}>
+              </MotionButton>
+              <MotionButton type="submit" id="btnSubmitForm" className="bh-btn-submit" disabled={busy || missingContact}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 <span id="btnSubmitFormText">{busy ? 'Đang gửi hồ sơ...' : 'Gửi đăng ký xét duyệt'}</span>
-              </button>
+              </MotionButton>
             </div>
           </form>
         </div>
@@ -435,10 +436,10 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
           </div>
 
           <div className="bh-state-actions">
-            <button type="button" id="btnStartSupplement" className="bh-btn-primary" disabled={!application?.allowResubmit || busy}>
+            <MotionButton type="button" id="btnStartSupplement" className="bh-btn-primary" disabled={!application?.allowResubmit || busy}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               <span>Chỉnh sửa &amp; Gửi lại hồ sơ</span>
-            </button>
+            </MotionButton>
             <Link className="bh-btn-secondary" to="/profile">Để sau</Link>
           </div>
         </div>
@@ -478,10 +479,10 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
           </div>
 
           <div className="bh-state-actions">
-            <button type="button" id="btnResubmitAfterReject" className="bh-btn-primary" disabled={!application?.allowResubmit || busy}>
+            <MotionButton type="button" id="btnResubmitAfterReject" className="bh-btn-primary" disabled={!application?.allowResubmit || busy}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
               <span>Tạo và gửi lại hồ sơ mới</span>
-            </button>
+            </MotionButton>
             <Link className="bh-btn-secondary" to="/profile">Về hồ sơ cá nhân</Link>
             <Link className="bh-btn-secondary" to="/">Về trang chủ</Link>
           </div>
@@ -547,7 +548,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
           <h2 className="bh-state-title">Không thể tải hồ sơ</h2>
           <p className="bh-state-desc" id="errorMessageText">{alert}</p>
           <div className="bh-state-actions">
-            <button type="button" id="btnRetryError" className="bh-btn-primary">Thử lại ngay</button>
+            <MotionButton type="button" id="btnRetryError" className="bh-btn-primary">Thử lại ngay</MotionButton>
             <Link className="bh-btn-secondary" to="/">Về trang chủ</Link>
           </div>
         </div>

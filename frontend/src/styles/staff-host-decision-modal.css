@@ -1,0 +1,90 @@
+/* Shared geometry and decision-specific accents for all host registration modals. */
+.hr-staff .hr-native-modal.hr-decision-dialog {
+  width:min(740px,calc(100vw - 32px));
+  max-height:calc(100dvh - 48px);
+  overflow:hidden;
+  border-radius:18px;
+}
+.hr-staff .hr-decision-modal .staff-modal-box { max-height:calc(100dvh - 48px); }
+.hr-staff .hr-decision-modal .staff-modal-header,
+.hr-staff .hr-decision-modal .staff-modal-footer { flex-shrink:0;padding:22px 24px; }
+.hr-staff .hr-decision-modal .staff-modal-header { align-items:flex-start;gap:14px; }
+.hr-staff .hr-modal-heading { flex:1;min-width:0; }
+.hr-staff .hr-decision-modal .modal-title { font-size:18px;line-height:1.45;letter-spacing:-.25px; }
+.hr-staff .hr-decision-modal .modal-sub { font-size:12px;line-height:1.65;margin-top:5px; }
+.hr-staff .hr-decision-modal .modal-icon-badge { width:42px;height:42px;border-radius:12px; }
+.hr-staff .hr-decision-modal .success-badge { color:#047857;background:#ecfdf5; }
+.hr-staff .hr-decision-modal .warning-badge { color:#b45309;background:#fffbeb; }
+.hr-staff .hr-decision-modal .danger-badge { color:#be123c;background:#fff1f2; }
+.hr-staff .hr-decision-modal .btn-close-modal { width:30px;height:30px;display:grid;place-items:center;margin-top:0; }
+.hr-staff .hr-decision-modal .staff-modal-body { display:flex;flex-direction:column;gap:20px;padding:24px;overflow-y:auto;overscroll-behavior:contain; }
+.hr-staff .hr-decision-modal .modal-applicant-summary { margin:0;padding:14px 16px;align-items:center;gap:14px; }
+.hr-staff .hr-applicant-identity { display:flex;flex-direction:column;gap:4px;min-width:0;flex:1; }
+.hr-staff .hr-summary-label { color:#64748b;font-size:11px;font-weight:500; }
+.hr-staff .hr-applicant-identity strong { font-size:14px;overflow-wrap:anywhere; }
+.hr-staff .hr-summary-contact { color:#64748b;font-size:12px;overflow-wrap:anywhere; }
+.hr-staff .hr-application-code { background:white;border:1px solid #dce5ef;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#475569;align-self:flex-start; }
+.hr-staff .hr-decision-modal .modal-info-alert { display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border:1px solid transparent;border-radius:10px; }
+.hr-staff .hr-decision-modal .modal-info-alert > svg { flex-shrink:0;margin-top:2px; }
+.hr-staff .hr-decision-modal .modal-info-alert .alert-text { margin:0;color:inherit;font-size:12px;line-height:1.75; }
+.hr-staff .hr-decision-modal .success-alert { background:#f0fdf4;border-color:#bbf7d0;color:#166534; }
+.hr-staff .hr-decision-modal .warning-alert { background:#fffbeb;border-color:#fde68a;color:#92400e; }
+.hr-staff .hr-decision-modal .danger-alert { background:#fff1f2;border-color:#fecdd3;color:#9f1239; }
+.hr-staff .hr-decision-modal .modal-form-group { margin:0; }
+.hr-staff .hr-field-heading { display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px; }
+.hr-staff .hr-field-heading .modal-label { margin:0; }
+.hr-staff .hr-decision-modal .modal-label { font-size:13px;line-height:1.6; }
+.hr-staff .hr-optional { font-weight:400;font-size:12px;color:#64748b; }
+.hr-staff .hr-required { color:#e11d48; }
+.hr-staff .hr-character-count { font-size:11px;color:#64748b;white-space:nowrap;flex-shrink:0; }
+.hr-staff .hr-decision-modal .modal-textarea { min-height:112px;line-height:1.7;padding:12px 14px; }
+.hr-staff .hr-decision-modal .modal-hint { display:block;margin-top:8px;font-size:11px;line-height:1.7;color:#64748b; }
+.hr-staff .hr-decision-modal .hr-total-count.is-over-limit { color:#be123c;font-weight:600; }
+.hr-staff .hr-checklist-heading { display:flex;justify-content:space-between;align-items:center;gap:12px; }
+.hr-staff .hr-checklist-heading h4 { font-size:13px;font-weight:700; }
+.hr-staff .hr-decision-modal .hr-checklist-hint { margin-top:-14px; }
+.hr-staff .hr-decision-modal .schema-checklist-container { display:grid;gap:14px; }
+.hr-staff .hr-decision-modal .shrd-schema-group { margin:0; }
+.hr-staff .hr-decision-modal .shrd-schema-field-item { padding:14px; }
+.hr-staff .hr-decision-modal .shrd-field-checkbox-row { align-items:flex-start; }
+.hr-staff .hr-decision-modal .shrd-field-checkbox-row input { margin-top:3px; }
+.hr-staff .hr-decision-modal .shrd-field-info { min-width:0; }
+.hr-staff .hr-decision-modal .shrd-field-curr-val { overflow-wrap:anywhere; }
+.hr-staff .hr-decision-modal .modal-checkbox-group { border:1px solid #dce5ef;background:#f8fafc;border-radius:10px;padding:14px 16px; }
+.hr-staff .hr-decision-modal .modal-checkbox-label { display:flex;align-items:flex-start;gap:10px;cursor:pointer; }
+.hr-staff .hr-decision-modal .modal-checkbox-label input { margin-top:3px; }
+.hr-staff .hr-decision-modal .modal-checkbox-label strong { display:block;font-size:12px;line-height:1.7; }
+.hr-staff .hr-decision-modal .modal-checkbox-label small { display:block;font-size:11px;color:#64748b;line-height:1.7;margin-top:4px; }
+.hr-staff .hr-resubmission-warning { margin-top:12px;border-top:1px solid #fecdd3;padding-top:10px;color:#be123c;font-size:12px;line-height:1.7; }
+.hr-staff .hr-decision-modal .blocks-resubmission { border-color:#fda4af;background:#fff1f2; }
+.hr-staff .hr-decision-error { color:#9f1239;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:11px 14px;font-size:12px;line-height:1.7; }
+.hr-staff .hr-decision-modal .staff-modal-footer { align-items:center;justify-content:space-between;gap:16px; }
+.hr-staff .hr-decision-footer-note { max-width:210px;font-size:11px;color:#64748b;line-height:1.6; }
+.hr-staff .hr-decision-buttons { display:flex;gap:10px;margin-left:auto;flex-shrink:0; }
+.hr-staff .hr-decision-modal .btn-modal-secondary,
+.hr-staff .hr-decision-modal .btn-modal-confirm { min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-size:12px;line-height:1.5; }
+.hr-staff .hr-decision-modal .btn-modal-secondary { min-width:86px; }
+.hr-staff .hr-decision-modal .btn-modal-confirm { min-width:188px; }
+.hr-staff .hr-decision-modal .success-btn { background:#059669; }
+.hr-staff .hr-decision-modal .btn-modal-confirm > svg { flex-shrink:0; }
+.hr-staff .hr-decision-modal button:focus-visible { outline:3px solid #99f6e4;outline-offset:3px; }
+@media(max-width:600px) {
+ .hr-staff .hr-native-modal.hr-decision-dialog { width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border-radius:14px; }
+ .hr-staff .hr-decision-modal .staff-modal-box { max-height:calc(100dvh - 24px); }
+ .hr-staff .hr-decision-modal .staff-modal-header,
+ .hr-staff .hr-decision-modal .staff-modal-body,
+ .hr-staff .hr-decision-modal .staff-modal-footer { padding:18px 16px; }
+ .hr-staff .hr-decision-modal .staff-modal-header { gap:10px; }
+ .hr-staff .hr-decision-modal .modal-icon-badge { width:34px;height:34px;border-radius:9px; }
+ .hr-staff .hr-decision-modal .modal-title { font-size:16px; }
+ .hr-staff .hr-decision-modal .modal-sub { font-size:11px; }
+ .hr-staff .hr-decision-modal .staff-modal-body { gap:18px; }
+ .hr-staff .hr-decision-modal .modal-applicant-summary,
+ .hr-staff .hr-decision-modal .modal-info-alert,
+ .hr-staff .hr-decision-modal .modal-checkbox-group { padding:12px; }
+ .hr-staff .hr-decision-modal .staff-modal-footer { flex-direction:column;align-items:stretch;gap:10px; }
+ .hr-staff .hr-decision-footer-note { max-width:none; }
+ .hr-staff .hr-decision-buttons { width:100%;margin:0;gap:8px; }
+ .hr-staff .hr-decision-modal .btn-modal-secondary { flex:1;min-width:0; }
+ .hr-staff .hr-decision-modal .btn-modal-confirm { flex:2;min-width:0; }
+}

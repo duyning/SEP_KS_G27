@@ -1,3 +1,4 @@
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -116,13 +117,13 @@ export default function HostNotificationsPage() {
           <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Theo dõi các cập nhật về lịch hẹn xem phòng, kết quả kiểm định nhà trọ, phản hồi từ Staff và tình trạng phòng trống.</p>
         </div>
         {unreadCount > 0 && (
-          <button
+          <MotionButton
             type="button"
             className="p-button"
             onClick={markAllAsRead}
           >
             <CheckCheck size={16} /> Đánh dấu tất cả đã đọc
-          </button>
+          </MotionButton>
         )}
       </div>
 
@@ -174,22 +175,22 @@ export default function HostNotificationsPage() {
         {/* Toolbar */}
         <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
+            <MotionButton
               type="button"
               className={`p-button ${activeTab === 'ALL' ? 'primary' : ''}`}
               style={{ padding: '6px 14px', fontSize: '13px' }}
               onClick={() => setActiveTab('ALL')}
             >
               Tất cả ({totalCount})
-            </button>
-            <button
+            </MotionButton>
+            <MotionButton
               type="button"
               className={`p-button ${activeTab === 'UNREAD' ? 'primary' : ''}`}
               style={{ padding: '6px 14px', fontSize: '13px' }}
               onClick={() => setActiveTab('UNREAD')}
             >
               Chưa đọc ({unreadCount})
-            </button>
+            </MotionButton>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>

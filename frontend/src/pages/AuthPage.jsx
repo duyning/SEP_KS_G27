@@ -1,3 +1,4 @@
+import { MotionButton } from '../components/motion/MotionUI.jsx';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -352,7 +353,7 @@ export default function AuthPage({ registerMode = false }) {
                           setLoginAlert('');
                         }}
                       />
-                      <button
+                      <MotionButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowLoginPassword(!showLoginPassword)}
@@ -360,7 +361,7 @@ export default function AuthPage({ registerMode = false }) {
                         title={showLoginPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </MotionButton>
                     </div>
                     {loginErrors.password && <p className="error-message">{loginErrors.password}</p>}
                   </div>
@@ -377,17 +378,17 @@ export default function AuthPage({ registerMode = false }) {
                       />
                       <span>Ghi nhớ đăng nhập</span>
                     </label>
-                    <button
+                    <MotionButton
                       type="button"
                       className="forgot-link"
                       onClick={() => notify('Vui lòng liên hệ ban quản trị HL_RCS hoặc kiểm tra email để đặt lại mật khẩu.', 'info')}
                     >
                       Quên mật khẩu?
-                    </button>
+                    </MotionButton>
                   </div>
 
                   {/* Nút Đăng nhập */}
-                  <button id="submitBtn" className="primary-button" type="submit" disabled={loginBusy}>
+                  <MotionButton id="submitBtn" className="primary-button" type="submit" disabled={loginBusy}>
                     {loginBusy ? (
                       <>
                         <LoaderCircle className="spin" size={18} />
@@ -399,29 +400,29 @@ export default function AuthPage({ registerMode = false }) {
                         <ArrowRight size={18} />
                       </>
                     )}
-                  </button>
+                  </MotionButton>
                 </form>
 
                 {/* Chuyển sang Đăng ký với hiệu ứng lật trang */}
                 <div className="signup-prompt">
                   <span>Bạn chưa có tài khoản?</span>
-                  <button
+                  <MotionButton
                     type="button"
                     className="flip-trigger-btn"
                     id="btnGoToRegisterUser"
                     onClick={() => goToRegister('USER')}
                   >
                     Đăng ký người thuê
-                  </button>
+                  </MotionButton>
                   <span>•</span>
-                  <button
+                  <MotionButton
                     type="button"
                     className="flip-trigger-btn"
                     id="btnGoToRegisterHost"
                     onClick={() => goToRegister('ROOM_HOST')}
                   >
                     Hợp tác chủ trọ
-                  </button>
+                  </MotionButton>
                 </div>
 
                 {/* Badge bảo mật SSL */}
@@ -435,7 +436,7 @@ export default function AuthPage({ registerMode = false }) {
                   <summary>Tài khoản kiểm thử nhanh (Demo)</summary>
                   <div className="demo-grid">
                     {DEMO_ACCOUNTS.map(([label, email, password]) => (
-                      <button
+                      <MotionButton
                         key={email}
                         type="button"
                         disabled={loginBusy}
@@ -448,7 +449,7 @@ export default function AuthPage({ registerMode = false }) {
                       >
                         <strong>{label}</strong>
                         <span>{email}</span>
-                      </button>
+                      </MotionButton>
                     ))}
                   </div>
                 </details>
@@ -568,7 +569,7 @@ export default function AuthPage({ registerMode = false }) {
                           setRegAlert('');
                         }}
                       />
-                      <button
+                      <MotionButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowRegPassword(!showRegPassword)}
@@ -576,7 +577,7 @@ export default function AuthPage({ registerMode = false }) {
                         title={showRegPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </MotionButton>
                     </div>
                     {regErrors.password && <p className="error-message">{regErrors.password}</p>}
                   </div>
@@ -604,7 +605,7 @@ export default function AuthPage({ registerMode = false }) {
                           setRegAlert('');
                         }}
                       />
-                      <button
+                      <MotionButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
@@ -612,7 +613,7 @@ export default function AuthPage({ registerMode = false }) {
                         title={showRegConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showRegConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </MotionButton>
                     </div>
                     {regErrors.confirmPassword && <p className="error-message">{regErrors.confirmPassword}</p>}
                   </div>
@@ -635,20 +636,20 @@ export default function AuthPage({ registerMode = false }) {
                       />
                       <label htmlFor="regAgree" className="terms-text">
                         Tôi đồng ý với{' '}
-                        <button type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
                           Điều khoản dịch vụ
-                        </button>{' '}
+                        </MotionButton>{' '}
                         và{' '}
-                        <button type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
                           Chính sách bảo mật
-                        </button>{' '}
+                        </MotionButton>{' '}
                         của HL_RCS.
                       </label>
                   </div>
                   {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: '12px' }} role="alert">{regErrors.agree}</p>}
 
                   {/* Nút Đăng ký */}
-                  <button id="submitRegisterBtn" className="primary-button" type="submit" disabled={regBusy}>
+                  <MotionButton id="submitRegisterBtn" className="primary-button" type="submit" disabled={regBusy}>
                     {regBusy ? (
                       <>
                         <LoaderCircle className="spin" size={18} />
@@ -660,13 +661,13 @@ export default function AuthPage({ registerMode = false }) {
                         <ArrowRight size={18} />
                       </>
                     )}
-                  </button>
+                  </MotionButton>
                 </form>
 
                 {/* Chuyển sang Đăng nhập với hiệu ứng lật trang */}
                 <div className="signup-prompt">
                   <span>Đã có tài khoản?</span>
-                  <button
+                  <MotionButton
                     type="button"
                     className="flip-trigger-btn"
                     id="toLoginBtn"
@@ -674,7 +675,7 @@ export default function AuthPage({ registerMode = false }) {
                   >
                     <ChevronLeft size={14} />
                     <span>Đăng nhập ngay</span>
-                  </button>
+                  </MotionButton>
                 </div>
 
                 {/* Badge bảo mật SSL */}

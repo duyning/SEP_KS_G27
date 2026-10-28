@@ -220,11 +220,17 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform var(--ui-motion-menu);
 }
 
 .visual-card:hover .visual-img {
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+  .visual-card:hover .visual-img {
   transform: scale(1.03);
+  }
 }
 
 /* Huy hiệu xác thực nổi góc trên */
@@ -251,22 +257,7 @@ body {
   border-radius: 50%;
   background-color: #10b981;
   box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
+  animation: none;
 }
 
 /* Thẻ nổi góc dưới hình ảnh */
@@ -434,10 +425,10 @@ body {
   margin-bottom: 16px;
   font-size: 13px;
   line-height: 1.45;
-  animation: slideDown 0.22s ease-out;
+  animation: hl-styles-slideDown 0.22s ease-out;
 }
 
-@keyframes slideDown {
+@keyframes hl-styles-slideDown {
   from {
     opacity: 0;
     transform: translateY(-6px);
@@ -710,7 +701,6 @@ form {
 .primary-button:hover {
   background: var(--primary-hover);
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.32);
-  transform: translateY(-1px);
 }
 
 .primary-button:active {
@@ -723,7 +713,13 @@ form {
 }
 
 .primary-button:hover .btn-icon {
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+  .primary-button:hover .btn-icon {
   transform: translateX(3px);
+  }
 }
 
 /* Spinner khi đang xử lý */
@@ -734,10 +730,10 @@ form {
   border: 2.5px solid rgba(255, 255, 255, 0.3);
   border-top-color: #ffffff;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: hl-styles-spin 0.6s linear infinite;
 }
 
-@keyframes spin {
+@keyframes hl-styles-spin {
   to { transform: rotate(360deg); }
 }
 
@@ -894,7 +890,7 @@ form {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   flex-shrink: 0;
   outline: none;
 }
@@ -935,10 +931,10 @@ form {
   line-height: 1;
   border: 1.5px solid #ffffff;
   box-sizing: border-box;
-  animation: notifBadgePop 0.25s ease;
+  animation: hl-styles-notifBadgePop 0.25s ease;
 }
 
-@keyframes notifBadgePop {
+@keyframes hl-styles-notifBadgePop {
   0% { transform: scale(0.6); }
   50% { transform: scale(1.15); }
   100% { transform: scale(1); }
@@ -957,10 +953,10 @@ form {
   box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.22);
   z-index: 1050;
   overflow: hidden;
-  animation: notifDropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hl-styles-notifDropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes notifDropFade {
+@keyframes hl-styles-notifDropFade {
   from {
     opacity: 0;
     transform: translateY(-8px);
@@ -1014,7 +1010,7 @@ form {
   gap: 4px;
   padding: 3px 6px;
   border-radius: 6px;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .notif-mark-read-all-btn:hover {
@@ -1043,7 +1039,7 @@ form {
   padding: 12px 18px;
   text-decoration: none;
   border-bottom: 1px solid var(--slate-100, #f1f5f9);
-  transition: all 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
   cursor: pointer;
   position: relative;
 }
@@ -1151,7 +1147,7 @@ form {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .notif-view-all-link:hover {
