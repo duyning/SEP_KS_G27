@@ -12,6 +12,8 @@ import org.hlrcs.repository.RoomRepository;
 import org.hlrcs.repository.RoomTypeImageRepository;
 import org.hlrcs.repository.RoomTypeRepository;
 import org.hlrcs.repository.FeedbackRepository;
+import org.hlrcs.repository.PropertyDocumentRepository;
+import org.hlrcs.repository.PropertyRepository;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,13 +35,16 @@ public class AccommodationService {
     private final RoomTypeImageRepository images;
     private final FeedbackRepository feedbacks;
     private final ObjectMapper json;
+    private final PropertyDocumentRepository documents;
+    private final PropertyRepository properties;
     private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final Map<String, String> LOCATIONS = Map.of(
             "tan-xa", "Tân Xã", "thach-hoa", "Thạch Hòa", "binh-yen", "Bình Yên", "cnc", "công nghệ cao");
     private static final Map<String, String> TYPES = Map.of(
             "khep-kin", "khép kín", "gac-lung", "gác", "chung-cu-mini", "chung cư mini");
 
-    public AccommodationPage list(int page, int size, String q, String location, String price, String sort, String type) {
+    public AccommodationPage list(int page, int size, String q, String location, String price, String sort, String type,
+                                  String amenities, boolean availableOnly) {
         if (page < 0 || size < 1 || size > 50) throw new BadRequestException("Trang phải từ 0; kích thước trang từ 1 đến 50.");
         if (q.length() > 200) throw new BadRequestException("Từ khóa tối đa 200 ký tự.");
         Specification<RoomType> filter = PublicAccommodationPolicy.visible();
@@ -65,15 +70,71 @@ public class AccommodationService {
             });
         }
         filter = filter.and(priceFilter(price));
+        filter = filter.and(amenityFilter(amenities));
+        if (availableOnly) filter = filter.and((root, query, cb) -> {
+            var vacant = query.subquery(Integer.class);
+            var room = vacant.from(org.hlrcs.entity.Room.class);
+            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"));
+            return cb.exists(vacant);
+        });
+        if ("rating-desc".equals(sort)) filter = filter.and((root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                var rating = query.subquery(Double.class);
+                var review = rating.from(org.hlrcs.entity.Feedback.class);
+                rating.select(cb.avg(review.get("rating"))).where(
+                        cb.equal(review.get("property"),root.get("property")),
+                        cb.equal(review.get("user").get("status"),org.hlrcs.entity.enums.UserStatus.ACTIVE),
+                        cb.between(review.get("rating"),1,5));
+                query.orderBy(cb.desc(cb.coalesce(rating,0.0)),cb.desc(root.get("roomTypeId")));
+            }
+            return cb.conjunction();
+        });
         Sort ordering = switch (sort) {
             case "recommended", "newest" -> Sort.by(Sort.Direction.DESC, "roomTypeId");
             case "price-asc" -> Sort.by("price").and(Sort.by("roomTypeId"));
             case "price-desc" -> Sort.by(Sort.Direction.DESC, "price").and(Sort.by("roomTypeId"));
+            case "area-desc" -> Sort.by(Sort.Direction.DESC, "areaSqm").and(Sort.by("roomTypeId"));
+            case "rating-desc" -> Sort.unsorted();
             default -> throw new BadRequestException("Cách sắp xếp không hợp lệ.");
         };
         var result = roomTypes.findAll(filter, PageRequest.of(page, size, ordering));
         return new AccommodationPage(summaries(result.getContent()), result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.getTotalPages());
+    }
+
+    private List<String> roomAmenities(RoomType type) {
+        if (type.getAmenitiesJson() == null) return List.of();
+        try { return Arrays.asList(json.readValue(type.getAmenitiesJson(), String[].class)); }
+        catch (tools.jackson.core.JacksonException ignored) { return List.of(); }
+    }
+
+    private Specification<RoomType> amenityFilter(String value) {
+        Set<String> roomKeys = Set.of("airConditioner","waterHeater","washingMachine","balcony","refrigerator","kitchen");
+        Set<String> commonKeys = Set.of("elevator","fingerprint","camera","flexibleHours","fireSafety","separateOwner");
+        var keys = value.isBlank() ? List.<String>of() : Arrays.asList(value.split(",",-1));
+        if(keys.size()>12 || keys.stream().anyMatch(key -> !roomKeys.contains(key) && !commonKeys.contains(key)))
+            throw new BadRequestException("Tiện nghi tìm kiếm không hợp lệ.");
+        var commonMatches = new HashMap<String,List<Integer>>();
+        if(keys.stream().anyMatch(key -> commonKeys.contains(key) || "washingMachine".equals(key))) {
+            for(var profile:properties.findPublicProfiles()) {
+                if(profile.getDetails()==null) continue;
+                try {
+                    var form=json.readValue(profile.getDetails(),PropertyRegistrationRequest.class);
+                    var declared=form.amenities()==null?List.<String>of():form.amenities();
+                    for(var key:keys) if(declared.contains("washingMachine".equals(key)?"laundry":key))
+                        commonMatches.computeIfAbsent(key,ignored -> new ArrayList<>()).add(profile.getPropertyId());
+                } catch (tools.jackson.core.JacksonException ignored) { /* No invented amenities for legacy records. */ }
+            }
+        }
+        return (root,query,cb) -> {
+            var predicates=new ArrayList<jakarta.persistence.criteria.Predicate>();
+            for(var key:keys) {
+                var room=roomKeys.contains(key)?cb.like(root.get("amenitiesJson"),"%\""+key+"\"%"):cb.disjunction();
+                var ids=commonMatches.getOrDefault(key,List.of());
+                predicates.add(ids.isEmpty()?room:cb.or(room,root.get("property").get("propertyId").in(ids)));
+            }
+            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
     }
 
     private Specification<RoomType> priceFilter(String price) {
@@ -137,7 +198,14 @@ public class AccommodationService {
                 amenities, profile == null || profile.amenities() == null ? List.of() : profile.amenities(),
                 profile == null || profile.selectedRules() == null ? List.of() : profile.selectedRules(), profile == null ? null : profile.rules(),
                 registration.getReviewedAt(), mapUrl, profile == null ? null : profile.nearby(),
-                reviews(propertyId), summaries(similar.getContent()), publicContact(profile));
+                reviews(propertyId), summaries(similar.getContent()), publicContact(profile),
+                documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(registration.getRegistrationId()).stream()
+                        .filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")
+                                && IMAGE_TYPES.contains(Objects.toString(file.getContentType(), "")))
+                        .map(file -> new AccommodationDetail.Photo("/api/public/properties/photos/" + file.getDocumentId(), property.getName()))
+                        .toList(),
+                summaries(roomTypes.findAll(PublicAccommodationPolicy.visible().and((root, query, cb) ->
+                        cb.equal(root.get("property").get("propertyId"), propertyId)), Sort.by("price", "roomTypeId"))));
     }
 
     /** Only the property registration's contact fields are approved for public use; never fall back to User.phoneNumber. */
@@ -183,7 +251,8 @@ public class AccommodationService {
             if (coverIds.containsKey(type.getRoomTypeId())) imageUrl = "/api/properties/" + property.getPropertyId()
                     + "/room-types/" + type.getRoomTypeId() + "/images/" + coverIds.get(type.getRoomTypeId());
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
-                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L));
+                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
+                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice());
         }).toList();
     }
 

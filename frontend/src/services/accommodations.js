@@ -3,7 +3,7 @@ import { detailPhone } from './accommodation-detail.js';
 
 export function accommodationQuery(values = {}) {
   const query = new URLSearchParams();
-  for (const key of ['page', 'size', 'q', 'location', 'price', 'sort', 'type']) {
+  for (const key of ['page', 'size', 'q', 'location', 'price', 'sort', 'type', 'amenities', 'availableOnly']) {
     if (values[key] !== undefined && values[key] !== '') query.set(key, String(values[key]));
   }
   return query.toString();
@@ -34,6 +34,8 @@ export const accommodationApi = {
     const data = await publicRequest(`/${propertyId}/room-types/${roomTypeId}/details`, signal);
     if (!validAccommodation(data?.summary) || !['gallery', 'amenities', 'propertyAmenities', 'selectedRules', 'similar'].every(key => Array.isArray(data[key]))
         || !data.gallery.every(photo => photo && typeof photo.url === 'string') || !data.similar.every(validAccommodation)
+        || (data.propertyGallery != null && (!Array.isArray(data.propertyGallery) || !data.propertyGallery.every(photo=>photo && typeof photo.url==='string')))
+        || (data.roomTypes != null && (!Array.isArray(data.roomTypes) || !data.roomTypes.every(type=>validAccommodation(type)&&type.propertyId===data.summary.propertyId)))
         || !data.reviews || !Array.isArray(data.reviews.ratingCounts) || data.reviews.ratingCounts.length !== 5
         || !Array.isArray(data.reviews.latest) || !Number.isInteger(data.reviews.totalReviews) || !validPublicContact(data.publicContact)) {
       throw new ApiError('Dữ liệu thông tin phòng không hợp lệ.', 502);

@@ -1,47 +1,64 @@
-import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Filter, RotateCcw, Search } from 'lucide-react';
-import Pagination from '../../components/common/Pagination.jsx';
-import AccommodationResults from '../../components/AccommodationResults.jsx';
+import {useEffect,useState} from 'react';
+import {Link,useSearchParams} from 'react-router-dom';
+import {Filter,Search,List,Map,LoaderCircle,RotateCcw,X} from 'lucide-react';
+import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
+import SearchPrototypeCard from '../../components/SearchPrototypeCard.jsx';
+import {Modal,useToast} from '../../components/PortalUI.jsx';
+import {AnimatePresence,MotionButton} from '../../components/motion/MotionUI.jsx';
 import useAccommodations from '../../hooks/useAccommodations.js';
-import { accommodationQuery } from '../../services/accommodations.js';
-import '../../styles/accommodations.css';
+import {accommodationQuery} from '../../services/accommodations.js';
+import {paginationRange} from '../../services/pagination.js';
+import {readSearchFilters,updateSearchFilters,searchLocations,searchPrices,searchTypes,searchAmenities,searchSorts} from '../../services/search-prototype.js';
+import '../../styles/home-prototype.css';
+import '../../styles/home-prototype-integration.css';
+import '../../styles/search-prototype.css';
+import '../../styles/search-prototype-integration.css';
 
-const PAGE_SIZE = 6;
-export default function SearchPage() {
-  const [params, setParams] = useSearchParams();
-  const rawPage = Number(params.get('page') || 1);
-  const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1;
-  const q = params.get('q') || '', location = params.get('location') || 'all', price = params.get('price') || 'all';
-  const sort = params.get('sort') || 'newest', type = params.get('type') || 'all';
-  const query = accommodationQuery({ page: page - 1, size: PAGE_SIZE, q, location, price, sort, type });
-  const state = useAccommodations(query);
-  const { data, loading } = state;
-  function change(key, value) {
-    const next = new URLSearchParams(params);
-    if (!value || value === 'all') next.delete(key); else next.set(key, String(value));
-    if (key !== 'page') next.delete('page');
-    setParams(next, { replace: key === 'q' });
-  }
-  useEffect(() => {
-    if (data && page > Math.max(1, data.totalPages)) {
-      const next = new URLSearchParams(params);
-      next.set('page', String(Math.max(1, data.totalPages)));
-      setParams(next, { replace: true });
-    }
-  }, [data, page, params, setParams]);
-  return <main className="acc-search">
-    <header className="acc-header"><h1>Khám phá nhà trọ &amp; Căn hộ tại Hòa Lạc</h1><p>Nhà trọ đã xác minh, giá thuê và số phòng trống cập nhật từ hệ thống.</p></header>
-    <div className="acc-search-layout"><aside className="acc-filters">
-      <div className="acc-filter-title"><h2><Filter size={18} />Bộ lọc tìm kiếm</h2><button type="button" onClick={() => setParams({})} aria-label="Đặt lại bộ lọc"><RotateCcw size={16} />Đặt lại</button></div>
-      <label htmlFor="searchArea">Khu vực</label><select id="searchArea" value={location} onChange={event => change('location', event.target.value)}><option value="all">Tất cả khu vực Hòa Lạc</option><option value="tan-xa">Tân Xã</option><option value="thach-hoa">Thạch Hòa</option><option value="binh-yen">Bình Yên</option><option value="cnc">Khu Công nghệ cao</option></select>
-      <label htmlFor="searchPrice">Khoảng giá / tháng</label><select id="searchPrice" value={price} onChange={event => change('price', event.target.value)}><option value="all">Tất cả mức giá</option><option value="under-15">Dưới 1,5 triệu</option><option value="15-25">Từ 1,5 đến 2,5 triệu</option><option value="25-35">Trên 2,5 đến 3,5 triệu</option><option value="above-35">Trên 3,5 triệu</option></select>
-      <label htmlFor="searchType">Loại phòng</label><select id="searchType" value={type} onChange={event => change('type', event.target.value)}><option value="all">Tất cả loại phòng</option><option value="khep-kin">Khép kín</option><option value="gac-lung">Gác lửng / xép</option><option value="chung-cu-mini">Chung cư mini</option></select>
-    </aside><section aria-label="Danh sách nhà trọ" aria-busy={loading}>
-      <div className="acc-toolbar"><div className="acc-search-input"><Search size={18} /><input type="search" aria-label="Tìm kiếm phòng trọ" placeholder="Tên nhà trọ, loại phòng, địa chỉ..." maxLength={200} value={q} onChange={event => change('q', event.target.value)} /></div><label htmlFor="searchSort">Sắp xếp</label><select id="searchSort" value={sort} onChange={event => change('sort', event.target.value)}><option value="newest">Mới nhất</option><option value="price-asc">Giá tăng dần</option><option value="price-desc">Giá giảm dần</option></select></div>
-      {!loading && data && <p className="acc-count" aria-live="polite">Tìm thấy <strong>{data.totalElements}</strong> loại phòng phù hợp</p>}
-      <AccommodationResults {...state} />
-      {!loading && !state.error && data?.totalElements > 0 && <Pagination currentPage={page} totalPages={data.totalPages} totalItems={data.totalElements} pageSize={PAGE_SIZE} onPageChange={value => change('page', value)} />}
-    </section></div>
-  </main>;
+const savedKey='hlrcs:public-saved-properties',PAGE_SIZE=6;
+function readSaved(){try{const value=JSON.parse(localStorage.getItem(savedKey)||'[]');return Array.isArray(value)?value.filter(Number.isInteger):[]}catch{return []}}
+function SelectField({id,label,options,value,onChange}){return <div className="search-field-select"><label className="search-sr-only" htmlFor={id}>{label}</label><select id={id} className="search-select-dropdown" value={value} onChange={e=>onChange(e.target.value)}>{options.map(([key,text])=><option value={key} key={key}>{text}</option>)}</select></div>}
+function AdvancedFields({draft,setDraft,prefix}){
+ const toggle=key=>setDraft(value=>({...value,amenities:value.amenities.includes(key)?value.amenities.filter(id=>id!==key):[...value.amenities,key]}));
+ return <div className="adv-filter-grid"><fieldset className="search-amenity-fieldset"><legend className="adv-filter-group-title">Tiện ích &amp; Trang thiết bị trong phòng</legend><div className="amenities-checkbox-grid">{searchAmenities.map(([key,text])=><label className="checkbox-label" key={key}><input type="checkbox" className="amenity-check" checked={draft.amenities.includes(key)} onChange={()=>toggle(key)}/><span>{text}</span></label>)}</div></fieldset>
+ <fieldset><legend className="adv-filter-group-title">Trạng thái phòng</legend><label className="checkbox-label" htmlFor={`${prefix}-available`}><input id={`${prefix}-available`} type="checkbox" checked={draft.availableOnly} onChange={e=>setDraft(value=>({...value,availableOnly:e.target.checked}))}/><span>Chỉ hiển thị phòng còn trống (vào ở ngay)</span></label></fieldset></div>;
+}
+export default function SearchPage(){
+ const [params,setParams]=useSearchParams(),filters=readSearchFilters(params),notify=useToast();
+ const [advanced,setAdvanced]=useState(false),[drawer,setDrawer]=useState(false),[draft,setDraft]=useState(filters),[saved,setSaved]=useState(readSaved);
+ const query=accommodationQuery({...filters,page:filters.page-1,size:PAGE_SIZE,amenities:filters.amenities.join(','),availableOnly:filters.availableOnly});
+ const {data,loading,error,retry}=useAccommodations(query),paramKey=params.toString();
+ useEffect(()=>{document.title='Tìm kiếm phòng trọ Hòa Lạc | HL_RCS';},[]);
+ useEffect(()=>{setDraft(readSearchFilters(new URLSearchParams(paramKey)));},[paramKey]);
+ useEffect(()=>{const update=()=>setSaved(readSaved());window.addEventListener('storage',update);return()=>window.removeEventListener('storage',update)},[]);
+ useEffect(()=>{if(data&&filters.page>Math.max(1,data.totalPages))setParams(updateSearchFilters(params,{page:Math.max(1,data.totalPages)}),{replace:true});},[data,filters.page,params,setParams]);
+ function change(updates){setParams(updateSearchFilters(params,updates),{replace:Object.keys(updates).length===1&&'q' in updates});}
+ function reset(){setParams({});setDraft(readSearchFilters(new URLSearchParams()));}
+ function toggleAmenity(key){change({amenities:filters.amenities.includes(key)?filters.amenities.filter(id=>id!==key):[...filters.amenities,key]});}
+ function apply(mobile=false){change({amenities:draft.amenities,availableOnly:draft.availableOnly,...(mobile?{location:draft.location,price:draft.price,type:draft.type}:{})});setDrawer(false);setAdvanced(false);}
+ function save(id){const next=saved.includes(id)?saved.filter(value=>value!==id):[...saved,id];try{localStorage.setItem(savedKey,JSON.stringify(next));setSaved(next);notify(next.includes(id)?'Đã lưu nhà trọ trên thiết bị này.':'Đã bỏ lưu nhà trọ trên thiết bị này.')}catch{notify('Thiết bị không cho phép lưu nhà trọ.','error')}}
+ const chips=[];
+ if(filters.q)chips.push({key:'q',text:`Từ khóa: “${filters.q}”`,remove:()=>change({q:''})});
+ for(const [key,options,label] of [['location',searchLocations,'Khu vực'],['price',searchPrices,'Giá'],['type',searchTypes,'Loại']])if(filters[key]!=='all')chips.push({key,text:`${label}: ${options.find(([id])=>id===filters[key])?.[1]}`,remove:()=>change({[key]:'all'})});
+ for(const key of filters.amenities)chips.push({key,text:searchAmenities.find(([id])=>id===key)?.[1],remove:()=>toggleAmenity(key)});
+ if(filters.availableOnly)chips.push({key:'availableOnly',text:'Chỉ phòng còn trống',remove:()=>change({availableOnly:false})});
+ return <DetailPrototypeShell savedCount={saved.length} className="prototype-search"><main>
+  <div className="search-breadcrumb-bar"><div className="container search-breadcrumb-inner"><ul className="search-breadcrumb-list"><li><Link to="/">Trang chủ</Link></li><li className="search-breadcrumb-sep">/</li><li className="search-breadcrumb-active">Tìm kiếm phòng trọ Hòa Lạc</li></ul><span className="search-breadcrumb-note">Dữ liệu niêm yết trực tiếp chính chủ</span></div></div>
+  <section className="search-header-section"><div className="container"><div className="search-headline-group"><h1 className="search-main-title">Khám phá nhà trọ &amp; Căn hộ tại Hòa Lạc</h1><p className="search-subtitle">Tìm không gian sống phù hợp với nhu cầu học tập và làm việc của bạn quanh ĐH FPT, ĐH Quốc Gia và Khu Công nghệ cao.</p></div>
+   <div className="search-controls-box"><form id="searchControlsForm" onSubmit={event=>{event.preventDefault();document.getElementById('resultsArea')?.scrollIntoView({block:'start'});}}><div className="search-main-inputs-row">
+    <div className="search-input-field"><span className="search-input-icon"><Search size={18}/></span><label className="search-sr-only" htmlFor="searchInput">Tìm kiếm phòng trọ</label><input type="search" id="searchInput" className="search-text-input" maxLength={200} placeholder="Tìm theo tên nhà trọ, địa chỉ, đường phố..." value={filters.q} onChange={e=>change({q:e.target.value})}/></div>
+    <SelectField id="selectLocation" label="Khu vực" options={searchLocations} value={filters.location} onChange={value=>change({location:value})}/><SelectField id="selectPrice" label="Mức giá thuê" options={searchPrices} value={filters.price} onChange={value=>change({price:value})}/><SelectField id="selectType" label="Loại phòng" options={searchTypes} value={filters.type} onChange={value=>change({type:value})}/>
+    <button type="submit" className="btn-search-trigger"><Search size={16}/><span>Tìm kiếm</span></button>
+   </div></form>
+   <div className="search-secondary-row"><div className="quick-filter-pills"><span className="search-quick-label">Gợi ý nhanh:</span><button type="button" className={`filter-pill-btn${!filters.amenities.length?' active':''}`} onClick={()=>change({amenities:[]})}>Tất cả</button>{[['airConditioner','❄️ Có điều hòa'],['flexibleHours','⏰ Giờ tự do'],['balcony','🌿 Có ban công']].map(([key,text])=><button type="button" key={key} className={`filter-pill-btn${filters.amenities.includes(key)?' active':''}`} aria-pressed={filters.amenities.includes(key)} onClick={()=>toggleAmenity(key)}>{text}</button>)}<button type="button" className="filter-pill-btn" disabled title="Chưa có dữ liệu khoảng cách thực tế đến ĐH FPT để lọc chính xác">🎓 Gần ĐH FPT (&lt;1km)</button><button type="button" className="filter-pill-btn" onClick={()=>notify('Danh sách chỉ bao gồm nhà trọ đã được duyệt và đang công khai.')}>✓ Đã xác minh</button></div>
+    <button type="button" className={`btn-toggle-advanced${advanced?' active':''}`} id="btnToggleAdv" aria-expanded={advanced} aria-controls="advFilterPanel" onClick={()=>{setDraft(filters);setAdvanced(value=>!value)}}><Filter size={15}/>Bộ lọc nâng cao</button><button type="button" className="btn-toggle-advanced" id="btnOpenMobileFilter" onClick={()=>{setDraft(filters);setDrawer(true)}}><Filter size={15}/>Bộ lọc</button>
+   </div>
+   <div className={`advanced-filter-panel${advanced?' open':''}`} id="advFilterPanel" hidden={!advanced}><AdvancedFields draft={draft} setDraft={setDraft} prefix="desktop"/><div className="adv-filter-actions-row"><button type="button" className="btn-reset-filters" onClick={()=>setDraft(value=>({...value,amenities:[],availableOnly:false}))}>Đặt lại tiêu chí</button><button type="button" className="btn-apply-filters" onClick={()=>apply()}>Áp dụng bộ lọc</button></div></div>
+   <div className="active-chips-wrapper" id="activeChipsContainer">{!!chips.length&&<><span className="chips-label">Đang lọc theo:</span>{chips.map(chip=><span className="chip-tag" key={chip.key}><span>{chip.text}</span><button type="button" onClick={chip.remove} aria-label={`Xóa bộ lọc ${chip.text}`}><X size={14}/></button></span>)}<button type="button" className="btn-clear-all-chips" onClick={reset}>Xóa tất cả</button></>}</div>
+   </div></div></section>
+  <section className="listing-results-section" id="resultsArea" aria-busy={loading}><div className="container"><div className="results-meta-header"><h2 className="results-count-title" id="resultsCount" aria-live="polite">{loading?'Đang tìm kiếm phòng trọ phù hợp...':data?<>Tìm thấy <strong>{data.totalElements}</strong> loại phòng phù hợp</>:'Kết quả tìm kiếm'}</h2><div className="results-header-actions"><nav className="view-switcher-group" aria-label="Chế độ hiển thị"><Link to={`/search?${params}`} className="view-switch-btn active" aria-current="page"><List size={15}/>Danh sách</Link><Link to={`/map?${params}`} className="view-switch-btn"><Map size={15}/>Bản đồ</Link></nav><div className="sort-controls-group"><label htmlFor="sortSelect" className="sort-label">Sắp xếp theo:</label><select id="sortSelect" className="sort-select" value={filters.sort} onChange={e=>change({sort:e.target.value})}>{searchSorts.map(([key,text])=><option key={key} value={key}>{text}</option>)}</select></div></div></div>
+   <div className="listing-grid-container" id="listingGrid">{loading?<div className="search-empty-container" role="status"><LoaderCircle className="spin"/><p>Đang tải danh sách nhà trọ...</p></div>:error?<div className="search-empty-container" role="alert"><h3 className="search-empty-title">Không thể tải danh sách nhà trọ</h3><p className="search-empty-desc">{error}</p><button type="button" className="btn-empty-reset" onClick={retry}>Thử lại</button></div>:data?.items.length?data.items.map(item=><SearchPrototypeCard key={item.roomTypeId} item={item} saved={saved.includes(item.propertyId)} onSave={save}/>):<div className="search-empty-container"><div className="search-empty-icon"><Search size={32}/></div><h3 className="search-empty-title">Không tìm thấy phòng trọ phù hợp</h3><p className="search-empty-desc">Không có kết quả nào thỏa mãn toàn bộ tiêu chí tìm kiếm hiện tại. Bạn vui lòng thử điều chỉnh lại bộ lọc, nới rộng khoảng giá hoặc xóa bớt tiện ích.</p><button type="button" className="btn-empty-reset" onClick={reset}><RotateCcw size={16}/>Xóa toàn bộ bộ lọc</button></div>}</div>
+   {!loading&&!error&&data?.totalPages>1&&<nav className="pagination-wrapper" id="paginationWrapper" aria-label="Phân trang kết quả"><button type="button" className="page-btn" disabled={filters.page<=1} onClick={()=>change({page:filters.page-1})}>← Trước</button>{paginationRange(filters.page,data.totalPages).map(value=>typeof value==='number'?<button type="button" key={value} className={`page-btn${filters.page===value?' active':''}`} aria-label={`Trang ${value}`} aria-current={filters.page===value?'page':undefined} onClick={()=>change({page:value})}>{value}</button>:<span key={value}>…</span>)}<button type="button" className="page-btn" disabled={filters.page>=data.totalPages} onClick={()=>change({page:filters.page+1})}>Sau →</button></nav>}
+  </div></section>
+  <AnimatePresence>{drawer&&<Modal title="Bộ lọc tìm kiếm phòng trọ" onClose={()=>setDrawer(false)} className="search-filter-modal"><div className="drawer-body"><SelectField id="drawerLocation" label="Khu vực" options={searchLocations} value={draft.location} onChange={value=>setDraft(v=>({...v,location:value}))}/><SelectField id="drawerPrice" label="Mức giá thuê" options={searchPrices} value={draft.price} onChange={value=>setDraft(v=>({...v,price:value}))}/><SelectField id="drawerType" label="Loại phòng" options={searchTypes} value={draft.type} onChange={value=>setDraft(v=>({...v,type:value}))}/><AdvancedFields draft={draft} setDraft={setDraft} prefix="mobile"/></div><div className="drawer-footer"><MotionButton className="btn-drawer-reset" onClick={()=>setDraft(readSearchFilters(new URLSearchParams()))}>Xóa lọc</MotionButton><MotionButton className="btn-drawer-apply" onClick={()=>apply(true)}>Áp dụng</MotionButton></div></Modal>}</AnimatePresence>
+ </main></DetailPrototypeShell>;
 }

@@ -1,0 +1,47 @@
+/* Preserve the original community layout; bind real data and existing interactions. */
+.prototype-community {--community-action:#0f766e;min-width:0;overflow-wrap:anywhere}
+.prototype-community main {display:block;min-width:0}
+.prototype-community .community-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.prototype-community .community-feed-column,.prototype-community .post-card-content,.prototype-community .filter-search-wrap,.prototype-community .filter-select-wrap {min-width:0}
+.prototype-community .post-card-title a {color:inherit;text-decoration:none}
+.prototype-community .post-card-title {overflow-wrap:anywhere}
+.prototype-community .post-card:hover {transform:none}
+.prototype-community .post-card:hover .post-card-img {transform:none}
+.prototype-community .post-card-desc {white-space:pre-wrap}
+.prototype-community .post-location-chip {max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.prototype-community .post-card-time {flex-shrink:0;white-space:normal;text-align:right;max-width:100px}
+.prototype-community .community-no-media {display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;height:100%;width:100%;color:#475569;font-size:12px}
+.prototype-community .post-media-count {pointer-events:none}
+.prototype-community .post-card-media video {height:100%;width:100%;object-fit:contain;background:#0f172a}
+.prototype-community .community-visibility-note {font-size:12px;line-height:1.6;color:#64748b;margin:0 0 16px}
+.prototype-community .community-refresh {background:transparent;border:0;cursor:pointer}
+.prototype-community .btn-create-post {background:var(--community-action);color:#fff}
+.prototype-community .btn-view-detail,.prototype-community a.btn-view-detail {background:#0f172a;color:#fff}
+.prototype-community .btn-quick-call {color:var(--community-action)}
+.prototype-community .category-tab-btn.active {background:var(--community-action);color:#fff}
+.prototype-community .active-filter-tag {display:inline-flex;padding:4px 10px;border-radius:16px;background:#f0fdfa;border:1px solid #99f6e4;color:#115e59;font-size:12px}
+.prototype-community .community-rejected-note {padding:10px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;color:#9f1239;font-size:13px;white-space:pre-wrap}
+.prototype-community .community-revision-note p {white-space:pre-wrap;margin:8px 0}
+.prototype-community .community-detail-actions {display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.prototype-community .community-detail-meta {display:flex;align-items:center;gap:8px;font-size:14px;color:#64748b;margin:14px 0}
+.prototype-community .community-detail-copy {white-space:pre-wrap;font-size:15px;line-height:1.8;margin:20px 0;overflow-wrap:anywhere}
+.prototype-community .community-detail-photos {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prototype-community .community-detail-photos img {width:100%;max-height:360px;object-fit:contain;border-radius:10px;background:#f1f5f9}
+.prototype-community .community-detail-prototype video {max-width:100%;max-height:400px}
+.prototype-community .community-load-more-wrap {margin:24px 0;text-align:center}
+.prototype-community .community-feed-card-footer {font-size:12px}
+.prototype-community .community-feed-card-footer button {min-height:36px;padding:6px 8px}
+.prototype-community button:disabled {cursor:not-allowed;opacity:.55}
+.prototype-community a:focus-visible,.prototype-community button:focus-visible,.prototype-community input:focus-visible,.prototype-community select:focus-visible {outline:3px solid var(--community-action);outline-offset:3px}
+.prototype-community .community-category-tabs {min-width:0}
+.prototype-community [id^="post-"] {scroll-margin-top:120px}
+@media(max-width:768px){
+ .prototype-community .community-category-tabs {overflow:auto;max-width:100%;flex-wrap:nowrap;padding-bottom:8px}
+ .prototype-community .category-tab-btn {flex:0 0 auto;white-space:nowrap}
+ .prototype-community .post-card-header {align-items:flex-start;flex-wrap:wrap;gap:8px}
+ .prototype-community .post-card-time {max-width:none;text-align:left}
+ .prototype-community .post-card-media {height:200px}
+ .prototype-community .community-detail-photos {grid-template-columns:1fr}
+ .prototype-community .community-comments h3 {font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){.prototype-community * {animation:none!important;transition:none!important;scroll-behavior:auto!important}}

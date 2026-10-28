@@ -19,9 +19,13 @@ public class AccommodationController {
             @RequestParam(defaultValue = "0") String page, @RequestParam(defaultValue = "6") String size,
             @RequestParam(defaultValue = "") String q, @RequestParam(defaultValue = "all") String location,
             @RequestParam(defaultValue = "all") String price, @RequestParam(defaultValue = "newest") String sort,
-            @RequestParam(defaultValue = "all") String type) {
+            @RequestParam(defaultValue = "all") String type,
+            @RequestParam(defaultValue = "") String amenities,
+            @RequestParam(defaultValue = "false") String availableOnly) {
         try {
-            return ApiResponse.success(service.list(Integer.parseInt(page), Integer.parseInt(size), q, location, price, sort, type));
+            if (!"true".equals(availableOnly) && !"false".equals(availableOnly))
+                throw new BadRequestException("Trạng thái phòng trống phải là true hoặc false.");
+            return ApiResponse.success(service.list(Integer.parseInt(page), Integer.parseInt(size), q, location, price, sort, type, amenities, Boolean.parseBoolean(availableOnly)));
         } catch (NumberFormatException exception) {
             throw new BadRequestException("Trang và kích thước trang phải là số nguyên hợp lệ.");
         }

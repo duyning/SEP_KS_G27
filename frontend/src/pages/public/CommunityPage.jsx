@@ -1,7 +1,7 @@
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, MapPin, Search, X, ImagePlus, Video, ShieldCheck } from 'lucide-react';
+import { X, ImagePlus, Video, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../../services/community.js';
 import { PostFieldError, useCommunityLoad } from '../../components/CommunityUI.jsx';
@@ -9,30 +9,25 @@ import CommunityPostImage, { LocalPostImage } from '../../components/CommunityPo
 import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-images.js';
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
-import CommunityPostMedia from '../../components/CommunityPostMedia.jsx';
-import CommunityPostFooter from '../../components/CommunityPostFooter.jsx';
+import CommunityPrototype from '../../components/CommunityPrototype.jsx';
+import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
 import Modal from '../../components/common/Modal.jsx';
-import StatusBadge from '../../components/common/StatusBadge.jsx';
 import { useToast } from '../../components/PortalUI.jsx';
 import '../../styles/community-post-form.css';
 import '../../styles/community-feed.css';
-
-const feedCategories = [
-  ['ALL', 'Tất cả bài viết'], ['ROOM_TRANSFER', 'Nhượng phòng'],
-  ['ROOMMATE', 'Tìm người ở ghép'], ['SECOND_HAND', 'Đồ cũ sinh viên'],
-];
+import '../../styles/home-prototype.css';
+import '../../styles/home-prototype-integration.css';
+import '../../styles/community-prototype.css';
+import '../../styles/community-prototype-integration.css';
 
 export default function CommunityPage() {
-  const [search, setSearch] = useState('');
   const [params, setParams] = useSearchParams();
   const notify = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const mine = Boolean(user) && params.get('view') === 'mine';
   const state = useCommunityLoad(mine ? 'mine' : 'published');
-  const selectedCategory = params.get('category') || 'ALL';
 
-  const posts = state.data || [];
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [revisionNote, setRevisionNote] = useState('');
@@ -157,13 +152,6 @@ export default function CommunityPage() {
     authorName, authorPhone, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
   }, initialDraft.current, true);
 
-  const categoryPosts = selectedCategory === 'ALL'
-    ? posts
-    : posts.filter((p) => p.type === selectedCategory);
-  const searchText = search.trim().toLocaleLowerCase('vi-VN');
-  const filteredPosts = categoryPosts.filter(post => !searchText ||
-    `${post.title} ${post.location || ''}`.toLocaleLowerCase('vi-VN').includes(searchText));
-
   const openForm = (post = null) => {
     if (!user) { navigate('/login', { state: { from: '/community' } }); return; }
     const initial = {
@@ -247,7 +235,7 @@ export default function CommunityPage() {
       setIsCreateModalOpen(false);
       setPhotos([]);
       setVideos([]);
-      if (mine) state.reload();
+      state.reload();
       notify?.(editingId ? 'Đã gửi lại bài viết sau chỉnh sửa. Bài đang chờ nhân viên kiểm duyệt lại.' : 'Bài viết đã được gửi, đang chờ nhân viên kiểm duyệt. Bạn có thể theo dõi tại Bài viết của tôi.', 'success');
     } catch (error) {
       if (!controller.signal.aborted) { setSubmitError(error.message); setErrors(error.fields || {}); }
@@ -332,191 +320,10 @@ export default function CommunityPage() {
   }, [errors, isCreateModalOpen]);
 
   return (
-    <div className="community-feed-page">
-      {/* Heading Bar */}
-      <div className="community-feed-heading">
-        <div>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-            Cộng đồng Cư dân & Sinh viên Hòa Lạc
-          </h1>
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
-            Kết nối nhượng phòng, tìm bạn ở ghép và chia sẻ đồ dùng sinh viên quanh ĐH FPT & Khu CNC.
-          </p>
-        </div>
-
-        <MotionButton
-          type="button"
-          onClick={() => openForm()}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 20px',
-            borderRadius: '10px',
-            backgroundColor: '#0d9488',
-            color: '#ffffff',
-            border: 'none',
-            fontWeight: 700,
-            fontSize: '14px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px -1px rgba(13, 148, 136, 0.2)',
-          }}
-        >
-          <Plus size={18} />
-          <span>Đăng bài viết mới</span>
-        </MotionButton>
-      </div>
-
-      <div className="community-feed-views" role="group" aria-label="Chế độ xem bài viết">
-        <MotionButton aria-pressed={!mine} className={`p-button ${!mine ? 'primary' : ''}`} onClick={() => setParams({})}>Bài viết công khai</MotionButton>
-        {user && <MotionButton aria-pressed={mine} className={`p-button ${mine ? 'primary' : ''}`} onClick={() => setParams({ view: 'mine' })}>Bài viết của tôi</MotionButton>}
-        <MotionButton className="p-button" onClick={state.reload} disabled={state.loading}>Làm mới</MotionButton>
-      </div>
-      <p className="community-feed-hint">{mine ? 'Chỉ bạn nhìn thấy các bài đang chờ duyệt, cần chỉnh sửa hoặc bị từ chối của mình.' : 'Chỉ những bài đã được nhân viên phê duyệt mới hiển thị công khai.'}</p>
-      {state.loading && <p role="status">Đang tải bài viết...</p>}
-      {state.error && <p role="alert" style={{ color: '#b91c1c' }}>{state.error} <MotionButton className="p-button" onClick={state.reload}>Thử lại</MotionButton></p>}
-
-      <div className="community-feed-layout">
-      <div className="community-feed-main">
-      <div className="community-feed-results" aria-live="polite">
-        <strong>{state.loading ? 'Đang tải...' : `${filteredPosts.length} bài viết`}</strong>
-        <span>{feedCategories.find(([key]) => key === selectedCategory)?.[1] || 'Tất cả bài viết'}</span>
-      </div>
-      {/* Category Tabs */}
-      <div className="community-feed-filters" role="group" aria-label="Lọc theo loại bài viết">
-        {feedCategories.map(([key, label]) => {
-          const active = selectedCategory === key;
-          return (
-            <MotionButton
-              key={key}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setParams({ ...(mine ? { view: 'mine' } : {}), ...(key === 'ALL' ? {} : { category: key }) })}
-              style={{
-                padding: '8px 18px',
-                borderRadius: '9999px',
-                border: active ? '1px solid #0d9488' : '1px solid #e2e8f0',
-                backgroundColor: active ? '#0d9488' : '#ffffff',
-                color: active ? '#ffffff' : '#475569',
-                fontWeight: active ? 700 : 600,
-                fontSize: '13px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {label}
-            </MotionButton>
-          );
-        })}
-      </div>
-
-      {/* Posts Feed */}
-      {!state.loading && !state.error && !filteredPosts.length && <section className="community-feed-empty" role="status">
-        <Search size={28} aria-hidden="true" />
-        <h2>{searchText ? 'Không tìm thấy bài phù hợp' : 'Chưa có bài viết'}</h2>
-        <p>{searchText ? <>Không có kết quả cho “{search.trim()}”. Hãy thử từ khóa ngắn hơn hoặc chọn chuyên mục khác.</>
-          : mine ? 'Bạn chưa có bài viết trong chuyên mục này.' : 'Chuyên mục này chưa có bài viết được duyệt.'}</p>
-        {(searchText || selectedCategory !== 'ALL') && <MotionButton className="p-button" type="button" onClick={() => { setSearch(''); setParams(mine ? { view: 'mine' } : {}); }}>Xóa bộ lọc</MotionButton>}
-      </section>}
-      <div className="community-feed-posts">
-        {filteredPosts.map((post) => (
-          <article
-            key={post.id}
-            id={`post-${post.id}`}
-            className="community-feed-card"
-          >
-            {/* Post Header */}
-            <div className="community-feed-card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '42px',
-                  flexShrink: 0,
-                  height: '42px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f1f5f9',
-                  color: '#475569',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                }}>
-                  {post.authorName.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{post.authorName}</div>
-                  <time dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('vi-VN')} className="community-feed-time">
-                    <span>{new Date(post.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span aria-hidden="true">•</span>
-                    <span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
-                  </time>
-                </div>
-              </div>
-
-              <div className="community-feed-badges">
-                <span className="community-feed-category">{post.typeLabel}</span>
-                {mine && <StatusBadge status={post.status} label={post.statusLabel} />}
-              </div>
-            </div>
-
-            {/* Post Content */}
-            <div className={`community-feed-body${post.images?.length || post.videos?.length ? ' community-feed-body--media' : ''}`}>
-            <div className="community-feed-copy">
-            <h2 className="community-feed-title">
-              {post.title}
-            </h2>
-            <p className="community-feed-description">{post.content}</p>
-            <dl className="community-feed-facts">
-            {post.priceDisplay && (
-              <div className="community-feed-price">
-                <dt>{post.type === 'SECOND_HAND' ? 'Giá bán' : post.type === 'ROOM_TRANSFER' ? 'Giá thuê' : 'Chi phí ở ghép'}</dt>
-                <dd>{post.priceDisplay}</dd>
-              </div>
-            )}
-              {post.location && <div><dt>Địa chỉ</dt><dd><MapPin size={16} aria-hidden="true" /> {post.location}</dd></div>}
-              {post.authorPhone && <div><dt>Số điện thoại</dt><dd><a href={`tel:${post.authorPhone}`}>{post.authorPhone}</a></dd></div>}
-            </dl>
-            </div>
-
-            {(post.images?.length > 0 || post.videos?.length > 0) && <CommunityPostMedia post={post} />}
-            </div>
-
-            {/* Post Footer Actions */}
-            {mine && post.status === 'NEED_CHANGES' && <section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên">
-              <strong>Nhân viên yêu cầu chỉnh sửa</strong>
-              <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{post.decisionNote || 'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p>
-              {post.reviewedBy && <small>{post.reviewedBy}{post.reviewedAt ? ` • ${new Date(post.reviewedAt).toLocaleString('vi-VN')}` : ''}</small>}
-              <p>Sửa bài theo yêu cầu rồi gửi lại. Bài chỉ công khai sau khi được nhân viên duyệt lại.</p>
-              <MotionButton type="button" className="p-button primary" onClick={() => openForm(post)}>Chỉnh sửa và gửi duyệt lại</MotionButton>
-            </section>}
-            <CommunityPostFooter post={post} mine={mine} deleting={deleting}
-              onDelete={() => { setPostToDelete(post); setDeleteError(''); }} />
-          </article>
-        ))}
-      </div>
-      </div>
-      <aside className="community-feed-sidebar" aria-label="Bộ lọc và hướng dẫn cộng đồng">
-        <section className="community-feed-sidebar-panel">
-          <h2>Tìm bài phù hợp</h2>
-          <label htmlFor="community-feed-search">Tiêu đề hoặc khu vực</label>
-          <input id="community-feed-search" type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Ví dụ: Hòa Lạc, bàn học..." />
-          {(searchText || selectedCategory !== 'ALL') && <MotionButton type="button" className="community-feed-clear" onClick={() => { setSearch(''); setParams(mine ? { view: 'mine' } : {}); }}><X size={14} aria-hidden="true" /> Xóa bộ lọc</MotionButton>}
-          <h3>Chuyên mục</h3>
-          <div className="community-feed-quick-filters">
-            {feedCategories.map(([key, label]) => <MotionButton type="button" key={key} aria-pressed={selectedCategory === key}
-              onClick={() => setParams({ ...(mine ? { view: 'mine' } : {}), ...(key === 'ALL' ? {} : { category: key }) })}>
-              <span>{label}</span><span>{key === 'ALL' ? posts.length : posts.filter(post => post.type === key).length}</span>
-            </MotionButton>)}
-          </div>
-          <p>Số lượng tính trên danh sách {mine ? 'bài của bạn' : 'bài công khai'} đã tải.</p>
-        </section>
-        <section className="community-feed-sidebar-panel community-feed-guidance">
-          <h2>Đăng bài dễ được duyệt</h2>
-          <ul><li>Ghi rõ nhu cầu, mức giá và khu vực.</li><li>Dùng ảnh, video liên quan đến nội dung.</li><li>Cung cấp số điện thoại liên hệ chính xác.</li></ul>
-          <MotionButton type="button" className="p-button primary" onClick={() => openForm()}><Plus size={16} aria-hidden="true" /> Đăng bài viết</MotionButton>
-        </section>
-      </aside>
-      </div>
+    <DetailPrototypeShell className="prototype-community">
+      <CommunityPrototype state={state} mine={mine} user={user} params={params} setParams={setParams}
+        onCreate={() => openForm()} onEdit={openForm} deleting={deleting}
+        onDelete={post => { setPostToDelete(post); setDeleteError(''); }} />
 
       <AnimatePresence>{postToDelete && (
         <Modal
@@ -759,6 +566,6 @@ export default function CommunityPage() {
           </form>
         </Modal>
       )}</AnimatePresence>
-    </div>
+    </DetailPrototypeShell>
   );
 }

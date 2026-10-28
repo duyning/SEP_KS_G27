@@ -1,323 +1,38 @@
-import { MotionButton } from '../../components/motion/MotionUI.jsx';
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  RotateCcw,
-  Search,
-  Filter,
-  Users,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  FileText
-} from 'lucide-react';
-import StatusBadge from '../../components/common/StatusBadge.jsx';
-import Pagination from '../../components/common/Pagination.jsx';
-import { useCommunityLoad } from '../../components/CommunityUI.jsx';
+import {useEffect} from 'react';
+import {Link,useSearchParams} from 'react-router-dom';
+import {Search,RotateCcw,ArrowRight,ImageOff,Users,LoaderCircle} from 'lucide-react';
+import {MotionButton} from '../../components/motion/MotionUI.jsx';
+import {useCommunityLoad} from '../../components/CommunityUI.jsx';
+import CommunityPostImage from '../../components/CommunityPostImage.jsx';
+import {communityDate} from '../../services/community-prototype.js';
+import {readModerationFilters,moderationSummary,filterModerationPosts,moderationCategories,moderationStatuses} from '../../services/staff-community-view.js';
+import '../../styles/staff-community-prototype.css';
+import '../../styles/staff-community-integration.css';
 
-export default function StaffCommunityModerationPage() {
-  const state = useCommunityLoad('moderation');
-  const posts = state.data || [];
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortOrder, setSortOrder] = useState('newest');
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
-
-  const totalCount = posts.length;
-  const pendingCount = posts.filter(p => p.status === 'PENDING').length;
-  const needChangesCount = posts.filter(p => p.status === 'NEED_CHANGES').length;
-  const processedCount = posts.filter(p => p.status === 'APPROVED' || p.status === 'REJECTED').length;
-
-  const catPendingTransfer = posts.filter(p => p.type === 'ROOM_TRANSFER' && p.status === 'PENDING').length;
-  const catPendingRoommate = posts.filter(p => p.type === 'ROOMMATE' && p.status === 'PENDING').length;
-  const catPendingSecondhand = posts.filter(p => p.type === 'SECOND_HAND' && p.status === 'PENDING').length;
-
-  const filteredPosts = useMemo(() => {
-    return posts
-      .filter(item => {
-        if (categoryFilter !== 'ALL' && item.type !== categoryFilter) return false;
-        if (statusFilter === 'PROCESSED' && !['APPROVED', 'REJECTED'].includes(item.status)) return false;
-        if (!['ALL', 'PROCESSED'].includes(statusFilter) && item.status !== statusFilter) return false;
-        if (search) {
-          const q = search.toLowerCase();
-          const matchTitle = item.title?.toLowerCase().includes(q);
-          const matchAuthor = item.authorName?.toLowerCase().includes(q);
-          const matchLoc = item.location?.toLowerCase().includes(q);
-          if (!matchTitle && !matchAuthor && !matchLoc) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortOrder === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      });
-  }, [posts, categoryFilter, statusFilter, search, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const paginatedItems = filteredPosts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  if (state.loading) return <p role="status">Đang tải danh sách bài viết...</p>;
-  if (state.error) return <div role="alert"><p>{state.error}</p><button className="p-button" onClick={state.reload}>Thử lại</button></div>;
-
-  return (
-    <div className="portal-page-container staff-content">
-      <p style={{ color: '#64748b', fontSize: 13 }}>Chỉ các bài viết đã duyệt mới xuất hiện công khai. Mỗi quyết định được lưu vào lịch sử kiểm duyệt.</p>
-
-      {/* Header */}
-      <section className="dashboard-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>Kiểm duyệt cộng đồng</h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-            Kiểm duyệt 3 loại bài: Nhượng phòng, Tìm người ở ghép, Đồ cũ sinh viên trước khi xuất hiện công khai.
-          </p>
-        </div>
-        <MotionButton
-          type="button"
-          className="p-button"
-          onClick={state.reload}
-        >
-          <RotateCcw size={15} /> Làm mới
-        </MotionButton>
-      </section>
-
-      {/* KPI Cards */}
-      <section className="staff-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-        <article
-          className="kpi-card"
-          tabIndex={0}
-          role="button"
-          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0d9488' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
-          onClick={() => { setStatusFilter('ALL'); setPage(1); }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Tổng bài viết</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={18} />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{totalCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Toàn bộ bài viết</span>
-        </article>
-
-        <article
-          className="kpi-card"
-          tabIndex={0}
-          role="button"
-          style={{ background: '#fff', border: statusFilter === 'PENDING' ? '2px solid #f59e0b' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
-          onClick={() => { setStatusFilter('PENDING'); setPage(1); }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Chờ kiểm duyệt</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Clock size={18} />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', marginBottom: '4px' }}>{pendingCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Cần xem xét ngay</span>
-        </article>
-
-        <article
-          className="kpi-card"
-          tabIndex={0}
-          role="button"
-          style={{ background: '#fff', border: statusFilter === 'NEED_CHANGES' ? '2px solid #f97316' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
-          onClick={() => { setStatusFilter('NEED_CHANGES'); setPage(1); }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Cần chỉnh sửa</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AlertCircle size={18} />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ea580c', marginBottom: '4px' }}>{needChangesCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Chờ tác giả sửa</span>
-        </article>
-
-        <article
-          className="kpi-card"
-          tabIndex={0}
-          role="button"
-          style={{ background: '#fff', border: statusFilter === 'PROCESSED' ? '2px solid #10b981' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
-          onClick={() => { setStatusFilter('PROCESSED'); setPage(1); }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Đã xử lý</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircle2 size={18} />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>{processedCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Duyệt & từ chối</span>
-        </article>
-      </section>
-
-      {/* Category Breakdown Summary Bar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 18px', marginBottom: '20px', alignItems: 'center', fontSize: '13px' }}>
-        <span style={{ color: '#64748b', fontWeight: '600' }}>Chờ duyệt theo loại:</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0d9488', fontWeight: '600' }}>Nhượng phòng</span>
-          <strong>{catPendingTransfer}</strong>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#faf5ff', color: '#9333ea', fontWeight: '600' }}>Tìm người ở ghép</span>
-          <strong>{catPendingRoommate}</strong>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#fff7ed', color: '#ea580c', fontWeight: '600' }}>Đồ cũ sinh viên</span>
-          <strong>{catPendingSecondhand}</strong>
-        </div>
-      </div>
-
-      {/* Table Section */}
-      <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-        {/* Filter Toolbar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input
-              type="text"
-              placeholder="Tìm theo tiêu đề, tác giả, vị trí..."
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-              style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <select
-              aria-label="Lọc loại bài"
-              value={categoryFilter}
-              onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
-            >
-              <option value="ALL">Tất cả loại bài</option>
-              <option value="ROOM_TRANSFER">Nhượng phòng</option>
-              <option value="ROOMMATE">Tìm người ở ghép</option>
-              <option value="SECOND_HAND">Đồ cũ sinh viên</option>
-            </select>
-
-            <select
-              aria-label="Lọc trạng thái"
-              value={statusFilter}
-              onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
-            >
-              <option value="ALL">Tất cả trạng thái</option>
-              <option value="PENDING">Chờ kiểm duyệt</option>
-              <option value="NEED_CHANGES">Cần chỉnh sửa</option>
-              <option value="PROCESSED">Đã xử lý (duyệt / từ chối)</option>
-              <option value="APPROVED">Đã phê duyệt</option>
-              <option value="REJECTED">Đã từ chối</option>
-            </select>
-
-            <select
-              aria-label="Sắp xếp"
-              value={sortOrder}
-              onChange={e => setSortOrder(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
-            >
-              <option value="newest">Mới nhất trước</option>
-              <option value="oldest">Cũ nhất trước</option>
-            </select>
-
-            <MotionButton
-              type="button"
-              className="p-button"
-              onClick={() => {
-                setSearch('');
-                setCategoryFilter('ALL');
-                setStatusFilter('ALL');
-                setSortOrder('newest');
-                setPage(1);
-              }}
-            >
-              <RotateCcw size={14} /> Đặt lại
-            </MotionButton>
-          </div>
-        </div>
-
-        <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
-          Hiển thị: <strong>{filteredPosts.length}</strong> bài viết
-        </div>
-
-        {/* Table */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-            <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <tr>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '36%' }}>BÀI VIẾT</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>LOẠI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '18%' }}>TÁC GIẢ</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>NGÀY GỬI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '10%' }}>TRẠNG THÁI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '8%', textAlign: 'right' }}>THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedItems.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-                    Không có bài viết cộng đồng nào phù hợp.
-                  </td>
-                </tr>
-              ) : (
-                paginatedItems.map((item, index) => (
-                  <tr key={item.id} style={{ borderBottom: index < paginatedItems.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                    <td style={{ padding: '14px' }}>
-                      <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '3px' }}>
-                        {item.title}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', gap: '8px' }}>
-                        <span>📍 {item.location}</span>
-                        {item.priceDisplay && <span>• 💰 {item.priceDisplay}</span>}
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px' }}>
-                      <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: item.type === 'ROOM_TRANSFER' ? '#f0fdfa' : item.type === 'ROOMMATE' ? '#faf5ff' : '#fff7ed', color: item.type === 'ROOM_TRANSFER' ? '#0d9488' : item.type === 'ROOMMATE' ? '#9333ea' : '#ea580c', fontWeight: '600' }}>
-                        {item.typeLabel}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px' }}>
-                      <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.authorName}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{item.authorPhone}</div>
-                    </td>
-                    <td style={{ padding: '14px', fontSize: '13px', color: '#475569' }}>
-                      {new Date(item.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td style={{ padding: '14px' }}>
-                      <StatusBadge status={item.status} label={item.statusLabel} />
-                    </td>
-                    <td style={{ padding: '14px', textAlign: 'right' }}>
-                      <Link
-                        to={`/staff/community/detail?id=${item.id}`}
-                        className="p-button primary"
-                        style={{ padding: '6px 10px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Eye size={14} /> Thẩm định
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div style={{ marginTop: '16px' }}>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            totalItems={filteredPosts.length}
-            pageSize={pageSize}
-          />
-        </div>
-      </section>
-    </div>
-  );
+const pageSize=15,categoryClass={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'},statusClass={PENDING:'badge-amber',NEED_CHANGES:'badge-orange',APPROVED:'badge-emerald',REJECTED:'badge-rose'};
+const detailUrl=post=>`/staff/community/detail?id=${post.id}`;
+function PostThumb({post,className='comm-thumb'}){return <div className={className}>{post.images.length?<CommunityPostImage postId={post.id} image={post.images[0]} images={post.images} defer/>:<ImageOff size={20} aria-label="Chưa có ảnh bài viết"/>}</div>}
+function Category({post}){return <span className={categoryClass[post.type]}>{post.typeLabel}</span>}
+function Status({post}){return <span className={`verif-status-badge ${statusClass[post.status]}`}>{post.statusLabel}</span>}
+export default function StaffCommunityModerationPage(){
+ const state=useCommunityLoad('moderation'),[params,setParams]=useSearchParams(),filters=readModerationFilters(params),posts=state.data||[];
+ const stats=moderationSummary(posts),filtered=filterModerationPosts(posts,filters),totalPages=Math.max(1,Math.ceil(filtered.length/pageSize)),page=Math.min(filters.page,totalPages),rows=filtered.slice((page-1)*pageSize,page*pageSize),known=!state.loading&&!state.error;
+ useEffect(()=>{document.title='Kiểm duyệt cộng đồng | HL_RCS Staff';},[]);
+ useEffect(()=>{if(known&&filters.page>totalPages){const next=new URLSearchParams(params);next.set('page',String(totalPages));setParams(next,{replace:true});}},[known,filters.page,totalPages,params,setParams]);
+ function change(values){const next=new URLSearchParams(params);for(const [key,value] of Object.entries(values)){if(!value||key==='category'&&value==='ALL'||key==='sort'&&value==='newest'||key==='page'&&value===1)next.delete(key);else next.set(key,String(value));}if(!('page' in values))next.delete('page');setParams(next,{replace:Object.keys(values).length===1&&'q' in values});}
+ const metrics=[['ALL','blue','Tổng bài viết','📁',stats.total,'Toàn bộ bài viết','Toàn hệ thống','kpiTotalCount'],['PENDING','amber','Chờ kiểm duyệt','⏳',stats.pending,'Cần xem xét','Ưu tiên xử lý','kpiPendingCount'],['NEED_CHANGES','purple','Cần chỉnh sửa','✏️',stats.needsChanges,'Chờ tác giả sửa','Đang phản hồi','kpiNeedChangesCount'],['PROCESSED','teal','Đã xử lý','✓',stats.processed,'Duyệt & từ chối','Hoàn thành','kpiProcessedCount']];
+ return <div className="staff-community-prototype">
+  <div className="moderation-intro"><p>Xem xét các bài viết cộng đồng đang chờ kiểm duyệt trước khi hiển thị công khai.</p><MotionButton type="button" className="btn-reset-filters" onClick={state.reload} disabled={state.loading}><RotateCcw size={15}/>Làm mới</MotionButton></div>
+  <section className="staff-kpi-grid" aria-label="Thống kê bài viết cộng đồng">{metrics.map(([status,color,label,icon,count,pill,footer,id])=><MotionButton type="button" key={status} className={`kpi-card kpi-${color}`} aria-label={`Lọc ${label}`} aria-pressed={filters.status===status} disabled={!known} onClick={()=>change({status})}><span className="kpi-header"><span className="kpi-title">{label}</span><span className="kpi-icon-badge" aria-hidden="true">{icon}</span></span><span className="kpi-body"><span className="kpi-number" id={id}>{known?count:'—'}</span><span className="kpi-pill">{pill}</span></span><span className="kpi-footer"><span className="kpi-cta-link">{footer}</span></span></MotionButton>)}</section>
+  <div className="category-summary-bar"><span className="category-summary-item">Chờ duyệt theo loại:</span>{moderationCategories.slice(1).map(([key,label])=><button type="button" className="category-summary-item moderation-category-button" key={key} disabled={!known} onClick={()=>change({category:key,status:'PENDING'})}><span className={categoryClass[key]}>{label}</span><strong>{known?stats.pendingByType[key]:'—'}</strong></button>)}</div>
+  <div className="verif-toolbar"><div className="verif-search-box"><Search className="search-icon" size={16}/><label className="moderation-sr-only" htmlFor="inputSearchPost">Tìm bài viết, tác giả hoặc vị trí</label><input type="search" id="inputSearchPost" className="verif-search-input" maxLength={200} placeholder="Tìm theo tiêu đề bài viết, tác giả, vị trí..." value={filters.q} onChange={e=>change({q:e.target.value})}/></div><div className="verif-filter-group"><label className="moderation-sr-only" htmlFor="selectFilterCategory">Lọc loại bài</label><select id="selectFilterCategory" className="verif-select" value={filters.category} onChange={e=>change({category:e.target.value})}>{moderationCategories.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><label className="moderation-sr-only" htmlFor="selectFilterStatus">Lọc trạng thái</label><select id="selectFilterStatus" className="verif-select" value={filters.status} onChange={e=>change({status:e.target.value})}>{moderationStatuses.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><label className="moderation-sr-only" htmlFor="selectSortOrder">Sắp xếp</label><select id="selectSortOrder" className="verif-select" value={filters.sort} onChange={e=>change({sort:e.target.value})}><option value="newest">Mới nhất trước</option><option value="oldest">Cũ nhất trước (FIFO)</option></select><MotionButton type="button" id="btnResetFilters" className="btn-reset-filters" onClick={()=>setParams({})}><RotateCcw size={14}/>Đặt lại</MotionButton></div><div className="verif-results-count" id="resultsCount" aria-live="polite">Hiển thị <strong>{known?filtered.length:'—'}</strong> bài viết</div></div>
+  {state.loading&&<div className="verif-empty-state" role="status"><LoaderCircle className="spin"/><p>Đang tải danh sách bài viết...</p></div>}
+  {state.error&&<div className="verif-empty-state" role="alert"><h2>Không thể tải bài viết</h2><p>{state.error}</p><MotionButton className="btn-staff-primary" onClick={state.reload}>Thử lại</MotionButton></div>}
+  {known&&!!rows.length&&<><div className="table-responsive" id="tableContainer"><table className="staff-table" id="tableCommunityPosts"><thead><tr>{['BÀI VIẾT','LOẠI','TÁC GIẢ','NGÀY GỬI','TRẠNG THÁI','THAO TÁC'].map(label=><th scope="col" key={label}>{label}</th>)}</tr></thead><tbody id="tbodyCommunityPosts">{rows.map(post=><tr key={post.id} data-id={post.id}><td><div className="comm-post-cell"><PostThumb post={post}/><div className="comm-post-info"><Link to={detailUrl(post)} className="comm-post-title" title={post.title}>{post.title}</Link><span className="comm-post-loc">📍 {post.location||'Chưa cập nhật vị trí'}</span></div></div></td><td><Category post={post}/></td><td><div className="comm-author-cell"><span className="comm-author-avatar-fallback">{post.authorName.charAt(0).toUpperCase()}</span><div><div className="comm-author-name">{post.authorName}</div><div className="comm-author-role">Thành viên cộng đồng</div></div></div></td><td><time className="verif-time-tag" dateTime={post.createdAt}>{communityDate(post.createdAt)}</time></td><td><Status post={post}/></td><td><Link to={detailUrl(post)} className="comm-action-btn">Xem nội dung<ArrowRight size={14}/></Link></td></tr>)}</tbody></table></div>
+   <div id="mobileCommunityPosts">{rows.map(post=><article className="comm-mobile-card" key={post.id} data-id={post.id}><div className="comm-mobile-card-top"><PostThumb post={post} className="comm-mobile-card-thumb"/><div className="comm-mobile-card-details"><Category post={post}/><h2><Link to={detailUrl(post)}>{post.title}</Link></h2><p>Tác giả: <strong>{post.authorName}</strong></p></div></div><div className="comm-mobile-card-meta"><div><Status post={post}/><time dateTime={post.createdAt}>{communityDate(post.createdAt)}</time></div><Link to={detailUrl(post)} className="comm-action-btn">Xem xét<ArrowRight size={14}/></Link></div></article>)}</div>
+  </>}
+  {known&&!rows.length&&<div className="verif-empty-state" id="emptyStateCommunity" role="status"><Users size={40}/><h2 className="empty-title">Không có bài viết cộng đồng nào phù hợp</h2><p className="empty-desc">Hiện tại không có bài viết nào phù hợp với bộ lọc đã chọn.</p><MotionButton type="button" className="btn-staff-primary" onClick={()=>change({q:'',category:'ALL',status:'ALL'})}>Xem tất cả bài viết</MotionButton></div>}
+  {known&&!!filtered.length&&<nav className="verif-pagination" id="paginationControls" aria-label="Phân trang kiểm duyệt"><span className="pagination-info">Trang {page} / {totalPages} · {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} / {filtered.length} bài viết</span><div><MotionButton type="button" className="btn-staff-secondary" disabled={page<=1} onClick={()=>change({page:page-1})}>Trang trước</MotionButton><MotionButton type="button" className="btn-staff-secondary" disabled={page>=totalPages} onClick={()=>change({page:page+1})}>Trang tiếp</MotionButton></div></nav>}
+  <footer className="staff-footer"><span>© 2026 HL_RCS — Hệ thống Kiểm định Nhà trọ &amp; Cộng đồng Hòa Lạc.</span><span>Chỉ bài đã phê duyệt được hiển thị công khai.</span></footer>
+ </div>;
 }

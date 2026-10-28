@@ -10,7 +10,8 @@ public record AccommodationDetail(
         BigDecimal electricityPrice, BigDecimal waterPrice, BigDecimal internetPrice, BigDecimal servicePrice,
         String description, String propertyDescription, List<String> amenities, List<String> propertyAmenities,
         List<String> selectedRules, String rules, LocalDateTime publishedAt, String mapUrl, String nearby,
-        ReviewSummary reviews, List<AccommodationSummary> similar, PublicContact publicContact) {
+        ReviewSummary reviews, List<AccommodationSummary> similar, PublicContact publicContact,
+        List<Photo> propertyGallery, List<AccommodationSummary> roomTypes) {
     public record PublicContact(String phone, String zaloPhone) { }
     public record Photo(String url, String caption) { }
     public record Review(Integer reviewId, String authorName, int rating, String content, LocalDateTime createdAt) { }

@@ -34,6 +34,7 @@ class AccommodationTests {
     @Autowired RoomRepository rooms;
     @Autowired RoomTypeImageRepository images;
     @Autowired FeedbackRepository feedbacks;
+    @Autowired PropertyDocumentRepository documents;
     @Autowired JwtTokenProvider jwt;
     private final HttpClient client = HttpClient.newHttpClient();
     private String prefix;
@@ -172,6 +173,72 @@ class AccommodationTests {
         var post = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + environment.getProperty("local.server.port") + "/api/properties/search"))
                 .POST(HttpRequest.BodyPublishers.noBody()).build();
         assertEquals(401, client.send(post, HttpResponse.BodyHandlers.ofString()).statusCode());
+    }
+
+    @Test void searchFiltersRoomAndSharedAmenitiesBeforeCountingAndPagination() throws Exception {
+        var property=property("ACTIVE",RegistrationStatus.APPROVED);
+        var registration=registrations.findById(property.getRegistration().getRegistrationId()).orElseThrow();
+        registration.setRegistrationDetails("{\"amenities\":[\"flexibleHours\",\"laundry\",\"camera\"]}");registrations.save(registration);
+        for(int index=0;index<3;index++){
+            var type=type(property,2200000+index);
+            type.setAmenitiesJson("[\"airConditioner\",\"balcony\"]");type.setElectricityPrice(new BigDecimal("3500"));types.save(type);
+            room(type,"R"+index,index==2?"OCCUPIED":"VACANT");
+        }
+        var noBalcony=type(property,1800000);noBalcony.setAmenitiesJson("[\"airConditioner\"]");types.save(noBalcony);room(noBalcony,"R4","VACANT");
+        var result=list("&amenities=airConditioner,balcony,flexibleHours,washingMachine&availableOnly=true&size=1");
+        assertEquals(2,result.path("totalElements").asInt());assertEquals(2,result.path("totalPages").asInt());
+        assertEquals(1,result.path("items").size());assertEquals(1,result.path("items").get(0).path("availableRooms").asInt());
+        assertEquals(3500,result.path("items").get(0).path("electricityPrice").asInt());
+        assertEquals(2,result.path("items").get(0).path("amenities").size());
+        assertEquals(0,list("&amenities=refrigerator").path("totalElements").asInt());
+        assertEquals(400,get(listUrl("&amenities=unknown"),null).statusCode());
+        assertEquals(400,get(listUrl("&availableOnly=invalid"),null).statusCode());
+    }
+
+    @Test void searchSortsByActualAreaAndPublicRatings() throws Exception {
+        var small=type(property("ACTIVE",RegistrationStatus.APPROVED),2200000);
+        var large=type(property("ACTIVE",RegistrationStatus.APPROVED),2500000);large.setAreaSqm(40F);types.save(large);
+        var reviewer=users.save(User.builder().email(prefix+"-sort@test.local").passwordHash("unused").role(UserRole.USER).status(UserStatus.ACTIVE).build());
+        feedbacks.save(Feedback.builder().property(small.getProperty()).user(reviewer).rating(5).content("Actual rating").build());
+        feedbacks.save(Feedback.builder().property(large.getProperty()).user(reviewer).rating(3).content("Actual rating").build());
+        assertEquals(large.getRoomTypeId().intValue(),list("&sort=area-desc").path("items").get(0).path("roomTypeId").asInt());
+        var ranked=list("&sort=rating-desc&size=1");assertEquals(2,ranked.path("totalElements").asInt());
+        assertEquals(small.getRoomTypeId().intValue(),ranked.path("items").get(0).path("roomTypeId").asInt());
+        assertEquals(large.getRoomTypeId().intValue(),list("&sort=rating-desc&size=1&page=1").path("items").get(0).path("roomTypeId").asInt());
+    }
+
+    @Test void detailSeparatesPropertyPhotosAndListsOnlyPublicRoomTypesOfThisProperty() throws Exception {
+        var property = property("ACTIVE", RegistrationStatus.APPROVED);
+        var registration = registrations.findById(property.getRegistration().getRegistrationId()).orElseThrow();
+        registration.setRegistrationDetails("{\"termsAccepted\":true}"); registrations.save(registration);
+        var first = type(property, 2200000);
+        var second = type(property, 2800000); room(second,"201","VACANT");
+        type(property, 0);
+        var other = type(property("ACTIVE", RegistrationStatus.APPROVED), 1800000);
+        var photo = documents.save(PropertyDocument.builder().registration(registration).documentType("PHOTO_0")
+                .fileName("building.png").contentType("image/png").fileContent(new byte[]{1,2,3}).build());
+        documents.save(PropertyDocument.builder().registration(registration).documentType("OWNERSHIP")
+                .fileName("private.png").contentType("image/png").fileContent(new byte[]{1,2,3}).build());
+        documents.save(PropertyDocument.builder().registration(registration).documentType("PHOTO_1")
+                .archivedAt(java.time.LocalDateTime.now()).contentType("image/png").fileContent(new byte[]{1}).build());
+        var image = images.save(RoomTypeImage.builder().roomType(first).imageUrl("")
+                .contentType("image/png").fileContent(new byte[]{1,2,3}).build());
+        var response = get(detailUrl(first) + "/details", null);
+        assertEquals(200,response.statusCode(),response.body());
+        var data=json.readTree(response.body()).path("data");
+        assertEquals(1,data.path("propertyGallery").size());
+        var photoUrl="/api/public/properties/photos/"+photo.getDocumentId();
+        assertEquals(photoUrl,data.path("propertyGallery").get(0).path("url").asString());
+        assertEquals(200,get(photoUrl,null).statusCode());
+        assertTrue(data.path("gallery").get(0).path("url").asString().endsWith("/images/"+image.getImageId()));
+        assertEquals(2,data.path("roomTypes").size());
+        assertEquals(first.getRoomTypeId().intValue(),data.path("roomTypes").get(0).path("roomTypeId").asInt());
+        assertEquals(1,data.path("roomTypes").get(1).path("availableRooms").asInt());
+        for(var choice:data.path("roomTypes")){
+            assertEquals(property.getPropertyId().intValue(),choice.path("propertyId").asInt());
+            assertNotEquals(other.getRoomTypeId().intValue(),choice.path("roomTypeId").asInt());
+        }
+        assertFalse(response.body().contains("private.png"));
     }
 
     @Test void fullDetailUsesActualFeesGalleryReviewsAndPublicRelatedRooms() throws Exception {

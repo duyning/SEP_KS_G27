@@ -29,8 +29,21 @@ Bo loc tuy chon: `q` (toi da 200 ky tu), `location` (`all`, `tan-xa`, `thach-hoa
 `price` (`all`, `under-15`, `15-25`, `25-35`, `above-35`), `type` (`all`, `khep-kin`, `gac-lung`, `chung-cu-mini`).
 Loc khu vuc va loai phong dua tren dia chi/ten loai phong dang luu; schema chua co ma phan loai chuan hoa.
 Khoang gia 1.5-2.5 trieu bao gom hai dau; khoang tiep theo la tren 2.5 den 3.5 trieu de khong trung bien.
-`sort`: `newest` (mac dinh), `price-asc`, `price-desc`. Gia trung nhau duoc sap tiep theo room type ID,
+`sort`: `newest` (mac dinh), `price-asc`, `price-desc`, `area-desc`, `rating-desc`. Gia trung nhau duoc sap tiep theo room type ID,
 giu phan trang on dinh. URL cu `recommended` duoc hieu la `newest`, khong gia lap diem de xuat/danh gia.
+
+`amenities` la danh sach ma cach nhau bang dau phay: `airConditioner`, `waterHeater`,
+`washingMachine`, `balcony`, `elevator`, `refrigerator`, `fingerprint`, `camera`,
+`flexibleHours`, `fireSafety`, `separateOwner`, `kitchen`. Tat ca tieu chi duoc ket hop AND;
+may giat chap nhan may rieng trong loai phong hoac `laundry` trong ho so nha tro.
+Tien ich chung duoc doc tu truong amenities cua ho so cong khai, khong tim tu khoa trong mo ta.
+`availableOnly=true` chi lay loai phong co phong VACANT. Cac bo loc duoc ap dung truoc khi dem va phan trang.
+Sap xep rating dung diem trung binh thuc cua Feedback 1-5 tu tai khoan ACTIVE; nha chua co danh gia xep sau.
+
+Trang React `/search` dung bo cuc va CSS scoped tu `Code/giao_dien/html/search.html`
+va `css/search.css`, cung header/footer prototype. URL giu bo loc, trang va sap xep khi reload/Back;
+tham so cu `keyword` van duoc doc. Bo loc nang cao va mobile chi ap dung sau khi bam Ap dung.
+Nut gan FPT <1km tam khoa vi chua co khoang cach that; khong dung khoang cach minh hoa de loc DB.
 
 Response van theo envelope `ApiResponse`: `data.items`, `page`, `size`, `totalElements`, `totalPages`.
 Moi item dung chung `AccommodationSummary`:
@@ -44,6 +57,8 @@ Moi item dung chung `AccommodationSummary`:
 | price, areaSqm | Gia thang (VND), dien tich m2 |
 | verificationStatus | APPROVED |
 | availableRooms | So phong VACANT cua loai phong |
+| capacity, amenities | Suc chua va tien nghi da luu cua loai phong |
+| electricityPrice, waterPrice | Gia dien va nuoc da luu; thieu du lieu giu null |
 
 `GET /api/properties/{propertyId}/room-types/{roomTypeId}` tra cung DTO cho link thong tin tu danh sach,
 tranh hien thi nham du lieu prototype co cung ID. Day la thong tin tom tat, chua gom dat lich/danh gia/yeu thich.

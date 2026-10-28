@@ -1,0 +1,42 @@
+/* Only React, accessibility and narrow-screen fixes; layout comes from search.css. */
+.prototype-search {min-width:0;overflow-wrap:anywhere;background:#fff;--search-action:#0f766e}
+.prototype-search main {display:block;min-width:0}
+.prototype-search .search-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.prototype-search #searchControlsForm {display:block;margin:0;padding:0;border:0;background:none;box-shadow:none}
+.prototype-search .search-main-inputs-row>* {min-width:0}
+.prototype-search .search-breadcrumb-note {font-size:12.5px;color:var(--slate-500)}
+.prototype-search .search-quick-label {font-size:12.5px;font-weight:700;color:var(--slate-600);margin-right:4px}
+.prototype-search #btnOpenMobileFilter {display:none}
+.prototype-search .advanced-filter-panel[hidden] {display:none}
+.prototype-search .adv-filter-grid fieldset {border:0;padding:0;margin:0;min-width:0}
+.prototype-search .search-amenity-fieldset {grid-column:1 / -1}
+.prototype-search .btn-search-trigger,.prototype-search .btn-apply-filters,.prototype-search .btn-drawer-apply,.prototype-search .page-btn.active {background:var(--search-action);color:#fff}
+.prototype-search button:disabled {cursor:not-allowed;opacity:.55}
+.prototype-search .filter-pill-btn:disabled {background:var(--slate-50);color:var(--slate-500);border-color:var(--slate-200)}
+.prototype-search .results-count-title {flex-wrap:wrap}
+.prototype-search .results-count-title strong {color:var(--search-action)}
+.prototype-search .room-thumb-link {display:block;width:100%;height:100%}
+.prototype-search .room-thumb-wrap .detail-photo-placeholder {display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;height:100%;width:100%;background:var(--slate-200);color:var(--slate-600);font-size:12px}
+.prototype-search .room-title a {color:inherit;text-decoration:none}
+.prototype-search .room-actions a {display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.prototype-search .room-price-row {flex-wrap:wrap;gap:8px}
+.prototype-search .btn-card-contact {background:var(--search-action)}
+.prototype-search .room-price-row .price-main {color:var(--search-action)}
+.prototype-search #resultsArea {scroll-margin-top:110px}
+.prototype-search a:focus-visible,.prototype-search button:focus-visible,.prototype-search select:focus-visible,.prototype-search input:focus-visible {outline:3px solid var(--search-action);outline-offset:3px}
+.prototype-search .search-filter-modal {width:min(600px,100%);padding:0;border-radius:20px 20px 0 0;max-height:90dvh;margin:auto auto 0}
+.prototype-search .search-filter-modal .drawer-body {max-height:65dvh}
+.prototype-search .search-filter-modal .drawer-footer {position:sticky;bottom:0}
+.prototype-search .search-filter-modal .search-sr-only {position:static;width:auto;height:auto;margin:0 0 8px;clip:auto;white-space:normal;display:block;font-weight:700}
+@media(max-width:768px){
+ .prototype-search #btnToggleAdv,.prototype-search #advFilterPanel {display:none}
+ .prototype-search #btnOpenMobileFilter {display:inline-flex;align-self:flex-start;min-height:44px}
+ .prototype-search .quick-filter-pills {min-width:0;max-width:100%}
+ .prototype-search .quick-filter-pills>* {flex:0 0 auto;white-space:nowrap}
+ .prototype-search .results-header-actions {width:100%;justify-content:space-between}
+ .prototype-search .sort-controls-group {flex-wrap:wrap;min-width:0}
+ .prototype-search .sort-select {max-width:100%}
+ .prototype-search .search-filter-modal .amenities-checkbox-grid {grid-template-columns:1fr}
+ .prototype-search .page-btn {min-width:40px;min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){.prototype-search * {animation:none!important;scroll-behavior:auto!important;transition:none!important}}

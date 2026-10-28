@@ -1,7 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {filterPublicProperties,normalizeLocation,fetchPublicProperties} from '../src/services/public-properties.js';
+import {filterPublicProperties,normalizeLocation,fetchPublicProperties,homeRoomType,homeDetailUrl} from '../src/services/public-properties.js';
 const rows=[{propertyId:1,commune:'Tân Xã',propertyType:'Chung cư mini',minPrice:2200000,amenities:['wifi'],roomTypes:[{amenities:['airConditioner']}]},{propertyId:2,address:'Bình Yên',minPrice:null,amenities:[],roomTypes:[]}];
+
+test('Home detail links use a real available room type with matching card pricing',()=>{
+ const property={propertyId:9,roomTypes:[{roomTypeId:2,price:1000000,area:20,vacantRooms:0},{roomTypeId:8,price:3000000,area:25,vacantRooms:1},{roomTypeId:7,price:2500000,area:22,vacantRooms:2}]};
+ assert.equal(homeRoomType(property).roomTypeId,7);
+ assert.equal(homeRoomType(property).price,2500000);
+ assert.equal(homeDetailUrl(property),'/properties/detail?propertyId=9&roomTypeId=7');
+ assert.equal(homeDetailUrl(property,true),'/properties/detail?propertyId=9&roomTypeId=7#host-contact');
+ assert.equal(property.roomTypes[0].roomTypeId,2,'Never reorder API data in place');
+});
+test('Home can show sold-out types but never invents a link for an incomplete property',()=>{
+ assert.equal(homeDetailUrl({propertyId:3,roomTypes:[]}),null);
+ assert.equal(homeDetailUrl({propertyId:3,roomTypes:[{roomTypeId:2,price:0,area:25}]}),null);
+ assert.equal(homeDetailUrl({propertyId:3,roomTypes:[{roomTypeId:2,price:2000000,area:25,vacantRooms:0}]}),'/properties/detail?propertyId=3&roomTypeId=2');
+ assert.equal(homeDetailUrl({propertyId:'<script>',roomTypes:[{roomTypeId:2,price:2000000,area:25}]}),null);
+});
 test('Public listing filters use actual location, price and room amenities',()=>{
  assert.equal(normalizeLocation('Đường Tân Xã'),'duong tan xa');
  assert.deepEqual(filterPublicProperties(rows,{area:'tan-xa',price:'15-25',amenity:'airConditioner',type:'Chung cư mini'}),[rows[0]]);
