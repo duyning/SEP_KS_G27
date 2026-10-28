@@ -4,6 +4,10 @@ import org.springframework.data.jpa.repository.*;
 import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room,Integer> {
+    interface VacancyCount { Integer getRoomTypeId(); Long getAvailableRooms(); }
+    @Query("select r.roomType.roomTypeId as roomTypeId, count(r) as availableRooms from Room r " +
+            "where r.roomType.roomTypeId in :ids and r.property = r.roomType.property and r.status = 'VACANT' group by r.roomType.roomTypeId")
+    List<VacancyCount> countPublicVacancies(@org.springframework.data.repository.query.Param("ids") List<Integer> ids);
     @EntityGraph(attributePaths={"property","roomType"})
     List<Room> findByProperty_Owner_UserIdOrderByRoomNumberAsc(Integer ownerId);
     @EntityGraph(attributePaths={"roomType"})

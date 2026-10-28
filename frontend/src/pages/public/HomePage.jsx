@@ -13,8 +13,9 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import { MOCK_ROOMS } from '../../fixtures/mockRooms.js';
-import DemoNoticeBanner from '../../components/common/DemoNoticeBanner.jsx';
+import AccommodationResults from '../../components/AccommodationResults.jsx';
+import useAccommodations from '../../hooks/useAccommodations.js';
+
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function HomePage() {
     navigate(`/search?${query.toString()}`);
   };
 
-  const featuredRooms = MOCK_ROOMS.filter((r) => r.featured).slice(0, 6);
+  const accommodations = useAccommodations('page=0&size=6&sort=newest');
 
   return (
     <div className="home-page-root">
@@ -154,9 +155,9 @@ export default function HomePage() {
                     style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', fontWeight: 600, color: '#0f172a', background: 'transparent' }}
                   >
                     <option value="all">Tất cả loại phòng</option>
-                    <option value="khep-kin">Khép kín có ban công</option>
+                    <option value="khep-kin">Khép kín</option>
                     <option value="gac-lung">Có gác lửng / xép</option>
-                    <option value="chung-cu-mini">Chung cư mini cao cấp</option>
+                    <option value="chung-cu-mini">Chung cư mini</option>
                   </select>
                 </div>
               </div>
@@ -198,8 +199,8 @@ export default function HomePage() {
             <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Xác minh chính chủ</div>
           </div>
           <div>
-            <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a' }}>1.200+</div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Phòng trọ quanh ĐH FPT</div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a' }}>{accommodations.data?.totalElements ?? '—'}</div>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Loại phòng đang công khai</div>
           </div>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#2563eb' }}>0 đồng</div>
@@ -212,147 +213,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. FEATURED ROOMS SECTION */}
-      <section style={{ padding: '60px 16px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              PHÒNG TRỌ XÁC THỰC
-            </span>
-            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: '4px 0 0' }}>
-              Phòng nổi bật còn trống tại Hòa Lạc
-            </h2>
-          </div>
-          <Link
-            to="/search"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '14px',
-              fontWeight: 700,
-              color: '#0d9488',
-              textDecoration: 'none',
-            }}
-          >
-            <span>Xem tất cả phòng trống</span>
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-
-        <DemoNoticeBanner message="Dữ liệu phòng hiển thị từ prototype fixture do backend chưa có API danh sách phòng công khai." />
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '24px',
-        }}>
-          {featuredRooms.map((room) => (
-            <article
-              key={room.id}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              <div style={{ position: 'relative', height: '210px', overflow: 'hidden' }}>
-                <img
-                  src={room.image}
-                  alt={room.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  backgroundColor: '#0d9488',
-                  color: '#ffffff',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}>
-                  <ShieldCheck size={14} />
-                  <span>Chính chủ xác thực</span>
-                </span>
-                <span style={{
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '12px',
-                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                  color: '#ffffff',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                }}>
-                  {room.availability}
-                </span>
-              </div>
-
-              <div style={{ padding: '18px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b', marginBottom: '6px' }}>
-                    <MapPin size={14} />
-                    <span>{room.campusDistance}</span>
-                    <span>•</span>
-                    <span>{room.area}</span>
-                  </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.4 }}>
-                    <Link to={`/properties/detail?id=${room.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                      {room.title}
-                    </Link>
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
-                    {room.location}
-                  </p>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingTop: '12px',
-                  borderTop: '1px solid #f1f5f9',
-                }}>
-                  <div>
-                    <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block' }}>Giá thuê niêm yết</span>
-                    <strong style={{ fontSize: '18px', fontWeight: 800, color: '#0d9488' }}>
-                      {room.priceDisplay}
-                    </strong>
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>/tháng</span>
-                  </div>
-                  <Link
-                    to={`/properties/detail?id=${room.id}`}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      backgroundColor: '#f0fdfa',
-                      color: '#0d9488',
-                      border: '1px solid #99f6e4',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    Xem phòng
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+      <section style={{ padding: '48px 16px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="acc-home-heading"><div><h2>Nhà trọ &amp; loại phòng mới nhất</h2><p>Các nhà trọ đã được xác minh và đang công khai.</p></div><Link className="acc-link" to="/search">Xem tất cả <ArrowRight size={16} /></Link></div>
+        <AccommodationResults {...accommodations} />
       </section>
-
       {/* 4. SERVICES SHORTCUT */}
       <section style={{ backgroundColor: '#f8fafc', padding: '60px 16px', borderTop: '1px solid #e2e8f0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>

@@ -345,8 +345,8 @@ export default function PortalLayout({ screen, children }) {
         )}
       </aside>
 
-      <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''}`}>
-        {portal !== 'host' && (
+      <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''} ${screen.path === '/properties/detail' ? 'detail-public-content' : ''}`}>
+        {portal !== 'host' && screen.path !== '/properties/detail' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
             <Link to="/">HL_RCS</Link>
             <ChevronRight size={13} />
