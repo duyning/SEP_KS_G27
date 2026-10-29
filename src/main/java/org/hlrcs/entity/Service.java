@@ -39,6 +39,15 @@ public class Service {
     @Column(name = "contact_info")
     private String contactInfo;
 
+    @Column(name = "contact_email")
+    private String contactEmail;
+
+    @Column(name = "pricing_type", length = 20)
+    private String pricingType;
+
+    @Column(name = "service_area", length = 500)
+    private String serviceArea;
+
     @Column(name = "price", precision = 12, scale = 2)
     private BigDecimal price;
 

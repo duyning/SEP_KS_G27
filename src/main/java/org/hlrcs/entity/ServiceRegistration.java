@@ -36,6 +36,18 @@ public class ServiceRegistration {
     @Column(name = "contact_info")
     private String contactInfo;
 
+    @Column(name = "applicant_name", length = 100)
+    private String applicantName;
+
+    @Column(name = "contact_email")
+    private String contactEmail;
+
+    @Column(name = "pricing_type", length = 20)
+    private String pricingType;
+
+    @Column(name = "service_area", length = 500)
+    private String serviceArea;
+
     @Column(name = "price", precision = 12, scale = 2)
     private BigDecimal price;
 
@@ -49,6 +61,19 @@ public class ServiceRegistration {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")
     private User reviewer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_staff_id")
+    private User assignedStaff;
+
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
+    @Column(name = "capability_decision", length = 20)
+    private String capabilityDecision;
+
+    @Column(name = "listing_decision", length = 20)
+    private String listingDecision;
 
     @Column(name = "reason_note", columnDefinition = "TEXT")
     private String reasonNote;

@@ -5,10 +5,12 @@ import { canAccess, landingFor, legacyTarget, screens } from '../src/routing/scr
 
 test('every source page has one explicit React migration target', () => {
   const inventory = JSON.parse(fs.readFileSync(new URL('../migration/inventory.json', import.meta.url)));
-  assert.equal(screens.length, 32);
-  assert.deepEqual(screens.map(item => `html/${item.source}`).sort(), inventory.html.map(item => item.file).sort());
+  const migrated = screens.filter(item => item.source);
+  assert.equal(migrated.length, 32);
+  assert.deepEqual(migrated.map(item => `html/${item.source}`).sort(), inventory.html.map(item => item.file).sort());
   assert.equal(new Set(screens.map(item => item.path)).size, screens.length);
-  for (const item of screens) assert.equal(legacyTarget(item.source), item.path);
+  for (const item of migrated) assert.equal(legacyTarget(item.source), item.path);
+  assert.equal(screens.find(item => item.path === '/staff/service-applications').portal, 'staff');
 });
 test('role guards match backend host/staff/admin permissions', () => {
   for (const role of ['USER', 'ROOM_HOST', 'STAFF', 'ADMIN']) {
@@ -36,7 +38,8 @@ test('actor landing routes and unsupported modules are explicit', () => {
   assert.equal(landingFor({ role: 'ROOM_HOST' }), '/host');
   assert.equal(landingFor({ role: 'STAFF' }), '/staff');
   assert.equal(landingFor({ role: 'ADMIN' }), '/admin');
-  for (const item of screens.filter(item => !['auth', 'redirect', 'profile'].includes(item.kind))) assert.equal(item.integration, 'blocked');
+  for (const item of screens.filter(item => item.source && !['auth', 'redirect', 'profile'].includes(item.kind))) assert.equal(item.integration, 'blocked');
+  assert.equal(screens.find(item => item.path === '/staff/service-applications').integration, 'connected');
 });
 test('active source contains no prototype storage identities or unsafe HTML', () => {
   const root = new URL('../src/', import.meta.url);
