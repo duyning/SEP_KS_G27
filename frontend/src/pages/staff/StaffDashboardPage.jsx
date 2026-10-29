@@ -4,7 +4,7 @@ import { ArrowRight, Building2, MessageSquare, RefreshCw, ShieldAlert, Star } fr
 import { useAuth } from '../../context/AuthContext.jsx';
 import { StaffLoadState, StaffMetric, staffDate, useStaffLoad } from '../../components/StaffUI.jsx';
 
-const types = { PROPERTY: 'Nhà trọ', REPORT: 'Báo cáo', COMMUNITY: 'Cộng đồng', SUPPORT: 'Hỗ trợ' };
+const types = { PROPERTY: 'Nhà trọ', SERVICE: 'Hồ sơ dịch vụ', REPORT: 'Báo cáo', COMMUNITY: 'Cộng đồng', SUPPORT: 'Hỗ trợ' };
 export default function StaffDashboardPage() {
   const { user } = useAuth();
   const state = useStaffLoad('dashboard');

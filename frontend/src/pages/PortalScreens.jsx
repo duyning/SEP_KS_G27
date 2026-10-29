@@ -25,6 +25,7 @@ import HostNotificationsPage from './host/HostNotificationsPage.jsx';
 
 // Staff Pages
 import StaffDashboardPage from './staff/StaffDashboardPage.jsx';
+import StaffServiceApplicationsPage from './staff/StaffServiceApplicationsPage.jsx';
 import StaffPropertyVerificationsPage from './staff/StaffPropertyVerificationsPage.jsx';
 import StaffPropertyVerificationDetailPage from './staff/StaffPropertyVerificationDetailPage.jsx';
 import StaffCommunityModerationPage from './staff/StaffCommunityModerationPage.jsx';
@@ -82,6 +83,8 @@ export default function PortalScreens({ screen }) {
     // Staff Routes
     case '/staff':
       return <StaffDashboardPage />;
+    case '/staff/service-applications':
+      return <StaffServiceApplicationsPage />;
     case '/staff/verifications':
       return <StaffPropertyVerificationsPage />;
     case '/staff/verifications/detail':

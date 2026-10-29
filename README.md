@@ -141,6 +141,73 @@ File `config/mysql-local.properties` la tuy chon va chi dung tren may; khong com
 User MySQL can quyen truy cap va cap nhat cac bang trong database hlrcs.
 Ket noi thanh cong hay khong phu thuoc thong tin tai khoan MySQL tren may.
 
+## Đăng ký cung cấp dịch vụ
+
+Khởi động MySQL (database `hlrcs`), chạy backend bằng `./mvnw.cmd spring-boot:run`.
+Trong thư mục `frontend`, chạy `npm install` (lần đầu) và `npm run dev`.
+Đăng nhập bằng tài khoản người dùng, mở `/services` và chọn **Đăng ký cung cấp dịch vụ**.
+Nhập người đăng ký, danh mục, thông tin dịch vụ đầu tiên, loại giá/số tiền, khu vực,
+liên hệ và từ 1–5 tài liệu PDF/JPG/PNG/WEBP (tối đa 10 MB/tệp).
+
+Hồ sơ và tệp được lưu trong database với trạng thái `PENDING`; chưa tạo dịch vụ công khai
+và chưa cấp capability `MANAGE_SERVICE`. Mở lại form để xem trạng thái, phản hồi và tải
+tài liệu của chính mình. Hồ sơ đang chờ duyệt/cần bổ sung/đã duyệt hoặc tài khoản đã
+có capability dịch vụ không được gửi hồ sơ onboarding mới. Hồ sơ bị từ chối được đăng ký lại.
+Danh mục mặc định được tạo khi backend khởi động; Hibernate `ddl-auto=update` thêm các cột mới.
+Danh sách `/services` và `/services/detail?id=...` đọc dữ liệu thực tế đã được duyệt.
+
+API yêu cầu JWT, không yêu cầu sẵn capability cung cấp dịch vụ:
+
+- `GET /api/service-registrations/categories`: danh mục thực tế.
+- `GET /api/service-registrations/current`: khả năng đăng ký và hồ sơ mới nhất của người đăng nhập.
+- `POST /api/service-registrations`: multipart gồm `details` (JSON) và `documents` (tệp lặp lại); trả HTTP 201.
+- `GET /api/service-registrations/documents/{id}`: tải tài liệu, chỉ người nộp hồ sơ được truy cập.
+
+`details` gồm `applicantName`, `categoryId`, `serviceName`, `description`, `pricingType`
+(`FIXED`, `FROM`, `NEGOTIABLE`), `price`, `serviceArea`, `contactPhone`, `contactEmail`.
+Giá `FIXED`/`FROM` phải lớn hơn 0; `NEGOTIABLE` phải gửi `price: null`.
+Danh tính người nộp được lấy từ JWT. Các yêu cầu gửi đồng thời được khóa theo người nộp
+để tránh hồ sơ trùng; tệp không hợp lệ làm rollback toàn bộ hồ sơ.
+
+Kiểm thử riêng: `./mvnw.cmd -Dtest=ServiceRegistrationTests test` và trong `frontend`, `npm test`.
+
+### Xét duyệt và công khai dịch vụ
+
+1. Đăng nhập Staff hoặc Admin, mở **Hồ sơ dịch vụ** tại `/staff/service-applications`.
+2. Mọi Staff và Admin được xem danh sách, chi tiết, tài liệu và duyệt hồ sơ chờ xử lý, không cần phân công.
+3. Xem thông tin, tải tài liệu và chọn riêng quyết định capability / nội dung. Nhập lý do 10–2000 ký tự cho mọi kết quả.
+4. Lưu quyết định. Thời gian, người xử lý, hai quyết định, lý do và nhật ký được lưu cùng giao dịch.
+
+`APPROVE/APPROVE` cấp hoặc kích hoạt `MANAGE_SERVICE`, tạo một dịch vụ `ACTIVE` và công khai.
+`APPROVE/REJECT` cấp capability, không công khai dịch vụ đầu tiên.
+`REJECT/REJECT` từ chối hồ sơ, không cấp quyền và không tạo dịch vụ.
+`REJECT/APPROVE` không hợp lệ. Hồ sơ đã xử lý không được duyệt lại.
+Admin kế thừa đầy đủ quyền xét duyệt dịch vụ của Staff; người nộp không được tự duyệt hồ sơ của mình.
+Service Owner là capability `MANAGE_SERVICE` ở bảng `user_capabilities`, không phải role mới.
+Các role USER/ROOM_HOST/STAFF/ADMIN được giữ nguyên khi cấp quyền và không tự có quyền cung cấp dịch vụ chỉ từ role.
+Khóa hồ sơ và tài khoản người đăng ký tránh cấp quyền/tạo dịch vụ trùng khi duyệt đồng thời.
+Người nộp mở lại form đăng ký hoặc bấm **Cập nhật kết quả hồ sơ** để xem quyết định, lý do, thời gian,
+`providerId`, `serviceId`, `capabilityActive`, `serviceState` và `publicEligible`.
+`providerId` là ID tài khoản người cung cấp; `serviceId` là ID dịch vụ được tạo sau khi cả hai quyết định được duyệt.
+API công khai tiếp tục kiểm tra capability hoạt động,
+tài khoản hoạt động và cả hai quyết định duyệt trước khi trả nội dung; không trả tài liệu xác minh.
+
+Các API xét duyệt (JWT STAFF hoặc ADMIN):
+
+- `GET /api/staff/service-applications`: Staff và Admin xem tất cả hồ sơ dịch vụ.
+- `GET /api/staff/service-applications/{id}`: hồ sơ, tài liệu và lịch sử.
+- `POST /api/staff/service-applications/{id}/review`: JSON `{ "capabilityDecision": "APPROVE", "listingDecision": "APPROVE", "reason": "Thông tin đã được xác minh đầy đủ." }`.
+- `GET /api/staff/service-applications/{id}/files/{fileId}`: tài liệu của hồ sơ có quyền truy cập.
+- `GET /api/services/categories`: danh mục từ database, gồm cả danh mục chưa có dịch vụ công khai.
+- `GET /api/services?categoryId=123`: lọc danh mục tại database; bỏ `categoryId` để lấy tất cả.
+- `GET /api/services/{id}`: chi tiết công khai và liên hệ, không cần đăng nhập.
+
+Danh sách và chi tiết trả `pricingLabel` (giá cố định / giá từ / thỏa thuận), `providerId`, `activeState`,
+`publicEligible`, điện thoại và email liên hệ. Giao diện dùng liên kết gọi điện/gửi email thực tế,
+không giả lập đặt dịch vụ. Dịch vụ, người cung cấp hoặc capability ngừng hoạt động sẽ không còn xuất hiện
+trên cả danh sách lẫn đường dẫn chi tiết trực tiếp. Các cột phân công cũ được giữ lại để bảo toàn dữ liệu,
+không còn dùng để chặn quyền xem hay duyệt hồ sơ dịch vụ.
+
 ## Build va kiem thu
 
 Tu thu muc chua pom.xml:

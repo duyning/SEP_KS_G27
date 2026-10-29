@@ -28,6 +28,7 @@ public class StaffService {
     private final SupportRequestRepository support;
     private final PostRepository posts;
     private final ObjectMapper json;
+    private final ServiceRegistrationRepository serviceApplications;
 
     private PropertyRegistrationRequest submission(PropertyRegistration registration) {
         if (registration.getRegistrationDetails() == null) return null;
@@ -108,6 +109,11 @@ public class StaffService {
         var supportRows = support.findAllByOrderByCreatedAtAsc();
         var postRows = posts.findAllByOrderByCreatedAtAsc();
         var queue = new ArrayList<QueueItem>();
+        var serviceRows = serviceApplications.findAllByOrderByRegistrationIdDesc();
+        for (var row : serviceRows) if (row.getStatus() == RegistrationStatus.PENDING) {
+            queue.add(new QueueItem("SERVICE-" + row.getRegistrationId(), "SERVICE", row.getServiceName(), row.getApplicantName(),
+                    row.getDescription(), "PENDING", row.getCreatedAt(), "/staff/service-applications?id=" + row.getRegistrationId()));
+        }
         for (var row : verification) if (row.getStatus() == RegistrationStatus.PENDING) {
             var details = submission(row);
             queue.add(new QueueItem("PROPERTY-" + row.getRegistrationId(), "PROPERTY", row.getName(), row.getUser().getFullName(), details == null ? row.getAddress() : details.description(), "PENDING", row.getCreatedAt(), "/staff/verifications/detail?id=" + row.getRegistrationId()));

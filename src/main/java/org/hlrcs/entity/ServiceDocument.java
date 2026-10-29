@@ -29,4 +29,11 @@ public class ServiceDocument {
 
     @Column(name = "verification_status")
     private String verificationStatus;
+
+    @Column(name = "content_type", length = 100)
+    private String contentType;
+
+    @Lob
+    @Column(name = "file_content", columnDefinition = "LONGBLOB")
+    private byte[] fileContent;
 }
