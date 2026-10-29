@@ -14,11 +14,11 @@ export const serviceRegistrationApi = {
       throw new ApiError('Không thể xác minh trạng thái hồ sơ. Vui lòng thử lại.', 502);
     return data;
   },
-  submit: async (details, documents) => {
+  submit: async (details, documents, signal) => {
     const body = new FormData();
     body.append('details', new Blob([JSON.stringify(details)], { type: 'application/json' }));
     documents.forEach(file => body.append('documents', file));
-    const data = await request('', { basePath, method: 'POST', body });
+    const data = await request('', { basePath, method: 'POST', body, signal });
     if (!validRegistration(data) || data.status !== 'PENDING' || !data.documents.length)
       throw new ApiError('Chưa xác nhận được hồ sơ đã lưu. Vui lòng đóng và mở lại để kiểm tra trạng thái trước khi gửi lại.', 502);
     return data;
@@ -26,18 +26,23 @@ export const serviceRegistrationApi = {
   document: id => request(`/documents/${id}`, { basePath, responseType: 'blob' }),
 };
 
-export function validateServiceRegistration(form, files) {
-  if (form.applicantName.trim().length < 2 || form.serviceName.trim().length < 3 || form.description.trim().length < 20 || form.serviceArea.trim().length < 2)
-    return 'Nhập tên người đăng ký, tên dịch vụ (ít nhất 3 ký tự), mô tả (ít nhất 20 ký tự) và khu vực phục vụ.';
-  if (!Number.isInteger(Number(form.categoryId)) || Number(form.categoryId) < 1) return 'Vui lòng chọn danh mục dịch vụ.';
-  if (!isVietnamesePhone(form.contactPhone)) return 'Số điện thoại Việt Nam không hợp lệ.';
-  if (!['FIXED', 'FROM', 'NEGOTIABLE'].includes(form.pricingType)) return 'Loại giá không hợp lệ.';
+export function validateServiceRegistrationFields(form, files) {
+  const errors = {};
+  for (const [key,label,min,max] of [['serviceName','Tên dịch vụ',3,255],['description','Mô tả dịch vụ',20,5000],['serviceArea','Khu vực phục vụ',2,500],['applicantName','Họ tên người đăng ký',2,100]]) {
+    const size = String(form[key] || '').trim().length;
+    if (size < min || size > max) errors[key] = `${label} cần từ ${min} đến ${max} ký tự.`;
+  }
+  if (!Number.isInteger(Number(form.categoryId)) || Number(form.categoryId) < 1) errors.categoryId = 'Vui lòng chọn danh mục dịch vụ.';
+  if (!isVietnamesePhone(form.contactPhone)) errors.contactPhone = 'Số điện thoại Việt Nam không hợp lệ.';
+  if (form.contactEmail && (form.contactEmail.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail))) errors.contactEmail = 'Nhập địa chỉ email hợp lệ hoặc để trống.';
+  if (!['FIXED', 'FROM', 'NEGOTIABLE'].includes(form.pricingType)) errors.pricingType = 'Loại giá không hợp lệ.';
   if (form.pricingType !== 'NEGOTIABLE' && (!/^\d+(\.\d{1,2})?$/.test(String(form.price)) || Number(form.price) <= 0 || Number(form.price) > 9999999999.99))
-    return 'Giá dịch vụ phải lớn hơn 0, tối đa 9.999.999.999,99 VNĐ và có tối đa 2 chữ số thập phân.';
-  if (!files.length || files.length > 5) return 'Vui lòng chọn từ 1 đến 5 tài liệu xác minh.';
+    errors.price = 'Nhập giá lớn hơn 0, tối đa 9.999.999.999,99 VNĐ và tối đa 2 chữ số thập phân.';
+  if (!files.length || files.length > 5) errors.documents = 'Vui lòng chọn từ 1 đến 5 tài liệu xác minh.';
   for (const file of files) {
     const error = validateRegistrationFile(file, true);
-    if (error) return `${file.name}: ${error}`;
+    if (error) errors.documents = `${file.name}: ${error}`;
   }
-  return '';
+  return errors;
 }
+export function validateServiceRegistration(form, files) { return Object.values(validateServiceRegistrationFields(form, files))[0] || ''; }

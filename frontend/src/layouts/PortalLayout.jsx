@@ -248,7 +248,7 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
-  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community'].includes(location.pathname)) return children;
+  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
 
   return (
     <div className={`portal-app ${portal}-portal ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>

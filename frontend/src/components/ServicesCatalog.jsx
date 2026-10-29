@@ -1,43 +1,51 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import {useEffect,useState} from 'react';
+import {Link,useSearchParams} from 'react-router-dom';
+import {ArrowRight,ArrowUpRight,Check,ShieldCheck,Search,MapPin,SlidersHorizontal,HandHelping,MessageSquare,ReceiptText,Plus,RotateCcw,LoaderCircle,X,ChevronRight} from 'lucide-react';
+import DetailPrototypeShell from './detail/DetailPrototypeShell.jsx';
 import ServiceRegistrationModal from './ServiceRegistrationModal.jsx';
-import { publicServicesApi as api, servicePrice } from '../services/public-services.js';
-import '../styles/service-applications.css';
+import {MotionButton,AnimatePresence} from './motion/MotionUI.jsx';
+import {ServiceCategoryIcon,ServiceDiscoveryCard,ServiceContact} from './ServiceDiscoveryParts.jsx';
+import {publicServicesApi as api,servicePrice} from '../services/public-services.js';
+import {resolveServiceCategory,discoverServices,serviceInventory,serviceAreas,serviceCategoryKind} from '../services/service-discovery.js';
+import '../styles/home-prototype.css';
+import '../styles/home-prototype-integration.css';
+import '../styles/services-discovery.css';
 
-const categoryAliases = { moving: 'Chuyển phòng trọ', laundry: 'Giặt là sinh viên', cleaning: 'Dọn dẹp & Vệ sinh', repair: 'Sửa chữa điện nước, khóa cổng' };
-
-export default function ServicesCatalog({ detail = false }) {
-  const [params, setParams] = useSearchParams(); const id = params.get('id'); const category = params.get('category') || 'all';
-  const [rows, setRows] = useState([]); const [row, setRow] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true); const [error, setError] = useState('');
-  const [revision, setRevision] = useState(0); const [register, setRegister] = useState(false);
-  useEffect(() => {
-    const controller = new AbortController(); setLoading(true); setError(''); setRow(null); setRows([]);
-    async function load() {
-      if (detail) return api.detail(id, controller.signal);
-      const options = await api.categories(controller.signal);
-      if (controller.signal.aborted) return;
-      setCategories(options);
-      const categoryId = category === 'all' ? null : options.find(option => option.name === categoryAliases[category])?.categoryId || category;
-      return api.list(controller.signal, categoryId);
-    }
-    load().then(data => { if (!controller.signal.aborted) detail ? setRow(data) : setRows(data); })
-      .catch(err => { if (!controller.signal.aborted) setError(err.message); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [detail, id, category, revision]);
-  const selectedCategory = String(categories.find(option => option.name === categoryAliases[category])?.categoryId || category);
-  const content = row => <><h2>{row.serviceName}</h2><p>Đối tác đã xác thực · {row.categoryName}</p><p className="service-text">{row.description}</p><p>Khu vực: {row.serviceArea}</p><p><strong>{servicePrice(row)}</strong></p><p>Nhà cung cấp: {row.providerName} · #{row.providerId}</p><a aria-label={`Gọi ${row.contactPhone}`} href={`tel:${row.contactPhone}`}>{row.contactPhone}</a>{row.contactEmail && <p><a aria-label={`Gửi email tới ${row.contactEmail}`} href={`mailto:${row.contactEmail}`}>{row.contactEmail}</a></p>}</>;
-  return <main className="service-applications">
-    <div className="service-applications-heading"><h1>{detail ? 'Chi tiết dịch vụ' : 'Dịch vụ hỗ trợ quanh khu vực Hòa Lạc'}</h1>{!detail && <button onClick={() => setRegister(true)}>Đăng ký cung cấp dịch vụ / Xem hồ sơ</button>}</div>
-    {detail ? <Link to="/services">← Danh sách dịch vụ</Link> : <p>Tìm và liên hệ các dịch vụ đã được xét duyệt, đang hoạt động tại Hòa Lạc.</p>}
-    {!detail && <label>Lọc danh mục<select value={selectedCategory} onChange={e => setParams(e.target.value === 'all' ? {} : { category: e.target.value })}><option value="all">Tất cả dịch vụ</option>{selectedCategory !== 'all' && !categories.some(option => String(option.categoryId) === selectedCategory) && <option value={selectedCategory}>{categoryAliases[category] || 'Danh mục đã chọn'}</option>}{categories.map(option => <option key={option.categoryId} value={option.categoryId}>{option.name}</option>)}</select></label>}
-    {error && <div role="alert" className="service-error">{error}<button onClick={() => setRevision(v => v + 1)}>Thử lại</button></div>}
-    {loading ? <p role="status">Đang tải dịch vụ...</p> : detail ? row && <section>{content(row)}</section> : !error && <>
-      {!rows.length && <p>Chưa có dịch vụ được công khai trong danh mục này.</p>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,300px),1fr))', gap: 18 }}>{rows.map(row => <section key={row.serviceId}>{content(row)}<p><Link to={`/services/detail?id=${row.serviceId}`}>Bảng giá & Chi tiết →</Link></p></section>)}</div>
-    </>}
-    {register && <ServiceRegistrationModal onClose={() => { setRegister(false); setRevision(value => value + 1); }} />}
-  </main>;
+export default function ServicesCatalog({detail=false}){
+ const [params,setParams]=useSearchParams(),id=params.get('id'),categoryValue=params.get('category')||'all';
+ const key=detail?`detail/${id}`:'catalog';
+ const [state,setState]=useState({key:'',loading:true,error:'',rows:[],categories:[],row:null}),[revision,setRevision]=useState(0),[register,setRegister]=useState(false);
+ useEffect(()=>{const controller=new AbortController();setState({key,loading:true,error:'',rows:[],categories:[],row:null});
+  (detail?api.detail(id,controller.signal):Promise.all([api.categories(controller.signal),api.list(controller.signal)]))
+   .then(data=>{if(!controller.signal.aborted)setState({key,loading:false,error:'',rows:detail?[]:data[1],categories:detail?[]:data[0],row:detail?data:null});})
+   .catch(error=>{if(!controller.signal.aborted)setState({key,loading:false,error:error.message,rows:[],categories:[],row:null});});return()=>controller.abort();
+ },[detail,id,key,revision]);
+ const current=state.key===key?state:{...state,loading:true,error:'',rows:[],categories:[],row:null};
+ const {loading,error,rows,categories,row}=current,category=resolveServiceCategory(categoryValue,categories),q=(params.get('q')||'').slice(0,200),area=serviceAreas.some(([key])=>key===params.get('area'))?params.get('area'):'all',sort=['price-asc','price-desc','name'].includes(params.get('sort'))?params.get('sort'):'recommended';
+ const matched=discoverServices(rows,{category,q,area,sort}),inventory=serviceInventory(rows,categories),known=!loading&&!error;
+ const rawCount=Number(params.get('count')||6),visibleCount=Number.isSafeInteger(rawCount)&&rawCount>=6?rawCount:6;
+ const activeCategory=categories.find(item=>String(item.categoryId)===category),activeFilters=q||category!=='all'||area!=='all';
+ useEffect(()=>{document.title=`${detail?row?.serviceName||'Chi tiết dịch vụ':'Dịch vụ quanh trọ'} | HL_RCS`;},[detail,row?.serviceName]);
+ function change(updates){const next=new URLSearchParams(params);for(const [field,value] of Object.entries(updates)){if(!value||value==='all'||value==='recommended')next.delete(field);else next.set(field,String(value));}if(!('count' in updates))next.delete('count');setParams(next,{replace:Object.keys(updates).length===1&&'q' in updates});}
+ function pickCategory(value){change({category:value});document.getElementById('services-results')?.scrollIntoView({block:'start'});}
+ const retry=()=>setRevision(value=>value+1),openRegistration=()=>setRegister(true);
+ return <DetailPrototypeShell className="prototype-services"><main className="sv-page">
+  <div className="sv-breadcrumb"><div className="container"><nav aria-label="Đường dẫn dịch vụ"><Link to="/">Trang chủ</Link><ChevronRight size={13}/>{detail?<><Link to="/services">Dịch vụ quanh trọ</Link><ChevronRight size={13}/><span>Chi tiết dịch vụ</span></>:<span>Dịch vụ quanh trọ</span>}</nav><span className="sv-breadcrumb-note">Kết nối trực tiếp tại Hòa Lạc</span></div></div>
+  {!detail&&<>
+   <section className="sv-hero"><div className="container sv-hero-grid"><div className="sv-hero-copy"><div className="sv-eyebrow"><span/>ĐỒNG HÀNH CÙNG CUỘC SỐNG THUÊ TRỌ</div><h1>Chuyện quanh trọ,<br/><em>để người có nghề lo.</em></h1><p>Chuyển nhà, giặt là hay một việc sửa chữa nhỏ. Tìm dịch vụ phù hợp quanh Hòa Lạc, xem giá và trao đổi trực tiếp với nhà cung cấp.</p><div className="sv-hero-actions"><a className="sv-button sv-button-primary" href="#services-results">Khám phá dịch vụ<ArrowRight size={17}/></a><MotionButton type="button" className="sv-button sv-button-quiet" onClick={openRegistration}>Đăng ký dịch vụ / Xem hồ sơ<ArrowUpRight size={16}/></MotionButton></div><div className="sv-hero-stats" aria-label="Thống kê dịch vụ công khai"><div><strong>{known?inventory.services:'—'}</strong><span>Dịch vụ đang hoạt động</span></div><div><strong>{known?inventory.providers:'—'}</strong><span>Nhà cung cấp</span></div><div><strong>{known?inventory.categories:'—'}</strong><span>Danh mục dịch vụ</span></div></div></div>
+    <div className="sv-service-board"><div className="sv-board-header"><div><span>HL_RCS · HÒA LẠC</span><h2>Hôm nay, bạn cần gì?</h2></div><span className="sv-board-mark"><HandHelping size={25}/></span></div><div className="sv-board-grid">{loading?<p role="status">Đang tải danh mục...</p>:categories.length?categories.slice(0,4).map(item=><MotionButton type="button" className={`sv-board-tile sv-tone-${serviceCategoryKind(item.name)}`} key={item.categoryId} onClick={()=>pickCategory(item.categoryId)}><span className="sv-board-icon"><ServiceCategoryIcon name={item.name} size={25}/></span><strong>{item.name}</strong><span>{inventory.byCategory[item.categoryId]||0} dịch vụ<ArrowUpRight size={14}/></span></MotionButton>):<div className="sv-board-empty"><HandHelping size={36}/><p>{error?'Danh mục chưa tải được. Vui lòng thử lại bên dưới.':'Danh mục dịch vụ sẽ hiển thị tại đây khi được cập nhật.'}</p></div>}</div><div className="sv-board-footer"><ShieldCheck size={15}/><span>Danh sách chỉ hiển thị dịch vụ đủ điều kiện công khai.</span></div></div>
+   </div></section>
+   <section className="sv-principles container" aria-label="Cách kết nối dịch vụ">{[[ShieldCheck,'Thông tin được xét duyệt','Hồ sơ nhà cung cấp và nội dung dịch vụ được kiểm tra trước khi công khai.'],[ReceiptText,'Xem giá trước khi liên hệ','Phân biệt giá cố định, giá từ và dịch vụ cần trao đổi báo giá.'],[MessageSquare,'Trao đổi trực tiếp','Thống nhất phạm vi công việc, thời gian và chi phí với nhà cung cấp.']].map(([Icon,title,text])=><div key={title}><Icon size={21}/><div><h2>{title}</h2><p>{text}</p></div></div>)}</section>
+   <section className="sv-results-section" id="services-results"><div className="container"><div className="sv-section-heading"><div><span className="sv-eyebrow">DỊCH VỤ QUANH TRỌ</span><h2>Tìm đúng người, cho đúng việc.</h2><p>Các dịch vụ đã được xét duyệt, đang hoạt động tại Hòa Lạc.</p></div><span className="sv-result-count" aria-live="polite">{loading?'Đang tải...':error?'Chưa tải được dữ liệu':`${matched.length} dịch vụ phù hợp`}</span></div>
+    <div className="sv-category-tabs" role="group" aria-label="Danh mục dịch vụ"><MotionButton type="button" className={category==='all'?'is-active':''} aria-pressed={category==='all'} onClick={()=>change({category:'all'})}>Tất cả<span>{known?rows.length:'—'}</span></MotionButton>{categories.map(item=><MotionButton type="button" key={item.categoryId} className={category===String(item.categoryId)?'is-active':''} aria-pressed={category===String(item.categoryId)} onClick={()=>change({category:item.categoryId})}><ServiceCategoryIcon name={item.name} size={16}/>{item.name}<span>{inventory.byCategory[item.categoryId]||0}</span></MotionButton>)}</div>
+    <div className="sv-toolbar"><div className="sv-search"><Search size={18}/><label className="sv-sr-only" htmlFor="svcSearchInput">Tìm kiếm dịch vụ hoặc nhà cung cấp</label><input id="svcSearchInput" type="search" maxLength={200} value={q} onChange={e=>change({q:e.target.value})} placeholder="Bạn cần dịch vụ gì? Tìm theo tên, nhà cung cấp..."/>{q&&<button type="button" aria-label="Xóa tìm kiếm" onClick={()=>change({q:''})}><X size={16}/></button>}</div><label className="sv-select"><span><MapPin size={14}/>Khu vực phục vụ</span><select aria-label="Lọc theo khu vực" value={area} onChange={e=>change({area:e.target.value})}>{serviceAreas.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label className="sv-select"><span><SlidersHorizontal size={14}/>Sắp xếp</span><select aria-label="Sắp xếp danh sách" value={sort} onChange={e=>change({sort:e.target.value})}><option value="recommended">Mới thêm</option><option value="name">Tên dịch vụ A–Z</option><option value="price-asc">Giá thấp đến cao</option><option value="price-desc">Giá cao đến thấp</option></select></label></div>
+    {activeFilters&&<div className="sv-active-filters"><span>Đang lọc:</span>{category!=='all'&&<span>{activeCategory?.name||'Danh mục đã chọn'}</span>}{q&&<span>“{q}”</span>}{area!=='all'&&<span>{serviceAreas.find(([key])=>key===area)?.[1]}</span>}<button type="button" onClick={()=>setParams({})}><RotateCcw size={13}/>Đặt lại bộ lọc</button></div>}
+    {loading?<div className="sv-state" role="status"><LoaderCircle className="spin" size={25}/><h3>Đang tìm dịch vụ cho bạn...</h3><p>Đang tải thông tin từ hệ thống.</p></div>:error?<div className="sv-state sv-error" role="alert"><h3>Chưa thể tải danh sách dịch vụ</h3><p>{error}</p><MotionButton className="sv-button sv-button-primary" onClick={retry}><RotateCcw size={16}/>Thử lại</MotionButton></div>:matched.length?<><div className="sv-service-grid" aria-label="Danh sách dịch vụ">{matched.slice(0,visibleCount).map(item=><ServiceDiscoveryCard key={item.serviceId} row={item}/>)}</div>{visibleCount<matched.length&&<div className="sv-load-more"><MotionButton className="sv-button sv-button-secondary" onClick={()=>change({count:visibleCount+6})}>Xem thêm {Math.min(6,matched.length-visibleCount)} dịch vụ<Plus size={16}/></MotionButton></div>}</>:<div className="sv-state"><span className="sv-state-icon"><Search size={27}/></span><h3>{activeFilters?'Chưa tìm thấy dịch vụ phù hợp':'Dịch vụ mới đang được cập nhật'}</h3><p>{activeFilters?'Thử đổi từ khóa hoặc mở rộng khu vực phục vụ.':'Các dịch vụ đã được duyệt sẽ xuất hiện tại đây. Bạn vẫn có thể đăng ký trở thành nhà cung cấp.'}</p><MotionButton className="sv-button sv-button-secondary" onClick={activeFilters?()=>setParams({}):openRegistration}>{activeFilters?'Xóa bộ lọc':'Đăng ký cung cấp dịch vụ'}</MotionButton></div>}
+    <p className="sv-price-note"><ReceiptText size={15}/>Giá và khu vực phục vụ do nhà cung cấp khai báo. Hãy xác nhận chi phí cuối cùng trước khi sử dụng.</p>
+   </div></section>
+   <section className="sv-partner-section container"><div className="sv-partner-banner"><div><span className="sv-eyebrow">CÙNG PHÁT TRIỂN TẠI HÒA LẠC</span><h2>Bạn có tay nghề.<br/>Cộng đồng đang cần bạn.</h2><p>Đăng ký thông tin dịch vụ và gửi giấy tờ xác minh để kết nối với người thuê trọ quanh Hòa Lạc.</p><div className="sv-partner-actions"><MotionButton className="sv-button sv-button-primary" onClick={openRegistration}>Đăng ký cung cấp dịch vụ<ArrowUpRight size={17}/></MotionButton><a href="tel:0912345678">Cần hỗ trợ đăng ký?</a></div></div><ol>{[['Gửi hồ sơ','Điền thông tin dịch vụ và đính kèm tài liệu xác minh.'],['Chờ xét duyệt','Đội ngũ HL_RCS kiểm tra hồ sơ và nội dung dịch vụ.'],['Kết nối khách hàng','Dịch vụ đủ điều kiện được hiển thị để khách liên hệ.']].map(([title,text],index)=><li key={title}><span>{String(index+1).padStart(2,'0')}</span><div><strong>{title}</strong><p>{text}</p></div></li>)}</ol></div></section>
+  </>}
+  {detail&&<div className="container sv-detail-page"><Link className="sv-detail-back" to="/services">← Danh sách dịch vụ</Link>{loading?<div className="sv-state" role="status">Đang tải thông tin dịch vụ...</div>:error?<div className="sv-state sv-error" role="alert"><h1>Không thể xem dịch vụ</h1><p>{error}</p><MotionButton className="sv-button sv-button-primary" onClick={retry}>Thử lại</MotionButton></div>:row&&<div className="sv-detail-grid"><article><div className={`sv-detail-heading sv-tone-${serviceCategoryKind(row.categoryName)}`}><span className="sv-card-icon"><ServiceCategoryIcon name={row.categoryName} size={34}/></span><span>{row.categoryName}</span><h1>{row.serviceName}</h1><span className="sv-reviewed"><ShieldCheck size={14}/>Thông tin đã xét duyệt</span></div><section className="sv-detail-description"><h2>Thông tin dịch vụ</h2><p>{row.description||'Chưa cập nhật mô tả.'}</p><h2>Khu vực phục vụ</h2><p><MapPin size={16}/>{row.serviceArea||'Liên hệ xác nhận khu vực phục vụ'}</p></section></article><aside className="sv-detail-contact"><span className="sv-eyebrow">KẾT NỐI NHÀ CUNG CẤP</span><h2>{row.providerName||`Nhà cung cấp #${row.providerId}`}</h2><div className="sv-card-price"><span>GIÁ DỊCH VỤ</span><strong>{servicePrice(row)}</strong></div><ServiceContact row={row}/><p>Trao đổi trực tiếp để thống nhất phạm vi công việc, lịch thực hiện và tổng chi phí. Hệ thống chưa hỗ trợ đặt dịch vụ trực tuyến.</p><ul><li><Check size={15}/>Xác nhận báo giá trước khi bắt đầu.</li><li><Check size={15}/>Giữ lại nội dung trao đổi với nhà cung cấp.</li></ul></aside></div>}</div>}
+  <AnimatePresence>{register&&<ServiceRegistrationModal onClose={()=>setRegister(false)}/>}</AnimatePresence>
+ </main></DetailPrototypeShell>;
 }

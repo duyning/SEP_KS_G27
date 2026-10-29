@@ -48,7 +48,7 @@ export default function DetailPrototypeShell({children,savedCount=0,className='p
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
           <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
-          <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
+          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
         </ul>

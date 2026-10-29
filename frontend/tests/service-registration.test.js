@@ -1,9 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { serviceRegistrationApi, validateServiceRegistration } from '../src/services/service-registration.js';
+import { serviceRegistrationApi, validateServiceRegistration, validateServiceRegistrationFields } from '../src/services/service-registration.js';
 
 const form = { applicantName: 'Nguyễn Văn An', categoryId: '1', serviceName: 'Chuyển trọ sinh viên', description: 'Dịch vụ chuyển trọ quanh khu vực Hòa Lạc.', pricingType: 'FIXED', price: '150000', serviceArea: 'Tân Xã', contactPhone: '0987654321' };
 const file = { name: 'license.pdf', type: 'application/pdf', size: 1024 };
+
+test('field errors identify each invalid control and allow optional email and negotiated price', () => {
+  const errors = validateServiceRegistrationFields({ ...form, serviceName: ' ', applicantName: 'A', description: 'Short', serviceArea: '', contactEmail: 'bad-address', categoryId: '0', contactPhone: '12', price: '-5' }, []);
+  for (const key of ['serviceName', 'applicantName', 'description', 'serviceArea', 'contactEmail', 'categoryId', 'contactPhone', 'price', 'documents']) assert.ok(errors[key], key);
+  assert.deepEqual(validateServiceRegistrationFields({ ...form, contactEmail: '', pricingType: 'NEGOTIABLE', price: '' }, [file]), {});
+  assert.ok(validateServiceRegistrationFields({ ...form, serviceName: 'x'.repeat(256) }, [file]).serviceName);
+  assert.ok(validateServiceRegistrationFields({ ...form, description: 'x'.repeat(5001) }, [file]).description);
+  assert.ok(validateServiceRegistrationFields({ ...form, contactEmail: 'valid@example.test' }, [file]).contactEmail === undefined);
+});
 test('service registration validates pricing and required evidence', () => {
   assert.equal(validateServiceRegistration(form, [file]), '');
   assert.equal(validateServiceRegistration({ ...form, pricingType: 'NEGOTIABLE', price: '' }, [file]), '');
