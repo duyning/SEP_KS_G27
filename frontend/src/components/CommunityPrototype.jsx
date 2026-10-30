@@ -1,41 +1,62 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Link,useLocation,useNavigate} from 'react-router-dom';
-import {Plus,FileText,Search,MapPin,Phone,ChevronRight,ImageOff,Info,RotateCcw,X} from 'lucide-react';
+import {Plus,FileText,Search,MapPin,Phone,Info,RotateCcw,X,ArrowUp,ChevronLeft,ChevronRight} from 'lucide-react';
 import {communityApi} from '../services/community.js';
-import {communityCategories,communityZones,communitySorts,filterCommunityPosts,communityDate} from '../services/community-prototype.js';
+import {communityCategories,communityZones,communitySorts,filterCommunityPosts,paginateCommunityPosts,communityDate} from '../services/community-prototype.js';
+import {paginationRange} from '../services/pagination.js';
 import {detailPhone} from '../services/accommodation-detail.js';
 import CommunityPrototypeSidebar from './CommunityPrototypeSidebar.jsx';
-import CommunityPostImage from './CommunityPostImage.jsx';
 import {useCommunityImage} from './CommunityImageViewer.jsx';
 import CommunityPostVideo from './CommunityPostVideo.jsx';
 import CommunityPostFooter from './CommunityPostFooter.jsx';
+import CommunityPostMedia from './CommunityPostMedia.jsx';
 import Modal from './common/Modal.jsx';
 import StatusBadge from './common/StatusBadge.jsx';
 import {AnimatePresence,MotionButton} from './motion/MotionUI.jsx';
 
 const badges={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'};
 function InlinePhoto({postId,image}){const photo=useCommunityImage(postId,image.id);return photo.url?<img src={photo.url} alt={image.fileName} onError={photo.fail}/>:<p role="status">{photo.loading?'Đang tải ảnh...':'Không tải được ảnh'}</p>}
-function Badge({post}){const category=communityCategories.find(([key])=>key===post.type);return <span className={`post-cat-badge ${badges[post.type]}`}>{category?.[1]} <span>{post.typeLabel}</span></span>}
+function Badge({post,className}){const category=communityCategories.find(([key])=>key===post.type);return <span className={className||`post-cat-badge ${badges[post.type]}`}><span aria-hidden="true">{category?.[1]}</span> <span>{post.typeLabel}</span></span>}
 export default function CommunityPrototype({state,mine,user,params,setParams,onCreate,onEdit,onDelete,deleting}){
  const navigate=useNavigate(),route=useLocation(),posts=state.data||[];
  const category=communityCategories.some(([key])=>key===params.get('category'))?params.get('category'):'ALL';
  const q=params.get('q')||'',location=communityZones.some(([key])=>key===params.get('location'))?params.get('location'):'all',sort=communitySorts.some(([key])=>key===params.get('sort'))?params.get('sort'):'newest';
- const rawLimit=Number(params.get('count')||8),limit=Number.isSafeInteger(rawLimit)&&rawLimit>0?rawLimit:8;
  const filtered=filterCommunityPosts(posts,{category,q,location,sort});
  const focusedId=Number(route.hash.match(/^#post-(\d+)$/)?.[1]),selected=posts.find(post=>post.id===focusedId);
- const visible=filtered.slice(0,Math.max(limit,filtered.findIndex(post=>post.id===focusedId)+1));
+ const {page,totalPages,items:visible}=paginateCommunityPosts(filtered,params.get('page'));
+ const feedRef=useRef(null),pageFocus=useRef(false);
+ const [showBackToTop,setShowBackToTop]=useState(false);
  const [mineCount,setMineCount]=useState(null);
+ useEffect(()=>{
+  const update=()=>setShowBackToTop(window.scrollY>400);
+  update();window.addEventListener('scroll',update,{passive:true});
+  return()=>window.removeEventListener('scroll',update);
+ },[]);
+ useEffect(()=>{
+  if(state.loading||state.error)return;
+  const index=filtered.findIndex(post=>post.id===focusedId);
+  const targetPage=index>=0?Math.floor(index/8)+1:page;
+  const expected=targetPage===1?null:String(targetPage);
+  if(params.get('page')!==expected){const next=new URLSearchParams(params);next.delete('count');if(expected)next.set('page',expected);else next.delete('page');setParams(next,{replace:true});}
+ },[state.loading,state.error,focusedId,filtered,page,params,setParams]);
+ useEffect(()=>{
+  if(!pageFocus.current)return;
+  pageFocus.current=false;
+  feedRef.current?.focus({preventScroll:true});
+  feedRef.current?.scrollIntoView({block:'start',behavior:'instant'});
+ },[page]);
  useEffect(()=>{document.title='Cộng đồng Hòa Lạc | HL_RCS';},[]);
  useEffect(()=>{
   if(!user){setMineCount(null);return;}
   if(mine){setMineCount(state.data?.length??null);return;}
   const controller=new AbortController();setMineCount(null);communityApi.mine(controller.signal).then(values=>{if(!controller.signal.aborted)setMineCount(values.length)}).catch(()=>{});return()=>controller.abort();
  },[user?.userId,mine,state.data]);
- function change(values){const next=new URLSearchParams(params);for(const [key,value] of Object.entries(values)){if(!value||value==='all'||value==='ALL'||value==='newest')next.delete(key);else next.set(key,String(value));}if(!('count' in values))next.delete('count');setParams(next,{replace:Object.keys(values).length===1&&'q' in values});}
+ function change(values){const next=new URLSearchParams(params);next.delete('count');for(const [key,value] of Object.entries(values)){if(!value||value==='all'||value==='ALL'||value==='newest'||key==='page'&&value===1)next.delete(key);else next.set(key,String(value));}if(!('page' in values))next.delete('page');setParams(next,{replace:Object.keys(values).length===1&&'q' in values});}
+ function changePage(value){if(value===page||value<1||value>totalPages)return;pageFocus.current=true;change({page:value});}
+ function scrollToTop(){window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
  function reset(){setParams(mine?{view:'mine'}:{});}
  function myPosts(){if(!user)navigate('/login',{state:{from:'/community?view=mine'}});else setParams({view:'mine'});}
  function closeDetail(){navigate({pathname:route.pathname,search:route.search,hash:''},{replace:true});}
- const detailLink=post=>({pathname:'/community',search:route.search,hash:`post-${post.id}`});
  const filtersActive=q||location!=='all'||category!=='ALL';
  return <>
   <div className="community-breadcrumb-bar"><div className="container community-breadcrumb-inner"><ul className="community-breadcrumb-list"><li><Link to="/">Trang chủ</Link></li><li className="breadcrumb-sep">/</li><li className="breadcrumb-active">Cộng đồng Hòa Lạc</li></ul><span className="breadcrumb-hint"><Info size={14}/>Không gian kết nối sinh viên &amp; cư dân Hòa Lạc</span></div></div>
@@ -49,18 +70,25 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
    <p className="community-visibility-note">{mine?'Chỉ bạn nhìn thấy các bài đang chờ duyệt, cần chỉnh sửa hoặc bị từ chối của mình.':'Chỉ những bài đã được nhân viên phê duyệt mới hiển thị công khai.'}</p>
    {state.loading&&<div className="community-empty-state" role="status">Đang tải bài viết...</div>}{state.error&&<div className="community-empty-state" role="alert"><h2>Không thể tải bài viết</h2><p>{state.error}</p><button type="button" className="btn-empty-reset" onClick={state.reload}>Thử lại</button></div>}
    {!state.loading&&!state.error&&!filtered.length&&<div className="community-empty-state" role="status"><div className="empty-icon-box"><Search size={48}/></div><h2 className="empty-title">Không tìm thấy bài viết phù hợp</h2><p className="empty-desc">{mine?'Bạn chưa có bài viết phù hợp trong danh mục này.':'Không có bài viết nào khớp với bộ lọc hiện tại. Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.'}</p><div className="empty-actions"><button type="button" className="btn-empty-reset" onClick={reset}>Xóa bộ lọc</button><button type="button" className="btn-create-post" onClick={onCreate}>Đăng bài mới</button></div></div>}
-   <div className="community-feed-list" id="communityFeedList">{visible.map(post=>{
-    const phone=detailPhone(post.authorPhone);
-    return <article className="post-card" id={`post-${post.id}`} key={post.id} data-id={post.id}><div className="post-card-media">{post.images.length?<CommunityPostImage postId={post.id} image={post.images[0]} images={post.images} defer/>:post.videos.length?<CommunityPostVideo postId={post.id} video={post.videos[0]}/>:<Link to={detailLink(post)} className="community-no-media" aria-label={`Chi tiết ${post.title}`}><ImageOff size={28}/><span>Chưa có ảnh đính kèm</span></Link>}{post.images.length>1&&<span className="post-media-count">📷 {post.images.length} ảnh</span>}</div>
-     <div className="post-card-content"><div><div className="post-card-header"><div className="post-badges-group"><Badge post={post}/><span className="post-location-chip">📍 {post.location||'Chưa cập nhật địa điểm'}</span>{mine&&<StatusBadge status={post.status} label={post.statusLabel}/>}</div><time className="post-card-time" dateTime={post.createdAt}>{communityDate(post.createdAt)}</time></div><h2 className="post-card-title"><Link to={detailLink(post)}>{post.title}</Link></h2><div className="post-price-row"><span className={`post-main-price${post.type==='SECOND_HAND'?' secondhand-price':''}`}>{post.priceDisplay}</span></div><p className="post-card-desc">{post.content}</p></div>
+   <div className="community-feed-list" id="communityFeedList" ref={feedRef} tabIndex={-1} aria-label={`Danh sách bài viết, trang ${page}`}>{visible.map(post=>{
+    const hasMedia=Boolean(post.images?.length||post.videos?.length);
+    return <article className="community-feed-card community-restored-post" id={`post-${post.id}`} key={post.id} data-id={post.id}>
+     <div className="community-feed-card-header">
+      <div className="community-restored-author"><div className="community-restored-avatar" aria-hidden="true">{post.authorName.slice(0,2).toUpperCase()}</div><div><strong>{post.authorName}</strong><time className="community-feed-time" dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('vi-VN')}><span>{new Date(post.createdAt).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span><span aria-hidden="true">•</span><span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span></time></div></div>
+      <div className="community-feed-badges"><Badge post={post} className="community-feed-category"/>{mine&&<StatusBadge status={post.status} label={post.statusLabel}/>}</div>
+     </div>
+     <div className={`community-feed-body${hasMedia?' community-feed-body--media':''}`}>
+      <div className="community-feed-copy"><h2 className="community-feed-title">{post.title}</h2><p className="community-feed-description">{post.content}</p>
+       <dl className="community-feed-facts">{post.priceDisplay&&<div className="community-feed-price"><dt>{post.type==='SECOND_HAND'?'Giá bán':post.type==='ROOM_TRANSFER'?'Giá thuê':'Chi phí ở ghép'}</dt><dd>{post.priceDisplay}</dd></div>}{post.location&&<div><dt>Địa chỉ</dt><dd><MapPin size={16} aria-hidden="true"/> {post.location}</dd></div>}{post.authorPhone&&<div><dt>Số điện thoại</dt><dd><a href={`tel:${post.authorPhone}`}>{post.authorPhone}</a></dd></div>}</dl>
+      </div>{hasMedia&&<CommunityPostMedia post={post}/>}</div>
      {mine&&post.status==='NEED_CHANGES'&&<section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên"><strong>Nhân viên yêu cầu chỉnh sửa</strong><p>{post.decisionNote||'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p><button type="button" className="btn-view-detail" onClick={()=>onEdit(post)}>Chỉnh sửa và gửi duyệt lại</button></section>}
      {mine&&post.status==='REJECTED'&&<p className="community-rejected-note">Lý do từ chối: {post.decisionNote||'Nội dung không phù hợp tiêu chuẩn cộng đồng.'}</p>}
-     <div className="post-card-footer"><div className="post-author-snippet"><div className="author-avatar">{post.authorName.slice(0,2).toUpperCase()}</div><div className="author-info"><span className="author-name">{post.authorName}</span><span className="author-role">Thành viên cộng đồng</span></div></div><div className="post-actions-group">{phone&&<a href={`tel:${phone}`} className="btn-quick-call"><Phone size={14}/>Gọi</a>}<Link to={detailLink(post)} className="btn-view-detail">Chi tiết<ChevronRight size={13}/></Link></div></div>
      <CommunityPostFooter post={post} mine={mine} deleting={deleting} onDelete={()=>onDelete(post)}/>
-     </div></article>;
+     </article>;
    })}</div>
-   {visible.length<filtered.length&&<div className="community-load-more-wrap"><button type="button" className="btn-feed-loadmore" onClick={()=>change({count:limit+8})}>Xem thêm bài viết cũ hơn</button></div>}
+   {!state.loading&&!state.error&&filtered.length>0&&<nav className="community-pagination" aria-label="Phân trang bài viết"><p aria-live="polite">Hiển thị {(page-1)*8+1}–{Math.min(page*8,filtered.length)} / {filtered.length} bài viết</p><div><button type="button" aria-label="Trang trước" disabled={page<=1} onClick={()=>changePage(page-1)}><ChevronLeft size={18} aria-hidden="true"/></button>{paginationRange(page,totalPages).map(value=>typeof value==='string'?<span key={value} aria-hidden="true">…</span>:<button type="button" key={value} aria-label={`Trang ${value}`} aria-current={value===page?'page':undefined} onClick={()=>changePage(value)}>{value}</button>)}<button type="button" aria-label="Trang sau" disabled={page>=totalPages} onClick={()=>changePage(page+1)}><ChevronRight size={18} aria-hidden="true"/></button></div></nav>}
   </section><CommunityPrototypeSidebar onZone={value=>change({location:value})}/></div></main>
+  {showBackToTop&&<button type="button" className="community-back-to-top" aria-label="Cuộn lên đầu trang" title="Cuộn lên đầu trang" onClick={scrollToTop}><ArrowUp size={22} aria-hidden="true"/></button>}
   <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><Badge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p><div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
  </>;
 }

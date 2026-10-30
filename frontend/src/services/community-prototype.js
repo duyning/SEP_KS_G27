@@ -1,6 +1,11 @@
 export const communityCategories=[['ALL','🌐','Tất cả'],['ROOM_TRANSFER','🏠','Nhượng phòng'],['ROOMMATE','👥','Tìm người ở ghép'],['SECOND_HAND','📦','Đồ cũ sinh viên']];
 export const communityZones=[['all','Tất cả khu vực Hòa Lạc'],['tan-xa','Tân Xã (Gần ĐH FPT)'],['thach-hoa','Thạch Hòa (Gần ĐHQG, Chợ)'],['binh-yen','Bình Yên (Khu yên tĩnh)'],['cnc','Khu CNC Hòa Lạc'],['khac','Khu vực khác']];
 export const communitySorts=[['newest','Mới đăng nhất'],['oldest','Cũ nhất'],['price-asc','Giá thấp đến cao'],['price-desc','Giá cao đến thấp']];
+export function paginateCommunityPosts(posts,rawPage=1,pageSize=8){
+ const totalPages=Math.max(1,Math.ceil(posts.length/pageSize));
+ const requested=Number(rawPage),page=Number.isSafeInteger(requested)&&requested>0?Math.min(requested,totalPages):1;
+ return {page,totalPages,items:posts.slice((page-1)*pageSize,page*pageSize)};
+}
 const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
 export function communityZone(location){const value=normalize(location);return value.includes('tan xa')?'tan-xa':value.includes('thach hoa')?'thach-hoa':value.includes('binh yen')?'binh-yen':/cong nghe cao|khu cnc/.test(value)?'cnc':'khac'}
 export function filterCommunityPosts(posts,{category='ALL',q='',location='all',sort='newest'}={}){

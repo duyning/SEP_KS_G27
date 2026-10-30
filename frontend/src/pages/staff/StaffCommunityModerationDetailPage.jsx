@@ -92,6 +92,7 @@ export default function StaffCommunityModerationDetailPage() {
         <span>Mã bài #{currentPost.id}</span>
       </nav>
 
+      <div className="staff-community-detail-layout">
       <article className="staff-community-post">
         <header className="staff-community-post-header">
           <div className="staff-community-post-author">
@@ -129,6 +130,7 @@ export default function StaffCommunityModerationDetailPage() {
         </div>)}
       </article>
 
+      <aside className="staff-community-detail-sidebar" aria-label="Kiểm duyệt và lịch sử bài viết">
       <section className="staff-community-moderation" aria-labelledby="staff-community-moderation-title">
         <div className="staff-community-section-heading">
           <div>
@@ -176,7 +178,7 @@ export default function StaffCommunityModerationDetailPage() {
         <summary>Lịch sử kiểm duyệt <span>{state.data.history.length} lần xử lý</span></summary>
         <div className="staff-community-history-list">
           {!state.data.history.length && <p>Chưa có quyết định kiểm duyệt.</p>}
-          {state.data.history.map(item => <div className="staff-community-history-item" key={item.id}>
+          {[...state.data.history].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)).map(item => <div className="staff-community-history-item" key={item.id}>
             <div className="staff-community-section-heading">
               <strong>{item.staffName}</strong>
               <StatusBadge status={item.action} label={({ APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', NEED_CHANGES: 'Yêu cầu chỉnh sửa' })[item.action] || item.action} />
@@ -190,6 +192,8 @@ export default function StaffCommunityModerationDetailPage() {
           </div>)}
         </div>
       </details>
+      </aside>
+      </div>
 
       {/* MODAL: APPROVE */}
       <AnimatePresence>{isApproveOpen && (

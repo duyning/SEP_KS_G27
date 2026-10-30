@@ -1,4 +1,22 @@
-.staff-content.staff-community-detail { display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 1080px; min-width: 0; margin: 0 auto; box-sizing: border-box; }
+.staff-content.staff-community-detail { display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 1440px; min-width: 0; margin: 0 auto; box-sizing: border-box; container-type: inline-size; }
+.staff-community-detail-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(300px, 3fr); gap: 24px; align-items: start; }
+.staff-community-detail-sidebar { display: grid; gap: 16px; min-width: 0; position: sticky; top: calc(var(--p-topbar-height, 72px) + 24px); }
+.staff-community-detail-sidebar .staff-community-section-heading { align-items: flex-start; }
+.staff-community-detail-sidebar .staff-community-section-heading h2 { font-size: 18px; line-height: 1.5; }
+.staff-community-detail-sidebar .staff-community-moderation-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+.staff-community-detail-sidebar .staff-community-moderation-actions > button { width: 100%; min-height: 44px; white-space: normal; }
+.staff-community-detail-sidebar .staff-community-moderation-actions > .primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+.staff-community-detail-sidebar .staff-community-history-list { max-height: 320px; overflow-y: auto; }
+.staff-community-detail-sidebar .staff-community-history summary { line-height: 1.6; }
+.staff-community-detail-sidebar .staff-community-history summary span { display: block; margin: 4px 0 0; }
+.staff-community-detail-sidebar :is(button,summary):focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
+@container (max-width: 960px) {
+  .staff-community-detail-layout { grid-template-columns: minmax(0, 1fr); }
+  .staff-community-detail-sidebar { position: static; }
+}
+@media (max-height: 760px) {
+  .staff-community-detail-sidebar { position: static; }
+}
 .staff-community-detail-nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; }
 .staff-community-detail-nav a { display: inline-flex; align-items: center; gap: 6px; color: #0d9488; font-weight: 600; text-decoration: none; }
 .staff-community-detail-nav > span { color: #64748b; }
