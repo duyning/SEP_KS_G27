@@ -1,0 +1,12 @@
+import {Link} from 'react-router-dom';
+import {ArrowUpRight,ArrowRight,Truck,WashingMachine,Sparkles,Wrench,HandHelping,MapPin,Phone,ShieldCheck,UserRound,Mail} from 'lucide-react';
+import {serviceCategoryKind} from '../services/service-discovery.js';
+import {detailPhone} from '../services/accommodation-detail.js';
+import {servicePrice} from '../services/public-services.js';
+export const categoryIcons={moving:Truck,laundry:WashingMachine,cleaning:Sparkles,repair:Wrench,other:HandHelping};
+export function ServiceCategoryIcon({name,size=24}){const Icon=categoryIcons[serviceCategoryKind(name)];return <Icon size={size} strokeWidth={1.7} aria-hidden="true"/>;}
+export function ServiceContact({row,compact=false}){const phone=detailPhone(row.contactPhone),email=typeof row.contactEmail==='string'&&/^[^\s@:?]+@[^\s@:?]+\.[^\s@:?]+$/.test(row.contactEmail)?row.contactEmail:null;return <div className="sv-contact-actions">{phone?<a className="sv-button sv-button-primary" href={`tel:${phone}`} aria-label={`Gọi ${row.providerName||'nhà cung cấp'}: ${phone}`}><Phone size={16}/>{compact?'Liên hệ':phone}</a>:<span className="sv-muted">Chưa cập nhật số điện thoại.</span>}{!compact&&email&&<a className="sv-button sv-button-secondary" href={`mailto:${email}`}><Mail size={16}/>Gửi email</a>}</div>;}
+export function ServiceDiscoveryCard({row}){return <article className={`sv-service-card sv-tone-${serviceCategoryKind(row.categoryName)}`}>
+ <div className="sv-card-top"><span className="sv-card-icon"><ServiceCategoryIcon name={row.categoryName} size={30}/></span><span className="sv-category-label">{row.categoryName}</span><ArrowUpRight size={20} aria-hidden="true"/></div>
+ <div className="sv-card-content"><div className="sv-reviewed"><ShieldCheck size={14}/>Thông tin đã xét duyệt</div><h3><Link to={`/services/detail?id=${row.serviceId}`}>{row.serviceName}</Link></h3><p className="sv-card-description">{row.description||'Nhà cung cấp chưa bổ sung mô tả dịch vụ.'}</p><div className="sv-card-meta"><p><UserRound size={15}/><span>{row.providerName||`Nhà cung cấp #${row.providerId}`}</span></p><p><MapPin size={15}/><span>{row.serviceArea||'Liên hệ xác nhận khu vực phục vụ'}</span></p></div><div className="sv-card-price"><span>{row.pricingType==='NEGOTIABLE'?'BÁO GIÁ TRỰC TIẾP':'GIÁ DỊCH VỤ'}</span><strong>{servicePrice(row)}</strong></div><div className="sv-card-footer"><Link className="sv-detail-link" to={`/services/detail?id=${row.serviceId}`}>Xem chi tiết<ArrowRight size={16}/></Link><ServiceContact row={row} compact/></div></div>
+ </article>;}

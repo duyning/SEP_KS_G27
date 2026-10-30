@@ -30,8 +30,8 @@ const menus = {
       ['Xem trang khách thuê', '/', Globe]
     ]]
   ],
-  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
-  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Phân công nhân viên', '/admin?view=assignment', ClipboardCheck]]], ['HỆ THỐNG', [['Nhật ký hoạt động', '/admin?view=activity', History]]]],
+  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
+  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Phân công nhân viên', '/admin?view=assignment', ClipboardCheck], ['Xét duyệt hồ sơ dịch vụ', '/staff/service-applications', Wrench]]], ['HỆ THỐNG', [['Nhật ký hoạt động', '/admin?view=activity', History]]]],
 };
 export function Brand({ portal = 'public', onClick }) {
   return (
@@ -248,7 +248,7 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
-  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community'].includes(location.pathname)) return children;
+  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
 
   return (
     <div className={`portal-app ${portal}-portal ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>

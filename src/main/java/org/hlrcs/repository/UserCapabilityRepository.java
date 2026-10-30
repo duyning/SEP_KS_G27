@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface UserCapabilityRepository extends JpaRepository<UserCapability, Integer> {
+    boolean existsByUser_UserIdAndCapability_CodeAndStatus(Integer userId, String code, String status);
 
     List<UserCapability> findByUser_UserId(Integer userId);
 

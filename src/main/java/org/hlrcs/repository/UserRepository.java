@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
+    java.util.List<User> findByRoleAndStatusOrderByUserIdAsc(org.hlrcs.entity.enums.UserRole role, org.hlrcs.entity.enums.UserStatus status);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select u from User u where u.userId = :id")
