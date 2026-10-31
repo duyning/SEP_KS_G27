@@ -3,6 +3,9 @@ import { ApiError, request } from './auth.js';
 export const postTypes = { ROOM_TRANSFER: 'Nhượng phòng', ROOMMATE: 'Tìm người ở ghép', SECOND_HAND: 'Đồ cũ sinh viên' };
 export const postStatuses = { PENDING: 'Chờ kiểm duyệt', NEED_CHANGES: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối' };
 const clean = value => String(value ?? '').trim();
+export function isOwnCommunityPost(post, user) {
+  return Number.isInteger(user?.userId) && user.userId > 0 && post.authorId === user.userId;
+}
 export function validPostContactLink(value, platform) {
   const url = clean(value);
   if (!url) return true;

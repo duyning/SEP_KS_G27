@@ -221,7 +221,7 @@ public class CommunityService {
             case ROOMMATE -> "Tìm người ở ghép";
             case PASS_ITEM -> "Đồ cũ sinh viên";
         };
-        return new CommunityPostResponse(post.getPostId(), type, label, post.getTitle(), post.getDescription(),
+        return new CommunityPostResponse(post.getPostId(), post.getAuthor().getUserId(), type, label, post.getTitle(), post.getDescription(),
                 post.getPrice(), post.getLocation(), post.getContactName() == null ? post.getAuthor().getFullName() : post.getContactName(),
                 post.getContactPhone(), post.getFacebookUrl(), post.getZaloUrl(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,

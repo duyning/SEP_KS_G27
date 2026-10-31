@@ -1,12 +1,21 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
+import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, isOwnCommunityPost, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
 
 const original = { fetch: globalThis.fetch, sessionStorage: globalThis.sessionStorage, localStorage: globalThis.localStorage };
 globalThis.sessionStorage = { getItem: () => 'user-token' };
 globalThis.localStorage = { getItem: () => null };
 after(() => Object.assign(globalThis, original));
 const valid = { type: 'ROOM_TRANSFER', title: 'Nhượng phòng gần Đại học FPT', content: 'Phòng khép kín có ban công, sạch sẽ và đầy đủ tiện nghi.', price: '2.200.000', location: 'Tân Xã, Hòa Lạc', authorName: 'Nguyễn Văn An', authorPhone: '0912 345 678' };
+test('post ownership uses account identity independently of filters or contact information', () => {
+  for (const status of ['PENDING', 'APPROVED', 'NEED_CHANGES', 'REJECTED']) {
+    const post = { authorId: 12, status, authorName: 'Tên liên hệ khác', authorPhone: '0987654321' };
+    assert.equal(isOwnCommunityPost(post, { userId: 12 }), true);
+    assert.equal(isOwnCommunityPost(post, { userId: 13, fullName: post.authorName }), false);
+    assert.equal(isOwnCommunityPost(post, null), false);
+  }
+  assert.equal(isOwnCommunityPost({}, {}), false);
+});
 test('social contacts are optional, validated and included in edits and payloads', () => {
   assert.deepEqual(validatePost({ ...valid, facebookUrl: '', zaloUrl: '' }), {});
   const links = { facebookUrl: ' https://www.facebook.com/nguyenvanan ', zaloUrl: 'https://zalo.me/0912345678' };

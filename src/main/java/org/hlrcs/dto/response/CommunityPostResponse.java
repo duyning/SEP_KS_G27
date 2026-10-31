@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record CommunityPostResponse(
-        Integer id, String type, String typeLabel, String title, String content,
+        Integer id, Integer authorId, String type, String typeLabel, String title, String content,
         BigDecimal price, String location, String authorName, String authorPhone,
         String facebookUrl, String zaloUrl,
         String status, LocalDateTime createdAt, LocalDateTime updatedAt,
