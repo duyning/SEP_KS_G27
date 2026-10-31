@@ -10,6 +10,7 @@ import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
 import CommunityPrototype from '../../components/CommunityPrototype.jsx';
+import { communityZones } from '../../services/community-prototype.js';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
 import Modal from '../../components/common/Modal.jsx';
 import { useToast } from '../../components/PortalUI.jsx';
@@ -145,11 +146,21 @@ export default function CommunityPage() {
     if (event.key === 'Delete' && input.value[position] === '.') input.setSelectionRange(position + 1, position + 1);
   };
   const [postLocation, setPostLocation] = useState('');
+  const [postZone, setPostZone] = useState('');
+  const [customLocation, setCustomLocation] = useState('');
+  const changeZone = event => {
+    const zone = event.target.value;
+    setPostZone(zone);
+    setPostLocation(zone === 'khac' ? customLocation : communityZones.find(([key]) => key === zone)?.[1] || '');
+    setErrors(current => ({ ...current, location: undefined }));
+  };
   const [authorName, setAuthorName] = useState('');
   const [authorPhone, setAuthorPhone] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [zaloUrl, setZaloUrl] = useState('');
   const revisionChanged = editingId == null || hasPostDraftChanges({
     type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation,
-    authorName, authorPhone, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
+    authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
   }, initialDraft.current, true);
 
   const openForm = (post = null) => {
@@ -158,6 +169,7 @@ export default function CommunityPage() {
       type: post?.type || 'ROOM_TRANSFER', title: post?.title || '', content: post?.content || '',
       price: formatPostPrice(post?.price), location: post?.location || '',
       authorName: post?.authorName || user.fullName || '', authorPhone: post?.authorPhone || user.phoneNumber || '',
+      facebookUrl: post?.facebookUrl || '', zaloUrl: post?.zaloUrl || '',
       retainedImageIds: (post?.images || []).map(image => image.id),
       retainedVideoIds: (post?.videos || []).map(video => video.id),
     };
@@ -172,8 +184,13 @@ export default function CommunityPage() {
     setPriceImeActive(false);
     setPostPrice(initial.price);
     setPostLocation(initial.location);
+    const knownZone = communityZones.find(([key, label]) => key !== 'all' && key !== 'khac' && label === initial.location);
+    setPostZone(knownZone ? knownZone[0] : initial.location ? 'khac' : '');
+    setCustomLocation(knownZone ? '' : initial.location);
     setAuthorName(initial.authorName);
     setAuthorPhone(initial.authorPhone);
+    setFacebookUrl(initial.facebookUrl);
+    setZaloUrl(initial.zaloUrl);
     imageSelection.current++;
     setCheckingImages(false);
     setPhotos([]);
@@ -188,7 +205,7 @@ export default function CommunityPage() {
   };
   const requestCloseForm = () => {
     if (busy || checkingMedia) return;
-    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
+    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
     if (hasPostDraftChanges(values, initialDraft.current, editingId != null)
       && !window.confirm('Bạn đã nhập dữ liệu vào bài viết. Nếu thoát, nội dung vừa nhập sẽ bị mất. Bạn có đồng ý thoát không?')) return;
     setIsCreateModalOpen(false);
@@ -215,7 +232,7 @@ export default function CommunityPage() {
     e.preventDefault();
     if (submission.current || checkingMedia) return;
     if (!revisionChanged) { setSubmitError('Bạn cần chỉnh sửa nội dung hoặc tệp đính kèm theo yêu cầu của nhân viên trước khi gửi lại.'); return; }
-    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
+    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
     const validation = validatePost(values);
     setErrors(validation);
     setSubmitError('');
@@ -315,7 +332,7 @@ export default function CommunityPage() {
   useEffect(() => {
     if (!isCreateModalOpen || !Object.keys(errors).length) return;
     const fields = { type: '#postType', title: '#postTitle', content: '#postContent', price: '#postPrice', location: '#postLocation',
-      authorName: '#authorName', authorPhone: '#authorPhone', images: '.community-post-form-images > button', videos: '.community-post-form-videos > button' };
+      authorName: '#authorName', authorPhone: '#authorPhone', facebookUrl: '#facebookUrl', zaloUrl: '#zaloUrl', images: '.community-post-form-images > button', videos: '.community-post-form-videos > button' };
     document.querySelector(fields[Object.keys(errors)[0]])?.focus();
   }, [errors, isCreateModalOpen]);
 
@@ -356,7 +373,7 @@ export default function CommunityPage() {
           footer={<div className="community-post-form-actions">
             <span className="community-post-form-policy"><ShieldCheck size={16} aria-hidden="true" /> Bài viết sẽ được kiểm duyệt trước khi công khai.</span>
             <MotionButton type="button" className="p-button" disabled={busy || checkingMedia} onClick={requestCloseForm}>Hủy</MotionButton>
-            <MotionButton type="submit" form="community-post-form" className="p-button primary" disabled={busy || checkingMedia || !revisionChanged}>{busy ? 'Đang gửi...' : checkingMedia ? 'Đang kiểm tra tệp...' : editingId ? 'Gửi lại để kiểm duyệt' : 'Gửi bài kiểm duyệt'}</MotionButton>
+            <MotionButton type="submit" form="community-post-form" className="p-button primary" disabled={busy || checkingMedia || !revisionChanged || postTitle.trim().length < 10 || postContent.trim().length < 10}>{busy ? 'Đang gửi...' : checkingMedia ? 'Đang kiểm tra tệp...' : editingId ? 'Gửi lại để kiểm duyệt' : 'Gửi bài kiểm duyệt'}</MotionButton>
           </div>}
         >
           <form id="community-post-form" noValidate onSubmit={handleCreatePost}>
@@ -389,40 +406,43 @@ export default function CommunityPage() {
             </div>
             <div className="community-post-form-title">
               <label htmlFor="postTitle" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/200</span>
+                Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/100</span>
               </label>
               <input
                 id="postTitle"
                 type="text"
                 required
-                maxLength={200}
+                minLength={10}
+                maxLength={100}
                 aria-invalid={Boolean(errors.title)}
-                aria-describedby="title-error"
+                aria-describedby="post-title-help title-error"
                 value={postTitle}
                 onChange={(e) => setPostTitle(e.target.value)}
-                placeholder="VD: Nhượng gấp phòng khép kín Tân Xã gần ĐH FPT..."
+                placeholder="Nhập tiêu đề bài viết (10–100 ký tự)"
                 style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
               <PostFieldError name="title" errors={errors} />
+              <small id="post-title-help" className="community-input-help-hidden">Tiêu đề cần từ 10–100 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
             <div className="community-post-form-content">
               <label htmlFor="postContent" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/5.000</span>
+                Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/2.500</span>
               </label>
               <textarea
                 id="postContent"
                 rows={3}
                 required
-                maxLength={5000}
+                minLength={10}
+                maxLength={2500}
                 aria-invalid={Boolean(errors.content)}
-                aria-describedby="content-error"
+                aria-describedby="post-content-help content-error"
                 value={postContent}
                 onChange={(e) => setPostContent(e.target.value)}
-                placeholder="Mô tả cụ thể về phòng, vị trí, giờ giấc, đồ dùng sang nhượng..."
+                placeholder="Mô tả phòng, vị trí, giờ giấc hoặc đồ dùng sang nhượng… (10–2.500 ký tự)"
                 style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
               <PostFieldError name="content" errors={errors} />
-              <small>Mô tả 30–5.000 ký tự; tiêu đề 10–200 ký tự.</small>
+              <small id="post-content-help" className="community-input-help-hidden">Mô tả cần từ 10–2.500 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
               </section>
               <div className="community-post-form-sidebar">
@@ -449,17 +469,25 @@ export default function CommunityPage() {
                   onCompositionEnd={endPriceComposition}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="VD: 2.200.000"
+                  placeholder={postType === 'SECOND_HAND' ? 'VD: 200.000 · Trống = thỏa thuận, 0 = miễn phí' : 'VD: 2.200.000 · Để trống nếu thỏa thuận'}
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
                 {priceImeActive && postPrice.trim() && !Number.isNaN(parsePostPrice(postPrice)) && <output htmlFor="postPrice" aria-live="polite" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0d9488', marginTop: 4 }}>Số tiền: {new Intl.NumberFormat('vi-VN').format(parsePostPrice(postPrice))} đ</output>}
-                <small id="price-help" style={{ color: '#64748b' }}>Để trống nếu thỏa thuận.{postType === 'SECOND_HAND' ? ' Có thể để 0 đồng.' : ''}</small>
+                <small id="price-help" className="community-input-help-hidden">Để trống nếu thỏa thuận.{postType === 'SECOND_HAND' ? ' Có thể để 0 đồng.' : ''}</small>
                 <PostFieldError name="price" errors={errors} />
               </div>
               <div>
-                <label htmlFor="postLocation" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <label htmlFor="postZone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Khu vực *
                 </label>
+                <select id="postZone" required value={postZone} onChange={changeZone}
+                  aria-invalid={Boolean(errors.location)} aria-describedby={errors.location ? 'location-error' : undefined}
+                  className="community-post-location-control">
+                  <option value="" disabled>Chọn khu vực</option>
+                  {communityZones.filter(([key]) => key !== 'all').map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+                {postZone === 'khac' && <>
+                <label htmlFor="postLocation" className="community-post-custom-location-label">Nhập khu vực / địa chỉ *</label>
                 <input
                   id="postLocation"
                   type="text"
@@ -468,10 +496,11 @@ export default function CommunityPage() {
                   aria-invalid={Boolean(errors.location)}
                   aria-describedby="location-error"
                   value={postLocation}
-                  onChange={(e) => setPostLocation(e.target.value)}
-                  placeholder="VD: Thôn 2, Tân Xã"
+                  onChange={(e) => { setPostLocation(e.target.value); setCustomLocation(e.target.value); }}
+                  placeholder="VD: Thôn 3, xã Hạ Bằng"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
+                </>}
                 <PostFieldError name="location" errors={errors} />
               </div>
             </div>
@@ -484,15 +513,16 @@ export default function CommunityPage() {
                   id="authorName"
                   type="text"
                   required
-                  maxLength={100}
+                  maxLength={50}
                   aria-invalid={Boolean(errors.authorName)}
-                  aria-describedby="authorName-error"
+                  aria-describedby="authorName-help authorName-error"
                   value={authorName}
                   onChange={(e) => setAuthorName(e.target.value)}
-                  placeholder="VD: Nguyễn Văn A"
+                  placeholder="Tên liên hệ (2–50 ký tự)"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
                 <PostFieldError name="authorName" errors={errors} />
+                <small id="authorName-help" className="community-input-help-hidden">Tên liên hệ cần từ 2–50 ký tự.</small>
               </div>
               <div>
                 <label htmlFor="authorPhone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
@@ -511,6 +541,26 @@ export default function CommunityPage() {
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
                 <PostFieldError name="authorPhone" errors={errors} />
+              </div>
+            </div>
+            <div className="community-post-form-row">
+              <div>
+                <label htmlFor="facebookUrl">Facebook <span>Không bắt buộc</span></label>
+                <input id="facebookUrl" type="url" maxLength={500} value={facebookUrl}
+                  className="community-post-location-control" aria-invalid={Boolean(errors.facebookUrl)}
+                  aria-describedby="facebookUrl-help facebookUrl-error" onChange={event => setFacebookUrl(event.target.value)}
+                  placeholder="https://facebook.com/user" />
+                <small id="facebookUrl-help" className="community-input-help-hidden">Link HTTPS facebook.com hoặc fb.com; tối đa 500 ký tự.</small>
+                <PostFieldError name="facebookUrl" errors={errors} />
+              </div>
+              <div>
+                <label htmlFor="zaloUrl">Zalo <span>Không bắt buộc</span></label>
+                <input id="zaloUrl" type="url" maxLength={500} value={zaloUrl}
+                  className="community-post-location-control" aria-invalid={Boolean(errors.zaloUrl)}
+                  aria-describedby="zaloUrl-help zaloUrl-error" onChange={event => setZaloUrl(event.target.value)}
+                  placeholder="https://zalo.me/0912345678" />
+                <small id="zaloUrl-help" className="community-input-help-hidden">Link HTTPS zalo.me; tối đa 500 ký tự.</small>
+                <PostFieldError name="zaloUrl" errors={errors} />
               </div>
             </div>
                 </section>

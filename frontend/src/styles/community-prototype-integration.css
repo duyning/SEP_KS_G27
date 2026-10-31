@@ -11,6 +11,9 @@
 @media(max-width:600px){.prototype-community .community-back-to-top {right:16px;bottom:16px}.prototype-community .community-pagination {padding-bottom:60px}}
 .prototype-community .community-restored-author {display:flex;align-items:center;gap:12px}
 .prototype-community .community-restored-author strong {font-size:15px;color:#0f172a}
+.prototype-community .community-restored-author {max-width:100%;min-width:0}
+.prototype-community .community-restored-author > div:last-child {min-width:0}
+.prototype-community .community-restored-author strong {display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
 .prototype-community .community-restored-avatar {display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:#f1f5f9;color:#475569;font-size:14px;font-weight:700}
 .prototype-community .community-restored-post .community-feed-title {margin:0 0 10px;color:#0f172a;font-size:21px;line-height:1.5;font-weight:800;overflow-wrap:anywhere}
 .prototype-community .community-restored-post .community-feed-description {font-size:15px;color:#334155;line-height:1.8;margin:0 0 16px;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -31,6 +34,9 @@
 .prototype-community .post-media-count {pointer-events:none}
 .prototype-community .post-card-media video {height:100%;width:100%;object-fit:contain;background:#0f172a}
 .prototype-community .community-visibility-note {font-size:12px;line-height:1.6;color:#64748b;margin:0 0 16px}
+.prototype-community .community-background-status {display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid #99f6e4;border-radius:10px;background:#f0fdfa;color:#115e59;font-size:13px;line-height:1.5}
+.prototype-community .community-background-status--error {justify-content:space-between;flex-wrap:wrap;border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.prototype-community .community-background-status--error button {min-height:36px;padding:6px 12px;border:1px solid currentColor;border-radius:8px;background:#fff;color:inherit;font:inherit;font-weight:700;cursor:pointer}
 .prototype-community .community-refresh {background:transparent;border:0;cursor:pointer}
 .prototype-community .btn-create-post {background:var(--community-action);color:#fff}
 .prototype-community .btn-view-detail,.prototype-community a.btn-view-detail {background:#0f172a;color:#fff}

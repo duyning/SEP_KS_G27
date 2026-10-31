@@ -240,6 +240,8 @@ CREATE TABLE `posts` (
     `post_type` VARCHAR(50) NOT NULL COMMENT 'ROOMMATE, PASS_ROOM, PASS_ITEM',
     `title` VARCHAR(255) NOT NULL,
     `description` TEXT NULL,
+    `facebook_url` VARCHAR(500) NULL,
+    `zalo_url` VARCHAR(500) NULL,
     `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED',
     `reviewed_by` INT NULL,
     `reviewed_at` DATETIME NULL,

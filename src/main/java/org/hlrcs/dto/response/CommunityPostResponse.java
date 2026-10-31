@@ -7,6 +7,7 @@ import java.util.List;
 public record CommunityPostResponse(
         Integer id, String type, String typeLabel, String title, String content,
         BigDecimal price, String location, String authorName, String authorPhone,
+        String facebookUrl, String zaloUrl,
         String status, LocalDateTime createdAt, LocalDateTime updatedAt,
         String decisionNote, String reviewedBy, LocalDateTime reviewedAt, List<Image> images, List<Image> videos, long commentCount
 ) {

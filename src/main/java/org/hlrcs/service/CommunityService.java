@@ -167,7 +167,9 @@ public class CommunityService {
         if (!type.equals(request.type()) || !Objects.equals(post.getTitle(), request.title())
                 || !Objects.equals(post.getDescription(), request.content()) || !samePrice
                 || !Objects.equals(post.getLocation(), request.location()) || !Objects.equals(post.getContactName(), request.authorName())
-                || !Objects.equals(post.getContactPhone(), request.authorPhone())) return true;
+                || !Objects.equals(post.getContactPhone(), request.authorPhone())
+                || !Objects.equals(Objects.toString(post.getFacebookUrl(), ""), Objects.toString(request.facebookUrl(), ""))
+                || !Objects.equals(Objects.toString(post.getZaloUrl(), ""), Objects.toString(request.zaloUrl(), ""))) return true;
         var imageIds = images.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
         var videoIds = videos.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
         return retainedChanged(request.retainedImageIds(), imageIds) || retainedChanged(request.retainedVideoIds(), videoIds);
@@ -193,6 +195,8 @@ public class CommunityService {
         post.setLocation(request.location());
         post.setContactName(request.authorName());
         post.setContactPhone(request.authorPhone());
+        post.setFacebookUrl(request.facebookUrl());
+        post.setZaloUrl(request.zaloUrl());
     }
 
     private CommunityPostResponse response(Post post, boolean privateView) {
@@ -219,7 +223,7 @@ public class CommunityService {
         };
         return new CommunityPostResponse(post.getPostId(), type, label, post.getTitle(), post.getDescription(),
                 post.getPrice(), post.getLocation(), post.getContactName() == null ? post.getAuthor().getFullName() : post.getContactName(),
-                post.getContactPhone(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
+                post.getContactPhone(), post.getFacebookUrl(), post.getZaloUrl(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,
                 privateView && post.getReviewer() != null ? post.getReviewer().getFullName() : null,
                 privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()), commentCount);

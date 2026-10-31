@@ -40,6 +40,9 @@
 .staff-community-prototype .comm-action-btn {font-size:13px;min-height:40px}
 .staff-community-prototype .comm-action-btn--review {background:#0f766e;border-color:#0f766e;color:#fff}
 .staff-community-prototype .comm-action-btn--review:hover {background:#115e59;border-color:#115e59}
+.staff-community-prototype .staff-community-refresh-status {display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid #99f6e4;border-radius:8px;background:#f0fdfa;color:#115e59;font-size:13px;line-height:1.5}
+.staff-community-prototype .staff-community-refresh-status--error {justify-content:space-between;flex-wrap:wrap;border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.staff-community-prototype .staff-community-refresh-status--error button {min-height:36px;padding:6px 12px;border:1px solid currentColor;border-radius:8px;background:#fff;color:inherit;font:inherit;font-weight:700;cursor:pointer}
 .staff-community-prototype .comm-thumb,.staff-community-prototype .comm-mobile-card-thumb {display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#64748b;overflow:hidden}
 .staff-community-prototype .comm-thumb button,.staff-community-prototype .comm-mobile-card-thumb button {min-width:0;min-height:0}
 .staff-community-prototype .verif-time-tag {white-space:normal;line-height:1.6}

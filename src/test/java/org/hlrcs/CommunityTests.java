@@ -113,8 +113,8 @@ class CommunityTests {
                 "location", " ", "authorName", " ", "authorPhone", "12345");
         var errors = data(request("POST", "/api/community/posts", invalid, author), 400);
         for (String field : invalid.keySet()) assertTrue(errors.has(field), field + ": " + errors);
-        for (var entry : Map.<String, Object>of("title", "x".repeat(201), "content", "x".repeat(5001),
-                "location", "x".repeat(256), "authorName", "x".repeat(101), "price", 1_000_000_001L).entrySet()) {
+        for (var entry : Map.<String, Object>of("title", "x".repeat(101), "content", "x".repeat(2501),
+                "location", "x".repeat(256), "authorName", "x".repeat(51), "price", 1_000_000_001L).entrySet()) {
             var body = valid("ROOMMATE");
             body.put(entry.getKey(), entry.getValue());
             assertTrue(data(request("POST", "/api/community/posts", body, author), 400).has(entry.getKey()));
@@ -159,6 +159,33 @@ class CommunityTests {
         }
         assertEquals(409, request("PUT", "/api/community/posts/" + id, valid("ROOM_TRANSFER"), author).statusCode());
         assertEquals(409, request("POST", "/api/staff/community/posts/" + id + "/review", Map.of("decision", "REJECT", "note", "Không được xử lý lặp lại"), staff).statusCode());
+    }
+
+    @Test
+    void socialContactsPersistAcrossReviewAndCanBeChangedOrRemovedOnResubmission() throws Exception {
+        var body = valid("ROOMMATE");
+        body.put("facebookUrl", "https://www.facebook.com/nguyenvanan");
+        body.put("zaloUrl", "https://zalo.me/0912345678");
+        var saved = data(request("POST", "/api/community/posts", body, author), 201);
+        int id = saved.path("id").asInt();
+        assertEquals(body.get("facebookUrl"), saved.path("facebookUrl").asString());
+        assertEquals(body.get("zaloUrl"), saved.path("zaloUrl").asString());
+        data(request("POST", "/api/staff/community/posts/" + id + "/review",
+                Map.of("decision", "REQUEST_CHANGES", "note", "Vui lòng cập nhật lại link liên hệ."), staff), 200);
+        body.put("facebookUrl", "https://facebook.com/contactnew");
+        body.remove("zaloUrl");
+        var revised = data(request("PUT", "/api/community/posts/" + id, body, author), 200);
+        assertEquals("PENDING", revised.path("status").asString());
+        assertEquals(body.get("facebookUrl"), revised.path("facebookUrl").asString());
+        assertTrue(revised.path("zaloUrl").isNull());
+        var reviewed = data(request("POST", "/api/staff/community/posts/" + id + "/review",
+                Map.of("decision", "APPROVE"), staff), 200);
+        assertEquals(body.get("facebookUrl"), reviewed.path("post").path("facebookUrl").asString());
+        var feed = data(request("GET", "/api/community/posts", null, null), 200);
+        for (var post : feed) if (post.path("id").asInt() == id) {
+            assertEquals(body.get("facebookUrl"), post.path("facebookUrl").asString());
+            assertTrue(post.path("zaloUrl").isNull());
+        }
     }
 
     @Test

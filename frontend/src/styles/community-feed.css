@@ -29,7 +29,10 @@
 .community-feed-time { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #475569; font-size: 14px; line-height: 1.7; margin-top: 3px; }
 .community-feed-badges { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .community-feed-badges .status-badge { font-size: 13px !important; padding: 5px 10px !important; }
-.community-feed-category { font-size: 14px; font-weight: 700; color: #0f766e; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 5px 10px; border-radius: 8px; }
+.community-feed-category { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 44px; box-sizing: border-box; font-size: 16px; line-height: 1.5; font-weight: 750; color: #115e59; background: #ccfbf1; border: 1px solid #5eead4; padding: 9px 16px; border-radius: 10px; }
+.prototype-community .community-feed-category[data-category="ROOM_TRANSFER"] { color: #115e59; background: #ccfbf1; border-color: #5eead4; }
+.prototype-community .community-feed-category[data-category="ROOMMATE"] { color: #5b21b6; background: #ede9fe; border-color: #c4b5fd; }
+.prototype-community .community-feed-category[data-category="SECOND_HAND"] { color: #9a3412; background: #ffedd5; border-color: #fdba74; }
 .community-feed-body { min-width: 0; }
 .community-feed-copy { min-width: 0; }
 .community-post-media { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -74,12 +77,24 @@
 .community-comments-list { list-style: none; display: grid; gap: 12px; margin: 0; padding: 0; }
 .community-comments-list li { padding: 12px 14px; border-radius: 10px; background: #f8fafc; }
 .community-comment-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+.community-comment-timestamp { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .community-comments-list > .community-comment-thread { padding: 0; background: transparent; }
 .community-comment-body { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; min-width: 0; padding: 0; background: transparent; }
 .community-comment-avatar { position: relative; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 2px solid #fff; border-radius: 50%; background: #e2f3ef; color: #115e59; font-size: 12px; font-weight: 750; }
 .community-comment-content { min-width: 0; }
 .community-comment-bubble { width: fit-content; max-width: 100%; min-width: min(240px, 100%); padding: 10px 14px; border-radius: 16px; background: #f1f5f9; }
 .community-comment-bubble:has(form) { width: 100%; }
+.community-comment-bubble { position: relative; }
+.community-comment-bubble--owned { padding-right: 52px; }
+.community-comment-menu { position: absolute; top: 4px; right: 4px; z-index: 2; }
+.community-comment-menu-trigger { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: #475569; cursor: pointer; }
+.community-comment-menu-trigger:hover { background: #e2e8f0; }
+.community-comment-menu-items { position: absolute; top: 100%; right: 0; min-width: 160px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 10px; background: white; box-shadow: 0 8px 24px #0f172a26; }
+.community-comment-menu-items button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 6px; background: transparent; color: #0f172a; text-align: left; cursor: pointer; }
+.community-comment-menu-items button:hover { background: #f1f5f9; }
+.community-comment-menu-items .community-comment-delete { color: #991b1b; }
+.community-comment-menu button:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.community-comment-menu-trigger:disabled { opacity: .5; cursor: wait; }
 .community-comment-thread.has-branches > .community-comment-body::after { content: ''; position: absolute; left: 17px; top: 36px; bottom: 0; border-left: 2px solid #cbd5e1; pointer-events: none; }
 .community-comment-actions { display: flex; align-items: center; gap: 14px; }
 .community-comment-actions button, .community-replies-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 0; border: 0; background: transparent; color: #475569; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -90,10 +105,20 @@
 .community-comment-replies { position: relative; margin: 8px 0 0 18px; padding-left: 30px; border: 0; }
 .community-comment-replies::before { content: ''; position: absolute; left: -1px; top: -8px; height: 8px; border-left: 2px solid #cbd5e1; pointer-events: none; }
 .community-reply-branch { position: relative; }
+.community-reply-branch.has-child-replies > .community-comment-body::after { content: ''; position: absolute; left: 17px; top: 36px; bottom: 0; border-left: 2px solid #cbd5e1; pointer-events: none; }
+.community-comment-nested { margin-top: 12px; }
+/* Keep deep conversations readable on narrow screens without losing tree structure. */
+@media (max-width: 600px) {
+  .community-comment-nested { margin-left: 10px; padding-left: 12px; }
+  .community-comment-nested > .community-comments-list > .community-reply-branch::before,
+  .community-comment-nested > .community-comments-list > .community-reply-branch::after { left: -13px; }
+  .community-comment-nested > .community-comments-list > .community-reply-branch::after { width: 12px; }
+  .community-comment-nested::before { left: -1px; }
+}
 .community-reply-branch::before { content: ''; position: absolute; left: -31px; top: 0; bottom: -12px; border-left: 2px solid #cbd5e1; pointer-events: none; }
 .community-reply-branch::after, .community-reply-composer-branch::after { content: ''; position: absolute; left: -31px; top: 0; width: 30px; height: 18px; border-left: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1; border-bottom-left-radius: 14px; pointer-events: none; }
 .community-reply-branch:last-child::before { bottom: auto; height: 18px; }
-.community-comment-replies.has-composer .community-reply-branch:last-child::before { bottom: -12px; height: auto; }
+.community-comment-replies.has-composer > .community-comments-list > .community-reply-branch:last-child::before { bottom: -12px; height: auto; }
 .community-reply-composer-branch { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 12px; margin-top: 12px; }
 .community-reply-composer-branch::after { top: -12px; height: 30px; }
 .community-reply-composer-branch .community-comment-form { margin-top: 0; }

@@ -50,6 +50,12 @@ public class Post {
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
 
+    @Column(name = "facebook_url", length = 500)
+    private String facebookUrl;
+
+    @Column(name = "zalo_url", length = 500)
+    private String zaloUrl;
+
     @Column(name = "review_note", length = 2000)
     private String reviewNote;
 

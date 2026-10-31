@@ -3,6 +3,14 @@ import { ApiError, request } from './auth.js';
 export const postTypes = { ROOM_TRANSFER: 'Nhượng phòng', ROOMMATE: 'Tìm người ở ghép', SECOND_HAND: 'Đồ cũ sinh viên' };
 export const postStatuses = { PENDING: 'Chờ kiểm duyệt', NEED_CHANGES: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối' };
 const clean = value => String(value ?? '').trim();
+export function validPostContactLink(value, platform) {
+  const url = clean(value);
+  if (!url) return true;
+  if (url.length > 500) return false;
+  return platform === 'facebook'
+    ? /^https:\/\/(?:(?:www\.|m\.)?facebook\.com|(?:www\.)?fb\.com)\/[^\s\\]+$/.test(url)
+    : platform === 'zalo' && /^https:\/\/(?:www\.)?zalo\.me\/[^\s\\]+$/.test(url);
+}
 
 export function parsePostPrice(value) {
   const text = clean(value);
@@ -46,7 +54,7 @@ export function hasPostDraftChanges(values, initial, editing = false) {
   if (values.retainedImageIds && JSON.stringify(values.retainedImageIds) !== JSON.stringify(initial.retainedImageIds || [])) return true;
   if (values.retainedVideoIds && JSON.stringify(values.retainedVideoIds) !== JSON.stringify(initial.retainedVideoIds || [])) return true;
   if (values.type !== initial.type) return true;
-  return ['title', 'content', 'price', 'location', 'authorName', 'authorPhone'].some(field => {
+  return ['title', 'content', 'price', 'location', 'authorName', 'authorPhone', 'facebookUrl', 'zaloUrl'].some(field => {
     const current = String(values[field] ?? '');
     const original = String(initial[field] ?? '');
     if (!editing && current === '') return false;
@@ -63,8 +71,8 @@ export function validatePost(values) {
   const errors = {};
   if (!Object.hasOwn(postTypes, values.type)) errors.type = 'Vui lòng chọn chuyên mục hợp lệ.';
   for (const [field, label, min, max] of [
-    ['title', 'Tiêu đề', 10, 200], ['content', 'Nội dung', 30, 5000],
-    ['location', 'Khu vực', 5, 255], ['authorName', 'Tên liên hệ', 2, 100],
+    ['title', 'Tiêu đề', 10, 100], ['content', 'Nội dung', 10, 2500],
+    ['location', 'Khu vực', 5, 255], ['authorName', 'Tên liên hệ', 2, 50],
   ]) {
     const length = clean(values[field]).length;
     if (length < min || length > max) errors[field] = `${label} cần từ ${min} đến ${max} ký tự.`;
@@ -73,6 +81,8 @@ export function validatePost(values) {
     errors.authorPhone = 'Nhập số điện thoại Việt Nam hợp lệ, ví dụ 0912345678 hoặc +84912345678.';
   }
   const price = parsePostPrice(values.price);
+  if (!validPostContactLink(values.facebookUrl, 'facebook')) errors.facebookUrl = 'Nhập link HTTPS Facebook hợp lệ (facebook.com hoặc fb.com), tối đa 500 ký tự.';
+  if (!validPostContactLink(values.zaloUrl, 'zalo')) errors.zaloUrl = 'Nhập link HTTPS Zalo hợp lệ (zalo.me), tối đa 500 ký tự.';
   if (price !== null && (!Number.isFinite(price) || price < 0 || price > 1_000_000_000)) {
     errors.price = 'Giá phải là số nguyên từ 0 đến 1 tỷ đồng; để trống nếu thỏa thuận.';
   } else if (price === 0 && values.type !== 'SECOND_HAND') {
@@ -86,6 +96,8 @@ export function postPayload(values) {
     type: values.type, title: clean(values.title), content: clean(values.content),
     price: parsePostPrice(values.price), location: clean(values.location),
     authorName: clean(values.authorName), authorPhone: clean(values.authorPhone).replace(/[\s.-]/g, ''),
+    ...(clean(values.facebookUrl) ? { facebookUrl: clean(values.facebookUrl) } : {}),
+    ...(clean(values.zaloUrl) ? { zaloUrl: clean(values.zaloUrl) } : {}),
     ...(values.retainedImageIds ? { retainedImageIds: values.retainedImageIds } : {}),
     ...(values.retainedVideoIds ? { retainedVideoIds: values.retainedVideoIds } : {}),
   };
@@ -146,6 +158,9 @@ export const communityApi = {
     return commentPage(await request(`/${id(postId)}/comments?page=${page}&size=20`, { basePath, signal }));
   },
   async addComment(postId, content, signal) { return request(`/${id(postId)}/comments`, { basePath, method: 'POST', body: { content }, signal }); },
+  async deleteComment(postId, commentId, signal) {
+    return request(`/${id(postId)}/comments/${id(commentId)}`, { basePath, method: 'DELETE', signal });
+  },
   async updateComment(postId, commentId, content, signal) {
     return request(`/${id(postId)}/comments/${id(commentId)}`, { basePath, method: 'PUT', body: { content }, signal });
   },

@@ -1,0 +1,6 @@
+.community-post-contact-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.community-post-contact-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border: 1px solid #99f6e4; border-radius: 8px; background: #f0fdfa; color: #0f766e; text-decoration: none; font-size: 14px; font-weight: 600; }
+.community-post-contact-links a:hover { background: #ccfbf1; }
+.community-post-contact-links a:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
+.community-social-contact-fact a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: #0f766e; overflow-wrap: anywhere; }
+.community-social-contact-fact a:hover { text-decoration: underline; }

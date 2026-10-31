@@ -13,6 +13,8 @@ import { useCommunityLoad } from '../../components/CommunityUI.jsx';
 import { communityApi } from '../../services/community.js';
 import CommunityPostImage from '../../components/CommunityPostImage.jsx';
 import CommunityPostVideo from '../../components/CommunityPostVideo.jsx';
+import CommunityPostDescription from '../../components/CommunityPostDescription.jsx';
+import CommunityPostContactLinks from '../../components/CommunityPostContactLinks.jsx';
 import { useToast } from '../../components/PortalUI.jsx';
 import '../../styles/staff-community-detail.css';
 
@@ -91,6 +93,8 @@ export default function StaffCommunityModerationDetailPage() {
         <Link to="/staff/community"><ArrowLeft size={16} /> Quay lại danh sách kiểm duyệt</Link>
         <span>Mã bài #{currentPost.id}</span>
       </nav>
+      {state.refreshing&&<p className="staff-community-detail-refresh" role="status">Đang cập nhật bài viết; nội dung hiện tại vẫn được giữ.</p>}
+      {state.refreshError&&<div className="staff-community-detail-refresh staff-community-detail-refresh--error" role="alert"><span>Không thể cập nhật bài viết: {state.refreshError}</span><MotionButton type="button" className="p-button" onClick={state.reload}>Thử lại</MotionButton></div>}
 
       <div className="staff-community-detail-layout">
       <article className="staff-community-post">
@@ -98,7 +102,7 @@ export default function StaffCommunityModerationDetailPage() {
           <div className="staff-community-post-author">
             <div className="staff-community-post-avatar" aria-hidden="true">{currentPost.authorName.slice(0, 2).toUpperCase()}</div>
             <div>
-              <strong>{currentPost.authorName}</strong>
+              <strong title={currentPost.authorName}>{currentPost.authorName}</strong>
               <time dateTime={currentPost.createdAt}>
                 <span>{new Date(currentPost.createdAt).toLocaleTimeString('vi-VN')}</span>
                 <span aria-hidden="true">•</span>
@@ -113,13 +117,14 @@ export default function StaffCommunityModerationDetailPage() {
         </header>
 
         <h1>{currentPost.title}</h1>
-        <p className="staff-community-post-content">{currentPost.content}</p>
+        <CommunityPostDescription key={currentPost.id} content={currentPost.content} className="staff-community-post-content" />
         {currentPost.priceDisplay && <div className="staff-community-post-price">Chi phí: <strong>{currentPost.priceDisplay}</strong></div>}
         <div className="staff-community-post-contact">
           {currentPost.location && <div>Địa chỉ: <strong>{currentPost.location}</strong></div>}
           {currentPost.authorPhone && <div>Số điện thoại: <strong>{currentPost.authorPhone}</strong></div>}
         </div>
 
+        <CommunityPostContactLinks post={currentPost} />
         {currentPost.images?.length > 0 && <div className="staff-community-post-images" aria-label="Hình ảnh bài viết">
           {currentPost.images.map(image => <div className="staff-community-post-thumbnail" key={image.id}>
             <CommunityPostImage postId={currentPost.id} image={image} images={currentPost.images} />
