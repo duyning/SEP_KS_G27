@@ -1,18 +1,6 @@
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Preserved from Code/giao_dien/html/staff-host-registrations.html and staff-host-registration-detail.html.
-import {Link} from 'react-router-dom';
 export default function StaffHostListTemplate(props){return <div className="hr-content-fragment" onClick={props.onClick} onChange={props.onChange}><section className="staff-content">
-
-
-        <nav className="dashboard-breadcrumbs" aria-label="Đường dẫn">
-          <Link to="/staff">HL_RCS</Link>
-          <span className="breadcrumb-separator">/</span>
-          <Link to="/staff">Staff Portal</Link>
-          <span className="breadcrumb-separator">/</span>
-          <span className="breadcrumb-current">Xác minh đăng ký chủ trọ</span>
-        </nav>
-
-
         <section className="dashboard-header-row">
           <div>
             <h2 className="dashboard-headline">Hồ sơ đăng ký làm chủ trọ</h2>

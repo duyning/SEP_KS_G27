@@ -16,12 +16,12 @@ export function useStaffLoad(type, id) {
     const controller = new AbortController();
     setState({ loading: true, data: null, error: '' });
     staffApi[type](controller.signal, id).then(data => { if (!controller.signal.aborted) setState({ loading: false, data, error: '' }); })
-      .catch(error => { if (!controller.signal.aborted) setState({ loading: false, data: null, error: error.message }); });
+      .catch(error => { if (!controller.signal.aborted) setState({ loading: false, data: null, error: error.message, errorStatus: error.status }); });
     return () => controller.abort();
   }, [type, id, revision, user?.userId]);
-  return { ...state, reload: () => setRevision(value => value + 1), replace: data => setState({ loading: false, error: '', data }) };
+  return { ...state, reload: () => setRevision(value => value + 1), deny: error => setState({loading:false,data:null,error:error.message,errorStatus:error.status}), replace: data => setState({ loading: false, error: '', data }) };
 }
-export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={state.error}><button className="p-button" onClick={state.reload}>Thử lại</button></StateView>; }
+export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={[403,404].includes(state.errorStatus) ? 'Hồ sơ không tồn tại hoặc bạn không còn quyền truy cập theo phân công. Vui lòng quay lại danh sách hoặc tải lại.' : state.error}><button className="p-button" onClick={state.reload}>Thử lại</button></StateView>; }
 export function StaffThumbnail({ registrationId, fileId, name }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(Boolean(fileId));

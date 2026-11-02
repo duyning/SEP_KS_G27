@@ -1,6 +1,6 @@
 import { AnimatePresence, MotionMenu, MotionButton } from '../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronDown, ChevronRight, ClipboardCheck, ExternalLink, Flag, Globe, Heart, History, House, Layers, LayoutDashboard, LogOut, Menu, MessagesSquare, PanelTop, PlusCircle, Shield, Star, UserRound, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { landingFor, roleLabels } from '../routing/screens.js';
@@ -8,6 +8,7 @@ import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
 import { staffHostApi } from '../services/staff-host-applications.js';
+import '../styles/host-workspace.css';
 
 const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
@@ -31,7 +32,7 @@ const menus = {
     ]]
   ],
   staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
-  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Phân công nhân viên', '/admin?view=assignment', ClipboardCheck], ['Xét duyệt hồ sơ dịch vụ', '/staff/service-applications', Wrench]]], ['HỆ THỐNG', [['Nhật ký hoạt động', '/admin?view=activity', History]]]],
+  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Giám sát phân công', '/admin?view=assignment', ClipboardCheck], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench]]], ['HỆ THỐNG', [['Nhật ký kiểm duyệt', '/admin?view=activity', History]]]],
 };
 export function Brand({ portal = 'public', onClick }) {
   return (
@@ -56,7 +57,7 @@ export default function PortalLayout({ screen, children }) {
   const { user, logout } = useAuth();
   const notify = useToast();
   const location = useLocation();
-  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -140,7 +141,7 @@ export default function PortalLayout({ screen, children }) {
     if (leaving) return;
     setLeaving(true);
     try { await logout(); } catch { notify('Phiên trên thiết bị đã được xóa. Máy chủ không phản hồi khi đăng xuất.', 'error'); }
-    finally { setLeaving(false); navigate('/login', { replace: true }); }
+    finally { setLeaving(false); }
   }
 
   const avatarChar = user?.fullName
@@ -156,6 +157,7 @@ export default function PortalLayout({ screen, children }) {
         type="button"
         className="host-user-btn"
         id="btnHostUserDropdown"
+        aria-label={`Tài khoản ${user.fullName || user.email} · ${roleLabels[user.role] || ''}`}
         aria-expanded={userMenuOpen}
         aria-haspopup="true"
         onClick={() => setUserMenuOpen((prev) => !prev)}
@@ -251,7 +253,7 @@ export default function PortalLayout({ screen, children }) {
   if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
 
   return (
-    <div className={`portal-app ${portal}-portal ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
+    <div className={`portal-app ${portal}-portal ${portal === 'host' && ['/host', '/host/property', '/host/property/new', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'host-workspace' : ''} ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
       <a className="skip-link" href="#main-content">Đến nội dung chính</a>
 
       {portal === 'public' ? (
@@ -274,10 +276,10 @@ export default function PortalLayout({ screen, children }) {
             <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={22} />
             </MotionButton>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h1>{screen.path === '/host/property/new' ? <><span className="registration-topbar-parent"><Link to="/host">Bảng điều khiển</Link> / <Link to="/host/property">Nhà trọ của tôi</Link> / </span>Đăng ký nhà trọ</> : topbarTitle}</h1>
+            <div className="portal-topbar-title">
+              <h1>{topbarTitle}</h1>
               {portal === 'staff' && staffCounts && <div className="topbar-status-chip hide-mobile"><span className="live-dot-green" /><span>{screen.path.startsWith('/staff/verifications') ? 'Thẩm định hồ sơ' : 'Hệ thống trực tuyến'}</span></div>}
-              {portal === 'host' && !['/host/rooms', '/host/viewings', '/host/property/new'].includes(screen.path) && (
+              {portal === 'host' && !['/host', '/host/property', '/host/room-types', '/host/rooms', '/host/viewings', '/host/property/new'].includes(screen.path) && (
                 <div className="topbar-status-chip hide-mobile">
                   <span className="live-dot-green" />
                   <span>{screen.path === '/host/property' ? 'Danh mục nhà trọ' : screen.path === '/host/room-types' ? 'Bảng giá & Tiện nghi' : 'Hệ thống trực tuyến'}</span>
@@ -315,7 +317,7 @@ export default function PortalLayout({ screen, children }) {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
                 const selectedPropertyId = new URLSearchParams(location.search).get('propertyId');
                 const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
-                const active = to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
+                const active = to.startsWith('/admin') ? location.pathname === '/admin' && (new URLSearchParams(to.split('?')[1] || '').get('view') || 'overview') === (new URLSearchParams(location.search).get('view') || 'overview') : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (
                   <Link key={to} to={scopedLink} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
                     <Icon size={19} />
@@ -345,7 +347,7 @@ export default function PortalLayout({ screen, children }) {
             </section>
           )}
         </nav>
-        {portal !== 'host' && user && (
+        {portal !== 'host' && portal !== 'staff' && user && (
           <footer className="portal-sidebar-footer" style={{ padding: '14px 16px', borderTop: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="host-user-avatar" style={{ width: '34px', height: '34px', fontSize: '12px' }}>{portal === 'host' ? avatarChar : initials}</div>

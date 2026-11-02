@@ -34,7 +34,17 @@ class HostDashboardTests {
     @Autowired WishlistRepository wishlists;
     @Autowired RoomRepository physicalRooms;
     @Autowired HostApplicationRepository hostApplications;
+    @Autowired org.hlrcs.service.DevelopmentVerificationAssignments fixtureAssignments;
+    @Autowired org.hlrcs.security.JwtTokenProvider fixtureTokens;
     private final HttpClient client = HttpClient.newHttpClient();
+
+    // Legacy workflow fixtures now explicitly provision responsibility. Security tests never use this helper.
+    private synchronized void assignFixture(String token, int id) {
+        var staff=users.findByEmail(fixtureTokens.getUsernameFromJWT(token)).orElseThrow();
+        var row=registrations.findById(id).orElse(null);
+        if(row!=null && staff.getRole()==UserRole.STAFF && row.getAssignedStaff()==null)
+            fixtureAssignments.apply(new org.hlrcs.service.DevelopmentVerificationAssignments.Command(id,row.getAssignmentVersion(),null,staff.getUserId()),"legacy-tests");
+    }
 
     private HttpResponse<String> propertyEdit(String token,int id) throws Exception {
         var request=HttpRequest.newBuilder(uri("/api/host/property-registrations/"+id+"/edit"));
@@ -50,7 +60,8 @@ class HostDashboardTests {
         return client.send(HttpRequest.newBuilder(uri("/api/host/property-registrations/"+id+"/resubmit")).header("Authorization","Bearer "+token).header("Content-Type","multipart/form-data; boundary="+boundary).POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
     }
     private HttpResponse<String> scopedSupplement(String staff,int id,java.util.List<String> fields) throws Exception {
-        return client.send(HttpRequest.newBuilder(uri("/api/staff/verifications/"+id+"/review")).header("Authorization","Bearer "+staff).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(Map.of("decision","REQUEST_SUPPLEMENT","note","Vui lòng cập nhật đúng các mục được yêu cầu.","requestedFields",fields)))).build(),HttpResponse.BodyHandlers.ofString());
+        assignFixture(staff,id);
+        return client.send(HttpRequest.newBuilder(uri("/api/staff/verifications/"+id+"/review")).header("Authorization","Bearer "+staff).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(Map.of("decision","REQUEST_SUPPLEMENT","note","Vui lòng cập nhật đúng các mục được yêu cầu.","requestedFields",fields,"assignmentVersion",registrations.findById(id).orElseThrow().getAssignmentVersion())))).build(),HttpResponse.BodyHandlers.ofString());
     }
     private java.util.List<Integer> retainedPhotos(int id){return documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id).stream().filter(d->d.getDocumentType().startsWith("PHOTO_")).map(PropertyDocumentRepository.Metadata::getDocumentId).toList();}
 
@@ -74,6 +85,8 @@ class HostDashboardTests {
         assertEquals(3,documents.countByRegistration_RegistrationId(id));
         var result=resubmit(host,id,version,fields,retainedPhotos(id),"idCard","%PDF-1.7 replacement document");
         assertEquals(200,result.statusCode(),result.body());assertEquals("PENDING",json.readTree(result.body()).path("data").path("status").asString());
+        assertEquals(1,registrations.findById(id).orElseThrow().getAssignmentVersion(),"Supplement resubmission keeps the explicit current assignment");
+        assertEquals(users.findByEmail(fixtureTokens.getUsernameFromJWT(staff)).orElseThrow().getUserId(),json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("assignedStaffId").asInt());
         assertEquals(4,documents.countByRegistration_RegistrationId(id));assertEquals(3,documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id).size());
         assertEquals(409,propertyEdit(host,id).statusCode());assertEquals(409,resubmit(host,id,version,fields,retainedPhotos(id),null,null).statusCode());
         assertEquals(1,json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("submissionEvents").size());
@@ -94,6 +107,8 @@ class HostDashboardTests {
         var first=java.util.concurrent.CompletableFuture.supplyAsync(call);var second=java.util.concurrent.CompletableFuture.supplyAsync(call);
         var a=first.get();var b=second.get();assertEquals(java.util.Set.of(200,409),java.util.Set.of(a.statusCode(),b.statusCode()));
         int revision=json.readTree((a.statusCode()==200?a:b).body()).path("data").path("registrationId").asInt();assertNotEquals(base,revision);
+        assertNull(registrations.findById(revision).orElseThrow().getAssignedStaff(),"A new revision must not inherit access from the published registration");
+        assertEquals(404,staffGet(staff,"/verifications/"+revision).statusCode());
         assertEquals(oldName,properties.findById(propertyId).orElseThrow().getName());assertEquals(RegistrationStatus.APPROVED,registrations.findById(base).orElseThrow().getStatus());
         assertEquals(1,json.readTree(propertyDetail(host,"").body()).path("data").path("records").size());
         assertEquals(revision,json.readTree(propertyDetail(host,"").body()).path("data").path("records").get(0).path("changeRequest").path("registrationId").asInt());
@@ -165,14 +180,16 @@ class HostDashboardTests {
         return client.send(request.GET().build(), HttpResponse.BodyHandlers.ofString());
     }
     private HttpResponse<String> staffReview(String token, int id, String decision, String note) throws Exception {
+        assignFixture(token,id);
         return client.send(HttpRequest.newBuilder(uri("/api/staff/verifications/" + id + "/review"))
                 .header("Authorization", "Bearer " + token).header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(Map.of("decision", decision, "note", note)))).build(), HttpResponse.BodyHandlers.ofString());
+                .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(Map.of("decision", decision, "note", note,"assignmentVersion",registrations.findById(id).map(PropertyRegistration::getAssignmentVersion).orElse(0L))))).build(), HttpResponse.BodyHandlers.ofString());
     }
     @Test void staffDashboardAndDetailReadTheFullSubmittedRegistration() throws Exception {
         String hostToken = token(account(UserRole.ROOM_HOST));
         int id = json.readTree(submitRegistration(hostToken, registrationDetails(), true, false).body()).path("data").path("registrationId").asInt();
         String staffToken = token(account(UserRole.STAFF));
+        assignFixture(staffToken,id);
         var dashboard = staffGet(staffToken, "/dashboard");
         assertEquals(200, dashboard.statusCode(), dashboard.body());
         var dashboardData = json.readTree(dashboard.body()).path("data");

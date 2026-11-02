@@ -29,13 +29,26 @@ export default function StaffPropertyVerificationDetailPage() {
   const reviewRequest = useRef();
   const previewUrl = useRef();
   useEffect(()=>{setPreview(null);setDecision(null);setFileError('');setFileLoading(false);setBusy(false);return()=>{fileRequest.current?.abort();reviewRequest.current?.abort();if(previewUrl.current)URL.revokeObjectURL(previewUrl.current);};},[id]);
+  useEffect(()=>{
+    if(!state.data || state.loading || busy)return;
+    const controller=new AbortController();let checking=false;
+    const check=async()=>{
+      if(checking || document.visibilityState==='hidden')return;
+      checking=true;
+      try{const next=await staffApi.detail(controller.signal,id);if(!controller.signal.aborted && (next.assignmentVersion!==state.data.assignmentVersion || next.summary.status!==state.data.summary.status)){closePreview();setDecision(null);state.replace(next);}}
+      catch(error){if(!controller.signal.aborted && [403,404].includes(error.status)){closePreview();setDecision(null);state.deny(error);}}
+      finally{checking=false;}
+    };
+    const timer=setInterval(check,30000);window.addEventListener('focus',check);
+    return()=>{controller.abort();clearInterval(timer);window.removeEventListener('focus',check);};
+  },[id,state.data,state.loading,busy]);
   const closePreview = () => { setPreview(null); if(previewUrl.current)URL.revokeObjectURL(previewUrl.current);previewUrl.current=null; };
   const openFile = async file => {
     fileRequest.current?.abort();
     const controller = new AbortController();fileRequest.current=controller;
     setFileLoading(true);setFileError('');
     try { const blob=await staffApi.file(id,file.documentId,controller.signal);if(controller.signal.aborted)return;if(previewUrl.current)URL.revokeObjectURL(previewUrl.current);const url=URL.createObjectURL(blob);previewUrl.current=url;setPreview({url,type:blob.type,name:file.fileName || 'tai-lieu'}); }
-    catch(error){if(!controller.signal.aborted)setFileError(error.message);}
+    catch(error){if(!controller.signal.aborted){setFileError(error.message);if([403,404].includes(error.status)){closePreview();setDecision(null);state.deny(error);}}}
     finally{if(!controller.signal.aborted)setFileLoading(false);}
   };
   const review = async event => {
@@ -46,13 +59,13 @@ export default function StaffPropertyVerificationDetailPage() {
     const reviewNote=supplement?composeSupplementNote(supplementGroups(state.data),selectedFields,note):note.trim();
     if(decision!=='APPROVE' && (reviewNote.length<10 || reviewNote.length>2000)){setReviewError('Nội dung yêu cầu và ghi chú cần từ 10 đến 2000 ký tự. Vui lòng rút gọn ghi chú nếu quá dài.');return;}
     const controller=new AbortController();reviewRequest.current=controller;setBusy(true);setReviewError('');
-    try{const data=await staffApi.review(id,decision,reviewNote,controller.signal,supplement?selectedFields:undefined);if(controller.signal.aborted)return;state.replace(data);setDecision(null);setNote('');notify?.(decision==='REQUEST_SUPPLEMENT'?'Đã gửi yêu cầu bổ sung. Chủ trọ có thể xem nội dung tại Nhà trọ của tôi.':decision==='APPROVE'?'Đã phê duyệt hồ sơ. Nhà trọ được chuyển sang trạng thái Đang hiển thị.':'Đã từ chối hồ sơ và lưu lý do cho chủ trọ.','success');window.dispatchEvent(new Event('hlrcs:staff-updated'));}
-    catch(error){if(!controller.signal.aborted){setReviewError(error.message);if(error.status===409){setDecision(null);state.reload();notify?.(error.message,'error');}}}
+    try{const data=await staffApi.review(id,decision,reviewNote,controller.signal,supplement?selectedFields:undefined,state.data.assignmentVersion);if(controller.signal.aborted)return;state.replace(data);setDecision(null);setNote('');notify?.(decision==='REQUEST_SUPPLEMENT'?'Đã gửi yêu cầu bổ sung. Chủ trọ có thể xem nội dung tại Nhà trọ của tôi.':decision==='APPROVE'?'Đã phê duyệt hồ sơ. Nhà trọ được chuyển sang trạng thái Đang hiển thị.':'Đã từ chối hồ sơ và lưu lý do cho chủ trọ.','success');window.dispatchEvent(new Event('hlrcs:staff-updated'));}
+    catch(error){if(!controller.signal.aborted){setReviewError(error.message);if([403,404].includes(error.status)){closePreview();setDecision(null);state.deny(error);}else if(error.status===409){setDecision(null);state.reload();notify?.(error.message,'error');}}}
     finally{if(reviewRequest.current===controller)reviewRequest.current=null;if(!controller.signal.aborted)setBusy(false);}
   };
   if(state.loading || state.error)return <div className="sw-page"><Link className="sw-back" to="/staff/verifications"><ArrowLeft size={16}/>Danh sách hồ sơ</Link><StaffLoadState state={state}/></div>;
   const {summary,submission:form,photos,documents,history,reasonNote}=state.data;
-  const editable=['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status);
+  const editable=state.data.canReview===true && ['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status);
   const supplement=decision==='REQUEST_SUPPLEMENT';
   return <div className="sw-page svd-page">
     <nav className="svd-breadcrumbs" aria-label="Đường dẫn hồ sơ"><Link to="/staff">HL_RCS</Link><span>/</span><Link to="/staff/verifications">Xác minh nhà trọ</Link><span>/</span><strong>HS-{summary.registrationId} · {summary.name}</strong></nav>
@@ -66,15 +79,15 @@ export default function StaffPropertyVerificationDetailPage() {
     </div><aside className="svd-decision-column"><section className="sw-panel svd-decision-card">
       <header><h3>Quyết định thẩm định</h3><span className="svd-reviewer-tag">Staff Portal</span></header>
       <div className="svd-current-status"><span>Trạng thái hồ sơ:</span><StaffStatus status={summary.status}/></div>
-      <VerificationFields rows={[['Mã hồ sơ',`HS-${summary.registrationId}`],['Ngày nộp ban đầu',staffDate(summary.createdAt)],['Gửi lại gần nhất',staffDate(summary.submittedAt||summary.createdAt)],['Cập nhật xét duyệt',staffDate(summary.reviewedAt||summary.createdAt)],['Người xử lý',summary.reviewerName||'Chưa có người xử lý']]}/>
+      <VerificationFields rows={[['Mã hồ sơ',`HS-${summary.registrationId}`],['Ngày nộp ban đầu',staffDate(summary.createdAt)],['Gửi lại gần nhất',staffDate(summary.submittedAt||summary.createdAt)],['Cập nhật xét duyệt',staffDate(summary.reviewedAt||summary.createdAt)],['Staff phụ trách',state.data.assignedStaffName||'Chưa phân công'],['Người xử lý',summary.reviewerName||'Chưa có người xử lý']]}/>
       <h4 className="svd-label">Lựa chọn quyết định</h4><div className="sw-review-actions">
         <MotionButton className="sw-primary" disabled={!editable||busy} onClick={()=>{setDecision('APPROVE');setNote('');setReviewError('');}}><Check size={16}/>Phê duyệt hồ sơ</MotionButton>
-        <MotionButton className="sw-amber-outline" disabled={summary.status!=='PENDING'||busy} onClick={()=>{setDecision('REQUEST_SUPPLEMENT');setSelectedFields([]);setNote('');setReviewError('');}}><FilePenLine size={16}/>Yêu cầu bổ sung</MotionButton>
+        <MotionButton className="sw-amber-outline" disabled={!editable||summary.status!=='PENDING'||busy} onClick={()=>{setDecision('REQUEST_SUPPLEMENT');setSelectedFields([]);setNote('');setReviewError('');}}><FilePenLine size={16}/>Yêu cầu bổ sung</MotionButton>
         <MotionButton className="sw-danger" disabled={!editable||busy} onClick={()=>{setDecision('REJECT');setNote('');setReviewError('');}}><X size={16}/>Từ chối hồ sơ</MotionButton>
       </div>
       {reasonNote&&<div className="svd-review-note"><strong>Phản hồi xét duyệt</strong><p>{reasonNote}</p></div>}
       {summary.status==='NEEDS_SUPPLEMENT'&&<p className="sw-private-note">Đã gửi yêu cầu bổ sung cho chủ trọ. Hồ sơ chưa được phê duyệt.</p>}
-      {!editable&&<p className="sw-private-note"><ShieldCheck size={14}/>Hồ sơ đã có quyết định; không thể xử lý lại.</p>}
+      {!editable&&<p className="sw-private-note"><ShieldCheck size={14}/>{['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status)?'Chỉ Staff được phân công, không có xung đột lợi ích và có đủ dữ liệu xác minh mới được xét duyệt. Admin chỉ có quyền giám sát.':'Hồ sơ đã có quyết định; không thể xử lý lại.'}</p>}
     </section></aside></div>
     <AnimatePresence>{preview&&<Modal title={preview.name} onClose={closePreview}>{preview.type==='application/pdf'?<iframe className="sw-document-preview" src={preview.url} title="Xem tài liệu PDF" sandbox="allow-same-origin"/>:<img className="sw-image-preview" src={preview.url} alt={preview.name}/>}<a className="sw-outline" href={preview.url} download={preview.name}><Download size={16}/>Tải tài liệu</a></Modal>}</AnimatePresence>
     <AnimatePresence>{decision&&<Modal className={`sw-review-modal ${supplement?'sw-supplement-modal':''}`} title={supplement?<><FilePenLine size={24}/>Yêu cầu Chủ trọ Bổ sung thông tin / Hồ sơ</>:decision==='APPROVE'?'Phê duyệt hồ sơ nhà trọ':'Từ chối hồ sơ nhà trọ'} onClose={()=>{if(!busy)setDecision(null);}}>

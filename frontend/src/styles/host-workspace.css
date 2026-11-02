@@ -1,0 +1,173 @@
+/* Shared geometry for the five primary Host workflows. */
+.portal-topbar-title{display:flex;align-items:center;gap:10px;min-width:0}
+.host-workspace{--hw-ink:#17252b;--hw-muted:#52636d;--hw-line:#dce5e8;--hw-action:#0f766e;--hw-blue:#2563eb;--hw-amber:#b45309;--hw-surface:#fff;background:#f6f8f9;letter-spacing:0}
+.host-workspace .portal-topbar{min-height:72px;padding:12px 28px;gap:20px;box-shadow:none}
+.host-workspace .portal-topbar h1{font-size:18px;line-height:1.5;font-weight:750;margin:0;color:var(--hw-ink)}
+.host-workspace .portal-topbar-left{flex:1}
+.host-workspace .portal-topbar-right{flex-shrink:0;gap:12px}
+.host-workspace .portal-topbar-right .p-icon{width:40px;height:40px;border-radius:6px}
+.host-workspace .host-user-btn{border-radius:8px;min-height:42px;padding:4px 10px 4px 5px}
+.host-workspace .host-user-avatar{width:32px;height:32px;background:var(--hw-action)}
+.host-workspace .host-user-name{font-size:13px}
+.host-workspace .host-user-role{font-size:11px}
+.host-workspace .btn-view-public-site{min-height:40px;border-radius:6px;font-size:12px}
+.host-workspace .portal-sidebar-brand{padding:12px 20px}
+.host-workspace .brand-portal-title{font-size:22px}
+.host-workspace .brand-portal-role{font-size:10px;letter-spacing:0}
+.host-workspace .portal-sidebar>nav{padding:16px 12px 24px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;scrollbar-gutter:stable}
+.host-workspace .portal-nav-group{margin:0 0 20px}
+.host-workspace .portal-nav-group>p{color:#64748b;font-size:10px;line-height:20px;margin:6px 12px;letter-spacing:0}
+.host-workspace .portal-nav-link{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;min-height:46px;padding:9px 12px;margin:2px 0;font-size:13px;line-height:20px;color:var(--hw-muted);text-decoration:none}
+.host-workspace .portal-nav-link>svg{width:19px;height:19px}
+.host-workspace .portal-nav-link.active{color:var(--hw-action);background:#eef9f6;border-left-color:var(--hw-action);font-weight:700}
+.host-workspace .portal-nav-link:hover{background:#f1f6f6;color:var(--hw-action)}
+.host-workspace .portal-content{padding:28px 28px 48px}
+.host-workspace :is(.host-dashboard-page,.host-property-page,.host-room-types-page,.host-rooms-page,.property-registration){max-width:1440px;width:100%;margin-inline:auto;min-width:0}
+.host-workspace :is(h1,h2,h3,h4){letter-spacing:0;color:var(--hw-ink)}
+.host-workspace :is(.dashboard-header-row,.hp-page-heading,.registration-header,.portal-heading){gap:20px;align-items:flex-start;margin-bottom:24px}
+.host-workspace :is(.dashboard-headline,.hp-page-heading h2,.registration-header h2,.portal-heading h2){font-size:26px;line-height:1.35;font-weight:750;margin:0 0 8px;overflow-wrap:anywhere}
+.host-workspace :is(.dashboard-subtext,.hp-page-heading p,.registration-header p,.portal-heading p){font-size:13px;line-height:1.7;color:var(--hw-muted);max-width:72ch}
+.host-workspace :is(.p-button,.hp-button,.host-rooms-primary,.host-rooms-secondary,.btn-add-property,.btn-refresh-dashboard){min-height:40px;border-radius:6px;font-size:12px;line-height:1.5;box-shadow:none}
+.host-workspace :is(.p-button.primary,.hp-button.primary,.host-rooms-primary,.btn-add-property,.registration-next,.registration-submit){background:var(--hw-action);border-color:var(--hw-action);color:white;box-shadow:none}
+.host-workspace :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--hw-action);outline-offset:3px}
+.host-workspace :is(.kpi-cards-grid,.rt-metrics,.hr-metrics,.hp-metrics){gap:16px;margin-bottom:24px}
+.host-workspace :is(.kpi-card,.rt-metrics article,.hr-metric,.hp-metrics>div){border:1px solid var(--hw-line);border-radius:8px;background:white;padding:20px;min-width:0;box-shadow:none}
+.host-workspace .kpi-card:hover{transform:none;border-color:#8fbcb4;box-shadow:0 2px 8px #17252b08}
+.host-workspace :is(.kpi-number,.hr-metric strong,.rt-metrics strong,.hp-metrics strong){font-size:30px;line-height:1.25;font-weight:750;font-variant-numeric:tabular-nums}
+.host-workspace :is(.kpi-label,.rt-metrics header,.hr-metric span,.hp-metrics>div>div>span){font-size:12px;line-height:1.6;color:var(--hw-muted);text-transform:none;letter-spacing:0}
+.host-workspace :is(.kpi-icon-wrap,.hr-metric>svg){width:36px;height:36px;border-radius:6px}
+.host-workspace .kpi-value-row{margin:16px 0}
+.host-workspace .kpi-card-footer{padding-top:12px;margin-top:16px}
+.host-workspace .secondary-metrics-strip{background:transparent;border:0;border-bottom:1px solid var(--hw-line);border-radius:0;padding:0 0 20px;margin-bottom:24px;box-shadow:none}
+.host-workspace :is(.dashboard-split-grid,.hp-detail-grid){gap:24px}
+.host-workspace :is(.dashboard-section,.section-card){border-radius:8px;box-shadow:none}
+.host-workspace :is(.host-property-empty,.new-host-onboarding){background:transparent;border:0;border-radius:0;box-shadow:none;padding:28px 0;text-align:left}
+.host-workspace :is(.onboarding-title,.host-property-empty h2){font-size:24px;line-height:1.4}
+.host-workspace :is(.onboarding-desc,.host-property-empty-description){margin:12px 0 24px;max-width:76ch;font-size:14px}
+.host-workspace :is(.onboarding-steps-grid,.host-property-empty-steps){margin:24px 0;gap:0;max-width:none;text-align:left;border-block:1px solid var(--hw-line)}
+.host-workspace :is(.step-card,.host-property-empty-steps article){background:transparent;border:0;border-radius:0;padding:24px 20px;box-shadow:none}
+.host-workspace :is(.step-card,.host-property-empty-steps article):not(:last-child){border-right:1px solid var(--hw-line)}
+.host-workspace :is(.step-num,.host-property-step-number){width:28px;height:28px;border-radius:6px;background:#e8f4f1;color:var(--hw-action);font-size:13px}
+.host-workspace .btn-onboarding-cta{border-radius:6px;background:var(--hw-action);box-shadow:none;font-size:13px;padding:12px 18px}
+.host-workspace :is(.hp-portfolio-toolbar,.rt-toolbar,.hr-toolbar){border:0;border-block:1px solid var(--hw-line);border-radius:0;background:transparent;padding:16px 0;margin-bottom:20px;box-shadow:none}
+.host-workspace :is(.hp-search,.rt-search,.hr-search){min-height:42px;background:white;border-color:#cedade;border-radius:6px}
+.host-workspace :is(.hp-portfolio-toolbar select,.rt-toolbar select,.hr-filter-row>select){min-height:42px;background:white;border-color:#cedade;border-radius:6px;font-size:12px}
+.host-workspace :is(.rt-filters,.hr-view-switch,.rt-view-switch){border-radius:6px}
+.host-workspace :is(.rt-filters button,.hr-status-row button){min-height:34px;border-radius:5px;font-size:12px}
+.host-workspace :is(.rt-filters button.active,.hr-status-row button.active){background:#e8f4f1;color:var(--hw-action);border-color:#aacfc7}
+.host-workspace :is(.rt-table-wrap,.hr-table-wrap){border:1px solid var(--hw-line);border-radius:8px;box-shadow:none;overflow:auto}
+.host-workspace :is(.rt-table,.hr-table){font-size:13px}
+.host-workspace :is(.rt-table,.hr-table) th{font-size:11px;letter-spacing:0;text-transform:none;color:var(--hw-muted);padding:14px 16px;background:#f1f5f6;white-space:nowrap}
+.host-workspace :is(.rt-table,.hr-table) td{padding:16px;border-top:1px solid #e9eef0}
+.host-workspace :is(.rt-table,.hr-table) tbody tr:hover{background:#f8fbfa}
+.host-workspace :is(.rt-price,.hr-price){color:var(--hw-action);font-variant-numeric:tabular-nums}
+.host-workspace :is(.hp-property-grid,.host-room-types-grid,.hr-grid){gap:20px}
+.host-workspace :is(.hp-property-card,.host-room-type,.hr-room-card){border:1px solid var(--hw-line);border-radius:8px;box-shadow:none;overflow:hidden}
+.host-workspace .hr-room-card.vacant{border-top:3px solid #218870}
+.host-workspace .hr-room-card.occupied{border-top:3px solid #748592}
+.host-workspace .hr-room-card>header{padding:16px 18px;background:#fbfcfc}
+.host-workspace .hr-actions .p-icon{width:34px;height:34px;border-radius:5px}
+.host-workspace .hr-actions>.p-button{min-height:34px;font-size:11px}
+.host-workspace .hr-metric.active{border-color:var(--hw-action);background:#f0f9f6;box-shadow:inset 0 0 0 1px var(--hw-action)}
+.host-workspace .hp-card-cover{aspect-ratio:16/9;height:auto}
+.host-workspace .hp-card-cover img{width:100%;height:100%;object-fit:cover}
+.host-workspace .hp-card-body{padding:18px}
+.host-workspace .hp-card-body h3{font-size:18px;line-height:1.5}
+.host-workspace .hp-card-numbers{padding-block:16px;border-block:1px solid #edf1f2}
+.host-workspace .hp-card-actions{padding:12px 18px;background:#fbfcfc}
+.host-workspace .hp-pagination{margin-top:24px;padding-top:18px;border-top:1px solid var(--hw-line)}
+.host-workspace .host-management-context{border:0;border-bottom:1px solid var(--hw-line);border-radius:0;background:transparent;padding:0 0 20px;margin-bottom:24px;box-shadow:none}
+.host-workspace .hmc-icon{width:44px;height:44px;border-radius:8px;background:#e8f4f1;color:var(--hw-action)}
+.host-workspace .hmc-eyebrow{letter-spacing:0;color:var(--hw-muted);font-size:10px}
+.host-workspace .hmc-heading h2{font-size:23px}
+.host-workspace .host-management-context .host-property-selector{background:transparent;border:0;padding:0;margin-top:16px}
+.host-workspace .host-property-selector select{max-width:620px;min-height:42px}
+.host-workspace .host-management-context footer{gap:12px}
+.host-workspace .registration-breadcrumb{font-size:12px;margin-bottom:16px;gap:8px}
+.host-workspace .registration-badge{border-radius:5px;padding:4px 10px;background:white;font-size:11px}
+.host-workspace .registration-steps{border:0;border-block:1px solid var(--hw-line);border-radius:0;background:transparent;padding:18px 0;margin-bottom:24px;box-shadow:none}
+.host-workspace .registration-steps button{font-size:11px;gap:8px;line-height:1.5}
+.host-workspace .registration-step-number{width:30px;height:30px;font-size:12px;background:white}
+.host-workspace .registration-steps button:not(:last-child)::after{top:15px}
+.host-workspace .registration-steps .current{color:var(--hw-action);font-weight:750}
+.host-workspace .registration-steps .current .registration-step-number{background:var(--hw-action);border-color:var(--hw-action);color:white;outline:3px solid #dceee8}
+.host-workspace .registration-grid{grid-template-columns:minmax(0,1fr) 280px;gap:24px}
+.host-workspace .registration-panel{padding:28px;border-radius:8px;box-shadow:none;border-color:var(--hw-line)}
+.host-workspace .registration-panel-header{padding-bottom:18px;margin-bottom:22px}
+.host-workspace .registration-panel-header>span{font-size:10px;color:var(--hw-action)}
+.host-workspace .registration-panel-header h3{font-size:21px;line-height:1.4}
+.host-workspace .registration-panel-header p{font-size:13px;line-height:1.7}
+.host-workspace .registration-info{padding:12px 14px;font-size:12px;line-height:1.7;border-radius:6px;border-left-width:3px;margin-bottom:22px}
+.host-workspace .registration-field{margin-bottom:20px}
+.host-workspace .registration-label{margin-bottom:8px}
+.host-workspace .registration-label label{font-size:13px}
+.host-workspace .registration-field :is(input:not([type=checkbox]):not([type=file]),select,textarea){border-radius:6px;border-color:#cbd8dc;font-size:14px;padding:11px 12px;background:white;width:100%;min-width:0}
+.host-workspace .registration-field :is(input,select):not([type=checkbox]):not([type=file]){min-height:44px}
+.host-workspace .registration-hint{font-size:12px;line-height:1.65}
+.host-workspace .registration-grid aside{min-width:0}
+.host-workspace .registration-grid aside>section{border-radius:8px;box-shadow:none;padding:20px}
+.host-workspace .registration-grid aside h3{font-size:14px;line-height:1.5}
+.host-workspace .registration-grid aside :is(p,li){font-size:12px;line-height:1.7}
+.host-workspace .host-footer{border-top:1px solid var(--hw-line);background:white;color:var(--hw-muted)}
+.host-workspace .host-room-types-heading{gap:20px;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap}
+.host-workspace .host-room-types-heading h2{font-size:24px;line-height:1.4;margin:0 0 8px;font-weight:750}
+.host-workspace .host-room-types-heading p{font-size:13px;line-height:1.7;color:var(--hw-muted);max-width:68ch}
+.host-workspace .host-room-types-heading .portal-actions{flex-wrap:wrap;gap:8px}
+.host-workspace .hp-eyebrow{letter-spacing:0;color:var(--hw-muted)}
+.host-workspace .hp-portfolio-heading h2{font-size:26px;font-weight:750}
+.host-workspace .hp-portfolio-stats button{border-radius:8px;box-shadow:none}
+.host-workspace .hp-portfolio-search{background:white;min-height:42px}
+.host-workspace .kpi-card{justify-content:flex-start}
+.host-workspace .kpi-card-footer{margin-top:auto}
+.host-workspace .registration-actions{border:0;border-top:1px solid var(--hw-line);border-radius:0;box-shadow:none;padding:20px 0;background:transparent;margin-top:24px}
+@media(min-width:901px) and (max-width:1200px){
+ .host-workspace{--p-sidebar-width:232px}
+ .host-workspace .portal-content{padding:24px}
+ .host-workspace .host-user-text{display:none}
+ .host-workspace .registration-grid{grid-template-columns:minmax(0,1fr)}
+ .host-workspace .registration-grid aside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ .host-workspace .registration-grid aside>section{margin:0}
+}
+@media(max-width:900px){
+ .host-workspace .portal-content{margin-left:0;padding:24px}
+ .host-workspace .portal-topbar{margin-left:0;padding:12px 20px}
+ .host-workspace .registration-grid{grid-template-columns:minmax(0,1fr)}
+ .host-workspace .registration-grid aside{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ .host-workspace .registration-grid aside>section{margin:0}
+ .host-workspace :is(.kpi-cards-grid,.hr-metrics){grid-template-columns:repeat(2,minmax(0,1fr))}
+ .host-workspace .hr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+ .host-workspace .portal-topbar{padding:10px 14px;gap:8px;min-height:64px}
+ .host-workspace .portal-topbar h1{font-size:14px;white-space:normal;overflow-wrap:anywhere}
+ .host-workspace .portal-topbar-right{gap:6px}
+ .host-workspace .host-user-text,.host-workspace .hide-mobile{display:none}
+ .host-workspace .host-user-btn{padding:3px;gap:3px}
+ .host-workspace .btn-view-public-site{padding:8px;min-width:36px;min-height:36px}
+ .host-workspace .portal-content{padding:20px 16px 36px}
+ .host-workspace :is(.dashboard-headline,.hp-page-heading h2,.registration-header h2,.portal-heading h2){font-size:22px}
+ .host-workspace :is(.dashboard-header-row,.hp-page-heading,.registration-header){flex-wrap:wrap;gap:12px;margin-bottom:20px}
+ .host-workspace :is(.kpi-cards-grid,.hr-metrics){gap:10px}
+ .host-workspace :is(.kpi-card,.hr-metric,.rt-metrics article){padding:14px;gap:8px}
+ .host-workspace :is(.kpi-number,.hr-metric strong,.rt-metrics strong){font-size:25px}
+ .host-workspace .hr-metric>svg{width:28px;height:28px;padding:6px}
+ .host-workspace .hr-metric{flex-wrap:wrap}
+ .host-workspace .hr-grid{grid-template-columns:minmax(0,1fr)}
+ .host-workspace :is(.step-card,.host-property-empty-steps article){padding:18px 0}
+ .host-workspace :is(.step-card,.host-property-empty-steps article):not(:last-child){border-right:0;border-bottom:1px solid var(--hw-line)}
+ .host-workspace .registration-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 8px;padding:16px 0}
+ .host-workspace .registration-steps button::after{display:none}
+ .host-workspace .registration-panel{padding:20px 16px}
+ .host-workspace .registration-grid aside{display:block}
+ .host-workspace .registration-grid aside>section{margin-top:16px}
+ .host-workspace .registration-field :is(input:not([type=checkbox]):not([type=file]),select,textarea){font-size:16px}
+ .host-workspace .hp-card-actions{padding:12px}
+ .host-workspace .host-management-context nav{gap:6px}
+ .host-workspace .host-management-context nav a{font-size:11px;min-height:40px;display:flex;align-items:center;justify-content:center}
+ .host-workspace .hmc-heading{flex-wrap:wrap}
+ .host-workspace .hmc-heading>div{flex:1 1 calc(100% - 60px)}
+ .host-workspace .hmc-status{margin-left:54px}
+ .host-workspace .host-room-types-heading .portal-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px;width:100%;gap:8px}
+ .host-workspace .host-room-types-heading .portal-actions>.p-button{width:100%;min-width:0;justify-content:center;padding:10px 8px}
+ .host-workspace .host-room-types-heading .portal-actions>.primary{grid-column:1/-1}
+}

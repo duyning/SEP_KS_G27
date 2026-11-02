@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
-import { landingFor } from '../routing/screens.js';
+import { sessionDestination } from '../routing/session-destination.js';
 
 const DEMO_ACCOUNTS = [
   ['Người thuê (Sinh viên)', 'user@hlrcs.com', '123456'],
@@ -73,14 +73,7 @@ export default function AuthPage({ registerMode = false }) {
 
   // Already logged in redirect
   if (user) {
-    const from = location.state?.from;
-    const destination =
-      typeof from === 'string' &&
-      from.startsWith('/') &&
-      !from.startsWith('//') &&
-      !/^\/(login|register)(?:[/?#]|$)/.test(from)
-        ? from
-        : landingFor(user);
+    const destination = sessionDestination(user, location.state?.from);
     return <Navigate to={destination} replace />;
   }
 

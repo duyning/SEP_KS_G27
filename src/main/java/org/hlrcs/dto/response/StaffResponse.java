@@ -16,7 +16,7 @@ public class StaffResponse {
     public record SubmissionEvent(Integer eventId,String actorName,String action,LocalDateTime createdAt) {}
     public record Detail(Verification summary, PropertyRegistrationRequest submission, List<Attachment> photos,
             List<Attachment> documents, String reasonNote, List<Activity> history, PropertyRegistrationRequest publishedSubmission,
-            List<SubmissionEvent> submissionEvents) {}
+            List<SubmissionEvent> submissionEvents, Integer assignedStaffId, String assignedStaffName, long assignmentVersion, boolean canReview) {}
     public record QueueItem(String key, String type, String title, String requester, String description,
             String status, LocalDateTime createdAt, String detailLink) {}
     public record Dashboard(long pendingVerifications, long pendingReports, Integer pendingFeedback,

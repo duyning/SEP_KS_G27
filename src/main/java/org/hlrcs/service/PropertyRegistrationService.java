@@ -25,6 +25,7 @@ public class PropertyRegistrationService {
     private final PropertyRegistrationRepository registrations;
     private final PropertyDocumentRepository documents;
     private final ObjectMapper json;
+    private final org.springframework.context.ApplicationEventPublisher publisher;
     private static final Set<String> TYPES = Set.of("Nhà trọ truyền thống / Phòng trọ sinh viên", "Chung cư mini", "Căn hộ dịch vụ / Studio", "Homestay");
     private static final Set<String> AREAS = Set.of("Tân Xã", "Thạch Hòa", "Bình Yên", "Khu Công nghệ cao Hòa Lạc");
     private static final Set<String> AMENITIES = Set.of("parking", "fingerprint", "camera", "flexibleHours", "fireSafety", "separateOwner", "wifi", "laundry", "drying", "cleaning", "water", "elevator");
@@ -68,6 +69,7 @@ public class PropertyRegistrationService {
         saveFile(registration, "OWNERSHIP", ownership, true);
         saveFile(registration, "ID_CARD", idCard, true);
         if (fireSafety != null && !fireSafety.isEmpty()) saveFile(registration, "FIRE_SAFETY", fireSafety, true);
+        publisher.publishEvent(new AutomaticVerificationAssignment.Submitted(registration.getRegistrationId()));
         return PropertyRegistrationResponse.from(registration);
     }
 

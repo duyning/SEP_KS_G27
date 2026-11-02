@@ -26,7 +26,8 @@ public class StaffController {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(file.contentType()))
                 .header(HttpHeaders.CACHE_CONTROL, "private, no-store").header("X-Content-Type-Options", "nosniff").body(file.bytes());
     }
-    public record Review(@NotBlank String decision, @Size(max = 2000) String note, @Size(max=18) List<String> requestedFields) {}
+    public record Review(@NotBlank String decision, @Size(max = 2000) String note, @Size(max=18) List<String> requestedFields, @NotNull @PositiveOrZero Long assignmentVersion) {}
     @PostMapping("/verifications/{id}/review")
-    public ApiResponse<Detail> review(@PathVariable Integer id, @Valid @RequestBody Review review) { return ApiResponse.success(service.review(id, review.decision(), review.note(),review.requestedFields())); }
+    @PreAuthorize("hasRole('STAFF') and !hasRole('ADMIN')")
+    public ApiResponse<Detail> review(@PathVariable Integer id, @Valid @RequestBody Review review) { return ApiResponse.success(service.review(id, review.decision(), review.note(),review.requestedFields(),review.assignmentVersion())); }
 }

@@ -29,6 +29,7 @@ public class PropertyEditService {
     private final PropertySubmissionEventRepository events;
     private final PropertyRegistrationService validation;
     private final ObjectMapper json;
+    private final org.springframework.context.ApplicationEventPublisher publisher;
     public record Edit(Integer registrationId,Integer propertyId,String mode,String status,String reasonNote,
         List<String> requestedFields,Set<String> editableFields,boolean legacyScope,PropertyRegistrationRequest details,
         List<Attachment> photos,List<Attachment> documents,String versionToken) {}
@@ -121,6 +122,7 @@ public class PropertyEditService {
         registrations.saveAndFlush(destination);documents.flush();
         if(!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"OWNERSHIP")||!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"ID_CARD"))throw new BadRequestException("Cần giấy tờ sở hữu và CCCD để gửi xét duyệt.");
         events.save(PropertySubmissionEvent.builder().registration(destination).actor(owner).action(revision?"CHANGE_REQUESTED":"RESUBMITTED").previousDetails(json.writeValueAsString(old)).submittedDetails(json.writeValueAsString(value)).previousDocumentIds(json.writeValueAsString(previousIds)).previousReviewNote(previousNote).build());
+        publisher.publishEvent(new AutomaticVerificationAssignment.Submitted(destination.getRegistrationId()));
         return PropertyRegistrationResponse.from(destination);
     }
 }
