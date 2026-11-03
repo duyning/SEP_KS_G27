@@ -38,10 +38,24 @@ cũ đang chờ và chưa có người phụ trách cũng được xem xét sau 
 Trong `application.properties`:
 
 ```properties
-app.verification.auto-assignment.enabled=${AUTO_VERIFICATION_ASSIGNMENT_ENABLED:true}
+app.verification.auto-assignment.enabled=${AUTO_VERIFICATION_ASSIGNMENT_ENABLED:false}
+app.verification.assignment-required=${VERIFICATION_ASSIGNMENT_REQUIRED:false}
 app.verification.auto-assignment.initial-delay-ms=30000
 app.verification.auto-assignment.retry-delay-ms=60000
 ```
+
+Chức năng hiện mặc định tắt: không tự phân công khi gửi hồ sơ và không quét
+phân công lại. Khi cần bật, đặt biến môi trường
+`AUTO_VERIFICATION_ASSIGNMENT_ENABLED=true` hoặc đổi giá trị cấu hình thành
+`app.verification.auto-assignment.enabled=true`, rồi khởi động lại backend.
+Phân công và yêu cầu phân công là hai cấu hình riêng. Hiện cả hai đều tắt:
+Staff đang hoạt động dùng hàng đợi chung, không cần `assigned_staff_id` để đọc
+và xét duyệt; vẫn chặn hồ sơ của chính mình/nhà trọ mình sở hữu. Admin chỉ giám sát.
+Phân công cũ không bị xóa và không hạn chế Staff khác trong chế độ hàng đợi chung.
+
+Khi muốn trở lại chế độ chỉ Staff được giao mới xử lý, bật cả
+`AUTO_VERIFICATION_ASSIGNMENT_ENABLED=true` và `VERIFICATION_ASSIGNMENT_REQUIRED=true`
+rồi khởi động lại backend. Hồ sơ cũ chưa phân công sẽ chờ đợt quét của scheduler.
 
 Khởi động lại backend để áp dụng. Với cấu hình `ddl-auto=update` hiện tại,
 Hibernate bổ sung bảng điều phối. Môi trường dùng migration/schema thủ công cần

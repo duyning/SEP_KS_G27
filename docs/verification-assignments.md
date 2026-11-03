@@ -4,6 +4,11 @@
 > Phần provisioning thủ công bên dưới chỉ dành cho phát triển/test; không còn là
 > cách cấp người phụ trách cho hồ sơ mới trong vận hành.
 
+> Chế độ hiện tại: `app.verification.assignment-required=false`, Staff dùng hàng
+> đợi chung và có thể xử lý mà chưa cần phân công. Các giới hạn assigned Staff
+> mô tả bên dưới chỉ áp dụng khi bật lại `assignment-required=true`; chống tự
+> xét duyệt, kiểm tra sở hữu, role và khóa chống ghi đồng thời luôn được giữ.
+
 ## Nguồn yêu cầu và khoảng trống
 
 Đối chiếu `Docs/ProjectTracking.xlsx`, sheet `HL_RCS`, hàng 12 (Assigned Verification Queue của Ning), cùng Report 3, Permission Matrix chú thích 5 và GB-02/04/05/06. Tracking đang ghi To Do; tài liệu gốc không được sửa hoặc đánh dấu Done bằng task này.

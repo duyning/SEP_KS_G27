@@ -1,0 +1,21 @@
+.host-empty-state{--he-ink:#142b35;--he-muted:#526573;--he-action:#0f766e;display:flex;align-items:flex-start;gap:23px;max-width:900px;width:100%;padding:34px;border:1px solid #dce7e9;border-radius:15px;background:white;color:var(--he-ink);box-sizing:border-box;margin:0 auto}
+.host-empty-symbol{display:grid;place-items:center;width:56px;height:56px;flex-shrink:0;border:1px solid #d5e9df;border-radius:15px;background:#f0f8f4;color:var(--he-action)}
+.host-empty-copy{min-width:0;flex:1}
+.host-portal .host-empty-state h2{margin:0 0 12px;font-size:1.35rem;letter-spacing:-.025em;line-height:1.45;color:var(--he-ink)}
+.host-portal .host-empty-state p{font-size:.86rem;line-height:1.85;color:var(--he-muted);margin:0;max-width:660px}
+.host-empty-action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 19px;border-radius:8px;background:var(--he-action);color:white;font-size:.82rem;font-weight:700;text-decoration:none;margin-top:22px;line-height:1.6}
+.host-empty-action:hover{background:#115e59;color:white}
+.host-portal .host-empty-state .host-empty-hint{font-size:.76rem;margin-top:17px}
+.host-empty-state details{border-top:1px solid #e2e8f0;margin-top:24px;padding-top:8px;font-size:.8rem;color:var(--he-muted)}
+.host-empty-state summary{cursor:pointer;color:var(--he-action);font-weight:650;min-height:44px;line-height:1.7;padding:10px 0}
+.host-empty-state ul{margin:3px 0 8px;padding-left:20px;line-height:1.9}
+.host-empty-state .host-empty-message{margin-top:17px;font-size:.8rem;color:var(--he-muted)}
+.host-empty-state .host-empty-error{padding:12px;border:1px solid #fecaca;border-radius:8px;background:#fff7f7;color:#991b1b;margin-top:17px;font-size:.8rem;line-height:1.8}
+.host-empty-state.is-pending .host-empty-symbol{color:#92400e;background:#fffbeb;border-color:#fde68a}
+.host-empty-state :is(a,summary):focus-visible{outline:3px solid var(--he-action);outline-offset:4px}
+.host-portal:has(.host-empty-state)>.host-footer{flex-shrink:0}
+.host-portal .registration-aside details{border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px}
+.host-portal .registration-aside summary{cursor:pointer;font-size:.8rem;font-weight:650;color:#0f766e;min-height:44px;padding:10px 0;line-height:1.7}
+.host-portal .registration-aside summary:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+@media(max-width:1100px){.host-portal:has(.host-empty-state)>.host-footer{margin-left:0;width:100%}}
+@media(max-width:600px){.host-empty-state{padding:25px 22px;flex-direction:column;gap:17px;border-radius:13px}.host-empty-symbol{width:46px;height:46px;border-radius:12px}.host-portal .host-empty-state h2{font-size:1.2rem}.host-portal .host-empty-state p{font-size:.82rem}.host-empty-action{font-size:.8rem}.host-empty-state details{margin-top:20px}}

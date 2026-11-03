@@ -43,7 +43,7 @@ public class HostRoomTypeService {
     private final WishlistRepository wishlists;
     private final RoomRepository rooms;
     private final RoomMapping roomMapper;
-    private static final Set<String> AMENITIES = Set.of("airConditioner", "waterHeater", "balcony", "kitchen", "loft", "refrigerator", "washingMachine", "bed", "wardrobe", "desk", "wifi", "privateBathroom");
+    private static final Set<String> AMENITIES = Set.of("airConditioner", "waterHeater", "balcony", "kitchen", "loft", "refrigerator", "washingMachine", "bed", "wardrobe", "desk", "wifi", "privateBathroom", "ceilingFan", "window", "curtains", "smartLock", "television", "sofa", "diningTable", "inductionCooker", "microwave", "kitchenHood", "privateDrying");
 
     private RoomTypeSummary summary(RoomType type) {
         List<String> amenities = List.of();

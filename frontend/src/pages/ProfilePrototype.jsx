@@ -62,18 +62,6 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
   </header>
 
 
-  <div className="profile-breadcrumb-bar">
-    <div className="container profile-breadcrumb-inner">
-      <ul className="profile-breadcrumb-list">
-        <li><Link to="/">Trang chủ</Link></li>
-        <li><span className="profile-breadcrumb-sep">/</span></li>
-        <li><span className="profile-breadcrumb-active">Hồ sơ cá nhân</span></li>
-      </ul>
-      <span style={{"fontSize": "12.5px", "color": "var(--slate-500)"}}>Trung tâm quản lý tài khoản &amp; cài đặt bảo mật</span>
-    </div>
-  </div>
-
-
   <section className="profile-header-banner" id="profileHeaderBanner">
     <div className="container">
       <div className="profile-header-card">

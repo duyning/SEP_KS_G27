@@ -1,13 +1,15 @@
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, ArrowRight, Building2, Check, ClipboardList, Clock3, FileText, ImagePlus, Info, LoaderCircle, LockKeyhole, Pencil, Save, Shield, Star, Trash2, Upload } from 'lucide-react';
+import '../../styles/host-empty-state.css';
+import '../../styles/host-registration-refinement.css';
+import { AlertCircle, ArrowLeft, ArrowRight, Building2, Check, ClipboardList, Clock3, FileText, ImagePlus, Info, LoaderCircle, LockKeyhole, Pencil, Save, Star, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import PropertyLocationMap from '../../components/PropertyLocationMap.jsx';
 import PropertyAddressLookup from '../../components/PropertyAddressLookup.jsx';
 import { StateView, useToast } from '../../components/PortalUI.jsx';
 import { hostApi } from '../../services/host.js';
-import { AMENITIES, AREAS, DOCUMENTS, PROPERTY_TYPES, REQUIRED_DOCUMENTS, RULES, STEPS, createPropertyForm, propertyDraft, restorePropertyDraft, validatePropertyStep, validateRegistrationFile } from '../../services/property-registration.js';
+import { AMENITIES, AREAS, DOCUMENTS, PROPERTY_TYPES, REQUIRED_DOCUMENTS, RULES, STEPS, createPropertyForm, propertyDraft, propertyDraftStep, restorePropertyDraft, validatePropertyStep, validateRegistrationFile } from '../../services/property-registration.js';
 import '../../styles/host-property-registration.css';
 
 const hintFields = new Set(['name', 'propertyType', 'description', 'managerName', 'contactPhone', 'zaloPhone', 'addressDetail', 'commune', 'nearby']);
@@ -23,7 +25,7 @@ function PhotoPreview({ file, onRemove, onCover, cover }) {
 }
 
 function ReviewSection({ title, onEdit, children }) {
-  return <section className="registration-review-section"><header><h4>{title}</h4><MotionButton type="button" onClick={onEdit}>Chỉnh sửa<Pencil size={12} /></MotionButton></header>{children}</section>;
+  return <section className="registration-review-section"><header><h4>{title}</h4><MotionButton type="button" aria-label={`Chỉnh sửa ${title.replace(/^\d+\.\s*/, '')}`} onClick={onEdit}><Pencil size={14} />Chỉnh sửa</MotionButton></header>{children}</section>;
 }
 
 function ReviewFields({ rows }) {
@@ -46,13 +48,20 @@ function RegistrationForm({ user, accessBlocked = false }) {
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState('');
   const [draftSaved, setDraftSaved] = useState(false);
+  const [draftStatus, setDraftStatus] = useState('');
   const formRef = useRef();
   const draftKey = user?.userId == null ? null : `hlrcs:property-draft:${user.userId}`;
   useEffect(() => {
     if (!draftKey) return;
     try {
-      const raw = sessionStorage.getItem(draftKey);
-      if (raw) { setData(restorePropertyDraft(raw, user)); setDraftSaved(true); setNotice('Đã khôi phục bản nháp trong phiên trình duyệt này. Vui lòng chọn lại ảnh và tài liệu xác minh.'); }
+      const raw = localStorage.getItem(draftKey) || sessionStorage.getItem(draftKey);
+      if (raw) {
+        const restored = restorePropertyDraft(raw, user);
+        const resume = propertyDraftStep(raw, restored);
+        setData(restored); setStep(resume); setFurthestStep(resume); setDraftSaved(true);
+        setDraftStatus('Đã khôi phục bản nháp trên thiết bị này.');
+        setNotice('Thông tin đã nhập được giữ nguyên. Vui lòng chọn lại ảnh và tài liệu khi tiếp tục hồ sơ.');
+      }
     } catch { setNotice('Không thể đọc bản nháp trên trình duyệt. Bạn có thể nhập hồ sơ mới.'); }
   }, [draftKey]);
   const update = (name, value) => {
@@ -72,11 +81,23 @@ function RegistrationForm({ user, accessBlocked = false }) {
     requestAnimationFrame(() => formRef.current?.querySelector('[aria-invalid="true"]')?.focus());
   };
   const move = target => { setStep(target); setFurthestStep(previous => Math.max(previous, target)); setErrors({}); setNotice(''); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const persistDraft = (resumeStep, manual = false) => {
+    try {
+      if (!draftKey) throw new Error('Missing account');
+      const snapshot = propertyDraft(data, resumeStep);
+      localStorage.setItem(draftKey, JSON.stringify(snapshot));
+      sessionStorage.removeItem(draftKey);
+      setDraftSaved(true);
+      setDraftStatus(`Đã ${manual ? 'lưu' : 'tự động lưu'} bản nháp lúc ${new Date(snapshot.savedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}.`);
+      if (manual) setNotice('Đã lưu thông tin trên thiết bị này. Ảnh và tài liệu cần chọn lại khi tải lại trang.');
+    } catch { setDraftStatus('Chưa lưu được bản nháp. Hãy kiểm tra quyền lưu trữ của trình duyệt.'); }
+  };
   const navigateStep = target => {
     if (target > step) for (let index = 0; index < target; index++) {
       const found = validatePropertyStep(data, index);
       if (Object.keys(found).length) { move(index); showErrors(found); return; }
     }
+    persistDraft(target);
     setReturnToReview(false);
     move(target);
   };
@@ -84,6 +105,7 @@ function RegistrationForm({ user, accessBlocked = false }) {
   const next = () => {
     const found = validatePropertyStep(data, step);
     if (Object.keys(found).length) return showErrors(found);
+    persistDraft(returnToReview ? 5 : step + 1);
     if (returnToReview) {
       for (let index = 0; index < 5; index++) {
         const invalid = validatePropertyStep(data, index);
@@ -93,14 +115,7 @@ function RegistrationForm({ user, accessBlocked = false }) {
       setReturnToReview(false);
     } else move(step + 1);
   };
-  const saveDraft = () => {
-    try {
-      if (!draftKey) throw new Error('Missing account');
-      sessionStorage.setItem(draftKey, JSON.stringify(propertyDraft(data)));
-      setDraftSaved(true);
-      setNotice('Đã lưu bản nháp trong phiên trình duyệt này, chưa gửi lên máy chủ. Ảnh và tài liệu cần chọn lại khi tải lại trang.');
-    } catch { setNotice('Không lưu được bản nháp. Vui lòng kiểm tra quyền lưu trữ của trình duyệt.'); }
-  };
+  const saveDraft = () => persistDraft(step, true);
   const addPhotos = selected => {
     const files = Array.from(selected || []);
     const invalid = files.map(file => validateRegistrationFile(file)).find(Boolean);
@@ -134,7 +149,7 @@ function RegistrationForm({ user, accessBlocked = false }) {
     const received = record => {
       setPending(record);
       setData(previous => ({ ...previous, photos: [], documents: {} }));
-      try { if (draftKey) sessionStorage.removeItem(draftKey); } catch { /* A saved server record must not be treated as failed because local storage is unavailable. */ }
+      try { if (draftKey) { localStorage.removeItem(draftKey); sessionStorage.removeItem(draftKey); } } catch { /* A saved server record must not be treated as failed because local storage is unavailable. */ }
       notify?.('Đã gửi đăng ký nhà trọ. Hồ sơ đang chờ xét duyệt.', 'success');
     };
     try {
@@ -148,17 +163,13 @@ function RegistrationForm({ user, accessBlocked = false }) {
       if (!controller.signal.aborted) setSubmitting(false);
     }
   };
-  if (pending) return <section className="registration-pending" role="status"><div className="registration-pending-icon"><Clock3 size={34} /></div><span className="registration-pending-badge">{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</span><h2>{pending.status==='NEEDS_SUPPLEMENT'?'Hồ sơ đăng ký nhà trọ cần bổ sung':'Hồ sơ đăng ký nhà trọ đang chờ xét duyệt'}</h2><p>Đã tiếp nhận hồ sơ <strong>{pending.name}</strong>.{pending.status==='NEEDS_SUPPLEMENT'?' Vui lòng xem nội dung yêu cầu của staff bên dưới.':' Vui lòng chờ Ban Quản Trị HL_RCS kiểm tra và xét duyệt.'}</p>{pending.reasonNote&&<p className="hp-review-note">{pending.reasonNote}</p>}<dl><div><dt>Mã hồ sơ</dt><dd>#{pending.registrationId}</dd></div><div><dt>Trạng thái</dt><dd>{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</dd></div></dl><p>Nhà trọ chưa được hiển thị công khai khi chưa được phê duyệt.</p><div className="portal-actions"><Link className="p-button primary" to="/host/property">Nhà trọ của tôi</Link><MotionButton type="button" className="p-button" onClick={()=>{setPending(null);setData(createPropertyForm(user));setStep(0);setFurthestStep(0);setReturnToReview(false);setErrors({});setSubmitError('');setDraftSaved(false);setNotice('');}}>Đăng ký nhà trọ khác</MotionButton><Link className="p-button" to="/host">Về bảng điều khiển</Link></div></section>;
-  const progress = [16, 33, 50, 67, 83, 100][step];
+  if (pending) return <section className="registration-pending" role="status"><div className="registration-pending-icon"><Clock3 size={34} /></div><span className="registration-pending-badge">{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</span><h2>{pending.status==='NEEDS_SUPPLEMENT'?'Hồ sơ đăng ký nhà trọ cần bổ sung':'Hồ sơ đăng ký nhà trọ đang chờ xét duyệt'}</h2><p>Đã tiếp nhận hồ sơ <strong>{pending.name}</strong>.{pending.status==='NEEDS_SUPPLEMENT'?' Vui lòng xem nội dung yêu cầu của staff bên dưới.':' Vui lòng chờ Ban Quản Trị HL_RCS kiểm tra và xét duyệt.'}</p>{pending.reasonNote&&<p className="hp-review-note">{pending.reasonNote}</p>}<dl><div><dt>Mã hồ sơ</dt><dd>#{pending.registrationId}</dd></div><div><dt>Trạng thái</dt><dd>{pending.status==='NEEDS_SUPPLEMENT'?'Cần bổ sung':'Chờ xét duyệt'}</dd></div></dl><p>Nhà trọ chưa được hiển thị công khai khi chưa được phê duyệt.</p><div className="portal-actions"><Link className="p-button primary" to="/host/property">Nhà trọ của tôi</Link><MotionButton type="button" className="p-button" onClick={()=>{setPending(null);setData(createPropertyForm(user));setStep(0);setFurthestStep(0);setReturnToReview(false);setErrors({});setSubmitError('');setDraftSaved(false);setDraftStatus('');setNotice('');}}>Đăng ký nhà trọ khác</MotionButton></div></section>;
   return <div className="property-registration">
-    <nav className="registration-breadcrumb" aria-label="Đường dẫn"><Link to="/host">Dashboard</Link><span>/</span><Link to="/host/property">Nhà trọ của tôi</Link><span>/</span><strong>Đăng ký nhà trọ</strong></nav>
-    <header className="registration-header"><div><h2>Đăng ký nhà trọ</h2><p>Thêm thông tin nhà trọ để bắt đầu quản lý phòng trên HL_RCS.</p></div><span className="registration-badge">{draftSaved ? 'Bản nháp cục bộ' : 'Hồ sơ mới'}</span></header>
     <nav className="registration-steps" aria-label="Các bước đăng ký">{STEPS.map((label, index) => <MotionButton type="button" key={label} disabled={submitting || index > furthestStep} aria-current={index === step ? 'step' : undefined} className={index === step ? 'current' : index < step ? 'done' : ''} onClick={() => navigateStep(index)}><span className="registration-step-number">{index < step ? <Check size={16} /> : index + 1}</span><span>{label}</span></MotionButton>)}</nav>
     <div className="registration-grid"><form ref={formRef} onSubmit={submit} noValidate aria-busy={submitting}><fieldset className="registration-form-lock" disabled={submitting || accessBlocked}>
       <section className="registration-panel">
-        <header className="registration-panel-header"><span>BƯỚC {step + 1} TRÊN 6</span><h3>{['Thông tin cơ bản', 'Vị trí nhà trọ', 'Thông tin & Tiện ích chung', 'Hình ảnh nhà trọ', 'Hồ sơ xác minh', 'Kiểm tra thông tin'][step]}</h3><p>{['Nhập các thông tin chính để nhận diện nhà trọ trên hệ thống HL_RCS.', 'Xác định địa chỉ chi tiết và định vị chính xác vị trí nhà trọ tại Hòa Lạc.', 'Chọn các tiện ích thuộc cấp độ toàn nhà trọ và quy định sinh hoạt chung.', 'Thêm hình ảnh giúp người thuê hiểu rõ hơn về không gian và cảnh quan nhà trọ.', 'Cung cấp các tài liệu được yêu cầu để HL_RCS có thể kiểm tra và thẩm định thông tin nhà trọ.', 'Kiểm tra lại toàn bộ thông tin trước khi gửi nhà trọ để Ban Quản Trị HL_RCS xem xét.'][step]}</p></header>
+        <header className="registration-panel-header"><h3>{['Thông tin cơ bản', 'Vị trí nhà trọ', 'Thông tin & Tiện ích chung', 'Hình ảnh nhà trọ', 'Hồ sơ xác minh', 'Kiểm tra thông tin'][step]}</h3><p>{['Nhập các thông tin chính để nhận diện nhà trọ trên hệ thống HL_RCS.', 'Nhập địa chỉ nhà trọ tại Hòa Lạc. Vị trí trên bản đồ có thể bổ sung sau.', 'Chọn các tiện ích thuộc cấp độ toàn nhà trọ và quy định sinh hoạt chung.', 'Thêm hình ảnh giúp người thuê hiểu rõ hơn về không gian và cảnh quan nhà trọ.', 'Cung cấp các tài liệu được yêu cầu để HL_RCS có thể kiểm tra và thẩm định thông tin nhà trọ.', 'Kiểm tra lại toàn bộ thông tin trước khi gửi nhà trọ để Ban Quản Trị HL_RCS xem xét.'][step]}</p></header>
         {step === 0 && <>
-          <div className="registration-info"><Info size={20} /><p><strong>Lưu ý kiến trúc:</strong> Nhà trọ (Property) là cơ sở hạ tầng chung. Giá thuê, diện tích và số lượng phòng sẽ được thiết lập theo từng <strong>Loại phòng (Room Type)</strong> và <strong>Phòng cụ thể</strong> sau khi hồ sơ nhà trọ được tạo.</p></div>
           <Field name="name" label="Tên nhà trọ" required count={data.name.length} max={100} hint={'Tên riêng đại diện cho nhà trọ. Không cần thêm tiền tố "Nhà trọ" nếu không muốn.'} error={errors.name}><input {...input('name')} maxLength={100} required placeholder="Ví dụ: Nhà trọ An Khang" autoComplete="organization" /></Field>
           <Field name="propertyType" label="Loại hình nhà trọ" required hint="Phân loại giúp người thuê lọc tìm kiếm chính xác nhu cầu lưu trú." error={errors.propertyType}><select {...input('propertyType')} required>{PROPERTY_TYPES.map(type => <option key={type}>{type}</option>)}</select></Field>
           <Field name="description" label="Mô tả nhà trọ" required count={data.description.length} max={2000} hint="Mô tả từ 30 đến 2000 ký tự về không gian, an ninh và những điểm nổi bật của nhà trọ." error={errors.description}><textarea {...input('description')} rows={6} maxLength={2000} required placeholder="Mô tả ngắn về nhà trọ, không gian, môi trường sống, an ninh và những điểm nổi bật xung quanh..." /></Field>
@@ -175,13 +186,12 @@ function RegistrationForm({ user, accessBlocked = false }) {
             <Field name="commune" label="Xã / Khu vực tại Hòa Lạc" required hint="Chọn khu vực nhà trọ tại Hòa Lạc." error={errors.commune}><select {...input('commune')} required><option value="">Chọn khu vực</option>{AREAS.map(area => <option key={area} value={area}>{area === 'Tân Xã' ? 'Tân Xã (Gần ĐH FPT, hồ Tân Xã)' : area}</option>)}</select></Field>
           </div>
           <Field name="nearby" label="Vị trí gần các địa điểm chính (Tùy chọn)" hint="Giúp người thuê dễ dàng hình dung quãng đường di chuyển hằng ngày." error={errors.nearby}><input {...input('nearby')} maxLength={255} placeholder="Ví dụ: Cách ĐH FPT 800m, Cách ĐHQG Hòa Lạc 2.5km, Gần chợ Tân Xã..." /></Field>
-          <div className="registration-map-heading"><strong>Xác định vị trí trên bản đồ Hòa Lạc</strong><span>Bấm trên bản đồ hoặc kéo ghim để chọn vị trí</span></div>
+          <div className="registration-map-heading"><strong>Xác định vị trí trên bản đồ Hòa Lạc (Tùy chọn)</strong><span>Có thể bỏ qua nếu bản đồ chưa khả dụng.</span></div>
           <PropertyLocationMap commune={data.commune} latitude={data.latitude} longitude={data.longitude} address={[data.addressDetail.trim(), data.commune].filter(Boolean).join(', ')} error={errors.location} onSelect={selectLocation} />
           {errors.location && <p className="registration-error" id="location-error" role="alert">{errors.location}</p>}
           <details className="registration-manual-coordinates" open={manualCoordinatesOpen} onToggle={event => setManualCoordinatesOpen(event.currentTarget.open)}><summary>Nhập tọa độ thủ công</summary><div className="registration-two-columns">{[['latitude', 'Vĩ độ'], ['longitude', 'Kinh độ']].map(([name, label]) => <Field key={name} name={name} label={label} error={errors[name]}><input {...input(name)} inputMode="decimal" placeholder={label} /></Field>)}</div></details>
         </>}
         {step === 2 && <>
-          <div className="registration-info"><Info size={20} /><p><strong>Phân biệt rõ:</strong> Mục này chỉ chọn <strong>Tiện ích chung của toàn nhà trọ</strong> (Bãi xe, khóa cổng, camera, PCCC...). Các tiện ích bên trong phòng (Điều hòa, nóng lạnh, giường, tủ, bếp riêng...) sẽ được thiết lập theo từng Loại phòng.</p></div>
           {[['amenities', AMENITIES, 'Tiện ích & Cơ sở vật chất chung', Building2], ['selectedRules', RULES, 'Quy định chung của nhà trọ', ClipboardList]].map(([name, choices, title, Icon]) => <fieldset key={name} className="registration-contact registration-choice-group" aria-describedby={errors[name] ? `${name}-error` : undefined}><legend><Icon size={16} />{title}</legend><div className="registration-amenities">{choices.map(([key, label]) => <label key={key}><input type="checkbox" checked={data[name].includes(key)} onChange={event => update(name, event.target.checked ? [...data[name], key] : data[name].filter(value => value !== key))} />{label}</label>)}</div>{errors[name] && <p id={`${name}-error`} className="registration-error" role="alert">{errors[name]}</p>}</fieldset>)}
           <details className="registration-other-rules" open={Boolean(errors.rules) || undefined}><summary>Quy định khác (không bắt buộc)</summary><Field name="rules" label="Nội quy bổ sung" count={data.rules.length} max={2000} error={errors.rules}><textarea {...input('rules')} rows={4} maxLength={2000} placeholder="Nhập thêm quy định riêng nếu có..." /></Field></details>
         </>}
@@ -194,15 +204,16 @@ function RegistrationForm({ user, accessBlocked = false }) {
           <div className="registration-photos" aria-label="Ảnh nhà trọ đã chọn">{data.photos.map((file, index) => <PhotoPreview key={`${file.name}-${file.lastModified}-${file.size}`} file={file} cover={index === 0} onRemove={() => update('photos', data.photos.filter((_, position) => position !== index))} onCover={() => update('photos', [file, ...data.photos.filter((_, position) => position !== index)])} />)}</div>
         </>}
         {step === 4 && <>
-          <div className="registration-info registration-privacy"><LockKeyhole size={22} /><p><strong>Cam kết bảo mật tài liệu:</strong> Các hồ sơ xác minh dưới đây là dữ liệu nhạy cảm, không được hiển thị công khai trên trang tìm kiếm của người thuê. Tệp đang được giữ trong phiên nhập; bản nháp không lưu ảnh giấy tờ và chưa tải tệp lên máy chủ.</p></div>
+          <div className="registration-info registration-privacy"><LockKeyhole size={22} /><p><strong>Cam kết bảo mật tài liệu:</strong> Các hồ sơ xác minh dưới đây là dữ liệu nhạy cảm, không được hiển thị công khai trên trang tìm kiếm của người thuê. Tài liệu chỉ phục vụ xét duyệt hồ sơ và được giới hạn truy cập theo vai trò trong hệ thống.</p></div>
           {DOCUMENTS.map(([key, label], index) => <section className="registration-document-section" key={key}>
             <h4><label htmlFor={key}>{index + 1}. {label}</label><span className={REQUIRED_DOCUMENTS.includes(key) ? 'required' : ''}>{REQUIRED_DOCUMENTS.includes(key) ? 'BẮT BUỘC' : 'KHUYẾN KHÍCH'}</span></h4>
-            <p id={`${key}-hint`}>{['Bản scan / ảnh chụp Sổ đỏ, Giấy phép xây dựng hoặc Hợp đồng ủy quyền quản lý vận hành tòa nhà hợp lệ.', 'Bản chụp đủ 2 mặt CCCD của chủ cơ sở hoặc người đại diện ký hợp đồng thuê trọ tại Hòa Lạc, gộp trong một tệp.', 'Biên bản kiểm định PCCC hoặc bản cam kết tuân thủ an toàn phòng cháy chữa cháy.'][index]} PDF, JPG, PNG, WEBP; tối đa 10MB.</p>
+            <p id={`${key}-hint`}>{['Giấy tờ quyền sở hữu hoặc quyền sử dụng cơ sở. Nếu quản lý thay chủ sở hữu, đính kèm hợp đồng / văn bản ủy quyền và giấy tờ liên quan trong cùng một tệp.', 'Bản chụp rõ hai mặt thẻ căn cước / CCCD của chủ cơ sở hoặc người đại diện quản lý, gộp trong một tệp.', 'Biên bản kiểm tra an toàn PCCC hoặc bản cam kết có chữ ký của chủ cơ sở; nêu rõ địa chỉ nhà trọ, phương án thoát nạn và trang thiết bị chữa cháy.'][index]} PDF, JPG, PNG, WEBP; tối đa 10MB.</p>
             <div className="registration-document"><FileText size={19} /><span>{data.documents[key]?.name || 'Chưa tải lên tài liệu'}</span>{data.documents[key] && <MotionButton type="button" className="p-icon" aria-label={`Xóa ${label}`} title={`Xóa ${label}`} onClick={() => { update('documents', { ...data.documents, [key]: undefined }); setErrors(previous => ({ ...previous, [key]: undefined })); }}><Trash2 size={16} /></MotionButton>}<label className="registration-file-button" htmlFor={key}>{data.documents[key] ? 'Thay đổi tệp' : 'Tải lên file (PDF/JPG)'}</label><input className="registration-file-input" id={key} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => addDocument(key, event)} aria-required={REQUIRED_DOCUMENTS.includes(key)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-hint ${key}-error` : `${key}-hint`} /></div>
             {errors[key] && <p id={`${key}-error`} className="registration-error" role="alert">{errors[key]}</p>}
           </section>)}
         </>}
         {step === 5 && <>
+          <div className="registration-review-summary"><span className="registration-review-summary-icon"><ClipboardList size={24} /></span><div><strong>Hồ sơ sẵn sàng để bạn kiểm tra</strong><p>Đối chiếu thông tin, hình ảnh và giấy tờ trước khi gửi xét duyệt.</p></div><span className="registration-review-count">{data.photos.length} ảnh · {REQUIRED_DOCUMENTS.filter(key => data.documents[key]).length}/{REQUIRED_DOCUMENTS.length} giấy tờ</span></div>
           <div className="registration-review-groups">
             <ReviewSection title="1. Thông tin cơ bản" onEdit={() => editStep(0)}><ReviewFields rows={[["Tên nhà trọ", data.name], ['Loại hình', data.propertyType], ['Người quản lý', `${data.managerName} · ${data.contactPhone}`], ['Zalo', data.zaloPhone], ['Mô tả', data.description]]} /></ReviewSection>
             <ReviewSection title="2. Vị trí & Bản đồ" onEdit={() => editStep(1)}><ReviewFields rows={[["Địa chỉ đầy đủ", `${data.addressDetail}, ${data.commune}`], ['Khu vực', data.commune], ['Địa điểm lân cận', data.nearby || 'Không để lại ghi chú'], ['Tọa độ ghim', data.latitude ? `[${data.latitude}, ${data.longitude}]` : 'Không cung cấp']]} /></ReviewSection>
@@ -214,14 +225,15 @@ function RegistrationForm({ user, accessBlocked = false }) {
           <div className="registration-info"><Info size={20} /><p>Sau khi gửi, hồ sơ sẽ ở trạng thái <strong>Chờ xét duyệt</strong>. Nhà trọ chỉ được hiển thị công khai sau khi được phê duyệt.</p></div>
         </>}
       </section>
+      <div className="registration-draft-status" role="status"><Save size={15} /><span>{draftStatus || (draftSaved ? 'Đã lưu bản nháp.' : 'Thông tin được tự động lưu khi hoàn thành mỗi bước.')}<small>Bản nháp lưu trên thiết bị này; ảnh và giấy tờ cần chọn lại sau khi tải lại trang.</small></span></div>
       {notice && <p className="registration-notice" role="status">{notice}</p>}
       {submitError && <p className="registration-submit-error" role="alert">{submitError}</p>}
       <div className="registration-actions"><MotionButton type="button" onClick={() => { setReturnToReview(false); move(step - 1); }} disabled={step === 0}><ArrowLeft size={16} />Quay lại</MotionButton><MotionButton type="button" onClick={saveDraft}><Save size={16} />Lưu bản nháp</MotionButton><MotionButton className="registration-next" type="submit">{submitting ? <><LoaderCircle size={16} className="spin" />Đang gửi hồ sơ...</> : step === 5 ? <><Check size={16} />Gửi xét duyệt</> : <>{returnToReview ? 'Lưu & Kiểm tra lại' : 'Tiếp tục'}<ArrowRight size={16} /></>}</MotionButton></div>
     </fieldset></form>
-    <aside className="registration-aside"><section><div className="registration-progress-label"><strong>Tiến trình hoàn thiện</strong><span>{progress}%</span></div><progress max="100" value={progress} aria-label="Tiến trình đăng ký" /><ol>{['Thông tin cơ bản', 'Vị trí & Bản đồ', 'Tiện ích chung & Quy định', 'Hình ảnh nhà trọ', 'Hồ sơ xác minh', 'Kiểm tra & Gửi'].map((label, index) => <li key={label} className={index < step ? 'done' : index === step ? 'current' : ''}><span>{index + 1}</span>{label}</li>)}</ol></section>
-      <section><h3><Shield size={19} />Quy trình xét duyệt</h3><ol className="registration-process">{[['Đăng ký & Nộp hồ sơ', 'Chủ trọ điền thông tin và đính kèm tài liệu xác thực.'], ['Thẩm định hồ sơ', 'Ban Quản Trị HL_RCS kiểm tra thông tin và tài liệu cung cấp.'], ['Hiển thị công khai', 'Nhà trọ được hiển thị sau khi hồ sơ được phê duyệt.']].map(([title, description], index) => <li key={title}><span>{index + 1}</span><div><strong>{title}</strong><p>{description}</p></div></li>)}</ol></section>
-      <section><h3><AlertCircle size={18} className="registration-amber" />Lưu ý quan trọng</h3><ul><li>Không cung cấp số điện thoại ảo hay thông tin sai lệch.</li><li>Chụp ảnh rõ nét không gian nhà trọ, bãi để xe và lối thoát hiểm.</li><li>Chuẩn bị tài liệu xác minh và thông tin an toàn PCCC đầy đủ.</li></ul></section>
-      <section className="registration-help"><h3>Cần hỗ trợ đăng ký?</h3><p>Liên hệ bộ phận hỗ trợ đối tác HL_RCS để được giải đáp.</p><Link to="/host/support">Yêu cầu Staff hỗ trợ<ArrowRight size={14} /></Link></section>
+    <aside className="registration-aside"><section><h3>Hướng dẫn hồ sơ</h3>
+      <details><summary>Quy trình xét duyệt</summary><ol className="registration-process">{[['Gửi hồ sơ', 'Điền thông tin và đính kèm giấy tờ xác minh.'], ['Kiểm tra & bổ sung', 'Staff kiểm tra, phản hồi khi cần bổ sung.'], ['Được phê duyệt', 'Nhà trọ được hiển thị và có thể cấu hình loại phòng.']].map(([title,description],index)=><li key={title}><span>{index+1}</span><div><strong>{title}</strong><p>{description}</p></div></li>)}</ol></details>
+      <details><summary>Lưu ý khi chuẩn bị hồ sơ</summary><ul><li>Cung cấp thông tin liên hệ chính xác.</li><li>Dùng ảnh thực tế, rõ nét về nhà trọ và lối thoát hiểm.</li><li>Chuẩn bị giấy tờ xác minh và thông tin an toàn PCCC.</li></ul></details>
+    </section>
     </aside></div>
   </div>;
 }

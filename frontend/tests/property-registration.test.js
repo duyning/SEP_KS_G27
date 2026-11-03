@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPropertyForm, isVietnamesePhone, parsePropertyCoordinates, propertyDraft, restorePropertyDraft, validatePropertyStep, validateRegistrationFile } from '../src/services/property-registration.js';
+import { createPropertyForm, isVietnamesePhone, parsePropertyCoordinates, propertyDraft, propertyDraftStep, restorePropertyDraft, validatePropertyStep, validateRegistrationFile } from '../src/services/property-registration.js';
 
 test('registration starts without sample pictures, documents or selected amenities', () => {
   const data = createPropertyForm({ fullName: 'Account owner', phoneNumber: '0912345678' });
@@ -27,9 +27,11 @@ test('phone validation supports Vietnam domestic and international forms', () =>
   for (const phone of ['0912345678', '+84912345678', '0912 345 678', '0912-345-678']) assert.equal(isVietnamesePhone(phone), true);
   for (const phone of ['', '123', '0112345678', '09123456789', '+840912345678', 'abc0912345678']) assert.equal(isVietnamesePhone(phone), false);
 });
-test('location requires real address and explicit paired bounded coordinates', () => {
+test('location requires address; optional coordinates must be paired and bounded when provided', () => {
   const empty = { ...createPropertyForm(), commune: 'Tân Xã', addressDetail: 'Số 18, ngõ 4, thôn 2' };
-  assert.ok(validatePropertyStep(empty, 1).location);
+  assert.deepEqual(validatePropertyStep(empty, 1), {});
+  assert.deepEqual(validatePropertyStep({...empty,latitude:null,longitude:null},1),{});
+  assert.deepEqual(validatePropertyStep({...empty,latitude:'  ',longitude:'  '},1),{});
   const data = { ...empty, latitude: '21.0188', longitude: '105.5215' };
   assert.deepEqual(validatePropertyStep(data, 1), {});
   assert.ok(validatePropertyStep({ ...data, commune: '' }, 1).commune);
@@ -61,8 +63,8 @@ test('every upload and consent step is validated before submission', () => {
   assert.ok(validatePropertyStep(data, 3).photos);
   assert.deepEqual(validatePropertyStep({ ...data, photos: [{}] }, 3), {});
   assert.deepEqual(validatePropertyStep({ ...data, photos: [{}, {}] }, 3), {});
-  assert.equal(Object.keys(validatePropertyStep(data, 4)).length, 2);
-  assert.deepEqual(validatePropertyStep({ ...data, documents: { ownership: {}, idCard: {} } }, 4), {});
+  assert.equal(Object.keys(validatePropertyStep(data, 4)).length, 3);
+  assert.deepEqual(validatePropertyStep({ ...data, documents: { ownership: {}, idCard: {}, fireSafety: {} } }, 4), {});
   assert.ok(validatePropertyStep(data, 5).termsAccepted);
   assert.deepEqual(validatePropertyStep({ ...data, termsAccepted: true }, 5), {});
 });
@@ -99,4 +101,24 @@ test('amenity and house rule values are restricted to supported choices', () => 
   assert.ok(validatePropertyStep({ ...data, selectedRules: ['unknown'] }, 2).selectedRules);
   const restored = restorePropertyDraft('{"version":1,"fields":{"selectedRules":["quietHours","unknown"]}}');
   assert.deepEqual(restored.selectedRules, ['quietHours']);
+});
+
+test('draft progress resumes safely and requires selecting files again', () => {
+  const data = { ...createPropertyForm(), name: 'Nhà trọ An Khang', description: 'Nhà trọ sạch sẽ, an ninh và không gian thoáng mát.', managerName: 'Nguyễn Văn An', contactPhone: '0912345678', commune: 'Tân Xã', addressDetail: 'Số 18, ngõ 4, thôn 2', amenities: ['emergencyExit', 'wasteCollection'], selectedRules: ['safeCharging', 'noBlockedExits'] };
+  for (const target of [1, 2, 3, 4, 5]) {
+    const raw = JSON.stringify(propertyDraft(data, target));
+    const restored = restorePropertyDraft(raw);
+    assert.equal(propertyDraftStep(raw, restored), Math.min(target, 3));
+    assert.deepEqual(restored.amenities, data.amenities);
+    assert.deepEqual(restored.selectedRules, data.selectedRules);
+    assert.ok(JSON.parse(raw).savedAt);
+  }
+  const invalid = JSON.stringify(propertyDraft({ ...data, addressDetail: '' }, 5));
+  assert.equal(propertyDraftStep(invalid, restorePropertyDraft(invalid)), 1);
+  assert.equal(propertyDraftStep('{"version":1,"fields":{}}', createPropertyForm()), 0);
+});
+
+test('PCCC document is mandatory even when ownership and identity are attached', () => {
+  const data = { ...createPropertyForm(), documents: { ownership: {}, idCard: {} } };
+  assert.deepEqual(Object.keys(validatePropertyStep(data, 4)), ['fireSafety']);
 });

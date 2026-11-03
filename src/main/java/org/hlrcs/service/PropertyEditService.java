@@ -117,7 +117,7 @@ public class PropertyEditService {
         for(var file:uploads)validation.saveFile(destination,"PHOTO_"+(photoIndex++),file,false);
         for(var replacement:replacements.entrySet())validation.saveFile(destination,replacement.getKey(),replacement.getValue(),true);
         destination.setName(value.name().trim());destination.setAddress(address);destination.setContactInfo(value.managerName().trim()+" · "+value.contactPhone());
-        destination.setGoogleMapLink("https://www.google.com/maps?q="+value.latitude()+","+value.longitude());destination.setRegistrationDetails(json.writeValueAsString(value));
+        destination.setGoogleMapLink(PropertyRegistrationService.mapLink(value));destination.setRegistrationDetails(json.writeValueAsString(value));
         var previousNote=destination.getReasonNote();destination.setStatus(RegistrationStatus.PENDING);destination.setSubmittedAt(now);destination.setReasonNote(revision?"Chủ trọ gửi đề nghị thay đổi thông tin. Bản đã duyệt tiếp tục hiển thị.":"Chủ trọ đã bổ sung thông tin và gửi lại xét duyệt.");
         registrations.saveAndFlush(destination);documents.flush();
         if(!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"OWNERSHIP")||!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"ID_CARD"))throw new BadRequestException("Cần giấy tờ sở hữu và CCCD để gửi xét duyệt.");

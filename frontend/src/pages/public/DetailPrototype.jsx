@@ -8,15 +8,6 @@ export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,o
 
     <div className="breadcrumb-wrapper">
       <div className="container breadcrumb-inner">
-        <ul className="breadcrumb-list">
-          <li><Link to="/">Trang chủ</Link></li>
-          <li><span className="breadcrumb-sep">/</span></li>
-          <li><Link to="/search">Phòng trọ Hòa Lạc</Link></li>
-          <li><span className="breadcrumb-sep">/</span></li>
-          <li><Link to={"/search?location=" + (room.locationKey)}>{room.locationShort}</Link></li>
-          <li><span className="breadcrumb-sep">/</span></li>
-          <li><span className="breadcrumb-current">{room.title}</span></li>
-        </ul>
         <MotionButton type="button" className="btn-back-link" onClick={onBack}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
           <span>Quay lại tìm kiếm</span>

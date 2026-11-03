@@ -63,26 +63,6 @@ export default function StaffAssistanceRequestsPage() {
         message="Xem và xử lý các yêu cầu hỗ trợ được phân công cho bạn từ các Chủ trọ đối tác."
       />
 
-      {/* Header */}
-      <section className="dashboard-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>Yêu cầu hỗ trợ từ đối tác</h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-            Xem, tiếp nhận và giải quyết các yêu cầu hỗ trợ được phân công cho bạn từ các Chủ trọ đối tác.
-          </p>
-        </div>
-        <MotionButton
-          type="button"
-          className="p-button"
-          onClick={() => {
-            setRequests(MOCK_STAFF_ASSISTANCE);
-            notify('Đã làm mới danh sách yêu cầu hỗ trợ', 'info');
-          }}
-        >
-          <RotateCcw size={15} /> Làm mới
-        </MotionButton>
-      </section>
-
       {/* KPI Cards */}
       <section className="staff-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         <article

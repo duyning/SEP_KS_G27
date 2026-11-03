@@ -14,6 +14,9 @@ const assert=require('node:assert/strict');const {chromium}=require(process.env.
  let standard;
  for(const [path,activeHref] of routes){
   await page.goto('http://127.0.0.1:5173'+path);await page.locator('#portal-navigation a[href="/staff/host-registrations"] .sw-nav-count').waitFor();
+  assert.equal(await page.locator('.portal-breadcrumbs,.dashboard-breadcrumbs,.svd-breadcrumbs').count(),0,'No Staff breadcrumbs at '+path);
+  assert.equal(await page.getByRole('button',{name:/^Làm mới|^Cập nhật dữ liệu$/}).count(),0,'No ordinary refresh controls at '+path);
+  assert.equal(await page.locator('.dashboard-header-row,.moderation-intro,.sa-page-heading,.sw-page-heading:not(.svd-page-toolbar)').count(),0,'No duplicate page heading at '+path);
   const actual=await page.locator('#portal-navigation').evaluate(sidebar=>({width:sidebar.getBoundingClientRect().width,groups:[...sidebar.querySelectorAll('nav .portal-nav-group>p')].map(el=>el.textContent),items:[...sidebar.querySelectorAll('nav .portal-nav-link')].map(el=>({label:el.querySelector('span')?.textContent.trim(),href:el.getAttribute('href'),icon:el.querySelector('svg')?.outerHTML,count:el.querySelector('.sw-nav-count')?.textContent}))}));
   if(!standard)standard=actual;else assert.deepEqual(actual,standard,'Different Staff menu at '+path);
   const active=await page.locator('#portal-navigation a[aria-current="page"]').evaluateAll(links=>links.map(link=>link.getAttribute('href')));assert.deepEqual(active,[activeHref],'Incorrect active item '+path);assert.equal(await page.locator('#staffSidebar').count(),0);assert.equal(await page.locator('.portal-sidebar').count(),1);

@@ -5,6 +5,7 @@ import { CalendarDays, Eye, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { hostApi } from '../../services/host.js';
 import HostPropertySelector from '../../components/HostPropertySelector.jsx';
+import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 import { Modal, StateView, StatusBadge, UnsupportedButton } from '../../components/PortalUI.jsx';
 import '../../styles/host-viewings-page.css';
 
@@ -12,12 +13,7 @@ const statuses = { PENDING: 'Chờ xác nhận', APPROVED: 'Đã xác nhận', R
 const formatDate = value => value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : 'Chưa cập nhật';
 
 export function ViewingsNoProperty() {
-  return <section id="noPropertyState" className="host-viewings-state">
-    <div className="host-viewings-state-icon" aria-hidden="true">🏠</div>
-    <h2>Bạn chưa đăng ký nhà trọ</h2>
-    <p>Bạn cần đăng ký nhà trọ trước khi nhận yêu cầu xem phòng từ khách thuê.</p>
-    <Link to="/host/property/new" className="host-viewings-register">Đăng ký nhà trọ ngay</Link>
-  </section>;
+ return <HostSetupRequired kind="viewings"/>;
 }
 
 function ViewingList({ data, propertyId, onRefresh }) {
@@ -35,7 +31,7 @@ function ViewingList({ data, propertyId, onRefresh }) {
 
   return <section className="host-viewings-list">
     <HostPropertySelector properties={data.properties} allowAll/>
-    <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><MotionButton className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></MotionButton></div>
+    <div className="host-viewings-heading"><MotionButton className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></MotionButton></div>
     <div className="host-viewings-counts"><span>Tổng yêu cầu <strong>{ownedRequests.length}</strong></span>{Object.entries(statuses).map(([key, label]) => <span key={key}>{label} <strong>{ownedRequests.filter(item => item.status === key).length}</strong></span>)}</div>
     {ownedRequests.length === 0 ? <StateView kind="empty" message="Chưa có yêu cầu xem phòng từ khách thuê. Yêu cầu mới sẽ hiển thị tại đây." /> : <>
       <div className="host-viewings-filters">

@@ -28,8 +28,8 @@ public class PropertyRegistrationService {
     private final org.springframework.context.ApplicationEventPublisher publisher;
     private static final Set<String> TYPES = Set.of("Nhà trọ truyền thống / Phòng trọ sinh viên", "Chung cư mini", "Căn hộ dịch vụ / Studio", "Homestay");
     private static final Set<String> AREAS = Set.of("Tân Xã", "Thạch Hòa", "Bình Yên", "Khu Công nghệ cao Hòa Lạc");
-    private static final Set<String> AMENITIES = Set.of("parking", "fingerprint", "camera", "flexibleHours", "fireSafety", "separateOwner", "wifi", "laundry", "drying", "cleaning", "water", "elevator");
-    private static final Set<String> RULES = Set.of("quietHours", "noSmoking", "noUnsafeStoves", "residenceRegistration", "cleanliness", "pets");
+    private static final Set<String> AMENITIES = Set.of("parking", "fingerprint", "camera", "flexibleHours", "fireSafety", "separateOwner", "wifi", "laundry", "drying", "cleaning", "water", "elevator", "security", "emergencyExit", "emergencyLighting", "wasteCollection", "bicycleParking", "commonArea");
+    private static final Set<String> RULES = Set.of("quietHours", "noSmoking", "noUnsafeStoves", "residenceRegistration", "cleanliness", "pets", "guestRegistration", "noBlockedExits", "safeCharging", "wasteSorting", "noSubletting", "reportIncidents");
 
     public record Eligibility(boolean canRegister, String reason) {}
 
@@ -51,7 +51,7 @@ public class PropertyRegistrationService {
                                                 MultipartFile ownership, MultipartFile idCard, MultipartFile fireSafety) throws IOException {
         validate(request);
         if (photos == null || photos.isEmpty() || photos.size() > 10) throw new BadRequestException("Cần từ 1 đến 10 ảnh nhà trọ.");
-        if (ownership == null || ownership.isEmpty() || idCard == null || idCard.isEmpty()) throw new BadRequestException("Cần giấy tờ sở hữu và CCCD để gửi xét duyệt.");
+        if (ownership == null || ownership.isEmpty() || idCard == null || idCard.isEmpty() || fireSafety == null || fireSafety.isEmpty()) throw new BadRequestException("Cần giấy tờ sở hữu / quản lý, căn cước và hồ sơ an toàn PCCC để gửi xét duyệt.");
         // Distinct properties may be submitted concurrently. Serialize by owner
         // so retries of the same name/address cannot create duplicate profiles.
         var owner = users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow(() -> new BadRequestException("Không tìm thấy chủ trọ."));
@@ -63,12 +63,12 @@ public class PropertyRegistrationService {
         var registration = registrations.save(PropertyRegistration.builder().user(owner).name(request.name().trim())
                 .address(request.addressDetail().trim() + ", " + request.commune())
                 .contactInfo(request.managerName().trim() + " · " + request.contactPhone())
-                .googleMapLink("https://www.google.com/maps?q=" + request.latitude() + "," + request.longitude())
+                .googleMapLink(mapLink(request))
                 .registrationDetails(json.writeValueAsString(request)).status(RegistrationStatus.PENDING).build());
         for (int index = 0; index < photos.size(); index++) saveFile(registration, "PHOTO_" + index, photos.get(index), false);
         saveFile(registration, "OWNERSHIP", ownership, true);
         saveFile(registration, "ID_CARD", idCard, true);
-        if (fireSafety != null && !fireSafety.isEmpty()) saveFile(registration, "FIRE_SAFETY", fireSafety, true);
+        saveFile(registration, "FIRE_SAFETY", fireSafety, true);
         publisher.publishEvent(new AutomaticVerificationAssignment.Submitted(registration.getRegistrationId()));
         return PropertyRegistrationResponse.from(registration);
     }
@@ -77,9 +77,15 @@ public class PropertyRegistrationService {
         if (!TYPES.contains(value.propertyType()) || !AREAS.contains(value.commune())) throw new BadRequestException("Loại hình hoặc khu vực nhà trọ không hợp lệ.");
         if (value.name().trim().length() < 3 || value.description().trim().length() < 30 || value.managerName().trim().length() < 2 || value.addressDetail().trim().length() < 10) throw new BadRequestException("Vui lòng điền đầy đủ thông tin nhà trọ.");
         if (!phone(value.contactPhone()) || (value.zaloPhone() != null && !value.zaloPhone().isBlank() && !phone(value.zaloPhone()))) throw new BadRequestException("Số điện thoại không hợp lệ.");
-        coordinate(value.latitude(), 90);
-        coordinate(value.longitude(), 180);
+        boolean hasLatitude=value.latitude()!=null&&!value.latitude().isBlank();
+        boolean hasLongitude=value.longitude()!=null&&!value.longitude().isBlank();
+        if(hasLatitude!=hasLongitude)throw new BadRequestException("Nếu cung cấp vị trí bản đồ, cần nhập đủ vĩ độ và kinh độ.");
+        if(hasLatitude){coordinate(value.latitude(),90);coordinate(value.longitude(),180);}
         if (value.amenities().stream().anyMatch(key -> key == null || !AMENITIES.contains(key)) || value.selectedRules().stream().anyMatch(key -> key == null || !RULES.contains(key))) throw new BadRequestException("Tiện ích hoặc quy định không hợp lệ.");
+    }
+    static String mapLink(PropertyRegistrationRequest value) {
+        return value.latitude()==null||value.latitude().isBlank()||value.longitude()==null||value.longitude().isBlank()
+            ? null : "https://www.google.com/maps?q="+value.latitude().trim()+","+value.longitude().trim();
     }
     private boolean phone(String value) { return value.replaceAll("[\\s.-]", "").matches("(?:0|\\+84)[35789]\\d{8}"); }
     private void coordinate(String value, double limit) {

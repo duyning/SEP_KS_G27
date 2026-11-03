@@ -7,6 +7,7 @@ import { StaffLoadState, StaffStatus, staffDate, useStaffLoad } from '../../comp
 import { staffApi } from '../../services/staff.js';
 import {VerificationDocuments,VerificationFields,VerificationHistory,VerificationOwnerInfo,VerificationPropertyInfo} from '../../components/VerificationDetailSections.jsx';
 import '../../styles/staff-verification-detail.css';
+import '../../styles/staff-verifications-refinement.css';
 import SupplementRequestFields from '../../components/SupplementRequestFields.jsx';
 import {composeSupplementNote,supplementGroups} from '../../services/supplement-request.js';
 import VerificationChangeComparison from '../../components/VerificationChangeComparison.jsx';
@@ -68,8 +69,8 @@ export default function StaffPropertyVerificationDetailPage() {
   const editable=state.data.canReview===true && ['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status);
   const supplement=decision==='REQUEST_SUPPLEMENT';
   return <div className="sw-page svd-page">
-    <nav className="svd-breadcrumbs" aria-label="Đường dẫn hồ sơ"><Link to="/staff">HL_RCS</Link><span>/</span><Link to="/staff/verifications">Xác minh nhà trọ</Link><span>/</span><strong>HS-{summary.registrationId} · {summary.name}</strong></nav>
-    <header className="sw-page-heading svd-page-toolbar"><Link className="sw-back" to="/staff/verifications"><ArrowLeft size={15}/>Quay lại danh sách xác minh</Link><div className="sw-heading-actions"><span className="svd-record-code">HS-{summary.registrationId}</span><StaffStatus status={summary.status}/><MotionButton className="p-icon" title="Tải lại hồ sơ" aria-label="Tải lại hồ sơ" onClick={state.reload}><RefreshCw size={16}/></MotionButton></div></header>
+    <header className="sw-page-heading svd-page-toolbar"><Link className="sw-back" to="/staff/verifications"><ArrowLeft size={15}/>Quay lại danh sách xác minh</Link><div className="sw-heading-actions"><span className="svd-record-code">HS-{summary.registrationId}</span><StaffStatus status={summary.status}/></div></header>
+    {reasonNote&&<section className="sv-review-feedback" aria-label="Phản hồi xét duyệt"><FilePenLine size={20}/><div><strong>Phản hồi xét duyệt</strong><p>{reasonNote}</p></div></section>}
     <div className="sw-detail-layout svd-grid"><div className="svd-main">
       <VerificationChangeComparison previous={state.data.publishedSubmission} current={form} propertyId={summary.targetPropertyId}/>
       <VerificationPropertyInfo summary={summary} submission={form} photos={photos} onOpen={openFile}/>
@@ -79,15 +80,15 @@ export default function StaffPropertyVerificationDetailPage() {
     </div><aside className="svd-decision-column"><section className="sw-panel svd-decision-card">
       <header><h3>Quyết định thẩm định</h3><span className="svd-reviewer-tag">Staff Portal</span></header>
       <div className="svd-current-status"><span>Trạng thái hồ sơ:</span><StaffStatus status={summary.status}/></div>
-      <VerificationFields rows={[['Mã hồ sơ',`HS-${summary.registrationId}`],['Ngày nộp ban đầu',staffDate(summary.createdAt)],['Gửi lại gần nhất',staffDate(summary.submittedAt||summary.createdAt)],['Cập nhật xét duyệt',staffDate(summary.reviewedAt||summary.createdAt)],['Staff phụ trách',state.data.assignedStaffName||'Chưa phân công'],['Người xử lý',summary.reviewerName||'Chưa có người xử lý']]}/>
+      <VerificationFields rows={[['Mã hồ sơ',`HS-${summary.registrationId}`],['Ngày nộp ban đầu',staffDate(summary.createdAt)],['Gửi lại gần nhất',staffDate(summary.submittedAt||summary.createdAt)],['Cập nhật xét duyệt',staffDate(summary.reviewedAt||summary.createdAt)],...(state.data.assignedStaffName?[['Staff phụ trách',state.data.assignedStaffName]]:[]),['Người xử lý',summary.reviewerName||'Chưa có người xử lý']]}/>
       <h4 className="svd-label">Lựa chọn quyết định</h4><div className="sw-review-actions">
         <MotionButton className="sw-primary" disabled={!editable||busy} onClick={()=>{setDecision('APPROVE');setNote('');setReviewError('');}}><Check size={16}/>Phê duyệt hồ sơ</MotionButton>
         <MotionButton className="sw-amber-outline" disabled={!editable||summary.status!=='PENDING'||busy} onClick={()=>{setDecision('REQUEST_SUPPLEMENT');setSelectedFields([]);setNote('');setReviewError('');}}><FilePenLine size={16}/>Yêu cầu bổ sung</MotionButton>
         <MotionButton className="sw-danger" disabled={!editable||busy} onClick={()=>{setDecision('REJECT');setNote('');setReviewError('');}}><X size={16}/>Từ chối hồ sơ</MotionButton>
       </div>
-      {reasonNote&&<div className="svd-review-note"><strong>Phản hồi xét duyệt</strong><p>{reasonNote}</p></div>}
+
       {summary.status==='NEEDS_SUPPLEMENT'&&<p className="sw-private-note">Đã gửi yêu cầu bổ sung cho chủ trọ. Hồ sơ chưa được phê duyệt.</p>}
-      {!editable&&<p className="sw-private-note"><ShieldCheck size={14}/>{['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status)?'Chỉ Staff được phân công, không có xung đột lợi ích và có đủ dữ liệu xác minh mới được xét duyệt. Admin chỉ có quyền giám sát.':'Hồ sơ đã có quyết định; không thể xử lý lại.'}</p>}
+      {!editable&&<p className="sw-private-note"><ShieldCheck size={14}/>{['PENDING','NEEDS_SUPPLEMENT'].includes(summary.status)?'Tài khoản hiện tại chưa đủ điều kiện xét duyệt hồ sơ này. Vui lòng kiểm tra quyền truy cập và dữ liệu xác minh.':'Hồ sơ đã có quyết định; không thể xử lý lại.'}</p>}
     </section></aside></div>
     <AnimatePresence>{preview&&<Modal title={preview.name} onClose={closePreview}>{preview.type==='application/pdf'?<iframe className="sw-document-preview" src={preview.url} title="Xem tài liệu PDF" sandbox="allow-same-origin"/>:<img className="sw-image-preview" src={preview.url} alt={preview.name}/>}<a className="sw-outline" href={preview.url} download={preview.name}><Download size={16}/>Tải tài liệu</a></Modal>}</AnimatePresence>
     <AnimatePresence>{decision&&<Modal className={`sw-review-modal ${supplement?'sw-supplement-modal':''}`} title={supplement?<><FilePenLine size={24}/>Yêu cầu Chủ trọ Bổ sung thông tin / Hồ sơ</>:decision==='APPROVE'?'Phê duyệt hồ sơ nhà trọ':'Từ chối hồ sơ nhà trọ'} onClose={()=>{if(!busy)setDecision(null);}}>

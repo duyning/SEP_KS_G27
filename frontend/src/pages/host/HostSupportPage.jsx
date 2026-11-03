@@ -145,7 +145,6 @@ export default function HostSupportPage() {
       {/* Header */}
       <div className="sp-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0' }}>Yêu cầu hỗ trợ</h1>
           <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Gửi và theo dõi các yêu cầu hỗ trợ kỹ thuật, kiểm định và vận hành từ HL_RCS.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>

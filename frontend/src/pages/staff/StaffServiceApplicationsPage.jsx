@@ -77,7 +77,6 @@ export default function StaffServiceApplicationsPage() {
   }
   const ready = !loading && !error;
   return <div className="service-applications sa-page">
-    <header className="sa-page-heading"><div><span className="sa-eyebrow">VẬN HÀNH · ĐỐI TÁC DỊCH VỤ</span><h1>{selected ? 'Thẩm định hồ sơ dịch vụ' : 'Hồ sơ cung cấp dịch vụ'}</h1><p>{selected ? 'Đối chiếu thông tin, kiểm tra tài liệu và ghi nhận quyết định xét duyệt.' : 'Tiếp nhận đối tác, kiểm tra hồ sơ và quản lý chất lượng nội dung dịch vụ.'}</p></div><MotionButton className="sa-button sa-secondary" disabled={busy || loading} onClick={() => setRevision(v => v+1)}><RotateCcw size={16} className={loading ? 'spin' : ''}/>Làm mới dữ liệu</MotionButton></header>
     {selected && <div className="sa-detail-top"><Link className="sa-back" to={listUrl}><ArrowLeft size={16}/>Danh sách hồ sơ</Link>{row && <div><span className="sa-id">DV-{row.registrationId}</span><Status value={row.status}/></div>}</div>}
     {error && !confirmation && <Notice error>{error}{!row && <MotionButton className="sa-inline-button" onClick={() => setRevision(v => v+1)}>Thử lại<RotateCcw size={14}/></MotionButton>}</Notice>}
     {!selected && <>

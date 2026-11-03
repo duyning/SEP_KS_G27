@@ -17,12 +17,12 @@ public class HostApplicationService {
  private final UserRepository users;
  private final HostApplicationRepository applications;
  private final ModerationLogRepository logs;
- public record Submission(@NotBlank String targetCommune,@NotBlank String expectedScale,@NotBlank @Size(min=20,max=1000) String introduction,@NotNull @AssertTrue Boolean agreementAccepted,Long version) {}
- public record Decision(@NotBlank @Pattern(regexp="APPROVED|NEEDS_CHANGES|REJECTED") String decision,@Size(max=2000) String note,Boolean allowResubmit,@NotNull Long version,@Size(max=6) List<@NotBlank String> requestedFields) {}
- public record View(Integer id,Integer userId,String userName,String userPhone,String userEmail,String targetCommune,String expectedScale,String introduction,String status,boolean allowResubmit,String reviewerNote,String reviewedBy,LocalDateTime submittedAt,LocalDateTime reviewedAt,LocalDateTime updatedAt,Long version,List<String> requestedFields) {}
+ public record Submission(@NotBlank String targetCommune,@NotBlank String expectedScale,@NotBlank @Size(min=20,max=1000) String introduction,@NotNull @AssertTrue Boolean agreementAccepted,Long version,@NotBlank @Pattern(regexp="OWNER|AUTHORIZED_MANAGER|SUBLESSOR") String applicantCapacity,@NotBlank @Pattern(regexp="FIRST_TIME|UNDER_TWO_YEARS|TWO_YEARS_OR_MORE") String rentalExperience) {}
+ public record Decision(@NotBlank @Pattern(regexp="APPROVED|NEEDS_CHANGES|REJECTED") String decision,@Size(max=2000) String note,Boolean allowResubmit,@NotNull Long version,@Size(max=8) List<@NotBlank String> requestedFields) {}
+ public record View(Integer id,Integer userId,String userName,String userPhone,String userEmail,String targetCommune,String expectedScale,String introduction,String status,boolean allowResubmit,String reviewerNote,String reviewedBy,LocalDateTime submittedAt,LocalDateTime reviewedAt,LocalDateTime updatedAt,Long version,List<String> requestedFields,String applicantCapacity,String rentalExperience) {}
  private static final Set<String> AREAS=Set.of("Tân Xã","Thạch Hòa","Bình Yên","Hạ Bằng","Đồng Trúc","Tiến Xuân","Khác");
  private static final Set<String> SCALES=Set.of("Dưới 5 phòng","5 - 15 phòng","16 - 30 phòng","31 - 50 phòng","Trên 50 phòng");
- private View view(HostApplication a){var u=a.getUser();return new View(a.getId(),u.getUserId(),u.getFullName(),u.getPhoneNumber(),u.getEmail(),a.getTargetCommune(),a.getExpectedScale(),a.getIntroduction(),a.getStatus(),a.isAllowResubmit(),a.getReviewerNote(),a.getReviewedBy()==null?null:a.getReviewedBy().getFullName(),a.getSubmittedAt(),a.getReviewedAt(),a.getUpdatedAt(),a.getVersion(),a.getRequestedFields()==null||a.getRequestedFields().isBlank()?List.of():List.of(a.getRequestedFields().split(",")));}
+ private View view(HostApplication a){var u=a.getUser();return new View(a.getId(),u.getUserId(),u.getFullName(),u.getPhoneNumber(),u.getEmail(),a.getTargetCommune(),a.getExpectedScale(),a.getIntroduction(),a.getStatus(),a.isAllowResubmit(),a.getReviewerNote(),a.getReviewedBy()==null?null:a.getReviewedBy().getFullName(),a.getSubmittedAt(),a.getReviewedAt(),a.getUpdatedAt(),a.getVersion(),a.getRequestedFields()==null||a.getRequestedFields().isBlank()?List.of():List.of(a.getRequestedFields().split(",")),a.getApplicantCapacity(),a.getRentalExperience());}
  @Transactional(readOnly=true) public View current(){return applications.findByUser_UserId(auth.getCurrentUser().getUserId()).map(this::view).orElse(null);}
  @Transactional public View submit(Submission input){
   var me=auth.getCurrentUser();var user=users.findForRegistrationUpdate(me.getUserId()).orElseThrow();
@@ -35,7 +35,7 @@ public class HostApplicationService {
    if(!Set.of("NEEDS_CHANGES","REJECTED").contains(a.getStatus())||!a.isAllowResubmit())throw new AppException("Hồ sơ hiện tại không thể gửi thêm hoặc chỉnh sửa.",HttpStatus.CONFLICT);
    if(!Objects.equals(a.getVersion(),input.version()))throw new AppException("Hồ sơ đã thay đổi. Vui lòng tải lại trang trước khi gửi.",HttpStatus.CONFLICT);
   }
-  a.setUser(user);a.setTargetCommune(input.targetCommune());a.setExpectedScale(input.expectedScale());a.setIntroduction(input.introduction().strip());a.setAgreementAccepted(true);a.setStatus("PENDING_REVIEW");a.setSubmittedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setReviewedBy(null);a.setReviewedAt(null);a.setReviewerNote(null);a.setRequestedFields(null);a.setAllowResubmit(true);
+  a.setApplicantCapacity(input.applicantCapacity());a.setRentalExperience(input.rentalExperience());a.setUser(user);a.setTargetCommune(input.targetCommune());a.setExpectedScale(input.expectedScale());a.setIntroduction(input.introduction().strip());a.setAgreementAccepted(true);a.setStatus("PENDING_REVIEW");a.setSubmittedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setReviewedBy(null);a.setReviewedAt(null);a.setReviewerNote(null);a.setRequestedFields(null);a.setAllowResubmit(true);
   return view(applications.saveAndFlush(a));
  }
  public record Stats(long total,long pending,long needsChanges,long approved,long rejected) {}
@@ -79,7 +79,7 @@ public class HostApplicationService {
   if(owner.getRole()!=UserRole.USER||owner.getStatus()!=UserStatus.ACTIVE)throw new AppException("Tài khoản đăng ký không còn đủ điều kiện xét duyệt.",HttpStatus.CONFLICT);
   if(!input.decision().equals("APPROVED")&&(input.note()==null||input.note().isBlank()))throw new BadRequestException("Vui lòng nêu rõ lý do hoặc yêu cầu bổ sung.");
   var fields=input.requestedFields()==null?List.<String>of():input.requestedFields().stream().distinct().toList();
-  if(fields.size()>6||!Set.of("targetCommune","expectedScale","introduction","accPhone","accFullName","accEmail").containsAll(fields))throw new BadRequestException("Mục yêu cầu bổ sung không hợp lệ");
+  if(fields.size()>8||!Set.of("targetCommune","expectedScale","introduction","accPhone","accFullName","accEmail","applicantCapacity","rentalExperience").containsAll(fields))throw new BadRequestException("Mục yêu cầu bổ sung không hợp lệ");
   a.setRequestedFields(input.decision().equals("NEEDS_CHANGES")?String.join(",",fields):null);
   a.setStatus(input.decision());a.setReviewerNote(input.note()==null?null:input.note().strip());a.setReviewedBy(reviewer);a.setReviewedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setAllowResubmit(!input.decision().equals("APPROVED")&&!Boolean.FALSE.equals(input.allowResubmit()));
   if(input.decision().equals("APPROVED")){owner.setRole(UserRole.ROOM_HOST);users.save(owner);}

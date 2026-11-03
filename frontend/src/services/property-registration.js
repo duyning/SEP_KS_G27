@@ -14,10 +14,10 @@ export function parsePropertyCoordinates(latitude, longitude) {
   const lng = Number(longitude);
   return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
 }
-export const AMENITIES = [['parking', 'Bãi để xe máy có mái che'], ['fingerprint', 'Cổng khóa vân tay / Thẻ từ'], ['camera', 'Camera an ninh 24/7'], ['flexibleHours', 'Giờ giấc tự do 24/7'], ['fireSafety', 'Hệ thống PCCC đạt chuẩn'], ['separateOwner', 'Không chung chủ'], ['wifi', 'Wifi 6 toàn tòa nhà'], ['laundry', 'Máy giặt dùng chung'], ['drying', 'Sân phơi đồ có mái che'], ['cleaning', 'Vệ sinh hành lang định kỳ'], ['water', 'Hệ thống lọc nước tổng'], ['elevator', 'Thang máy di chuyển']];
-export const RULES = [['quietHours', 'Giữ trật tự sau 23h'], ['noSmoking', 'Không hút thuốc trong nhà'], ['noUnsafeStoves', 'Nghiêm cấm bếp than/ga mini'], ['residenceRegistration', 'Đăng ký tạm trú đầy đủ'], ['cleanliness', 'Giữ vệ sinh chung'], ['pets', 'Cho phép nuôi thú cưng']];
+export const AMENITIES = [['parking', 'Bãi để xe máy có mái che'], ['fingerprint', 'Cổng khóa vân tay / Thẻ từ'], ['camera', 'Camera an ninh 24/7'], ['flexibleHours', 'Giờ giấc tự do 24/7'], ['fireSafety', 'Hệ thống PCCC đạt chuẩn'], ['separateOwner', 'Không chung chủ'], ['wifi', 'Wifi 6 toàn tòa nhà'], ['laundry', 'Máy giặt dùng chung'], ['drying', 'Sân phơi đồ có mái che'], ['cleaning', 'Vệ sinh hành lang định kỳ'], ['water', 'Hệ thống lọc nước tổng'], ['elevator', 'Thang máy di chuyển'], ['security', 'Bảo vệ / Người trực quản lý'], ['emergencyExit', 'Lối thoát nạn riêng'], ['emergencyLighting', 'Đèn sự cố & Biển chỉ dẫn thoát nạn'], ['wasteCollection', 'Khu tập kết rác & Thu gom định kỳ'], ['bicycleParking', 'Chỗ để xe đạp'], ['commonArea', 'Khu sinh hoạt chung']];
+export const RULES = [['quietHours', 'Giữ trật tự sau 23h'], ['noSmoking', 'Không hút thuốc trong nhà'], ['noUnsafeStoves', 'Nghiêm cấm bếp than/ga mini'], ['residenceRegistration', 'Đăng ký tạm trú đầy đủ'], ['cleanliness', 'Giữ vệ sinh chung'], ['pets', 'Cho phép nuôi thú cưng'], ['guestRegistration', 'Đăng ký khách đến thăm / Lưu trú'], ['noBlockedExits', 'Không để đồ chắn hành lang, lối thoát nạn'], ['safeCharging', 'Sạc xe điện tại khu vực được cho phép'], ['wasteSorting', 'Bỏ rác đúng nơi & Đúng giờ'], ['noSubletting', 'Không tự ý cho thuê lại / Chuyển nhượng'], ['reportIncidents', 'Báo ngay sự cố điện, nước & An toàn']];
 export const DOCUMENTS = [['ownership', 'Giấy tờ chứng minh quyền sở hữu hoặc quyền quản lý'], ['idCard', 'Căn cước công dân (CCCD / CMND) chủ trọ'], ['fireSafety', 'Biên bản kiểm tra hoặc Cam kết an toàn PCCC']];
-export const REQUIRED_DOCUMENTS = ['ownership', 'idCard'];
+export const REQUIRED_DOCUMENTS = ['ownership', 'idCard', 'fireSafety'];
 export const STEPS = ['Thông tin cơ bản', 'Vị trí', 'Tiện ích', 'Hình ảnh', 'Hồ sơ xác minh', 'Kiểm tra & Gửi'];
 export function createPropertyForm(user = {}) {
   return { name: '', propertyType: PROPERTY_TYPES[0], description: '', managerName: user.fullName || '', contactPhone: user.phoneNumber || '', zaloPhone: '', commune: '', addressDetail: '', nearby: '', latitude: '', longitude: '', amenities: [], selectedRules: [], rules: '', photos: [], documents: {}, termsAccepted: false };
@@ -43,10 +43,11 @@ export function validatePropertyStep(data, step) {
     if (!AREAS.includes(data.commune)) errors.commune = 'Vui lòng chọn khu vực nhà trọ.';
     length('addressDetail', 10, 255, 'Địa chỉ chi tiết');
     if (data.nearby.length > 255) errors.nearby = 'Địa điểm lân cận tối đa 255 ký tự.';
-    if (!data.latitude.trim() && !data.longitude.trim()) errors.location = 'Vui lòng chọn vị trí trên bản đồ hoặc nhập đủ vĩ độ và kinh độ.';
-    else if (!parsePropertyCoordinates(data.latitude, data.longitude)) {
+    const latitude=String(data.latitude??'').trim(),longitude=String(data.longitude??'').trim();
+    if ((latitude || longitude) && !parsePropertyCoordinates(latitude, longitude)) {
       for (const [key, limit, label] of [['latitude', 90, 'Vĩ độ'], ['longitude', 180, 'Kinh độ']]) {
-        if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(data[key].trim()) || !Number.isFinite(Number(data[key])) || Math.abs(Number(data[key])) > limit) errors[key] = `${label} phải là số thập phân từ -${limit} đến ${limit}; cần nhập đủ cả hai tọa độ.`;
+        const value=String(data[key]??'').trim();
+        if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value) || !Number.isFinite(Number(value)) || Math.abs(Number(value)) > limit) errors[key] = `${label} phải là số thập phân từ -${limit} đến ${limit}; cần nhập đủ cả hai tọa độ.`;
       }
     }
   }
@@ -69,9 +70,16 @@ export function validateRegistrationFile(file, document = false) {
 }
 
 // Only text fields are stored. Identity documents, photos and consent never enter browser storage.
-export function propertyDraft(data) {
+export function propertyDraft(data, resumeStep = 0) {
   const { photos, documents, termsAccepted, ...fields } = data;
-  return { version: 1, fields };
+  return { version: 1, fields, resumeStep: Math.max(0, Math.min(5, Number(resumeStep) || 0)), savedAt: new Date().toISOString() };
+}
+// Uploaded files are deliberately excluded; resume at the photo step at most.
+export function propertyDraftStep(raw, data) {
+  const parsed = JSON.parse(raw);
+  const target = Number.isInteger(parsed.resumeStep) ? Math.max(0, Math.min(3, parsed.resumeStep)) : 0;
+  for (let index = 0; index < target; index++) if (Object.keys(validatePropertyStep(data, index)).length) return index;
+  return target;
 }
 export function restorePropertyDraft(raw, user) {
   const base = createPropertyForm(user);

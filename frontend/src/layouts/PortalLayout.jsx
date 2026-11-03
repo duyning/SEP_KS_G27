@@ -7,8 +7,10 @@ import { landingFor, roleLabels } from '../routing/screens.js';
 import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
+import { HostHeaderTarget } from '../components/HostHeaderSlot.jsx';
 import { staffHostApi } from '../services/staff-host-applications.js';
 import '../styles/host-workspace.css';
+import '../styles/host-header.css';
 
 const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
@@ -59,13 +61,14 @@ export default function PortalLayout({ screen, children }) {
   const location = useLocation();
 
   const [open, setOpen] = useState(false);
+  const [hostHeaderTarget,setHostHeaderTarget] = useState(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const toggle = useRef();
   const sidebar = useRef();
   const popoverRef = useRef();
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
-  const topbarTitle = screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
+  const topbarTitle = screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
   const [pendingHostApplications, setPendingHostApplications] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
@@ -279,15 +282,10 @@ export default function PortalLayout({ screen, children }) {
             <div className="portal-topbar-title">
               <h1>{topbarTitle}</h1>
               {portal === 'staff' && staffCounts && <div className="topbar-status-chip hide-mobile"><span className="live-dot-green" /><span>{screen.path.startsWith('/staff/verifications') ? 'Thẩm định hồ sơ' : 'Hệ thống trực tuyến'}</span></div>}
-              {portal === 'host' && !['/host', '/host/property', '/host/room-types', '/host/rooms', '/host/viewings', '/host/property/new'].includes(screen.path) && (
-                <div className="topbar-status-chip hide-mobile">
-                  <span className="live-dot-green" />
-                  <span>{screen.path === '/host/property' ? 'Danh mục nhà trọ' : screen.path === '/host/room-types' ? 'Bảng giá & Tiện nghi' : 'Hệ thống trực tuyến'}</span>
-                </div>
-              )}
             </div>
           </div>
           <div className="portal-topbar-right">
+            {portal === 'host' && screen.path === '/host' && <div className="host-header-actions" ref={setHostHeaderTarget}/>}
             <Link className="btn-view-public-site" to="/" title="Xem giao diện tìm kiếm phòng của người thuê">
               <ExternalLink size={15} /> <span className="hide-mobile">Trang người thuê</span>
             </Link>
@@ -363,7 +361,7 @@ export default function PortalLayout({ screen, children }) {
       </aside>
 
       <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''} ${screen.path === '/properties/detail' ? 'detail-public-content' : ''}`}>
-        {portal !== 'host' && location.pathname !== '/' && screen.path !== '/properties/detail' && (
+        {!['host','staff'].includes(portal) && location.pathname !== '/' && screen.path !== '/properties/detail' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
             <Link to="/">HL_RCS</Link>
             <ChevronRight size={13} />
@@ -374,7 +372,7 @@ export default function PortalLayout({ screen, children }) {
             <span aria-current="page">{screen.title}</span>
           </nav>
         )}
-        {children}
+        <HostHeaderTarget.Provider value={hostHeaderTarget}>{children}</HostHeaderTarget.Provider>
       </main>
 
       {portal === 'host' && (

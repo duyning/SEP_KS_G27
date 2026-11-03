@@ -79,7 +79,7 @@ class PropertyAssignmentSecurityTests {
     private HttpResponse<String> submitHost(Map<String,Object> details) throws Exception {
         var boundary="assignment-"+UUID.randomUUID();var body=new java.io.ByteArrayOutputStream();
         body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"details\"\r\nContent-Type: application/json\r\n\r\n"+json.writeValueAsString(details)+"\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        for(var name:List.of("photos","ownership","idCard")) {
+        for(var name:List.of("photos","ownership","idCard","fireSafety")) {
             boolean photo=name.equals("photos");
             body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+name+"\"; filename=\"file"+(photo?".jpg":".pdf")+"\"\r\nContent-Type: "+(photo?"image/jpeg":"application/pdf")+"\r\n\r\n").getBytes());
             body.writeBytes(photo?new byte[]{(byte)255,(byte)216,(byte)255,1}:"%PDF-private-test".getBytes());body.writeBytes("\r\n".getBytes());

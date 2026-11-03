@@ -12,6 +12,8 @@ public class HostApplication {
  @Column(nullable=false,length=100) private String targetCommune;
  @Column(nullable=false,length=100) private String expectedScale;
  @Column(nullable=false,length=1000) private String introduction;
+ @Column(length=40) private String applicantCapacity;
+ @Column(length=30) private String rentalExperience;
  @Column(nullable=false) private boolean agreementAccepted;
  private LocalDateTime submittedAt;
  private LocalDateTime updatedAt;

@@ -82,12 +82,12 @@ class HostDashboardTests {
         assertEquals(400,resubmit(host,id,version,fields,java.util.List.of(Integer.MAX_VALUE),null,null).statusCode());
         assertEquals(400,resubmit(host,id,version,fields,retainedPhotos(id),"idCard","invalid pdf").statusCode());
         assertEquals(RegistrationStatus.NEEDS_SUPPLEMENT,registrations.findById(id).orElseThrow().getStatus());
-        assertEquals(3,documents.countByRegistration_RegistrationId(id));
+        assertEquals(4,documents.countByRegistration_RegistrationId(id));
         var result=resubmit(host,id,version,fields,retainedPhotos(id),"idCard","%PDF-1.7 replacement document");
         assertEquals(200,result.statusCode(),result.body());assertEquals("PENDING",json.readTree(result.body()).path("data").path("status").asString());
         assertEquals(1,registrations.findById(id).orElseThrow().getAssignmentVersion(),"Supplement resubmission keeps the explicit current assignment");
         assertEquals(users.findByEmail(fixtureTokens.getUsernameFromJWT(staff)).orElseThrow().getUserId(),json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("assignedStaffId").asInt());
-        assertEquals(4,documents.countByRegistration_RegistrationId(id));assertEquals(3,documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id).size());
+        assertEquals(5,documents.countByRegistration_RegistrationId(id));assertEquals(4,documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id).size());
         assertEquals(409,propertyEdit(host,id).statusCode());assertEquals(409,resubmit(host,id,version,fields,retainedPhotos(id),null,null).statusCode());
         assertEquals(1,json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("submissionEvents").size());
         assertEquals(200,staffReview(staff,id,"APPROVE","").statusCode());
@@ -204,7 +204,7 @@ class HostDashboardTests {
         assertEquals("New registered property", data.path("submission").path("name").asString());
         assertEquals("21.0188", data.path("submission").path("latitude").asString());
         assertTrue(data.path("submission").path("termsAccepted").asBoolean());
-        assertEquals(2, data.path("documents").size());
+        assertEquals(3, data.path("documents").size());
         assertTrue(data.path("summary").path("ownerId").asInt()>0);
         assertTrue(data.path("documents").get(0).path("fileSize").asLong()>0);
         assertFalse(data.path("documents").get(0).path("uploadedAt").isNull());
@@ -315,7 +315,7 @@ class HostDashboardTests {
         assertEquals("Owner name", record.path("managerName").asString());
         assertEquals("wifi", record.path("amenities").get(0).asString());
         assertEquals(1, record.path("photos").size());
-        assertEquals(2, record.path("documents").size());
+        assertEquals(3, record.path("documents").size());
         assertFalse(record.path("verified").asBoolean());
         assertTrue(record.path("totalRooms").isNull());
         assertFalse(response.body().contains("fileContent"));
@@ -367,12 +367,16 @@ class HostDashboardTests {
                 Map.entry("termsAccepted", true)));
     }
     private HttpResponse<String> submitRegistration(String token, Map<String, Object> details, boolean includeDocuments, boolean invalidPhoto) throws Exception {
+        return submitRegistration(token, details, includeDocuments, invalidPhoto, true);
+    }
+    private HttpResponse<String> submitRegistration(String token, Map<String, Object> details, boolean includeDocuments, boolean invalidPhoto, boolean includeFireSafety) throws Exception {
         String boundary = "hlrcs-" + System.nanoTime();
         var body = new java.io.ByteArrayOutputStream();
         body.writeBytes(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"details\"\r\nContent-Type: application/json\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
         body.writeBytes(json.writeValueAsBytes(details));
         body.writeBytes("\r\n".getBytes());
-        for (String part : includeDocuments ? java.util.List.of("photos", "ownership", "idCard") : java.util.List.of("photos")) {
+        for (String part : includeDocuments ? java.util.List.of("photos", "ownership", "idCard", "fireSafety") : java.util.List.of("photos")) {
+            if (part.equals("fireSafety") && !includeFireSafety) continue;
             boolean photo = part.equals("photos");
             body.writeBytes(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + part + "\"; filename=\"test." + (photo ? "png" : "pdf") + "\"\r\nContent-Type: " + (photo ? "image/png" : "application/pdf") + "\r\n\r\n").getBytes());
             body.writeBytes(photo ? (invalidPhoto ? "not a photo".getBytes() : java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jz2kAAAAASUVORK5CYII=")) : "%PDF-1.7\nTest-only document\n%%EOF".getBytes());
@@ -388,6 +392,24 @@ class HostDashboardTests {
         if (token != null) request.header("Authorization", "Bearer " + token);
         return client.send(request.GET().build(), HttpResponse.BodyHandlers.ofString());
     }
+
+    @Test void pcccIsRequiredAndNewCommonFacilitiesAndRulesArePersisted() throws Exception {
+        var host = account(UserRole.ROOM_HOST);
+        String hostToken = token(host);
+        var details = registrationDetails();
+        details.put("amenities", java.util.List.of("security", "emergencyExit", "emergencyLighting", "wasteCollection", "bicycleParking", "commonArea"));
+        details.put("selectedRules", java.util.List.of("guestRegistration", "noBlockedExits", "safeCharging", "wasteSorting", "noSubletting", "reportIncidents"));
+        var missing = submitRegistration(hostToken, details, true, false, false);
+        assertEquals(400, missing.statusCode(), missing.body());
+        assertTrue(registrations.findByUser_UserIdOrderByCreatedAtDesc(host.getUserId()).isEmpty());
+        var received = submitRegistration(hostToken, details, true, false);
+        assertEquals(200, received.statusCode(), received.body());
+        int id = json.readTree(received.body()).path("data").path("registrationId").asInt();
+        assertTrue(documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "FIRE_SAFETY"));
+        var stored = registrations.findById(id).orElseThrow().getRegistrationDetails();
+        assertTrue(stored.contains("emergencyExit"));
+        assertTrue(stored.contains("safeCharging"));
+    }
     @Test void submittedRegistrationPersistsPendingAndPrivateAttachments() throws Exception {
         var host = account(UserRole.ROOM_HOST);
         String token = token(host);
@@ -396,7 +418,7 @@ class HostDashboardTests {
         var data = json.readTree(response.body()).path("data");
         assertEquals("PENDING", data.path("status").asString());
         int id = data.path("registrationId").asInt();
-        assertEquals(3, documents.countByRegistration_RegistrationId(id));
+        assertEquals(4, documents.countByRegistration_RegistrationId(id));
         assertTrue(registrations.findById(id).orElseThrow().getRegistrationDetails().contains("quietHours"));
         assertFalse(response.body().contains("fileContent"));
         assertEquals(id, json.readTree(currentRegistration(token).body()).path("data").path("registrationId").asInt());
@@ -404,6 +426,27 @@ class HostDashboardTests {
         assertEquals(0, properties.findByOwner_UserIdOrderByPropertyIdAsc(host.getUserId()).size());
         assertEquals(409, submitRegistration(token, registrationDetails(), true, false).statusCode());
         assertTrue(json.readTree(currentRegistration(token(account(UserRole.ROOM_HOST))).body()).path("data").isNull());
+    }
+    @Test void registrationAcceptsMissingMapCoordinatesWithoutInventingMapLink() throws Exception {
+        for(var mode:java.util.List.of("blank","omitted","null")){
+            var host=account(UserRole.ROOM_HOST);var details=registrationDetails();
+            if(mode.equals("blank")){details.put("latitude"," ");details.put("longitude","");}
+            else if(mode.equals("null")){details.put("latitude",null);details.put("longitude",null);}
+            else{details.remove("latitude");details.remove("longitude");}
+            var response=submitRegistration(token(host),details,true,false);
+            assertEquals(200,response.statusCode(),response.body());
+            var row=registrations.findByUser_UserIdOrderByCreatedAtDesc(host.getUserId()).get(0);
+            assertNull(row.getGoogleMapLink());assertEquals(RegistrationStatus.PENDING,row.getStatus());
+            assertTrue(row.getAddress().contains("Tân Xã"));
+        }
+    }
+    @Test void optionalCoordinatesRejectPartialPairsAndInvalidNumbersWithoutSaving() throws Exception {
+        var host=account(UserRole.ROOM_HOST);var token=token(host);var details=registrationDetails();
+        for(var pair:java.util.List.of(new String[]{"21.0188",""},new String[]{"","105.5215"},new String[]{"NaN","105"},new String[]{"91","105"},new String[]{"21","181"})){
+            details.put("latitude",pair[0]);details.put("longitude",pair[1]);
+            assertEquals(400,submitRegistration(token,details,true,false).statusCode());
+        }
+        assertTrue(registrations.findByUser_UserIdOrderByCreatedAtDesc(host.getUserId()).isEmpty());
     }
     @Test void failedRegistrationDoesNotPersistAnything() throws Exception {
         var host = account(UserRole.ROOM_HOST);
@@ -562,6 +605,27 @@ class HostDashboardTests {
         assertEquals(404,createType(token(account(UserRole.ROOM_HOST)),details).statusCode());
         assertEquals(409,createType(ownerToken,details).statusCode());
         assertEquals(1,roomTypes.findByProperty_Owner_UserId(owner.getUserId()).size());
+    }
+
+    @Test void expandedRoomAmenitiesPersistThroughBatchCreationAndEditing() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);
+        var property=properties.save(Property.builder().owner(owner).name("Amenity fixture property").status("ACTIVE").build());
+        String auth=token(owner);
+        var details=typeDetails(property.getPropertyId());
+        var keys=java.util.List.of("airConditioner","waterHeater","balcony","kitchen","loft","refrigerator","washingMachine","bed","wardrobe","desk","wifi","privateBathroom","ceilingFan","window","curtains","smartLock","television","sofa","diningTable","inductionCooker","microwave","kitchenHood","privateDrying");
+        details.put("amenities",keys);
+        var created=batchType(auth,details,java.util.List.of(Map.of("roomNumber","A.101","floor","Tầng 1")),java.util.List.of());
+        assertEquals(200,created.statusCode(),created.body());
+        int id=json.readTree(created.body()).path("data").path("roomTypeId").asInt();
+        var stored=json.readTree(hostGet(auth,"/room-types/"+id).body()).path("data");
+        assertEquals(keys.size(),stored.path("amenities").size());
+        assertEquals(keys.size(),stored.path("rooms").get(0).path("amenities").size());
+        details.put("amenities",java.util.List.of("ceilingFan","smartLock","microwave"));
+        var updated=typeMultipart(auth,id,details,java.util.List.of());
+        assertEquals(200,updated.statusCode(),updated.body());
+        assertTrue(roomTypes.findById(id).orElseThrow().getAmenitiesJson().contains("smartLock"));
+        details.put("amenities",java.util.List.of("unknown"));
+        assertEquals(400,typeMultipart(auth,id,details,java.util.List.of()).statusCode());
     }
     @Test void roomTypeValidationAndPendingPropertyCannotCreateData() throws Exception {
         var owner = account(UserRole.ROOM_HOST);
@@ -901,13 +965,17 @@ class HostDashboardTests {
         return client.send(request.GET().build(),HttpResponse.BodyHandlers.ofString());
     }
     private User applicant(){var user=account(UserRole.USER);user.setPhoneNumber(String.format("09%08d",Math.floorMod(System.nanoTime(),100000000)));return users.save(user);}
-    private Map<String,Object> hostApplicationFields(){return new java.util.HashMap<>(Map.of("targetCommune","Tân Xã","expectedScale","5 - 15 phòng","introduction","Tôi muốn quản lý nhà trọ và cập nhật thông tin phòng cho sinh viên tại Hòa Lạc.","agreementAccepted",true));}
+    private Map<String,Object> hostApplicationFields(){return new java.util.HashMap<>(Map.of("targetCommune","Tân Xã","expectedScale","5 - 15 phòng","introduction","Tôi muốn quản lý nhà trọ và cập nhật thông tin phòng cho sinh viên tại Hòa Lạc.","agreementAccepted",true,"applicantCapacity","OWNER","rentalExperience","FIRST_TIME"));}
     @Test void hostApplicationIsOwnedPersistedValidatedAndNeverSelfGrantsRole() throws Exception {
         var owner=applicant();var jwt=token(owner);var other=token(applicant());
         assertEquals(401,hostApplicationGet(null,"/current").statusCode());
         assertTrue(json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").isNull());
         var invalid=hostApplicationFields();invalid.put("agreementAccepted",false);assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
         invalid=hostApplicationFields();invalid.put("targetCommune","Invalid area");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        for(String key : java.util.List.of("applicantCapacity","rentalExperience")){
+            invalid=hostApplicationFields();invalid.remove(key);assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+            invalid=hostApplicationFields();invalid.put(key,"UNSUPPORTED");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        }
         var response=hostApplicationPost(jwt,"",hostApplicationFields());assertEquals(200,response.statusCode(),response.body());
         assertEquals("PENDING_REVIEW",json.readTree(response.body()).path("data").path("status").asString());
         assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());
@@ -919,6 +987,9 @@ class HostDashboardTests {
         assertEquals(403,hostApplicationGet(other,"/"+id).statusCode());
         var detail=json.readTree(hostApplicationGet(staff,"/"+id).body()).path("data");assertEquals(owner.getUserId(),detail.path("application").path("userId").asInt());
         assertEquals(hostApplicationFields().get("introduction"),detail.path("application").path("introduction").asString());
+        assertEquals("OWNER",detail.path("application").path("applicantCapacity").asString());
+        assertEquals("FIRST_TIME",detail.path("application").path("rentalExperience").asString());
+        assertEquals("OWNER",json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("applicantCapacity").asString());
         var queue=json.readTree(hostApplicationGet(staff,"?search=HREG-"+id+"&size=1&sort=NAME_ASC").body()).path("data");
         assertEquals(1,queue.path("totalElements").asInt());assertEquals(id,queue.path("content").get(0).path("id").asInt());assertTrue(queue.path("stats").path("pending").asLong()>=1);
         assertEquals(400,hostApplicationGet(staff,"?status=INVALID").statusCode());
@@ -929,12 +1000,12 @@ class HostDashboardTests {
         var first=json.readTree(hostApplicationPost(jwt,"",hostApplicationFields()).body()).path("data");int id=first.path("id").asInt();long version=first.path("version").asLong();
         assertEquals(403,hostApplicationPost(jwt,"/"+id+"/review",Map.of("decision","APPROVED","version",version)).statusCode());
         assertEquals(400,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","version",version)).statusCode());
-        assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","note","Vui lòng mô tả rõ kinh nghiệm quản lý.","version",version,"requestedFields",java.util.List.of("introduction"))).statusCode());
+        assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","note","Vui lòng mô tả rõ kinh nghiệm quản lý.","version",version,"requestedFields",java.util.List.of("introduction","applicantCapacity","rentalExperience"))).statusCode());
         var fields=hostApplicationFields();fields.put("version",version);assertEquals(409,hostApplicationPost(jwt,"",fields).statusCode());
-        var current=json.readTree(hostApplicationGet(jwt,"/current").body()).path("data");fields.put("version",current.path("version").asLong());
+        var current=json.readTree(hostApplicationGet(jwt,"/current").body()).path("data");fields.put("version",current.path("version").asLong());fields.put("applicantCapacity","AUTHORIZED_MANAGER");fields.put("rentalExperience","UNDER_TWO_YEARS");
         assertEquals("introduction",current.path("requestedFields").get(0).asString());
         var resubmitted=hostApplicationPost(jwt,"",fields);assertEquals(200,resubmitted.statusCode(),resubmitted.body());
-        var pending=json.readTree(resubmitted.body()).path("data");assertEquals(id,pending.path("id").asInt());
+        var pending=json.readTree(resubmitted.body()).path("data");assertEquals(id,pending.path("id").asInt());assertEquals("AUTHORIZED_MANAGER",pending.path("applicantCapacity").asString());assertEquals("UNDER_TWO_YEARS",pending.path("rentalExperience").asString());
         assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","REJECTED","note","Thông tin không hợp lệ.","allowResubmit",false,"version",pending.path("version").asLong())).statusCode());
         fields.put("version",json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("version").asLong());assertEquals(409,hostApplicationPost(jwt,"",fields).statusCode());
     }

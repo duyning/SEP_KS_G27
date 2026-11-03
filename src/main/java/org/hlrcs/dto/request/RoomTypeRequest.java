@@ -13,7 +13,7 @@ public record RoomTypeRequest(
         @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal deposit,
         @Size(max=1000) String imageUrl,
         @Size(max=2000) String description,
-        @NotNull @Size(max=12) List<@NotBlank String> amenities,
+        @NotNull @Size(max=23) List<@NotBlank String> amenities,
         @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal electricityPrice,
         @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal waterPrice,
         @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal internetPrice,

@@ -1,68 +1,37 @@
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Calendar,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Home,
-  Layers,
-  Plus,
-  RefreshCw,
-  MessagesSquare,
-} from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, FileText, Home, Layers, Plus, RefreshCw, MessagesSquare } from 'lucide-react';
 import { hostApi } from '../../services/host.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { StateView, StatusBadge } from '../../components/PortalUI.jsx';
+import HostHeaderSlot from '../../components/HostHeaderSlot.jsx';
+import HostEmptyState from '../../components/HostEmptyState.jsx';
 import '../../styles/host-dashboard.css';
 
-const onboardingSteps = [
-  ['Thêm thông tin nhà trọ', 'Điền tên nhà trọ, địa chỉ thực tế và mức giá niêm yết minh bạch.'],
-  ['Cấu hình loại phòng & số phòng', 'Khởi tạo các phòng cụ thể (P.101, P.102,...) và đánh dấu phòng còn trống.'],
-  ['Gửi kiểm duyệt & nhận khách', 'Ban quản trị thẩm định trong 24h và tin đăng sẽ hiển thị công khai ngay.'],
-];
 const bookingLabels = { PENDING: 'Chờ xác nhận', APPROVED: 'Đã xác nhận', REJECTED: 'Đã từ chối', CANCELLED: 'Đã hủy' };
 const money = value => value == null ? 'Chưa có giá niêm yết' : `${new Intl.NumberFormat('vi-VN').format(value)} đ / tháng`;
 
-export function HostOnboarding() {
-  return (
-    <section id="newHostOnboardingState" className="new-host-onboarding">
-      <div className="onboarding-card">
-        <div className="onboarding-badge">Bắt đầu cùng HL_RCS</div>
-        <h2 className="onboarding-title">Chào mừng bạn đến với Mạng lưới Chủ trọ Hòa Lạc!</h2>
-        <p className="onboarding-desc">
-          Bạn chưa có nhà trọ nào trong hệ thống. Hãy thêm nhà trọ đầu tiên để bắt đầu quản lý phòng và tiếp cận hàng nghìn sinh viên ĐH FPT &amp; người đi làm tại Khu Công nghệ cao.
-        </p>
-
-        <div className="onboarding-steps-grid">
-          {onboardingSteps.map(([title, description], index) => (
-            <div className="step-card" key={title}>
-              <div className="step-num">{index + 1}</div>
-              <h4 className="step-title">{title}</h4>
-              <p className="step-desc">{description}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="onboarding-cta-wrap">
-          <Link to="/host/property/new" className="btn-onboarding-cta">
-            <Plus size={18} strokeWidth={2.5} />
-            <span>+ Đăng ký nhà trọ đầu tiên của bạn</span>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+export function HostOnboarding({canRegister=false,checking=false,error='',pendingCount=0}) {
+ const pending=pendingCount>0;
+ const action=pending?{to:'/host/property',label:'Theo dõi hồ sơ'}:canRegister?{to:'/host/property/new',label:'Đăng ký nhà trọ'}:!checking&&!error?{to:'/host/property',label:'Xem hồ sơ nhà trọ'}:null;
+ return <HostEmptyState id="newHostOnboardingState" title={pending?'Hồ sơ nhà trọ chưa được phê duyệt':'Bạn chưa có nhà trọ nào'}
+  description={pending?`Bạn có ${pendingCount} hồ sơ chưa hoàn tất xét duyệt. Theo dõi phản hồi để bổ sung thông tin khi được yêu cầu.`:'Đăng ký nhà trọ để bắt đầu quản lý phòng, giá thuê và lịch xem phòng.'}
+  action={action} pending={pending}>
+  {checking&&<div className="host-empty-message" role="status">Đang kiểm tra quyền đăng ký…</div>}
+  {error&&<div className="host-empty-error" role="alert">Chưa kiểm tra được quyền đăng ký. {error} Vui lòng làm mới để thử lại.</div>}
+ </HostEmptyState>;
 }
 
 export function HostDashboardContent({ data, onRefresh, loading }) {
   const { user } = useAuth();
   const [canRegister,setCanRegister] = useState(false);
+  const [eligibility,setEligibility] = useState({loading:true,error:''});
   useEffect(() => {
     const controller = new AbortController();
     setCanRegister(false);
-    hostApi.registrationEligibility(controller.signal).then(policy=>{if(!controller.signal.aborted)setCanRegister(policy.canRegister);}).catch(()=>{});
+    setEligibility({loading:true,error:''});
+    hostApi.registrationEligibility(controller.signal).then(policy=>{if(!controller.signal.aborted){setCanRegister(policy.canRegister);setEligibility({loading:false,error:''});}}).catch(error=>{if(!controller.signal.aborted)setEligibility({loading:false,error:error.message});});
     return ()=>controller.abort();
   },[user?.userId,data]);
   const properties = data?.properties || [];
@@ -76,38 +45,12 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
   const activeListingCount = data?.activeListingCount ?? properties.filter(p => p.status === 'ACTIVE').length;
   const hasProperty = properties.length > 0;
 
+  if(!hasProperty) return <div className="dashboard-data-container hd-start-page">
+    <HostOnboarding canRegister={canRegister} checking={eligibility.loading} error={eligibility.error} pendingCount={pendingRegistrationCount}/>
+  </div>;
+
   return (
     <div className="dashboard-data-container">
-      {/* 1. Header greeting row */}
-      <section className="dashboard-header-row">
-        <div className="header-greeting-col">
-          <h2 className="dashboard-headline">Bảng điều khiển</h2>
-          <p className="dashboard-greeting-lead" style={{ margin: '0 0 4px', fontWeight: 700, color: 'var(--host-text-main)', fontSize: '15px' }}>
-            Xin chào, <span className="greeting-text" id="hostGreetingText" style={{ color: 'var(--host-primary)' }}>{user?.fullName || 'Chủ trọ mới (Test Onboarding)'}</span>
-          </p>
-          <p className="dashboard-subtext">
-            Tổng quan tình trạng nhà trọ, phòng trống và các yêu cầu cần xử lý.
-          </p>
-        </div>
-        <div className="header-cta-col">
-          {canRegister && <Link to="/host/property/new" className="btn-add-property" id="btnTriggerAddProperty">
-            <Plus size={18} strokeWidth={2.5} id="headerCtaIcon" />
-            <span id="headerCtaText">Đăng ký nhà trọ</span>
-          </Link>}
-          <MotionButton
-            type="button"
-            className="btn-refresh-icon"
-            id="btnRefreshDashboard"
-            onClick={onRefresh}
-            title="Làm mới dữ liệu"
-            aria-label="Làm mới dữ liệu"
-            disabled={loading}
-          >
-            <RefreshCw size={16} />
-          </MotionButton>
-        </div>
-      </section>
-
       {/* 2. 4 Primary KPI Cards */}
       <section className="kpi-cards-grid" aria-label="Chỉ số hiệu quả chính">
         <Link to="/host/property" className="kpi-card" id="kpiCardProperties" title="Bấm để xem danh sách nhà trọ">
@@ -225,9 +168,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
       </section>
 
       {/* 5. Main Content Area */}
-      {!hasProperty ? (
-        canRegister ? <HostOnboarding /> : <section className="dashboard-section"><h3>Hồ sơ nhà trọ</h3><p>Kiểm tra trạng thái đăng ký và phản hồi xét duyệt tại Nhà trọ của tôi.</p><Link className="p-button" to="/host/property">Nhà trọ của tôi</Link></section>
-      ) : (
+      {hasProperty && (
         <div className="dashboard-split-grid">
           <div className="split-col-left">
             <section className="dashboard-section card-box" id="section-viewing-requests">
@@ -389,10 +330,11 @@ export default function HostDashboardPage() {
   }, [user?.userId, revision]);
 
   const handleRefresh = () => setRevision(v => v + 1);
+  const header=<HostHeaderSlot><MotionButton type="button" className="hd-context-refresh" onClick={handleRefresh} disabled={state.loading} aria-label="Làm mới dữ liệu"><RefreshCw size={16}/><span>Làm mới</span></MotionButton></HostHeaderSlot>;
 
   if (state.loading) {
     return (
-      <div className="host-dashboard-page">
+      <div className="host-dashboard-page">{header}
         <StateView kind="loading" />
       </div>
     );
@@ -400,7 +342,7 @@ export default function HostDashboardPage() {
 
   if (state.error) {
     return (
-      <div className="host-dashboard-page">
+      <div className="host-dashboard-page">{header}
         <StateView kind="error" message={state.error}>
           <MotionButton className="p-button primary" onClick={handleRefresh}>
             Thử lại
@@ -411,7 +353,7 @@ export default function HostDashboardPage() {
   }
 
   return (
-    <div className="host-dashboard-page">
+    <div className="host-dashboard-page">{header}
       <HostDashboardContent data={state.data} onRefresh={handleRefresh} loading={state.loading} />
     </div>
   );

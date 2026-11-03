@@ -28,7 +28,7 @@ public class AutomaticVerificationAssignment {
             PropertyRegistrationRepository registrations, PropertyAssignmentEventRepository events,
             UserRepository users, PropertyVerificationAccess policy, jakarta.persistence.EntityManager em,
             PlatformTransactionManager manager,
-            @Value("${app.verification.auto-assignment.enabled:true}") boolean enabled) {
+            @Value("${app.verification.auto-assignment.enabled:false}") boolean enabled) {
         this.queue=queue; this.registrations=registrations; this.events=events;
         this.users=users; this.policy=policy; this.em=em; this.enabled=enabled;
         transaction=new TransactionTemplate(manager);

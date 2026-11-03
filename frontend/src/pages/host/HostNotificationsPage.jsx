@@ -113,7 +113,6 @@ export default function HostNotificationsPage() {
       {/* Header */}
       <div className="hn-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0' }}>Trung tâm thông báo</h1>
           <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Theo dõi các cập nhật về lịch hẹn xem phòng, kết quả kiểm định nhà trọ, phản hồi từ Staff và tình trạng phòng trống.</p>
         </div>
         {unreadCount > 0 && (

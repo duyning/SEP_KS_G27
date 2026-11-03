@@ -17,6 +17,12 @@ public class PropertyVerificationAccess {
     private final PropertyRegistrationRepository registrations;
     private final PropertyRepository properties;
     private final jakarta.persistence.EntityManager entityManager;
+    @org.springframework.beans.factory.annotation.Value("${app.verification.assignment-required:true}")
+    private boolean assignmentRequired;
+
+    private boolean eligibleAssignment(PropertyRegistration row, Integer staffId) {
+        return !assignmentRequired || row.getAssignedStaff()!=null && row.getAssignedStaff().getUserId().equals(staffId);
+    }
 
     public User actor() {
         var actor = auth.getCurrentUser();
@@ -26,11 +32,13 @@ public class PropertyVerificationAccess {
     }
     public List<PropertyRegistration> list() {
         var actor = actor();
-        return actor.getRole() == UserRole.ADMIN ? registrations.findAllByOrderByCreatedAtDesc() : registrations.findAssigned(actor.getUserId());
+        return actor.getRole() == UserRole.ADMIN ? registrations.findAllByOrderByCreatedAtDesc()
+            : assignmentRequired ? registrations.findAssigned(actor.getUserId()) : registrations.findSharedQueue(actor.getUserId());
     }
     public PropertyRegistration read(Integer id) {
         var actor = actor();
-        return (actor.getRole() == UserRole.ADMIN ? registrations.findById(id) : registrations.findAssignedById(id, actor.getUserId()))
+        return (actor.getRole() == UserRole.ADMIN ? registrations.findById(id)
+            : assignmentRequired ? registrations.findAssignedById(id, actor.getUserId()) : registrations.findSharedQueueById(id,actor.getUserId()))
             .orElseThrow(this::missing);
     }
     private boolean adminAuthority() {
@@ -53,8 +61,8 @@ public class PropertyVerificationAccess {
         // Lock fresh account state too: disabling/role changes cannot race the save.
         var staff = users.findForRegistrationUpdate(current.getUserId()).orElseThrow(this::missing);
         entityManager.refresh(staff, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
-        if (staff.getRole() != UserRole.STAFF || staff.getStatus() != UserStatus.ACTIVE || locked.getAssignedStaff() == null
-                || !locked.getAssignedStaff().getUserId().equals(staff.getUserId()) || conflict(locked, staff.getUserId())) throw missing();
+        if (staff.getRole() != UserRole.STAFF || staff.getStatus() != UserStatus.ACTIVE
+                || !eligibleAssignment(locked,staff.getUserId()) || conflict(locked, staff.getUserId())) throw missing();
         if (expectedVersion == null || expectedVersion != locked.getAssignmentVersion())
             throw new AppException("Phân công hồ sơ đã thay đổi. Vui lòng tải lại trước khi xét duyệt.", HttpStatus.CONFLICT);
         // All outcomes, including rejection/supplement, need trustworthy current ownership.
@@ -72,8 +80,8 @@ public class PropertyVerificationAccess {
     }
     public boolean canReview(PropertyRegistration row) {
         var actor = actor();
-        if (actor.getRole() != UserRole.STAFF || adminAuthority() || row.getAssignedStaff() == null
-                || !row.getAssignedStaff().getUserId().equals(actor.getUserId()) || conflict(row, actor.getUserId())
+        if (actor.getRole() != UserRole.STAFF || adminAuthority()
+                || !eligibleAssignment(row,actor.getUserId()) || conflict(row, actor.getUserId())
                 || !Set.of(RegistrationStatus.PENDING, RegistrationStatus.NEEDS_SUPPLEMENT).contains(row.getStatus())) return false;
         if (row.getTargetPropertyId() == null) return row.getBaseRegistrationId() == null && properties.findByRegistration_RegistrationId(row.getRegistrationId())
             .map(p -> p.getOwner() != null && p.getOwner().getUserId().equals(row.getUser().getUserId())).orElse(true);
@@ -81,5 +89,5 @@ public class PropertyVerificationAccess {
             && p.getOwner().getUserId().equals(row.getUser().getUserId()) && Objects.equals(row.getBaseRegistrationId(),p.getRegistration().getRegistrationId())).isPresent();
     }
     private AppException uncertainOwnership() { return new AppException("Không đủ dữ liệu sở hữu hoặc phiên bản nhà trọ đã thay đổi. Vui lòng kiểm tra lại hồ sơ trước khi xét duyệt.", HttpStatus.CONFLICT); }
-    private ResourceNotFoundException missing() { return new ResourceNotFoundException("Không tìm thấy hồ sơ xác minh hoặc bạn không còn được phân công."); }
+    private ResourceNotFoundException missing() { return new ResourceNotFoundException("Không tìm thấy hồ sơ xác minh hoặc bạn không có quyền xử lý hồ sơ này."); }
 }
