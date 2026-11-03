@@ -1,0 +1,56 @@
+/* Match the community moderation list without changing service detail/review forms. */
+.sa-page.sa-list-page {max-width:none;padding:0 0 24px;font-size:14px;line-height:1.5}
+.sa-list-page .sa-page-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.sa-list-page .sa-page-heading p {margin:0;font-size:14px;color:#64748b;line-height:1.6}
+.sa-list-page .sa-page-heading>.sa-button {min-height:38px;font-size:13px;padding:8px 12px}
+.sa-list-page .sa-metrics {grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.sa-list-page .sa-metric {padding:16px;min-height:104px;border-radius:10px;box-shadow:0 1px 3px #0f172a08}
+.sa-list-page .sa-metric.slate {--metric-color:#2563eb;--metric-bg:#eff6ff}
+.sa-list-page .sa-metric.purple {--metric-color:#7c3aed;--metric-bg:#f5f3ff}
+.sa-list-page .sa-metric>div {font-size:14px;font-weight:600}
+.sa-list-page .sa-metric>div svg {width:28px;height:28px;box-sizing:border-box;padding:5px;border-radius:7px}
+.sa-list-page .sa-metric>strong {font-size:28px;line-height:1.1;margin:10px 0 6px}
+.sa-list-page .sa-metric small {padding:0;border:0;font-size:12px;line-height:1.5;justify-content:flex-start;gap:6px}
+.sa-list-page .sa-metric small svg {display:none}
+.sa-list-page .sa-metric.is-selected {outline:2px solid #0f766e;outline-offset:2px;border-color:#e2e8f0}
+.sa-category-summary {display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;margin-bottom:18px;color:#64748b;font-size:13px}
+.sa-category-summary button {display:inline-flex;align-items:center;gap:7px;padding:3px 0;border:0;background:transparent;font:inherit;color:#475569}
+.sa-category-summary button {--sa-category-bg:#f0fdfa;--sa-category-ink:#0f766e;--sa-category-border:#99f6e4}
+.sa-category-summary button[data-category="moving"] {--sa-category-bg:#fff7ed;--sa-category-ink:#9a3412;--sa-category-border:#fed7aa}
+.sa-category-summary button[data-category="laundry"] {--sa-category-bg:#eff6ff;--sa-category-ink:#1e40af;--sa-category-border:#bfdbfe}
+.sa-category-summary button[data-category="cleaning"] {--sa-category-bg:#f0fdf4;--sa-category-ink:#166534;--sa-category-border:#bbf7d0}
+.sa-category-summary button[data-category="repair"] {--sa-category-bg:#f5f3ff;--sa-category-ink:#6d28d9;--sa-category-border:#ddd6fe}
+.sa-category-summary button>span {display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--sa-category-border);border-radius:6px;background:var(--sa-category-bg);color:var(--sa-category-ink);font-size:12px}
+.sa-category-summary button>span svg {flex-shrink:0}
+.sa-category-summary button:hover>span {border-color:var(--sa-category-ink)}
+.sa-list-page .sa-queue {border:0;border-radius:0;box-shadow:none;background:transparent;overflow:visible}
+.sa-list-page .sa-filters {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0;margin-bottom:16px}
+.sa-list-page .sa-search {flex:1 1 280px;min-width:0;min-height:40px}
+.sa-list-page .sa-search input {padding:9px 0;font-size:14px}
+.sa-list-page .sa-select {min-width:0;flex:0 1 170px;max-width:100%}
+.sa-list-page .sa-select select {min-height:40px;font-size:13px;padding:8px 24px 8px 10px}
+.sa-list-page .sa-filters>.sa-button {min-height:40px;font-size:13px;padding:8px 12px}
+.sa-list-count {flex-basis:100%;text-align:right;font-size:13px;color:#64748b;margin-top:4px}
+.sa-list-page .sa-table-wrap {overflow-x:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff;box-shadow:0 1px 3px #0f172a08}
+.sa-list-page .sa-table {min-width:1000px}
+.sa-list-page .sa-table th {font-size:12px;padding:14px;text-align:left;letter-spacing:0}
+.sa-list-page .sa-table td {font-size:14px;padding:16px 14px;line-height:1.6}
+.sa-list-page .sa-table th:first-child {width:32%}
+.sa-list-page .sa-table th:nth-child(2) {width:18%}
+.sa-list-page .sa-table th:nth-child(3) {width:14%}
+.sa-list-page .sa-table th:nth-child(4) {width:14%}
+.sa-list-page .sa-table th:nth-child(5) {width:10%}
+.sa-list-page .sa-table th:last-child {width:12%;text-align:right}
+.sa-list-page .sa-table td:last-child {text-align:right}
+.sa-list-page .sa-service-title {font-size:15px;line-height:1.5}
+.sa-list-page .sa-row-meta,.sa-list-page .sa-service-cell small,.sa-list-page .sa-table td>small,.sa-list-page .sa-table time {font-size:12px;color:#64748b}
+.sa-list-page .sa-table td>strong {font-size:14px}
+.sa-list-page .sa-status {font-size:12px;border-radius:6px;padding:5px 8px}
+.sa-list-page .sa-view-link {font-size:13px;min-height:40px;padding:8px 12px}
+.sa-list-page .sa-table tr:has(.sa-status.pending) .sa-view-link {background:#0f766e;border-color:#0f766e;color:#fff}
+.sa-list-page .sa-pagination {padding:16px 0;border:0;font-size:13px;flex-wrap:wrap}
+.sa-list-page .sa-pagination button {width:40px;height:40px}
+.sa-list-page .sa-bottom-note {justify-content:flex-start;margin:24px 0 0;padding-top:18px;border-top:1px solid #e2e8f0;font-size:12px}
+@media(max-width:1100px){.sa-list-page .sa-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.sa-list-page .sa-table th:nth-child(5),.sa-list-page .sa-table td:nth-child(5){display:table-cell}}
+@media(max-width:800px){.sa-list-page .sa-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.sa-list-page .sa-table{min-width:0}.sa-list-page .sa-table tbody{padding:12px}.sa-list-page .sa-table td:last-child{text-align:left}.sa-list-page .sa-table td:nth-child(5){display:none}.sa-list-page .sa-select{flex:1 1 140px}.sa-list-page .sa-list-count{text-align:left}.sa-list-page .sa-page-heading{align-items:flex-start}}
+@media(max-width:560px){.sa-list-page .sa-metrics{gap:10px}.sa-list-page .sa-metric{padding:12px}.sa-list-page .sa-page-heading{flex-direction:row}.sa-list-page .sa-page-heading>.sa-button{flex-shrink:0}.sa-list-page .sa-table tbody{grid-template-columns:1fr}}

@@ -1,10 +1,23 @@
 # Dịch vụ quanh trọ
 
-Trang `/services` giữ thứ tự nội dung từ `Code/giao_dien/html/services.html`:
-giới thiệu, danh mục, tìm kiếm/bộ lọc, danh sách dịch vụ và lời mời nhà cung cấp.
-Theo yêu cầu thiết kế mới, dùng phần giới thiệu có bảng chọn danh mục, màu nhận
-diện nhẹ theo nhóm dịch vụ và thẻ ưu tiên thông tin/giá thay cho bố cục demo cũ.
+Trang `/services` ưu tiên tìm kiếm: phần giới thiệu ngắn, danh mục,
+tìm kiếm/bộ lọc, danh sách dịch vụ và lời mời nhà cung cấp. Chỉ giữ một hàng chọn
+danh mục ở danh sách; không lặp bảng chọn ở hero. Hai dịch vụ chia hai cột desktop;
+một dịch vụ có chiều rộng tối đa 680px. Thẻ ưu tiên tên, mô tả, khu vực, giá và liên hệ;
+chữ mô tả 15px, metadata 14px, nhãn giá 12px. Nút “Hồ sơ dịch vụ của tôi” mở luồng
+hồ sơ hiện có; khối đăng ký và quản lý hồ sơ nằm bên phải phần giới thiệu đầu trang,
+nền sáng và kích thước gọn. Màn hình dưới 900px xếp khối này dưới mô tả.
+Không lặp banner nhà cung cấp cuối trang; không hiển thị thống kê ở hero.
+Danh mục chưa có dịch vụ được đánh dấu “Chưa có”, khi chọn có lời mời đăng ký.
+Bộ lọc và danh mục dùng một panel. Giá thỏa thuận có hướng dẫn hỏi báo giá và nút
+liên hệ ở cạnh giá; không suy ra khoảng giá, đánh giá hay thời gian phản hồi.
 Header/footer tái sử dụng giao diện public của Home, Search và Community.
+
+Mật độ catalogue: thay hero quảng bá bằng tiêu đề trang 26px và một dòng mô tả.
+Tiêu đề danh sách 18px; panel lọc padding 12px, tab desktop cao tối thiểu 36px,
+ô lọc 48px có icon và nhãn nằm bên trong, đồng hàng trên desktop. Thẻ có header 44px, tiêu đề 18px, mô tả 14px tối đa hai dòng và
+padding nội dung 12px × 16px. Mục tiêu: thấy tên, giá và liên hệ ngay trên laptop
+1366×768 với nội dung ngắn hiện tại; nội dung dài vẫn được phép tăng chiều cao.
 
 - API `/api/services` và `/api/services/categories` là nguồn dữ liệu duy nhất
   cho danh mục, số lượng, nhà cung cấp, mô tả, giá và khu vực phục vụ.

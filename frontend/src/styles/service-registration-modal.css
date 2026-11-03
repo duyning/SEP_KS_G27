@@ -74,3 +74,79 @@
 @media(max-width:800px){.sr-layout{grid-template-columns:1fr}.sr-sidebar{display:none}.sr-welcome{padding:20px;gap:12px}.sr-welcome h2{font-size:19px}.sr-header-status{align-self:flex-start}.sr-welcome-icon{width:44px;height:44px}.sr-footer>span{max-width:220px}}
 @media(max-width:560px){.sr-modal .modal-container{border-radius:14px!important;max-height:94dvh!important}.sr-modal .modal-header{padding:14px 16px!important}.sr-modal .modal-header h3{font-size:16px!important}.sr-welcome{padding:18px 16px;flex-wrap:wrap;gap:10px}.sr-welcome-icon{display:none}.sr-welcome>div{flex:1;min-width:190px}.sr-welcome h2{font-size:18px}.sr-welcome p{font-size:11px}.sr-header-status{font-size:9px;padding:5px 7px}.sr-layout,.sr-submitted{padding:14px;gap:14px}.sr-panel{padding:18px 15px}.sr-two-fields,.sr-submitted-grid{grid-template-columns:1fr}.sr-section-heading{margin-bottom:18px}.sr-price-explainer{margin-top:0}.sr-footer{padding:12px 14px;flex-direction:column;align-items:stretch;gap:9px}.sr-footer>span{max-width:none;font-size:9px}.sr-footer>div{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px}.sr-modal .sr-button{font-size:11px;padding:10px 12px}.sr-result-banner{padding:16px;gap:10px}.sr-result-banner h2{font-size:16px}.sr-error-banner{margin:14px 14px 0}}
 @media(prefers-reduced-motion:reduce){.sr-modal *{animation:none!important;transition:none!important}}
+
+/* Content left, contact and documents right, matching the community form. */
+.sr-modal.sr-modal--compact-form .modal-container {max-height:calc(100dvh - 24px)!important;border-radius:14px!important}
+.sr-modal--compact-form .modal-header {padding:14px 20px!important}
+.sr-modal--compact-form .sr-welcome,.sr-modal--compact-form .sr-sidebar {display:none}
+.sr-modal--compact-form .sr-layout {display:block;padding:16px}
+.sr-modal--compact-form .sr-layout fieldset {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.sr-modal--compact-form .sr-layout fieldset>.sr-panel:first-child {grid-column:1;grid-row:1}
+.sr-modal--compact-form .sr-form-secondary {grid-column:2;grid-row:1;display:grid;align-content:start;gap:10px;min-width:0}
+.sr-modal--compact-form .sr-compact-process {padding:10px 12px;border-radius:10px;background:#f0f8f4}
+.sr-modal--compact-form .sr-compact-process h3 {font-size:13px}
+.sr-modal--compact-form .sr-compact-process ol {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0 0}
+.sr-modal--compact-form .sr-compact-process li {gap:6px;min-width:0}
+.sr-modal--compact-form .sr-compact-process li>span {width:20px;height:20px}
+.sr-modal--compact-form .sr-compact-process strong {font-size:12px;line-height:1.5}
+.sr-modal--compact-form .sr-compact-process p {margin:2px 0 0;font-size:12px;line-height:1.5;color:#475569}
+.sr-modal--compact-form .sr-panel {padding:12px 14px;border-radius:10px}
+.sr-modal--compact-form .sr-section-heading {margin-bottom:10px;padding-bottom:8px;gap:8px}
+.sr-modal--compact-form .sr-section-heading>span {width:24px;height:24px;border-radius:6px}
+.sr-modal--compact-form .sr-section-heading p {display:none}
+.sr-modal--compact-form .sr-fields {gap:9px}
+.sr-modal--compact-form .sr-two-fields {gap:10px}
+.sr-modal--compact-form .sr-field label {margin-bottom:4px;font-size:13px}
+.sr-modal.sr-modal--compact-form .sr-field :is(input,select,textarea) {min-height:38px;padding:7px 10px;font-size:14px;line-height:1.45}
+.sr-modal.sr-modal--compact-form .sr-field textarea {height:86px;min-height:86px;resize:vertical}
+.sr-modal--compact-form .sr-field-hint {font-size:12px!important;margin-top:3px!important;line-height:1.45!important}
+.sr-modal--compact-form .sr-price-explainer {margin-top:24px;padding:7px;font-size:12px}
+.sr-modal--compact-form .sr-dropzone {min-height:76px;padding:10px;gap:4px}
+.sr-modal--compact-form .sr-upload-icon {display:none}
+.sr-modal--compact-form .sr-dropzone>strong {font-size:13px}
+.sr-modal--compact-form .sr-dropzone>span:not(.sr-upload-button) {font-size:12px}
+.sr-modal--compact-form .sr-upload-button {padding:3px 9px;font-size:12px}
+.sr-modal--compact-form .sr-file-list {max-height:92px;overflow-y:auto;gap:5px;margin-top:8px}
+.sr-modal--compact-form .sr-file-list:empty {display:none}
+.sr-modal--compact-form .sr-document {padding:5px 8px;gap:7px}
+.sr-modal--compact-form .sr-document small {margin-top:1px}
+.sr-modal--compact-form .sr-footer {padding:10px 16px;gap:12px}
+.sr-modal--compact-form .sr-footer>span {font-size:12px}
+.sr-modal--compact-form .sr-error-banner {margin:10px 16px 0;padding:10px;font-size:13px}
+@media(max-width:900px){.sr-modal--compact-form .sr-layout fieldset{grid-template-columns:1fr}.sr-modal--compact-form .sr-layout fieldset>.sr-panel:nth-child(n),.sr-modal--compact-form .sr-form-secondary{grid-column:auto;grid-row:auto}.sr-modal--compact-form .sr-layout{padding:12px}}
+@media(max-width:560px){.sr-modal--compact-form .sr-compact-process ol{grid-template-columns:1fr;gap:8px}}
+
+/* Submitted application: compact read-only layout, keeping every field and action. */
+.sr-date-time {display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;line-height:1.6}
+.sr-date-time>span {white-space:nowrap}
+.sr-submitted-documents {margin-top:12px;padding-top:10px;border-top:1px solid var(--sr-line)}
+.sr-modal.sr-modal--compact-result .modal-container {max-height:calc(100dvh - 24px)!important;border-radius:14px!important}
+.sr-modal--compact-result .modal-header {padding:12px 18px!important}
+.sr-modal--compact-result .sr-welcome {padding:12px 18px;gap:10px}
+.sr-modal--compact-result .sr-welcome-icon {width:36px;height:36px;border-radius:10px;box-shadow:none}
+.sr-modal--compact-result .sr-welcome-icon svg {width:21px;height:21px}
+.sr-modal--compact-result .sr-welcome h2 {font-size:16px;line-height:1.4;margin:2px 0}
+.sr-modal--compact-result .sr-welcome p {font-size:12px;line-height:1.5}
+.sr-modal--compact-result .sr-submitted {padding:12px 16px}
+.sr-modal--compact-result .sr-result-banner {padding:10px 12px;gap:9px;margin-bottom:12px;border-radius:8px}
+.sr-modal--compact-result .sr-result-banner h2 {font-size:15px;line-height:1.5;margin:0 0 3px}
+.sr-modal--compact-result .sr-result-banner p {font-size:12px;line-height:1.5}
+.sr-modal--compact-result .sr-result-banner>span svg {width:21px;height:21px}
+.sr-modal--compact-result .sr-submitted-grid {gap:12px;align-items:start}
+.sr-modal--compact-result .sr-panel {padding:12px 14px;border-radius:9px}
+.sr-modal--compact-result .sr-panel h3 {font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.sr-modal--compact-result .sr-category-tag {margin-top:5px;padding:3px 7px;font-size:12px}
+.sr-modal--compact-result .sr-preserve {font-size:13px;line-height:1.6;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sr-modal--compact-result .sr-submitted-grid dl {grid-template-columns:minmax(110px,.8fr) minmax(0,1fr);gap:6px 10px;margin:10px 0 0;font-size:13px;line-height:1.5}
+.sr-modal--compact-result .sr-file-list {gap:6px;margin-top:8px}
+.sr-modal--compact-result .sr-document {padding:7px 9px;gap:8px;min-height:36px}
+.sr-modal--compact-result .sr-document>span {font-size:13px}
+.sr-modal--compact-result .sr-review-note {padding:9px 10px;margin-top:10px;font-size:13px;line-height:1.5}
+.sr-modal--compact-result .sr-review-note .sr-preserve {margin:4px 0 0}
+.sr-modal--compact-result .sr-button {min-height:36px;padding:7px 11px;font-size:13px}
+.sr-modal--compact-result .sr-panel>.sr-button {margin-top:10px}
+.sr-modal--compact-result .sr-footer {padding:10px 16px;gap:10px}
+.sr-modal--compact-result .sr-footer>span {font-size:12px;line-height:1.5}
+.sr-modal--compact-result .sr-error-banner {margin:10px 16px 0;padding:9px 10px;font-size:13px}
+@media(max-width:650px){.sr-modal--compact-result .sr-submitted-grid{grid-template-columns:1fr}.sr-modal--compact-result .sr-welcome{flex-wrap:wrap}.sr-modal--compact-result .sr-submitted{padding:10px}.sr-modal--compact-result .sr-footer>div{display:flex;flex-wrap:wrap}}
+@media(max-height:720px) and (min-width:901px){.sr-modal--compact-form .sr-layout{padding:10px 14px}.sr-modal--compact-form .sr-fields{gap:7px}.sr-modal--compact-form .sr-panel{padding:10px 12px}.sr-modal.sr-modal--compact-form .sr-field textarea{height:64px;min-height:64px}}

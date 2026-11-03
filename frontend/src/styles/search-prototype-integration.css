@@ -1,6 +1,20 @@
-/* Only React, accessibility and narrow-screen fixes; layout comes from search.css. */
+/* Search layout refinements and accessible React controls. */
 .prototype-search {min-width:0;overflow-wrap:anywhere;background:#fff;--search-action:#0f766e}
 .prototype-search main {display:block;min-width:0}
+.prototype-search .search-header-section {padding:20px 0 12px}
+.prototype-search .listing-results-section {padding-top:16px}
+.prototype-search .results-meta-header {margin-bottom:16px;padding-bottom:12px}
+.prototype-search .search-headline-group {padding:18px 20px;margin-bottom:16px;border:1px solid #cce5e1;border-left:4px solid var(--search-action);border-radius:12px;background:linear-gradient(110deg,#eaf7f4,#f5faf9)}
+.prototype-search .search-main-title {font-size:clamp(22px,2.5vw,28px);margin:0 0 6px;line-height:1.3}
+.prototype-search .search-subtitle {font-size:14px;line-height:1.6;color:#475569;max-width:850px;margin:0}
+.prototype-search .search-controls-box {padding:12px 16px;gap:10px;border-radius:12px}
+.prototype-search .search-main-inputs-row {gap:10px}
+.prototype-search .search-text-input,.prototype-search .search-select-dropdown {min-height:42px;padding-top:9px;padding-bottom:9px}
+.prototype-search .btn-search-trigger {min-height:42px;padding:9px 18px}
+.prototype-search .search-secondary-row {padding-top:10px;gap:8px}
+.prototype-search .filter-pill-btn {padding:5px 12px;min-height:32px}
+.prototype-search .active-chips-wrapper {margin-top:0}
+.prototype-search .active-chips-wrapper:empty {display:none}
 .prototype-search .search-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .prototype-search #searchControlsForm {display:block;margin:0;padding:0;border:0;background:none;box-shadow:none}
 .prototype-search .search-main-inputs-row>* {min-width:0}
@@ -29,6 +43,8 @@
 .prototype-search .search-filter-modal .drawer-footer {position:sticky;bottom:0}
 .prototype-search .search-filter-modal .search-sr-only {position:static;width:auto;height:auto;margin:0 0 8px;clip:auto;white-space:normal;display:block;font-weight:700}
 @media(max-width:768px){
+ .prototype-search .search-headline-group {padding:14px 16px}
+ .prototype-search .search-controls-box {padding:12px}
  .prototype-search #btnToggleAdv,.prototype-search #advFilterPanel {display:none}
  .prototype-search #btnOpenMobileFilter {display:inline-flex;align-self:flex-start;min-height:44px}
  .prototype-search .quick-filter-pills {min-width:0;max-width:100%}

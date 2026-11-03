@@ -30,7 +30,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   });
   const base='http://127.0.0.1:5173/staff/service-applications';
   await page.goto(base);await page.locator('.sa-table tbody tr').first().waitFor();
-  assert.equal(await page.locator('.sa-table tbody tr').count(),8);
+  assert.equal(await page.locator('.sa-table tbody tr').count(),9);
+  assert.equal(await page.getByLabel('Trạng thái hồ sơ').inputValue(),'PENDING');
   assert.equal(await page.locator('.sa-metric>strong').first().innerText(),'12');
   assert.equal(await page.locator('#portal-navigation a[aria-current=page]').getAttribute('href'),'/staff/service-applications');
   for(const width of [1440,1024,768,375]){
@@ -38,7 +39,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Overflow list '+width);
    await page.waitForTimeout(180);if([1440,375].includes(width))await page.screenshot({path:path.join(os.tmpdir(),`hlrcs-staff-services-${width}.png`),fullPage:true});
   }
-  await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'Trang sau',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.sa-table tbody tr').length===4);
+  await page.setViewportSize({width:1440,height:1000});assert.ok(await page.getByRole('button',{name:'Trang sau',exact:true}).isDisabled());await page.getByLabel('Trạng thái hồ sơ').selectOption('ALL');await page.waitForFunction(()=>document.querySelectorAll('.sa-table tbody tr').length===12);
   await page.getByLabel('Tìm hồ sơ dịch vụ').fill('nguyen');await page.waitForFunction(()=>document.querySelectorAll('.sa-table tbody tr').length===6);
   await page.getByLabel('Danh mục dịch vụ').selectOption('Chuyển trọ');await page.waitForFunction(()=>document.querySelectorAll('.sa-table tbody tr').length===2);
   await page.reload();await page.locator('.sa-table tbody tr').first().waitFor();assert.equal(await page.getByLabel('Tìm hồ sơ dịch vụ').inputValue(),'nguyen');
