@@ -1,3 +1,4 @@
+import HomeFilterSelect from '../../components/HomeFilterSelect.jsx';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Layout and static content preserved from Code/giao_dien/html/home.html.
 import {Link} from 'react-router-dom';
@@ -96,14 +97,8 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
             </div>
             <div className="search-field-content">
-              <label htmlFor="filterLocation" className="search-label">Khu vực</label>
-              <select id="filterLocation" className="search-select" value={filters.location}>
-                <option value="all">Tất cả khu vực Hòa Lạc</option>
-                <option value="tan-xa">Tân Xã (Gần ĐH FPT)</option>
-                <option value="thach-hoa">Thạch Hòa (Gần chợ &amp; bus)</option>
-                <option value="binh-yen">Bình Yên (Khu yên tĩnh)</option>
-                <option value="cnc">Gần Khu Công nghệ cao</option>
-              </select>
+              <label id="filterLocation-label" htmlFor="filterLocation" className="search-label">Khu vực</label>
+              <HomeFilterSelect id="filterLocation" value={filters.location} onChange={onChange} options={[{"value":"all","label":"Tất cả khu vực Hòa Lạc"},{"value":"tan-xa","label":"Tân Xã (Gần ĐH FPT)"},{"value":"thach-hoa","label":"Thạch Hòa (Gần chợ & bus)"},{"value":"binh-yen","label":"Bình Yên (Khu yên tĩnh)"},{"value":"cnc","label":"Gần Khu Công nghệ cao"}]}/>
             </div>
           </div>
 
@@ -113,14 +108,8 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
             <div className="search-field-content">
-              <label htmlFor="filterPrice" className="search-label">Mức giá thuê</label>
-              <select id="filterPrice" className="search-select" value={filters.price}>
-                <option value="all">Mọi mức giá</option>
-                <option value="under-15">Dưới 1.5 triệu / tháng</option>
-                <option value="15-25">1.5 - 2.5 triệu / tháng</option>
-                <option value="25-35">2.5 - 3.5 triệu / tháng</option>
-                <option value="above-35">Trên 3.5 triệu (CCMN)</option>
-              </select>
+              <label id="filterPrice-label" htmlFor="filterPrice" className="search-label">Mức giá thuê</label>
+              <HomeFilterSelect id="filterPrice" value={filters.price} onChange={onChange} options={[{"value":"all","label":"Mọi mức giá"},{"value":"under-15","label":"Dưới 1.5 triệu / tháng"},{"value":"15-25","label":"1.5 - 2.5 triệu / tháng"},{"value":"25-35","label":"2.5 - 3.5 triệu / tháng"},{"value":"above-35","label":"Trên 3.5 triệu / tháng"}]}/>
             </div>
           </div>
 
@@ -130,14 +119,8 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             </div>
             <div className="search-field-content">
-              <label htmlFor="filterType" className="search-label">Loại phòng</label>
-              <select id="filterType" className="search-select" value={filters.type}>
-                <option value="all">Tất cả loại phòng</option>
-                <option value="khep-kin">Phòng khép kín</option>
-                <option value="gac-lung">Có gác lửng</option>
-                <option value="chung-cu-mini">Chung cư mini (Studio)</option>
-                <option value="o-ghep">Tìm bạn ở ghép</option>
-              </select>
+              <label id="filterType-label" htmlFor="filterType" className="search-label">Loại phòng</label>
+              <HomeFilterSelect id="filterType" value={filters.type} onChange={onChange} options={[{"value":"all","label":"Tất cả loại phòng"},{"value":"khep-kin","label":"Phòng khép kín"},{"value":"gac-lung","label":"Có gác lửng"},{"value":"chung-cu-mini","label":"Chung cư mini (Studio)"}]}/>
             </div>
           </div>
 
@@ -194,15 +177,17 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
       <div className="section-header">
         <div>
           <span className="section-eyebrow">Dữ liệu kiểm duyệt 2026</span>
-          <h2 className="section-title">Phòng trọ nổi bật còn trống tại Hòa Lạc</h2>
+          <h2 className="section-title">Khám phá phòng trọ tại Hòa Lạc</h2>
           <p className="section-desc">Tất cả phòng đều được xác minh hình ảnh, tiện nghi và tình trạng thực tế trước khi hiển thị.</p>
         </div>
-        <div className="filter-tabs" role="tablist">
+      </div>
+      <div className="home-listing-controls">
+        <div className="filter-tabs" role="tablist" aria-label="Lọc phòng theo khu vực">
           <MotionButton type="button" className={`tab-btn ${filters.tab === "all" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "all"} data-tab="all">Tất cả phòng</MotionButton>
           <MotionButton type="button" className={`tab-btn ${filters.tab === "tan-xa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "tan-xa"} data-tab="tan-xa">Tân Xã</MotionButton>
           <MotionButton type="button" className={`tab-btn ${filters.tab === "thach-hoa" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "thach-hoa"} data-tab="thach-hoa">Thạch Hòa</MotionButton>
-          <MotionButton type="button" className={`tab-btn ${filters.tab === "studio" ? "active" : ""}`} role="tab" aria-selected={filters.tab === "studio"} data-tab="studio">Studio cao cấp</MotionButton>
         </div>
+        <label className="home-price-sort" htmlFor="homePriceSort"><span>Sắp xếp giá</span><select id="homePriceSort" aria-label="Sắp xếp giá" value={filters.sort}><option value="default">Mặc định</option><option value="price-asc">Giá thấp đến cao</option><option value="price-desc">Giá cao đến thấp</option></select></label>
       </div>
 
 

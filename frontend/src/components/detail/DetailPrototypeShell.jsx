@@ -1,10 +1,12 @@
+import {useFavorites} from '../../context/FavoritesContext.jsx';
 import {useEffect,useState} from 'react';
 import {Link,NavLink} from 'react-router-dom';
 import {Heart,LogOut} from 'lucide-react';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {landingFor,roleLabels} from '../../routing/screens.js';
 import {MotionButton} from '../motion/MotionUI.jsx';
-export default function DetailPrototypeShell({children,savedCount=0,className='prototype-detail'}){
+export default function DetailPrototypeShell({children,className='prototype-detail'}){
+ const favorites=useFavorites(),savedCount=favorites?.total??0;
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
  const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;

@@ -40,6 +40,9 @@
 .prototype-detail .rtd-contact a,.prototype-detail .rtd-contact button{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--rtd-border);border-radius:8px;min-height:44px;padding:9px 12px;color:var(--rtd-action);background:white;font:inherit;font-size:14px;font-weight:650;text-decoration:none;cursor:pointer}
 .prototype-detail .rtd-contact .rtd-primary{background:var(--rtd-action);border-color:var(--rtd-action);color:white}
 .prototype-detail .rtd-contact p{margin:0;font-size:13px;line-height:1.5}
+.prototype-detail .rtd-save-room{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;padding:10px 14px;border:1px solid var(--rtd-action);border-radius:8px;background:white;color:var(--rtd-action);font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+.prototype-detail .rtd-save-room:hover,.prototype-detail .rtd-save-room[aria-pressed=true]{background:#f0fdfa}
+.prototype-detail .rtd-save-room:disabled{cursor:wait;opacity:.65}
 .prototype-detail .rtd-muted{color:var(--rtd-muted)}
 .prototype-detail .rtd-section-nav{display:flex;flex-wrap:wrap;gap:4px 12px;margin:24px 0 20px;padding:8px 12px;background:white;border:1px solid var(--rtd-border);border-radius:10px}
 .prototype-detail .rtd-section-nav a{display:inline-flex;align-items:center;min-height:40px;padding:6px 10px;color:var(--rtd-muted);font-size:14px;font-weight:650;text-decoration:none;border-radius:6px}

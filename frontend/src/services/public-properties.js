@@ -16,6 +16,17 @@ export function homeDetailUrl(property,contact=false){
  if(!type||!Number.isSafeInteger(property.propertyId)||property.propertyId<1)return null;
  return `/properties/detail?${new URLSearchParams({propertyId:property.propertyId,roomTypeId:type.roomTypeId})}${contact?'#host-contact':''}`;
 }
+// Use the price shown on the card, which may belong to an available type rather than minPrice.
+export function sortHomeProperties(properties,sort='default'){
+ if(!['price-asc','price-desc'].includes(sort))return properties;
+ const price=property=>{const value=homeRoomType(property)?.price??property.minPrice;return Number.isFinite(value)&&value>0?value:null;};
+ return [...properties].sort((a,b)=>{
+  const left=price(a),right=price(b);
+  if(left==null&&right!=null)return 1;
+  if(left!=null&&right==null)return -1;
+  return (left!=null&&right!=null?(sort==='price-desc'?right-left:left-right):0)||a.propertyId-b.propertyId;
+ });
+}
 export function filterPublicProperties(properties,{area='all',price='all',type='all',amenity='all'}={}){
  return properties.filter(property=>{
   const location=normalizeLocation(`${property.commune||''} ${property.address||''}`);

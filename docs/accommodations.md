@@ -1,5 +1,7 @@
 # View Accommodation List (GB-07, GB-11)
 
+Iteration 2 — luồng yêu thích theo loại phòng và tài khoản: [SDS Favorites](SDS-Favorites.md).
+
 Trang `/search` doc database qua API `/api/properties/search`, khong dung fixture.
 Sau khi merge voi main, trang `/` giu giao dien HomeLandingPage hien tai va doc
 database qua `/api/public/properties`; khong thay giao dien home bang ban cu cua nhanh.

@@ -9,14 +9,14 @@ import {DetailImage,DetailRules,DetailDistances,DetailReviews,DetailRatingBars,D
 const amenityIcons={wifi:Wifi,airConditioner:Snowflake,waterHeater:Flame,balcony:Sun,kitchen:ChefHat,loft:Layers,refrigerator:Refrigerator,washingMachine:WashingMachine,bed:BedDouble,wardrobe:Shirt,desk:Armchair,privateBathroom:ShowerHead,parking:Bike,fingerprint:KeyRound,camera:Video,flexibleHours:Clock,fireSafety:FireExtinguisher,separateOwner:House,laundry:WashingMachine,drying:Wind,cleaning:Sparkles,water:Droplets,elevator:ArrowUpDown,security:ShieldCheck};
 function RoomAmenities({item}){const entries=[...(item.amenities||[]).map(key=>({key,label:ROOM_AMENITIES.find(([id])=>id===key)?.[1]||key})),...(item.propertyAmenities||[]).map(key=>({key,label:AMENITIES.find(([id])=>id===key)?.[1]||(key==='security'?'An ninh':key)}))];return entries.length?<div className="rtd-amenity-list">{entries.map(({key,label},index)=>{const Icon=amenityIcons[key]||Check;return <div key={index} className="rtd-amenity"><Icon size={21} aria-hidden="true"/><span>{label}</span></div>})}</div>:<p>Chủ trọ chưa cập nhật tiện nghi.</p>}
 function Section({id,title,children}){return <section id={id} className="rtd-panel"><h2>{title}</h2>{children}</section>}
-export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,onReport,onSchedule,onPhoto,onBack,savedIds,onSaveSimilar}){
+export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,onReport,onSchedule,onPhoto,onBack,savedIds,onSaveSimilar,saveBusy,isSaveBusy}){
  const photos=item.gallery.length?item.gallery:room.gallery;
  const photoSource=item.gallery.length?'room':'property';
  const fees=[['Tiền điện',room.electric,room.electricNote],['Tiền nước',room.water,room.waterNote],['Internet',room.internet,room.internetNote],['Tiền đặt cọc',room.deposit,'Điều kiện đặt cọc và hoàn cọc theo thỏa thuận thuê.'],['Phí dịch vụ & rác thải',room.serviceFee,room.serviceFeeNote],['Gửi xe máy',room.parkingFee,room.parkingFeeNote]];
  return <main id="detailApp" className="rtd-detail">
   <div className="container">
    <div className="rtd-back-row"><MotionButton className="btn-back-link" onClick={onBack}><ArrowLeft size={17}/>Quay lại tìm kiếm</MotionButton><nav aria-label="Đường dẫn"><Link to="/">Trang chủ</Link><span aria-hidden="true">/</span><Link to="/search">Phòng trọ</Link><span aria-hidden="true">/</span><span>Chi tiết</span></nav></div>
-   <header className="rtd-heading"><div><span className="rtd-property-name">{item.propertyName}</span><h1>{item.roomTypeName}</h1><p><MapPin size={17} aria-hidden="true"/>{room.location}</p></div><div className="rtd-actions"><MotionButton onClick={onShare}><Share2 size={18}/>Chia sẻ</MotionButton><MotionButton onClick={onSave} aria-pressed={isWishlisted}><Heart size={18}/>{isWishlisted?'Đã lưu':'Lưu tin'}</MotionButton><MotionButton onClick={onReport}><Flag size={18}/>Báo cáo</MotionButton></div></header>
+   <header className="rtd-heading"><div><span className="rtd-property-name">{item.propertyName}</span><h1>{item.roomTypeName}</h1><p><MapPin size={17} aria-hidden="true"/>{room.location}</p></div><div className="rtd-actions"><MotionButton onClick={onShare}><Share2 size={18}/>Chia sẻ</MotionButton><MotionButton onClick={onReport}><Flag size={18}/>Báo cáo</MotionButton></div></header>
    <div className="rtd-layout"><div className="rtd-summary-column">
     <aside className="rtd-summary" aria-label="Thông tin thuê và liên hệ">
      <div className="rtd-status-row"><span className="rtd-approved"><ShieldCheck size={16}/>Hồ sơ đã duyệt</span><span className={`rtd-availability${item.availableRooms===0?' is-full':''}`}>{room.availability}</span></div>
@@ -25,6 +25,7 @@ export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,o
      <div className="rtd-upfront"><span>Tiền phòng + tiền cọc</span><strong>{room.estimateDisplay}</strong><small>Chưa gồm điện, nước và các phí khác.</small></div>
      <div className="rtd-contact-person"><span className="rtd-person-icon"><House size={19}/></span><div><strong>{room.hostInfo.name}</strong><span>{room.hostInfo.role}</span><small>{room.hostInfo.joined}</small></div></div>
      <div className="rtd-contact" id="host-contact"><MotionButton className="rtd-primary" id="btnOpenScheduleModal" onClick={onSchedule}><CalendarDays size={18}/>Liên hệ hẹn xem phòng</MotionButton>{room.hostInfo.phone?<a href={`tel:${room.hostInfo.phone}`}><Phone size={18}/>Gọi chủ trọ: {room.hostInfo.phone}</a>:<p className="rtd-muted">Chưa cập nhật số điện thoại công khai.</p>}{room.hostInfo.zalo?<a href={`https://zalo.me/${room.hostInfo.zalo}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/>Nhắn Zalo</a>:<p className="rtd-muted">Chưa cập nhật Zalo.</p>}</div>
+     <MotionButton type="button" className="rtd-save-room" onClick={onSave} aria-pressed={isWishlisted} disabled={saveBusy} aria-busy={saveBusy}><Heart size={18} fill={isWishlisted?'currentColor':'none'}/>{saveBusy?'Đang xử lý...':isWishlisted?'Bỏ lưu phòng':'Lưu phòng'}</MotionButton>
     </aside>
 </div><div className="rtd-primary-content">
    <div className="rtd-hero" id="room-type-details">
@@ -46,7 +47,7 @@ export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,o
    </div></div>
    <PropertyRoomTypes item={item} separateCurrent/>
    </div></div>
-   <section className="rtd-similar"><div className="rtd-similar-heading"><h2>Nhà trọ tương tự quanh Hòa Lạc</h2><Link to="/search">Xem tất cả phòng</Link></div><DetailSimilar rooms={item.similar} savedIds={savedIds} onSave={onSaveSimilar}/></section>
+   <section className="rtd-similar"><div className="rtd-similar-heading"><h2>Nhà trọ tương tự quanh Hòa Lạc</h2><Link to="/search">Xem tất cả phòng</Link></div><DetailSimilar rooms={item.similar} savedIds={savedIds} onSave={onSaveSimilar} isSaveBusy={isSaveBusy}/></section>
   </div>
   <div className="mobile-bottom-cta"><div className="mobile-price-group"><span className="mobile-price-val">{room.priceDisplay}</span><span className="mobile-price-unit">/ tháng</span></div><div className="mobile-actions-group">{room.hostInfo.phone&&<a href={`tel:${room.hostInfo.phone}`} className="btn-mobile-call">Gọi chủ trọ</a>}{room.hostInfo.zalo&&<a href={`https://zalo.me/${room.hostInfo.zalo}`} target="_blank" rel="noopener noreferrer" className="btn-mobile-call">Zalo</a>}<MotionButton className="btn-mobile-book" id="btnMobileBook" onClick={onSchedule}>Liên hệ xem phòng</MotionButton></div></div>
  </main>;

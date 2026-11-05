@@ -18,6 +18,11 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidParameter(Exception ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Tham số không hợp lệ."));
+    }
+
     @ExceptionHandler(FieldValidationException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleFieldValidation(FieldValidationException ex) {
         return ResponseEntity.badRequest().body(ApiResponse.<Map<String, String>>builder()

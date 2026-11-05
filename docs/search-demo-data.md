@@ -7,6 +7,7 @@ Chạy tại thư mục project bằng PowerShell:
 ```
 
 Script dùng MySQL local `127.0.0.1:3306/hlrcs`, đọc mật khẩu từ cấu hình backend và dùng hai tài khoản demo có sẵn `host@hlrcs.com`, `staff@hlrcs.com`.
+Script đọc thêm cấu hình trong `config/application.properties`, `config/mysql-local.properties` khi có; biến môi trường `DB_USERNAME` / `DB_PASSWORD` được ưu tiên khi cấu hình dùng các biến này.
 
 - 8 nhà trọ giả lập, 16 loại phòng, 48 phòng và 64 ảnh JPEG lưu trong database.
 - 6 nhà trọ đã duyệt và đang hoạt động: 12 loại phòng công khai, 2 trang tại `/search` (6 kết quả/trang).

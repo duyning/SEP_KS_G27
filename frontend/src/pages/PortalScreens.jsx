@@ -6,6 +6,7 @@ import SearchPage from './public/SearchPage.jsx';
 import MapSearchPage from './public/MapSearchPage.jsx';
 import DetailPage from './public/DetailPage.jsx';
 import FavoritesPage from './public/FavoritesPage.jsx';
+import RoomComparisonPage from './public/RoomComparisonPage.jsx';
 import BookingsPage from './public/BookingsPage.jsx';
 import CommunityPage from './public/CommunityPage.jsx';
 import ServicesPage from './public/ServicesPage.jsx';
@@ -52,6 +53,7 @@ export default function PortalScreens({ screen }) {
       return <MapSearchPage />;
     case '/properties/detail':
       return <DetailPage />;
+    case '/favorites/compare': return <RoomComparisonPage />;
     case '/favorites':
       return <FavoritesPage />;
     case '/bookings':

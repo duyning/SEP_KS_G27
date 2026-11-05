@@ -62,7 +62,7 @@ export default function ProfilePage() {
   if(busy)return;setBusy(true);setAlert('');
   try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});setPasswords(emptyPasswords);setEyes({});setErrors({});notify('Đã đổi mật khẩu thành công.');}catch(error){fail(error);}finally{setBusy(false);setConfirming(false);}
  }
- async function signOut(){if(busy)return;setBusy(true);try{await logout();}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{navigate('/login',{replace:true});setBusy(false);}}
+ async function signOut(){if(busy)return;setBusy(true);try{if(await logout()===false)return;navigate('/login',{replace:true});}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');navigate('/login',{replace:true});}finally{setBusy(false);}}
  function selectTab(key){if(busy)return;setParams(key==='info'?{}:{tab:key});setErrors({});setAlert('');}
  function onClick(event){
   const target=event.target;

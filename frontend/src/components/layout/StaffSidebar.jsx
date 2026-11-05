@@ -22,7 +22,7 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
 
   const handleLogout = async () => {
     try {
-      await logout();
+      if (await logout() === false) return;
       navigate('/login');
     } catch {
       navigate('/login');

@@ -139,8 +139,8 @@ export default function PortalLayout({ screen, children }) {
   async function signOut() {
     if (leaving) return;
     setLeaving(true);
-    try { await logout(); } catch { notify('Phiên trên thiết bị đã được xóa. Máy chủ không phản hồi khi đăng xuất.', 'error'); }
-    finally { setLeaving(false); navigate('/login', { replace: true }); }
+    try { if (await logout() === false) return; navigate('/login', {replace:true}); } catch { notify('Phiên trên thiết bị đã được xóa. Máy chủ không phản hồi khi đăng xuất.', 'error'); navigate('/login', {replace:true}); }
+    finally { setLeaving(false); }
   }
 
   const avatarChar = user?.fullName
@@ -248,6 +248,7 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
+  if (['/favorites','/favorites/compare'].includes(location.pathname)) return children;
   if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
 
   return (

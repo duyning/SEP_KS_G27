@@ -34,7 +34,7 @@ build/
 
 ### VS Code ###
 .vscode/
-config/mysql-local.properties
+/config/
 sql/setup-local-connection.sql
 frontend/node_modules/
 frontend/dist/
