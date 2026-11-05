@@ -1,0 +1,145 @@
+/* Shared Leaflet presentation, scoped to NestHub map surfaces. */
+.accommodation-map { --map-action:#0f766e; --map-text:#0f172a; --map-muted:#475569; --map-border:#e2e8f0; position:relative; min-width:0; width:100%; isolation:isolate; }
+.nh-map-stage { position:relative; overflow:hidden; border:1px solid var(--map-border); border-radius:16px; background:#e2e8f0; }
+.accommodation-map .leaflet-container { height:420px; width:100%; z-index:0; font:inherit; background:#e2e8f0; }
+.accommodation-map .leaflet-control-attribution { max-width:calc(100% - 16px); font-size:10px; line-height:1.4; color:var(--map-muted); background:rgba(255,255,255,.94); }
+.accommodation-map .leaflet-control-attribution a { color:var(--map-action); }
+.nh-map-layers { position:absolute; top:16px; left:16px; z-index:450; display:flex; padding:4px; gap:3px; border:1px solid var(--map-border); background:white; border-radius:12px; box-shadow:0 3px 14px #0f172a24; }
+.accommodation-map .nh-map-layers button { display:flex; gap:7px; align-items:center; justify-content:center; min-height:40px; padding:8px 12px; border:0; border-radius:8px; background:white; color:var(--map-muted); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.accommodation-map .nh-map-layers button.active { background:#e6f5f1; color:var(--map-action); }
+.accommodation-map .nh-map-layers button:disabled { color:#64748b; cursor:not-allowed; background:#f8fafc; }
+.accommodation-map button:focus-visible, .accommodation-map a:focus-visible { outline:3px solid var(--map-action); outline-offset:3px; }
+.nh-map-actions { position:absolute; right:16px; bottom:42px; z-index:800; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.accommodation-map .nh-map-actions button { display:flex; justify-content:center; align-items:center; width:44px; height:44px; padding:0; border:1px solid var(--map-border); border-radius:12px; background:white; color:var(--map-text); box-shadow:0 2px 8px #0f172a1a; cursor:pointer; }
+@media(hover:hover) and (pointer:fine) { .accommodation-map .nh-map-actions button:hover, .accommodation-map .nh-map-layers button:not(:disabled):hover { background:#f0fdfa; color:var(--map-action); } }
+.nh-map-zoom { border-radius:12px; overflow:hidden; box-shadow:0 2px 8px #0f172a1a; }
+.accommodation-map .nh-map-zoom button { border-radius:0; box-shadow:none; }
+.accommodation-map .nh-map-zoom button+button { border-top:0; }
+.nh-map-hint { position:absolute; top:80px; left:16px; z-index:400; display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:7px 10px; max-width:calc(100% - 90px); background:rgba(255,255,255,.95); border-radius:8px; font-size:11px; color:var(--map-muted); pointer-events:none; box-shadow:0 1px 5px #0f172a12; }
+.nh-map-legend-pin { width:8px; height:8px; background:var(--map-action); border-radius:50%; }
+.nh-map-loading { position:absolute; bottom:16px; left:16px; z-index:400; padding:7px 12px; background:white; border-radius:8px; font-size:12px; color:var(--map-muted); pointer-events:none; }
+.accommodation-map-status, .accommodation-map-empty, .accommodation-map-caption { padding:12px; color:var(--map-muted,#475569); background:#f8fafc; border-radius:10px; }
+.accommodation-map-status { display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:8px; margin:8px 0 0; font-size:13px; }
+.accommodation-map-status>div { display:flex; gap:8px; flex-wrap:wrap; }
+.accommodation-map-status button { min-height:36px; padding:6px 12px; font:inherit; border:1px solid var(--map-border); border-radius:8px; background:white; color:var(--map-action); cursor:pointer; }
+.nh-map-marker, .nh-map-price-marker { background:transparent; border:0; }
+.nh-map-pin { display:flex; align-items:center; justify-content:center; width:36px; height:36px; background:var(--map-action); color:white; border:3px solid white; border-radius:50% 50% 50% 4px; transform:rotate(-45deg); box-shadow:0 4px 12px #0f172a4d; }
+.nh-map-pin svg { transform:rotate(45deg); }
+.nh-map-price-marker>span { position:relative; display:flex; gap:3px; align-items:center; justify-content:center; height:36px; white-space:nowrap; background:white; color:var(--map-text); border:2px solid var(--map-action); border-radius:20px; font-size:13px; font-weight:800; box-shadow:0 3px 10px #0f172a33; }
+.nh-map-price-marker>span:after { content:''; position:absolute; bottom:-7px; left:calc(50% - 5px); width:10px; height:10px; background:white; border-right:2px solid var(--map-action); border-bottom:2px solid var(--map-action); transform:rotate(45deg); }
+.nh-map-price-unit { font-size:9px; font-weight:500; color:var(--map-muted); }
+.nh-map-price-marker.is-selected>span, .nh-map-price-marker:focus>span { background:var(--map-action); color:white; }
+.nh-map-price-marker.is-selected .nh-map-price-unit, .nh-map-price-marker:focus .nh-map-price-unit { color:white; }
+.accommodation-map .leaflet-popup-content-wrapper { border-radius:14px; box-shadow:0 8px 28px #0f172a33; }
+.accommodation-map-popup { max-height:190px; overflow-y:auto; width:min(230px,60vw); }
+.accommodation-map-popup article+article { border-top:1px solid var(--map-border); margin-top:12px; padding-top:12px; }
+.accommodation-map-popup img { width:100%; height:100px; object-fit:cover; border-radius:8px; }
+.accommodation-map-popup strong { display:block; overflow-wrap:anywhere; font-size:14px; color:var(--map-text); }
+.accommodation-map .accommodation-map-popup p { margin:8px 0; font-size:12px; line-height:1.5; }
+.accommodation-map .accommodation-map-popup a { display:block; padding:9px 12px; text-align:center; border-radius:8px; color:white; background:var(--map-action); font-weight:700; text-decoration:none; }
+.accommodation-map-directions { display:inline-flex; align-items:center; gap:6px; color:#0f766e; font-weight:700; padding:12px 0; }
+.registration-map-shell .accommodation-map { padding:0 12px; }
+.prototype-search .accommodation-map .leaflet-container { height:560px; }
+.accommodation-map.accommodation-map-expanded { position:fixed; inset:12px; width:auto; z-index:10000; padding:0; background:white; border-radius:16px; box-shadow:0 0 0 30px #0f172a99; display:flex; flex-direction:column; }
+.accommodation-map-expanded .nh-map-stage { flex:1; min-height:0; }
+.accommodation-map.accommodation-map-expanded .leaflet-container { height:100%; min-height:100%; }
+.accommodation-map-expanded .accommodation-map-status { flex-shrink:0; margin:0; }
+@media(max-width:600px) {
+  .accommodation-map .leaflet-container, .prototype-search .accommodation-map .leaflet-container { height:400px; }
+  .nh-map-layers { top:12px; left:12px; }
+  .accommodation-map .nh-map-layers button { padding:8px 10px; font-size:12px; }
+  .nh-map-hint { left:12px; top:76px; font-size:10px; }
+  .nh-map-hint>span:last-child { display:none; }
+  .nh-map-actions { right:12px; }
+  .accommodation-map.accommodation-map-expanded { inset:6px; }
+}
+
+.accommodation-map .leaflet-marker-icon:focus-visible { outline:3px solid var(--map-action); outline-offset:5px; }
+
+/* Map discovery workspace. Content uses Animate UI; Leaflet owns map transforms. */
+.nh-map-explorer { --map-action:#0f766e; --map-text:#0f172a; --map-muted:#64748b; --map-border:#e2e8f0; overflow:clip; border:1px solid var(--map-border); border-radius:22px; background:white; box-shadow:0 12px 40px #0f172a08; }
+.nh-map-explorer-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px; padding:24px 26px; background:linear-gradient(120deg,#f0fdfa,white 65%); border-bottom:1px solid var(--map-border); }
+.nh-map-eyebrow { display:flex; gap:7px; align-items:center; font-size:10px; font-weight:800; letter-spacing:.12em; color:var(--map-action); }
+.nh-map-explorer .nh-map-explorer-heading h3 { margin:7px 0 6px; color:var(--map-text); font-size:22px; line-height:1.3; letter-spacing:-.5px; }
+.nh-map-explorer-heading p { margin:0; font-size:12px; color:#475569; }
+.nh-map-total { display:flex; gap:7px; align-items:center; flex-wrap:wrap; border:1px solid #cce7df; border-radius:24px; padding:10px 14px; background:white; color:var(--map-action); font-size:12px; font-weight:700; }
+.nh-map-total>span { font-weight:500; color:#475569; }
+.nh-map-workspace { display:grid; grid-template-columns:296px minmax(0,1fr); min-width:0; }
+.nh-map-room-panel { display:flex; flex-direction:column; height:560px; min-width:0; padding:0 14px; background:#f8fafc; border-right:1px solid var(--map-border); }
+.nh-map-panel-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:18px 2px 14px; }
+.nh-map-panel-heading strong { font-size:13px; color:var(--map-text); }
+.nh-map-panel-heading>span { font-size:10px; color:var(--map-muted); }
+.nh-map-room-list { display:flex; flex-direction:column; flex:1; min-height:0; gap:12px; overflow:auto; padding:5px 5px 14px; scrollbar-width:thin; }
+.nh-map-room-card { position:relative; flex-shrink:0; padding:0; border:1px solid #e2e8f0; border-radius:14px; background:white; box-shadow:0 2px 6px #0f172a04; }
+.nh-map-room-card.selected { border-color:var(--map-action); box-shadow:0 0 0 2px #0f766e16,0 5px 18px #0f766e12; }
+.nh-map-room-choice { display:flex; align-items:center; gap:12px; width:100%; min-width:0; padding:12px; border:0; border-radius:14px; background:transparent; color:inherit; text-align:left; font:inherit; cursor:pointer; }
+.nh-map-room-choice:focus-visible { outline:3px solid var(--map-action); outline-offset:2px; }
+.nh-map-room-photo { position:relative; display:block; flex:0 0 62px; height:76px; border-radius:10px; background:#edf5f2; }
+.nh-map-room-photo img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+.nh-room-photo-placeholder { display:flex; align-items:center; justify-content:center; height:100%; border-radius:inherit; color:#0f766e; background:linear-gradient(140deg,#e2f3ed,#eff5fa); }
+.nh-map-chosen { position:absolute; right:-5px; bottom:-5px; display:flex; align-items:center; justify-content:center; width:23px; height:23px; color:white; background:var(--map-action); border:2px solid white; border-radius:50%; }
+.nh-map-room-copy { display:flex; flex:1; flex-direction:column; min-width:0; gap:4px; }
+.nh-map-card-title { font-size:12px; font-weight:800; color:var(--map-text); line-height:1.45; overflow-wrap:anywhere; }
+.nh-map-card-type { font-size:11px; color:#475569; }
+.nh-map-card-address { display:flex; align-items:flex-start; gap:4px; color:var(--map-muted); font-size:10px; line-height:1.5; }
+.nh-map-card-address svg { flex-shrink:0; margin-top:1px; }
+.nh-map-card-price { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; margin-top:4px; font-size:14px; font-weight:800; color:var(--map-action); }
+.nh-map-card-price small { font-size:10px; font-weight:500; color:var(--map-muted); }
+.nh-map-panel-footer { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:12px 4px; border-top:1px solid var(--map-border); color:var(--map-muted); font-size:10px; }
+.nh-map-explorer-canvas { min-width:0; }
+.nh-map-explorer .nh-map-stage { border:0; border-radius:0; }
+.nh-map-explorer .nh-map-layers { box-shadow:0 4px 20px #0f172a14; }
+.nh-map-selection-slot { min-height:74px; border-top:1px solid var(--map-border); background:white; }
+.nh-map-selection { display:flex; align-items:center; gap:12px; padding:15px 22px; min-height:74px; }
+.nh-map-selection-icon { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:40px; height:40px; border-radius:12px; color:var(--map-action); background:#ecf8f3; }
+.nh-map-selection>div { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; }
+.nh-map-selection small { font-size:9px; font-weight:800; letter-spacing:.1em; color:var(--map-action); }
+.nh-map-selection strong { font-size:12px; color:var(--map-text); overflow-wrap:anywhere; }
+.nh-map-selection>a { display:flex; flex-shrink:0; align-items:center; gap:6px; padding:10px 14px; min-height:40px; border-radius:10px; background:var(--map-action); color:white; text-decoration:none; font-size:12px; font-weight:700; }
+.nh-map-selection-empty { display:flex; align-items:center; justify-content:center; min-height:74px; padding:16px; gap:9px; color:var(--map-muted); font-size:12px; }
+.nh-map-price-marker.is-selected>span:after { background:var(--map-action); }
+@media(hover:hover) and (pointer:fine) { .nh-map-room-card:hover { border-color:#91bdb1; box-shadow:0 6px 18px #0f172a0c; } }
+@media(max-width:1000px) { .nh-map-workspace { grid-template-columns:250px minmax(0,1fr); } .nh-map-room-photo { flex-basis:48px; height:65px; } .nh-map-room-choice { padding:10px; gap:9px; } }
+@media(max-width:700px) {
+  .nh-map-explorer-heading { padding:20px 18px; gap:14px; }
+  .nh-map-explorer .nh-map-explorer-heading h3 { font-size:19px; }
+  .nh-map-total { padding:7px 11px; font-size:11px; }
+  .nh-map-workspace { display:flex; flex-direction:column; }
+  .nh-map-explorer-canvas { order:0; }
+  .nh-map-room-panel { order:1; height:auto; border-right:0; border-top:1px solid var(--map-border); padding:0 12px; }
+  .nh-map-room-list { flex-direction:row; padding-bottom:12px; scroll-snap-type:x proximity; }
+  .nh-map-room-card { width:265px; scroll-snap-align:start; }
+  .nh-map-room-photo { flex-basis:58px; height:70px; }
+  .nh-map-panel-heading { padding-top:14px; }
+  .nh-map-selection { flex-wrap:wrap; padding:14px; gap:10px; }
+  .nh-map-selection>a { margin-left:auto; }
+  .nh-map-panel-footer { padding:10px 4px; }
+  .nh-map-selection-empty { font-size:11px; }
+}
+
+.nh-map-tool-icon { display:inline-grid; width:20px; height:20px; place-items:center; }
+.nh-map-tool-icon>span { display:flex; grid-area:1/1; }
+
+.nh-nearby-control { position:absolute; top:16px; right:16px; z-index:850; }
+.nh-nearby-control>button { display:flex; gap:6px; align-items:center; min-height:44px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; background:white; color:#0f766e; font:inherit; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 3px 12px #0f172a18; }
+.nh-nearby-control>button.active { color:white; background:#0f766e; }
+.nh-nearby-panel { position:absolute; right:72px; top:70px; width:min(280px,calc(100% - 90px)); max-height:260px; z-index:850; overflow:auto; padding:12px; background:white; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 28px #0f172a33; color:#334155; font-size:12px; }
+.nh-nearby-panel header { display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; }
+.nh-nearby-panel button { min-height:32px; border:1px solid #e2e8f0; background:white; border-radius:6px; cursor:pointer; color:#0f766e; }
+.nh-nearby-panel ul { padding:0; list-style:none; }
+.nh-nearby-panel li { display:flex; flex-direction:column; gap:3px; padding:9px 0; border-top:1px solid #f1f5f9; }
+.nh-nearby-panel li span { font-size:11px; color:#64748b; }
+.nh-nearby-panel footer { font-size:10px; line-height:1.5; color:#64748b; }
+@media(max-width:600px){.nh-nearby-control{top:12px;right:12px}.nh-nearby-control>button{padding:9px;font-size:11px}.nh-nearby-panel{top:64px;right:64px;max-height:200px}}
+
+.nh-poi-marker { background:transparent; border:0; }
+.nh-poi-marker>span { display:flex; justify-content:center; align-items:center; width:29px; height:29px; background:white; border:2px solid currentColor; border-radius:50%; box-shadow:0 2px 6px #0f172a33; }
+.nh-nearby-auto-status { position:absolute; right:16px; top:66px; z-index:400; padding:5px 8px; max-width:220px; border-radius:7px; background:white; color:#475569; font-size:10px; pointer-events:none; }
+
+/* Official Google canvas; preserve provider attribution and logo. */
+.nh-google-canvas { height:420px; width:100%; }
+.prototype-search .nh-google-canvas { height:560px; }
+.nh-google-pin { display:flex; align-items:center; justify-content:center; min-width:38px; height:38px; padding:0 10px; border:2px solid white; border-radius:20px; background:var(--map-action); color:white; font-size:24px; font-weight:700; box-shadow:0 3px 12px #0f172a40; }
+.nh-google-pin.nh-google-price { height:36px; background:white; color:var(--map-action); border:2px solid var(--map-action); font-size:13px; font-family:inherit; white-space:nowrap; }
+.nh-google-pin.is-selected { background:var(--map-action); color:white; }
+@media(max-width:600px) { .nh-google-canvas, .prototype-search .nh-google-canvas { height:400px; } .nh-google-map .nh-map-layers { left:8px; top:8px; } .nh-google-map .nh-map-layers button { padding:8px; } }

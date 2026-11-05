@@ -190,6 +190,9 @@ public class AccommodationService {
         String address = Objects.toString(property.getAddress(), "");
         String mapUrl = address.isBlank() ? null : "https://www.google.com/maps/search/?api=1&query="
                 + java.net.URLEncoder.encode(address, java.nio.charset.StandardCharsets.UTF_8);
+        if (summary.latitude() != null && summary.longitude() != null)
+            mapUrl = "https://www.google.com/maps/dir/?api=1&destination="
+                    + summary.latitude().toPlainString() + "," + summary.longitude().toPlainString();
         var similar = roomTypes.findAll(PublicAccommodationPolicy.visible().and((root, query, cb) ->
                 cb.notEqual(root.get("property").get("propertyId"), propertyId)), PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "roomTypeId")));
         return new AccommodationDetail(summary, gallery.values().stream().limit(10).toList(), type.getCapacity(), type.getDeposit(),
@@ -250,10 +253,29 @@ public class AccommodationService {
             String imageUrl = safeImageUrl(type.getImageUrl());
             if (coverIds.containsKey(type.getRoomTypeId())) imageUrl = "/api/properties/" + property.getPropertyId()
                     + "/room-types/" + type.getRoomTypeId() + "/images/" + coverIds.get(type.getRoomTypeId());
+            var coordinates = publishedCoordinates(property);
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
                     property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
-                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice());
+                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1]);
         }).toList();
+    }
+
+    /** Read only the approved registration, never a pending location change. */
+    private BigDecimal[] publishedCoordinates(org.hlrcs.entity.Property property) {
+        try {
+            var registration = property.getRegistration();
+            if (registration != null && registration.getRegistrationDetails() != null) {
+                var profile = json.readValue(registration.getRegistrationDetails(), PropertyRegistrationRequest.class);
+                var latitude = new BigDecimal(profile.latitude().trim());
+                var longitude = new BigDecimal(profile.longitude().trim());
+                if (latitude.abs().compareTo(BigDecimal.valueOf(90)) <= 0
+                        && longitude.abs().compareTo(BigDecimal.valueOf(180)) <= 0)
+                    return new BigDecimal[]{latitude, longitude};
+            }
+        } catch (tools.jackson.core.JacksonException | IllegalArgumentException | NullPointerException ignored) {
+            // Legacy profiles remain public without an invented marker.
+        }
+        return new BigDecimal[]{null, null};
     }
 
     private String safeImageUrl(String value) {

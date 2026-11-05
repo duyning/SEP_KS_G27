@@ -1,13 +1,15 @@
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
-export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,account,onClick,onSubmit,onChange,alert}) {
-return <div className="prototype-home prototype-profile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
+import {ChevronDown,X,UserRound} from 'lucide-react';
+const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Nhà trọ đã lưu',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
+export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,accountMenuOpen,announcementOpen,account,onClick,onSubmit,onChange,alert}) {
+return <div className="prototype-home prototype-profile profile-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 
 
   <header className="navbar-wrapper">
-    <div className="top-announcement">
-      <div className="container top-announcement-inner">
+    <div className={`top-announcement ${announcementOpen?'pm-info-open':''}`}><MotionButton type="button" id="profileInfoToggle" className="pm-info-toggle" aria-expanded={announcementOpen} aria-controls="profileInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
+      <div className="container top-announcement-inner" id="profileInformation">
         <div className="announcement-left">
           <span className="badge-tag">Hòa Lạc Campus</span>
           <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
@@ -47,19 +49,20 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
-          <li><Link className="nav-item active" to="/profile">Hồ sơ cá nhân</Link></li>
+          <li><Link className="nav-item active" to="/profile">Hồ sơ cá nhân</Link></li><li className="pm-menu-account">{account}</li>
         </ul>
 
 
         <div className="nav-actions">{account}</div>
 
 
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
+          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
         </MotionButton>
       </div>
     </nav>
   </header>
+  {mobileOpen&&<button type="button" className="pm-menu-backdrop pm-menu-dismiss" aria-label="Đóng thực đơn và quay lại hồ sơ"/>}
 
 
   <section className="profile-header-banner" id="profileHeaderBanner">
@@ -104,7 +107,7 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
             </div>
           </Link>
 
-          <div className="profile-stat-box" id="headerApptBox" style={{"cursor": "pointer"}}>
+          <div className="profile-stat-box" id="headerApptBox" role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.currentTarget.click();}}} style={{"cursor": "pointer"}}>
             <div className="profile-stat-icon cal">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </div>
@@ -124,8 +127,9 @@ return <div className="prototype-home prototype-profile" onClick={onClick} onSub
       <div className="profile-layout-grid">
 
 
-        <aside className="profile-sidebar">
-          <ul className="profile-nav-menu">
+        <aside className={`profile-sidebar ${accountMenuOpen?'pm-account-open':''}`} aria-label="Chức năng tài khoản">
+          <MotionButton type="button" className="pm-account-toggle" id="profileAccountToggle" aria-expanded={accountMenuOpen} aria-controls="profileAccountMenu"><span className="pm-account-icon"><UserRound size={20}/></span><span><small>Quản lý tài khoản</small><strong>{mobileTabLabels[tab]}</strong></span><ChevronDown size={20}/></MotionButton>
+          <ul className="profile-nav-menu" id="profileAccountMenu">
             <li id="sidebarHostLinkItem" style={{display:user.role === "ROOM_HOST" || user.role === "ADMIN" ? "block" : "none"}}>
               <Link className="profile-nav-btn" style={{"textDecoration": "none", "background": "rgba(13, 148, 136, 0.08)", "color": "var(--primary)"}} title="Vào Bảng điều khiển Chủ trọ" to="/host">
                 <span className="profile-nav-item-left">

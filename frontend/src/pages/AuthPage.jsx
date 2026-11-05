@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
 import { sessionDestination } from '../routing/session-destination.js';
+import '../styles/auth-mobile.css';
 
 const DEMO_ACCOUNTS = [
   ['Người thuê (Sinh viên)', 'user@hlrcs.com', '123456'],
@@ -189,7 +190,7 @@ export default function AuthPage({ registerMode = false }) {
         {/* ==========================================================================
             MẶT 1: GIAO DIỆN ĐĂNG NHẬP (HÌNH MINH HỌA TRÁI - FORM BÊN PHẢI)
             ========================================================================== */}
-        <div className="flip-face flip-login-face">
+        <div className="flip-face flip-login-face" inert={isFlipped} aria-hidden={isFlipped}>
           <div className="auth-wrapper">
             {/* CỘT TRÁI: SHOWCASE ĐĂNG NHẬP */}
             <aside className="showcase-side login-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
@@ -273,10 +274,8 @@ export default function AuthPage({ registerMode = false }) {
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <div className="brand-icon" style={{ width: '34px', height: '34px' }}>
-                    <House size={18} />
-                  </div>
-                  <span className="mobile-brand-name">HL_RCS</span>
+                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
                 {/* Header Form */}
@@ -306,6 +305,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="loginIdentifier"
+                        aria-invalid={Boolean(loginErrors.identifier)}
+                        aria-describedby={loginErrors.identifier ? 'loginIdentifier-error' : undefined}
                         name="loginIdentifier"
                         type="text"
                         className={`form-input ${loginErrors.identifier ? 'invalid' : ''}`}
@@ -320,7 +321,7 @@ export default function AuthPage({ registerMode = false }) {
                         }}
                       />
                     </div>
-                    {loginErrors.identifier && <p className="error-message">{loginErrors.identifier}</p>}
+                    {loginErrors.identifier && <p id="loginIdentifier-error" className="error-message" role="alert">{loginErrors.identifier}</p>}
                   </div>
 
                   {/* Mật khẩu */}
@@ -334,6 +335,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="loginPassword"
+                        aria-invalid={Boolean(loginErrors.password)}
+                        aria-describedby={loginErrors.password ? 'loginPassword-error' : undefined}
                         name="loginPassword"
                         type={showLoginPassword ? 'text' : 'password'}
                         className={`form-input has-action ${loginErrors.password ? 'invalid' : ''}`}
@@ -356,7 +359,7 @@ export default function AuthPage({ registerMode = false }) {
                         {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </MotionButton>
                     </div>
-                    {loginErrors.password && <p className="error-message">{loginErrors.password}</p>}
+                    {loginErrors.password && <p id="loginPassword-error" className="error-message" role="alert">{loginErrors.password}</p>}
                   </div>
 
                   {/* Ghi nhớ & Quên mật khẩu */}
@@ -454,17 +457,15 @@ export default function AuthPage({ registerMode = false }) {
         {/* ==========================================================================
             MẶT 2: GIAO DIỆN ĐĂNG KÝ (FORM BÊN TRÁI - HÌNH MINH HỌA PHẢI)
             ========================================================================== */}
-        <div className="flip-face flip-register-face">
+        <div className="flip-face flip-register-face" inert={!isFlipped} aria-hidden={!isFlipped}>
           <div className="auth-wrapper register-layout">
             {/* CỘT TRÁI: FORM ĐĂNG KÝ */}
             <main className="form-side" aria-label="Khu vực đăng ký">
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <div className="brand-icon" style={{ width: '34px', height: '34px' }}>
-                    <House size={18} />
-                  </div>
-                  <span className="mobile-brand-name">HL_RCS</span>
+                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
                 {/* Header Form */}
@@ -494,6 +495,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="regFullName"
+                        aria-invalid={Boolean(regErrors.fullName)}
+                        aria-describedby={regErrors.fullName ? 'regFullName-error' : undefined}
                         name="regFullName"
                         type="text"
                         className={`form-input ${regErrors.fullName ? 'invalid' : ''}`}
@@ -508,7 +511,7 @@ export default function AuthPage({ registerMode = false }) {
                         }}
                       />
                     </div>
-                    {regErrors.fullName && <p className="error-message">{regErrors.fullName}</p>}
+                    {regErrors.fullName && <p id="regFullName-error" className="error-message" role="alert">{regErrors.fullName}</p>}
                   </div>
 
                   {/* Email hoặc Số điện thoại */}
@@ -522,6 +525,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="regIdentifier"
+                        aria-invalid={Boolean(regErrors.identifier)}
+                        aria-describedby={regErrors.identifier ? 'regIdentifier-error' : undefined}
                         name="regIdentifier"
                         type="text"
                         className={`form-input ${regErrors.identifier ? 'invalid' : ''}`}
@@ -536,7 +541,7 @@ export default function AuthPage({ registerMode = false }) {
                         }}
                       />
                     </div>
-                    {regErrors.identifier && <p className="error-message">{regErrors.identifier}</p>}
+                    {regErrors.identifier && <p id="regIdentifier-error" className="error-message" role="alert">{regErrors.identifier}</p>}
                   </div>
 
                   {/* Mật khẩu */}
@@ -550,6 +555,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="regPassword"
+                        aria-invalid={Boolean(regErrors.password)}
+                        aria-describedby={regErrors.password ? 'regPassword-error' : undefined}
                         name="regPassword"
                         type={showRegPassword ? 'text' : 'password'}
                         className={`form-input has-action ${regErrors.password ? 'invalid' : ''}`}
@@ -572,7 +579,7 @@ export default function AuthPage({ registerMode = false }) {
                         {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </MotionButton>
                     </div>
-                    {regErrors.password && <p className="error-message">{regErrors.password}</p>}
+                    {regErrors.password && <p id="regPassword-error" className="error-message" role="alert">{regErrors.password}</p>}
                   </div>
 
                   {/* Xác nhận mật khẩu */}
@@ -586,6 +593,8 @@ export default function AuthPage({ registerMode = false }) {
                       </div>
                       <input
                         id="regConfirmPassword"
+                        aria-invalid={Boolean(regErrors.confirmPassword)}
+                        aria-describedby={regErrors.confirmPassword ? 'regConfirmPassword-error' : undefined}
                         name="regConfirmPassword"
                         type={showRegConfirmPassword ? 'text' : 'password'}
                         className={`form-input has-action ${regErrors.confirmPassword ? 'invalid' : ''}`}
@@ -608,7 +617,7 @@ export default function AuthPage({ registerMode = false }) {
                         {showRegConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </MotionButton>
                     </div>
-                    {regErrors.confirmPassword && <p className="error-message">{regErrors.confirmPassword}</p>}
+                    {regErrors.confirmPassword && <p id="regConfirmPassword-error" className="error-message" role="alert">{regErrors.confirmPassword}</p>}
                   </div>
 
                   {/* Điều khoản & Chính sách */}

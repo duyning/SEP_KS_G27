@@ -1,12 +1,13 @@
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original user-facing markup from Code/giao_dien/html/become-host.html.
 import {Link} from 'react-router-dom';
+import {ChevronDown,X} from 'lucide-react';
 import {applicantCapacities,rentalExperiences,applicationFieldLabel} from '../services/host-applications.js';
-export default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {
-return <div className="prototype-home prototype-become-host" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
+export default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,announcementOpen,progressOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {
+return <div className="prototype-home prototype-become-host become-host-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 <header className="navbar-wrapper">
-    <div className="top-announcement">
-      <div className="container top-announcement-inner">
+    <div className={`top-announcement ${announcementOpen?'bm-info-open':''}`}><MotionButton type="button" id="becomeHostInfoToggle" className="bm-info-toggle" aria-expanded={announcementOpen} aria-controls="becomeHostInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
+      <div className="container top-announcement-inner" id="becomeHostInformation">
         <div className="announcement-left">
           <span className="badge-tag">Hòa Lạc Campus</span>
           <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
@@ -46,27 +47,28 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
-          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
+          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li><li className="bm-menu-account">{account}</li>
         </ul>
 
 
         <div className="nav-actions">{account}</div>
 
 
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
+          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
         </MotionButton>
       </div>
     </nav>
   </header>
+  {mobileOpen&&<button type="button" className="bm-menu-backdrop bm-menu-dismiss" aria-label="Đóng thực đơn và quay lại đăng ký"/>}
 
 
   <section className="bh-page-intro container" aria-labelledby="become-host-title">
     <div><span className="bh-page-eyebrow">DÀNH CHO CHỦ NHÀ</span><h1 id="become-host-title">Đăng ký làm chủ trọ</h1><p>Hoàn thiện hồ sơ để sử dụng không gian quản lý nhà trọ trên HL_RCS.</p></div>
   </section>
   <div className="bh-application-workspace container">
-  <section className="bh-stepper-wrapper">
-    <div className="bh-stepper-card" id="bhStepperCard">
+  <section className={`bh-stepper-wrapper ${progressOpen?'bm-progress-open':''}`}>
+    <div className="bh-stepper-card" id="bhStepperCard"><MotionButton type="button" id="becomeHostProgressToggle" className="bm-progress-toggle" aria-expanded={progressOpen} aria-controls="becomeHostProgressHelp"><span>Tiến trình đăng ký</span><span className="bm-progress-count">{['approved','already_host'].includes(state)?4:['pending','needs_changes','rejected'].includes(state)?3:1}/4</span><ChevronDown size={18}/></MotionButton>
       <div className="bh-stepper-title">
         <span>Tiến trình đăng ký</span>
 
@@ -97,7 +99,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
         </div>
       </div>
     </div>
-    <div className="bh-process-note"><h2>Sau khi được duyệt</h2><p>Bạn có thể đăng ký nhà trọ, thiết lập loại phòng và quản lý lịch xem phòng tại Host Portal.</p><p className="bh-process-private">Hồ sơ nhà trọ và giấy tờ xác minh sẽ được gửi riêng sau khi tài khoản được cấp quyền.</p></div>
+    <div className="bh-process-note" id="becomeHostProgressHelp"><h2>Sau khi được duyệt</h2><p>Bạn có thể đăng ký nhà trọ, thiết lập loại phòng và quản lý lịch xem phòng tại Host Portal.</p><p className="bh-process-private">Hồ sơ nhà trọ và giấy tờ xác minh sẽ được gửi riêng sau khi tài khoản được cấp quyền.</p></div>
   </section>
 
 

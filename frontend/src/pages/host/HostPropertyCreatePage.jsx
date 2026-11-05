@@ -6,6 +6,7 @@ import '../../styles/host-registration-refinement.css';
 import { AlertCircle, ArrowLeft, ArrowRight, Building2, Check, ClipboardList, Clock3, FileText, ImagePlus, Info, LoaderCircle, LockKeyhole, Pencil, Save, Star, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import PropertyLocationMap from '../../components/PropertyLocationMap.jsx';
+import {applyLocationSuggestion} from '../../services/property-location.js';
 import PropertyAddressLookup from '../../components/PropertyAddressLookup.jsx';
 import { StateView, useToast } from '../../components/PortalUI.jsx';
 import { hostApi } from '../../services/host.js';
@@ -180,7 +181,7 @@ function RegistrationForm({ user, accessBlocked = false }) {
           </div></fieldset>
         </>}
         {step === 1 && <>
-          <PropertyAddressLookup locationKey={[data.addressDetail,data.commune,data.latitude,data.longitude].join('|')} onApply={location=>{setData(previous=>({...previous,addressDetail:location.addressDetail,commune:location.commune,latitude:location.latitude,longitude:location.longitude,nearby:''}));setErrors(previous=>({...previous,addressDetail:undefined,commune:undefined,latitude:undefined,longitude:undefined,location:undefined}));setNotice('');}}/>
+          <PropertyAddressLookup resolveDetails coordinates={data} disabled={submitting} locationKey={[data.latitude,data.longitude,data.addressDetail,data.commune,data.nearby].join('|')} onApply={location=>{setData(previous=>applyLocationSuggestion(previous,location,['latitude','longitude','addressDetail','commune','nearby']));setErrors(previous=>({...previous,latitude:undefined,longitude:undefined,location:undefined}));setNotice('');}}/>
           <div className="registration-two-columns registration-location-address">
             <Field name="addressDetail" label="Địa chỉ chi tiết" required hint="Số nhà, ngõ, xóm, thôn; từ 10 đến 255 ký tự." error={errors.addressDetail}><input {...input('addressDetail')} maxLength={255} autoComplete="street-address" required placeholder="Ví dụ: Số 18, ngõ 12, Thôn 2" /></Field>
             <Field name="commune" label="Xã / Khu vực tại Hòa Lạc" required hint="Chọn khu vực nhà trọ tại Hòa Lạc." error={errors.commune}><select {...input('commune')} required><option value="">Chọn khu vực</option>{AREAS.map(area => <option key={area} value={area}>{area === 'Tân Xã' ? 'Tân Xã (Gần ĐH FPT, hồ Tân Xã)' : area}</option>)}</select></Field>

@@ -82,7 +82,7 @@ public class HostPropertyService {
                 details == null ? null : details.rules(), photos, files, typeCount, property==null?null:Math.toIntExact(rooms.countByProperty_PropertyId(property.getPropertyId())), property==null?null:Math.toIntExact(rooms.countByProperty_PropertyIdAndStatus(property.getPropertyId(),"VACANT")),
                 property == null ? 0 : bookings.countByRoomType_Property_PropertyIdAndStatus(property.getPropertyId(), BookingStatus.PENDING),
                 property == null ? registration.getCreatedAt() : property.getCreatedAt(), property == null ? registration.getReviewedAt() : property.getUpdatedAt(), registration == null ? null : registration.getReasonNote(),
-                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote())).orElse(null));
+                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote())).orElse(null),details==null?null:details.latitude(),details==null?null:details.longitude());
     }
 
     public record Photo(byte[] content, String contentType) {}

@@ -7,7 +7,7 @@ export function parseLocationInput(raw) {
   if(links?.length){
     const url=links.map(link=>new URL(link)).find(url=>['google.com','www.google.com','maps.google.com','maps.app.goo.gl','goo.gl'].includes(url.hostname));
     if(!url)throw new Error('Liên kết chưa được hỗ trợ. Vui lòng dán địa chỉ hoặc liên kết Google Maps.');
-    if(['maps.app.goo.gl','goo.gl'].includes(url.hostname))throw new Error('Liên kết rút gọn chưa có địa chỉ. Hãy mở Google Maps rồi sao chép địa chỉ hoặc liên kết đầy đủ.');
+    if(['maps.app.goo.gl','goo.gl'].includes(url.hostname))throw new Error('Đây là liên kết Google Maps rút gọn; ô này chưa tự mở rộng liên kết. Hãy mở link, sao chép liên kết đầy đủ có tọa độ hoặc dán cặp vĩ độ, kinh độ.');
     if(url.username||url.password||url.protocol!=='https:')throw new Error('Liên kết Google Maps không hợp lệ.');
     const point=decodeURIComponent(url.href).match(/!3d([+-]?[\d.]+)!4d([+-]?[\d.]+)/);
     const placeId=url.searchParams.get('query_place_id');if(placeId)return {placeId};

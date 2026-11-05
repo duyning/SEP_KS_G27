@@ -11,5 +11,5 @@ public record HostPropertyResponse(List<PropertyDetail> records) {
             String managerName, String contactPhone, String zaloPhone, String contactInfo, String description,
             List<String> amenities, List<String> selectedRules, String rules, List<Attachment> photos,
             List<Attachment> documents, int roomTypeCount, Integer totalRooms, Integer vacantRooms,
-            long pendingViewingCount, LocalDateTime createdAt, LocalDateTime updatedAt, String reasonNote,ChangeRequest changeRequest) {}
+            long pendingViewingCount, LocalDateTime createdAt, LocalDateTime updatedAt, String reasonNote,ChangeRequest changeRequest,String latitude,String longitude) {}
 }

@@ -9,6 +9,7 @@ import { AMENITIES, RULES } from '../../services/property-registration.js';
 import {filterPropertyRecords,propertyPage,propertyRecordKey,PROPERTY_PAGE_SIZE} from '../../services/host-property-list.js';
 import '../../styles/host-property-page.css';
 import '../../styles/host-property-detail.css';
+import {RoomLocationMap} from '../../components/AccommodationMap.jsx';
 import HostEmptyState from '../../components/HostEmptyState.jsx';
 
 export function HostPropertyEmpty() {
@@ -71,6 +72,7 @@ function PropertyDetail({ property }) {
         <div className="hp-description"><h4>Mô tả chi tiết:</h4><p>{property.description || 'Chưa cập nhật mô tả.'}</p></div>
         <div className="hp-gallery"><h4>Hình ảnh nhà trọ ({property.photos.length} ảnh):</h4><div>{property.photos.map(photo => <MotionButton type="button" key={photo.documentId} title="Xem ảnh nhà trọ" aria-label={`Xem ảnh ${photo.fileName || photo.documentId}`} onClick={() => setPreview(photo)} disabled={!images[photo.documentId]}>{renderImage(photo)}</MotionButton>)}{!property.photos.length && <p>Chưa có ảnh nhà trọ.</p>}</div></div>
       </section>
+      <section className="hp-information hp-property-map"><header className="hp-section-heading"><div><h3>Vị trí nhà trọ</h3><p>Vị trí đã lưu trong hồ sơ nhà trọ của bạn.</p></div></header><RoomLocationMap room={{...property,propertyName:property.name}}/></section>
       <section className="hp-review"><header className="hp-section-heading"><div><h3>Hồ sơ & Xét duyệt</h3><p>Thông tin kiểm định pháp lý và hồ sơ tài liệu lưu trữ bảo mật nội bộ.</p></div>{badge}</header>
         <dl className="hp-review-state"><div><dt>Trạng thái tin đăng:</dt><dd>{visible ? 'Đang hiển thị công khai trên hệ thống tìm kiếm' : stateLabels[property.displayStatus]}</dd></div><div><dt>Ngày khởi tạo:</dt><dd>{date(property.createdAt)}</dd></div><div><dt>Cập nhật gần nhất:</dt><dd>{date(property.updatedAt)}</dd></div></dl>
         <h4>Hồ sơ xác minh đã gửi (Bảo mật cho Chủ trọ):</h4><div className="hp-documents">{documentLabels.map(([type, label]) => { const file = property.documents.find(item => item.type === type); const approved = file && ['APPROVED', 'VERIFIED'].includes(file.verificationStatus); return <div key={type}><FileCheck2 size={22} /><div><strong>{label}</strong><p className={approved ? 'approved' : file ? 'waiting' : ''}>{approved ? 'Đã xác minh' : file?.verificationStatus === 'REJECTED' ? 'Tài liệu chưa hợp lệ' : file ? 'Đã tiếp nhận · Chờ kiểm tra' : 'Chưa đính kèm'}</p></div></div>; })}</div><p className="hp-privacy"><ShieldCheck size={13} />Tài liệu xác minh được lưu trữ riêng tư, phục vụ xét duyệt và không hiển thị công khai tới người tìm phòng.</p>

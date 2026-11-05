@@ -253,10 +253,10 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
-  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
+  if (portal === 'public' && ['/', '/profile', '/become-host', '/properties/detail', '/search', '/map', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
 
   return (
-    <div className={`portal-app ${portal}-portal ${portal === 'host' && ['/host', '/host/property', '/host/property/new', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'host-workspace' : ''} ${location.pathname==='/'?'home-route':''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
+    <div className={`portal-app ${portal}-portal ${portal === 'host' && ['/host', '/host/property', '/host/property/new', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'host-workspace' : ''} ${location.pathname==='/'?'home-route':''} ${screen.path === '/host' ? 'host-dashboard-route' : ''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
       <a className="skip-link" href="#main-content">Đến nội dung chính</a>
 
       {portal === 'public' ? (

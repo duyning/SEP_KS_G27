@@ -8,6 +8,7 @@ import { StateView, StatusBadge } from '../../components/PortalUI.jsx';
 import HostHeaderSlot from '../../components/HostHeaderSlot.jsx';
 import HostEmptyState from '../../components/HostEmptyState.jsx';
 import '../../styles/host-dashboard.css';
+import '../../styles/host-dashboard-mobile.css';
 
 const bookingLabels = { PENDING: 'Chờ xác nhận', APPROVED: 'Đã xác nhận', REJECTED: 'Đã từ chối', CANCELLED: 'Đã hủy' };
 const money = value => value == null ? 'Chưa có giá niêm yết' : `${new Intl.NumberFormat('vi-VN').format(value)} đ / tháng`;
@@ -204,13 +205,13 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                     <tbody id="viewingRequestsTableBody">
                       {recentViewings.map(v => (
                         <tr key={v.bookingId}>
-                          <td>
+                          <td data-label="Người yêu cầu">
                             <div style={{ fontWeight: 600 }}>{v.renterName}</div>
                             <small style={{ color: '#64748b' }}>{v.propertyName} · {v.roomType}</small>
                           </td>
-                          <td>{new Date(v.scheduledDate).toLocaleString('vi-VN')}</td>
-                          <td><StatusBadge>{bookingLabels[v.status] || v.status}</StatusBadge></td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td data-label="Thời gian xem">{new Date(v.scheduledDate).toLocaleString('vi-VN')}</td>
+                          <td data-label="Trạng thái"><StatusBadge>{bookingLabels[v.status] || v.status}</StatusBadge></td>
+                          <td data-label="Thao tác" style={{ textAlign: 'right' }}>
                             <Link to="/host/viewings" className="btn-link-action">Chi tiết</Link>
                           </td>
                         </tr>
@@ -232,12 +233,12 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
               <div className="my-properties-list" id="myPropertiesList">
                 {properties.map(property => (
                   <div className="my-prop-row" key={property.propertyId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
-                      <div style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
+                    <div className="my-prop-info">
+                      <div className="my-prop-name" style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
+                      <div className="my-prop-address" style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
+                      <div className="my-prop-config" style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="my-prop-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <StatusBadge>{property.status === 'ACTIVE' ? 'Đang hoạt động' : property.status || 'Chưa cập nhật trạng thái'}</StatusBadge>
                       <Link to={`/host/property?id=${property.propertyId}`} className="btn-quick-action">Chi tiết</Link>
                     </div>

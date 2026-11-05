@@ -279,6 +279,8 @@ class HostDashboardTests {
         assertEquals(0, properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).size());
         var hostData = json.readTree(propertyDetail(hostToken, "").body()).path("data").path("records").get(0);
         assertEquals("NEEDS_SUPPLEMENT", hostData.path("displayStatus").asString());
+        assertEquals("21.0188",hostData.path("latitude").asString());
+        assertEquals("105.5215",hostData.path("longitude").asString());
         assertEquals(note, hostData.path("reasonNote").asString());
         assertEquals(note, json.readTree(currentRegistration(hostToken).body()).path("data").path("reasonNote").asString());
         assertEquals(0, json.readTree(propertyDetail(token(account(UserRole.ROOM_HOST)), "").body()).path("data").path("records").size());

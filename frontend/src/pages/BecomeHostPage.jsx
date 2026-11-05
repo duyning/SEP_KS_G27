@@ -12,13 +12,14 @@ import '../styles/home-prototype-integration.css';
 import '../styles/become-host-prototype.css';
 import '../styles/become-host-integration.css';
 import '../styles/become-host-refinement.css';
+import '../styles/become-host-mobile.css';
 
 const emptyForm={applicantCapacity:'',rentalExperience:'',targetCommune:'',expectedScale:'',introduction:'',agreementAccepted:false};
 const ids={applicantCapacity:'applicantCapacity',rentalExperience:'rentalExperience',targetCommune:'targetCommune',expectedScale:'expectedScale',introduction:'introduction',agreementAccepted:'agreementCheck'};
 const formatDate=value=>value?new Date(value).toLocaleString('vi-VN'):'—';
 export default function BecomeHostPage(){
  const {user,logout,refreshUser}=useAuth(),navigate=useNavigate(),notify=useToast();
- const [application,setApplication]=useState(null),[values,setValues]=useState(emptyForm),[loading,setLoading]=useState(true),[loadError,setLoadError]=useState(''),[alert,setAlert]=useState(''),[errors,setErrors]=useState({}),[busy,setBusy]=useState(false),[editing,setEditing]=useState(false),[modal,setModal]=useState(null),[revision,setRevision]=useState(0),[mobileOpen,setMobileOpen]=useState(false);
+ const [application,setApplication]=useState(null),[values,setValues]=useState(emptyForm),[loading,setLoading]=useState(true),[loadError,setLoadError]=useState(''),[alert,setAlert]=useState(''),[errors,setErrors]=useState({}),[busy,setBusy]=useState(false),[editing,setEditing]=useState(false),[modal,setModal]=useState(null),[revision,setRevision]=useState(0),[mobileOpen,setMobileOpen]=useState(false),[announcementOpen,setAnnouncementOpen]=useState(false),[progressOpen,setProgressOpen]=useState(false);
  const refreshed=useRef(false),formDirty=Object.values(values).some(Boolean);
  const missingContact=!user?.fullName?.trim()||!/^(0|\+84)[35789]\d{8}$/.test(user?.phoneNumber||'');
  useEffect(()=>{
@@ -35,6 +36,11 @@ export default function BecomeHostPage(){
  useEffect(()=>{if(application?.status==='APPROVED'&&user?.role==='USER'&&!refreshed.current){refreshed.current=true;refreshUser().catch(()=>notify('Vui lòng đăng nhập lại để cập nhật quyền Chủ trọ.','error'));}},[application?.status,user?.role]);
  useEffect(()=>{const handler=event=>{if(editing||(!application&&formDirty)){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler);},[editing,application,formDirty]);
  const state=loading?'loading':loadError?'error':application?.status==='APPROVED'?'approved':['ROOM_HOST','ADMIN'].includes(user?.role)?'already_host':user?.role!=='USER'?'error':editing?'unregistered':({PENDING_REVIEW:'pending',NEEDS_CHANGES:'needs_changes',REJECTED:'rejected'}[application?.status]||'unregistered');
+ useEffect(()=>{
+  if(!mobileOpen)return;
+  const escape=event=>{if(event.key==='Escape'){setMobileOpen(false);document.getElementById('mobileMenuBtn')?.focus();}};
+  document.addEventListener('keydown',escape);return()=>document.removeEventListener('keydown',escape);
+ },[mobileOpen]);
  const roleLabel=roleLabels[user?.role]||'Thành viên';
  function stepClass(number){
   if(['approved','already_host'].includes(state))return 'completed';
@@ -58,7 +64,10 @@ export default function BecomeHostPage(){
  function onChange(event){const {name,value,checked,type}=event.target;if(!Object.hasOwn(emptyForm,name))return;setValues(previous=>({...previous,[name]:type==='checkbox'?checked:value}));setErrors(previous=>({...previous,[name]:undefined}));setAlert('');}
  function onSubmit(event){if(event.target.id==='becomeHostForm'){event.preventDefault();if(!busy&&validate())setModal('submit');}}
  function onClick(event){
-  if(event.target.closest('#mobileMenuBtn'))setMobileOpen(value=>!value);
+  if(event.target.closest('#mobileMenuBtn')){setMobileOpen(value=>!value);setAnnouncementOpen(false);}
+  if(event.target.closest('#becomeHostInfoToggle')){setAnnouncementOpen(value=>!value);setMobileOpen(false);}
+  if(event.target.closest('.bm-menu-dismiss'))setMobileOpen(false);
+  if(event.target.closest('#becomeHostProgressToggle'))setProgressOpen(value=>!value);
   if(event.target.closest('.nav-menu a'))setMobileOpen(false);
   if(event.target.closest('#btnRetryError'))setRevision(value=>value+1);
   if(event.target.closest('#btnCancelForm')){if(formDirty)setModal('cancel');else navigate('/profile');}
@@ -66,5 +75,5 @@ export default function BecomeHostPage(){
  }
  async function signOut(){if(busy)return;try{await logout();}finally{navigate('/login',{replace:true});}}
  const account=<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">0</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabel}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={signOut}><LogOut size={15}/></MotionButton></div></>;
- return <><BecomeHostPrototype {...{user,roleLabel,application,values,errors,state,busy,mobileOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}} alert={loadError||alert||(user.role==='STAFF'?'Tài khoản nhân viên không cần đăng ký quyền Chủ trọ.':'')}/><AnimatePresence>{modal&&<Modal className="bh-confirm-modal" title={modal==='submit'?'Xác nhận gửi hồ sơ đăng ký làm Chủ trọ?':'Hủy bỏ nội dung đang nhập?'} onClose={()=>{if(!busy)setModal(null);}}>{modal==='submit'?<><p>Hồ sơ xin cấp quyền sẽ được chuyển sang trạng thái <strong>“Đang chờ xét duyệt”</strong> để đội ngũ Staff HL-RCS thẩm định.</p><aside><strong>Lưu ý:</strong> Đơn đăng ký này là thủ tục xin cấp quyền sử dụng chức năng Chủ trọ. Sau khi được duyệt, bạn sẽ tạo hồ sơ cơ sở nhà trọ và danh sách phòng sau tại Host Portal.</aside><footer><MotionButton className="p-button" disabled={busy} onClick={()=>setModal(null)}>Xem lại hồ sơ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={submit}>{busy?'Đang gửi...':'Đồng ý gửi hồ sơ'}</MotionButton></footer></>:<><p>Bạn đang có một số thông tin đã điền trong đơn đăng ký. Nếu rời khỏi trang lúc này, các nội dung chưa gửi sẽ bị hủy bỏ.</p><footer><MotionButton className="p-button" onClick={()=>setModal(null)}>Ở lại tiếp tục điền</MotionButton><MotionButton className="p-button danger" onClick={()=>{setValues(emptyForm);navigate('/profile');}}>Đồng ý rời đi</MotionButton></footer></>}</Modal>}</AnimatePresence></>;
+ return <><BecomeHostPrototype {...{user,roleLabel,application,values,errors,state,busy,mobileOpen,announcementOpen,progressOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}} alert={loadError||alert||(user.role==='STAFF'?'Tài khoản nhân viên không cần đăng ký quyền Chủ trọ.':'')}/><AnimatePresence>{modal&&<Modal className="bh-confirm-modal" title={modal==='submit'?'Xác nhận gửi hồ sơ đăng ký làm Chủ trọ?':'Hủy bỏ nội dung đang nhập?'} onClose={()=>{if(!busy)setModal(null);}}>{modal==='submit'?<><p>Hồ sơ xin cấp quyền sẽ được chuyển sang trạng thái <strong>“Đang chờ xét duyệt”</strong> để đội ngũ Staff HL-RCS thẩm định.</p><aside><strong>Lưu ý:</strong> Đơn đăng ký này là thủ tục xin cấp quyền sử dụng chức năng Chủ trọ. Sau khi được duyệt, bạn sẽ tạo hồ sơ cơ sở nhà trọ và danh sách phòng sau tại Host Portal.</aside><footer><MotionButton className="p-button" disabled={busy} onClick={()=>setModal(null)}>Xem lại hồ sơ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={submit}>{busy?'Đang gửi...':'Đồng ý gửi hồ sơ'}</MotionButton></footer></>:<><p>Bạn đang có một số thông tin đã điền trong đơn đăng ký. Nếu rời khỏi trang lúc này, các nội dung chưa gửi sẽ bị hủy bỏ.</p><footer><MotionButton className="p-button" onClick={()=>setModal(null)}>Ở lại tiếp tục điền</MotionButton><MotionButton className="p-button danger" onClick={()=>{setValues(emptyForm);navigate('/profile');}}>Đồng ý rời đi</MotionButton></footer></>}</Modal>}</AnimatePresence></>;
 }

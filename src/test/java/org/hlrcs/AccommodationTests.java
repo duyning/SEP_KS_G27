@@ -76,6 +76,44 @@ class AccommodationTests {
         return "/api/properties/" + type.getProperty().getPropertyId() + "/room-types/" + type.getRoomTypeId();
     }
 
+    @Test void mapCoordinatesComeFromApprovedProfileAndRemainOptionalForLegacyData() throws Exception {
+        var property = property("ACTIVE", RegistrationStatus.APPROVED);
+        var type = type(property, 2000000);
+        var registration = property.getRegistration();
+        for (var pair : List.of(new String[]{"21.018812", "105.521512"}, new String[]{"0", "0"}, new String[]{"-90", "180"})) {
+            registration.setRegistrationDetails(json.writeValueAsString(Map.of("latitude", pair[0], "longitude", pair[1])));
+            registrations.save(registration);
+            var item = list("").path("items").get(0);
+            assertEquals(Double.parseDouble(pair[0]), item.path("latitude").asDouble());
+            assertEquals(Double.parseDouble(pair[1]), item.path("longitude").asDouble());
+            var details = json.readTree(get(detailUrl(type) + "/details", null).body()).path("data").path("summary");
+            assertEquals(item.path("latitude"), details.path("latitude"));
+            assertEquals(item.path("longitude"), details.path("longitude"));
+        }
+        // A new unreviewed change must not replace the published location.
+        registrations.save(PropertyRegistration.builder().user(host).name(prefix).targetPropertyId(property.getPropertyId())
+                .status(RegistrationStatus.PENDING).registrationDetails("{\"latitude\":\"22\",\"longitude\":\"106\"}").build());
+        assertEquals(-90, list("").path("items").get(0).path("latitude").asDouble());
+        for (var legacy : List.of("{}", "{\"latitude\":\"21\"}", "{\"latitude\":\"91\",\"longitude\":\"105\"}",
+                "{\"latitude\":\"NaN\",\"longitude\":\"105\"}", "malformed")) {
+            registration.setRegistrationDetails(legacy); registrations.save(registration);
+            var item = list("").path("items").get(0);
+            assertTrue(item.path("latitude").isNull());
+            assertTrue(item.path("longitude").isNull());
+            assertEquals(200, get(detailUrl(type), null).statusCode());
+        }
+    }
+
+    @Test void locationLookupKeepsHostAuthorizationAndValidatesPublicCoordinates() throws Exception {
+        assertEquals(400,get("/api/properties/location/nearby?latitude=91&longitude=105",null).statusCode());
+        String path="http://127.0.0.1:"+environment.getProperty("local.server.port")+"/api/host/property-registrations/location/resolve";
+        var body=HttpRequest.BodyPublishers.ofString("{\"input\":\"https://evil.example/\"}");
+        assertEquals(401,client.send(HttpRequest.newBuilder(URI.create(path)).header("Content-Type","application/json").POST(body).build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        var member=users.save(User.builder().email(prefix+"-lookup@test.local").passwordHash("unused").role(UserRole.USER).status(UserStatus.ACTIVE).build());
+        assertEquals(403,client.send(HttpRequest.newBuilder(URI.create(path)).header("Content-Type","application/json").header("Authorization","Bearer "+jwt.generateTokenFromUser(member)).POST(body).build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        assertEquals(400,client.send(HttpRequest.newBuilder(URI.create(path)).header("Content-Type","application/json").header("Authorization","Bearer "+jwt.generateTokenFromUser(host)).POST(body).build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+    }
+
     @Test void onlyApprovedActiveCompleteAccommodationIsPublicEvenForMembers() throws Exception {
         var visible = type(property("ACTIVE", RegistrationStatus.APPROVED), 2000000);
         for (var status : List.of(RegistrationStatus.PENDING, RegistrationStatus.REJECTED, RegistrationStatus.NEEDS_SUPPLEMENT)) {

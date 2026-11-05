@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AccommodationController {
     private final AccommodationService service;
+    private final org.hlrcs.service.PropertyLocationService locations;
+
+    @GetMapping("/location/nearby")
+    public ApiResponse<org.hlrcs.service.PropertyLocationService.Nearby> nearby(@RequestParam double latitude, @RequestParam double longitude) {
+        return ApiResponse.success(locations.nearby(latitude, longitude));
+    }
 
     @GetMapping("/search")
     public ApiResponse<AccommodationPage> list(

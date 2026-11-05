@@ -3,3 +3,12 @@
 @media(max-width:600px){.hpe-panel{padding:18px}.hpe-grid,.hpe-options{grid-template-columns:minmax(0,1fr)}.hpe-wide{grid-column:auto}.hpe-heading h2{font-size:22px}.hpe-actions .p-button{flex:1 1 100%;justify-content:center}.hpe-photo{width:calc(50% - 6px)}.hpe-field input,.hpe-field select,.hpe-field textarea{font-size:16px}}
 .hpe-page .hpe-heading h2{font-size:27px;line-height:1.4}.hpe-page .hpe-columns>.hpe-fields{min-width:0}
 @media(max-width:600px){.hpe-page .hpe-heading h2{font-size:22px}.host-portal:has(.hpe-page) .host-footer .footer-inner{flex-direction:column;align-items:flex-start;gap:12px}.host-portal:has(.hpe-page) .host-footer .footer-inner>span{width:100%}}
+
+.hpe-editor .registration-address-lookup { margin-bottom:20px; padding:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; }
+.hpe-editor .registration-address-lookup>label { display:block; font-weight:700; font-size:13px; margin-bottom:10px; }
+.hpe-editor .registration-lookup-input { display:flex; align-items:center; gap:10px; }
+.hpe-editor .registration-lookup-input input { flex:1; min-width:0; height:44px; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font:inherit; font-size:13px; }
+.registration-location-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px; }
+.registration-location-actions small { color:#64748b; font-size:11px; }
+.hpe-editor .registration-error { color:#991b1b; font-size:12px; }
+@media(max-width:600px){.hpe-editor .registration-lookup-input { flex-wrap:wrap; }.hpe-editor .registration-lookup-input input { flex-basis:100%;font-size:16px; }.hpe-editor .registration-lookup-input button { width:100%;justify-content:center; }}
