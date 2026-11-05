@@ -37,7 +37,9 @@ public record CommunityPostRequest(
         @Size(max = 6, message = "Mỗi bài viết được tối đa 6 ảnh.")
         List<@NotNull @Positive Integer> retainedImageIds,
         @Size(max = 1, message = "Mỗi bài viết được tối đa 1 video.")
-        List<@NotNull @Positive Integer> retainedVideoIds
+        List<@NotNull @Positive Integer> retainedVideoIds,
+        @Size(max = 300000, message = "Nội dung có quá nhiều định dạng.")
+        String contentFormat
 ) {
     public CommunityPostRequest {
         type = clean(type);

@@ -82,7 +82,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
       <div className="community-feed-badges"><Badge post={post} className="community-feed-category"/>{mine&&<StatusBadge status={post.status} label={post.statusLabel}/>}</div>
      </div>
      <div className={`community-feed-body${hasMedia?' community-feed-body--media':''}`}>
-      <div className="community-feed-copy"><h2 className="community-feed-title">{post.title}</h2><CommunityPostDescription content={post.content}/>
+      <div className="community-feed-copy"><h2 className="community-feed-title">{post.title}</h2><CommunityPostDescription content={post.content} contentFormat={post.contentFormat}/>
        <dl className="community-feed-facts">{post.priceDisplay&&<div className="community-feed-price"><dt>{post.type==='SECOND_HAND'?'Giá bán':post.type==='ROOM_TRANSFER'?'Giá thuê':'Chi phí ở ghép'}</dt><dd>{post.priceDisplay}</dd></div>}{post.location&&<div><dt>Địa chỉ</dt><dd><MapPin size={16} aria-hidden="true"/> {post.location}</dd></div>}{post.authorPhone&&<div><dt>Số điện thoại</dt><dd><a href={`tel:${post.authorPhone}`}>{post.authorPhone}</a></dd></div>}<CommunityPostContactLinks post={post} asFacts/></dl>
       </div>{hasMedia&&<CommunityPostMedia post={post}/>}</div>
      {mine&&post.status==='NEED_CHANGES'&&<section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên"><strong>Nhân viên yêu cầu chỉnh sửa</strong><p>{post.decisionNote||'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p><button type="button" className="btn-view-detail" onClick={()=>onEdit(post)}>Chỉnh sửa và gửi duyệt lại</button></section>}

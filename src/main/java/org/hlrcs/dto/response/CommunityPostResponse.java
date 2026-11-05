@@ -9,7 +9,8 @@ public record CommunityPostResponse(
         BigDecimal price, String location, String authorName, String authorPhone,
         String facebookUrl, String zaloUrl,
         String status, LocalDateTime createdAt, LocalDateTime updatedAt,
-        String decisionNote, String reviewedBy, LocalDateTime reviewedAt, List<Image> images, List<Image> videos, long commentCount
+        String decisionNote, String reviewedBy, LocalDateTime reviewedAt, List<Image> images, List<Image> videos, long commentCount,
+        String contentFormat
 ) {
     public record Image(Integer id, String fileName) {}
     public record Activity(Integer id, String action, String note, String staffName, LocalDateTime createdAt) {}

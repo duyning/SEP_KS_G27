@@ -38,6 +38,9 @@ public class Post {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "content_format", columnDefinition = "MEDIUMTEXT")
+    private String contentFormat;
+
     @Column(name = "price", precision = 12, scale = 0)
     private BigDecimal price;
 

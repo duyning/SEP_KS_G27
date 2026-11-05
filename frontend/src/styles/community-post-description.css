@@ -2,3 +2,7 @@
 .community-post-description .community-description-toggle { display: inline-flex; align-items: center; min-height: 36px; margin: -8px 0 12px; padding: 4px 0; border: 0; background: transparent; color: #0f766e; font: inherit; font-weight: 650; cursor: pointer; }
 .community-post-description .community-description-toggle:hover { text-decoration: underline; }
 .community-post-description .community-description-toggle:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
+.community-rich-text p { margin: 0; min-height: 1lh; }
+.community-rich-text :is(ul, ol) { margin: 0; padding-inline-start: 1.65em; }
+.community-rich-text ul { list-style: disc outside; }
+.community-rich-text ol { list-style: decimal outside; }

@@ -16,8 +16,55 @@
 .community-post-form-row > div { min-width: 0; }
 .community-post-location-control { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; }
 .community-post-custom-location-label { margin: 8px 0 6px; font-size: 13px; font-weight: 600; }
-.community-post-form-grid textarea { display: block; height: 164px; resize: none; }
 .community-post-form-grid input, .community-post-form-grid select, .community-post-form-grid textarea { box-sizing: border-box; font: inherit; font-size: 14px; line-height: 1.4; }
+.community-post-form-grid :is(.community-growing-title, .community-growing-content) {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  line-height: 1.55;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  resize: none;
+}
+.community-post-form-grid .community-growing-title { min-height: 54px; }
+.community-post-form-grid .community-growing-content { min-height: 184px; border-radius: 0 0 8px 8px; font-size: 14px; white-space: pre-wrap; }
+.community-post-form-grid .community-growing-content:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+.community-editor-empty .community-growing-content:has(> p:only-child:empty)::before,
+.community-editor-empty .community-growing-content:has(> p:only-child > br:only-child)::before {
+  content: attr(data-placeholder);
+  color: #64748b;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.community-format-controls :disabled { opacity: .5; cursor: default; }
+.community-format-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: #f8fafc;
+}
+.community-post-form-grid .community-format-controls :is(select, button) {
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+}
+.community-format-controls select { max-width: 100%; padding: 0 8px; }
+.community-format-controls button { display: inline-grid; width: 38px; place-items: center; cursor: pointer; }
+.community-post-form-grid .community-format-controls button[aria-pressed=true] {
+  border-color: #0f766e;
+  color: #115e59;
+  background: #ccfbf1;
+}
 .community-post-form-grid input:not([type=file]), .community-post-form-grid select { min-height: 38px; }
 .community-post-form-grid small { display: block; font-size: 11px; color: #b91c1c; line-height: 1.45; margin-top: 4px; }
 .community-post-form-grid .community-input-help-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -57,12 +104,12 @@
   .community-post-modal .modal-body { padding: 12px 16px !important; }
   .community-post-form-grid, .community-post-form-main, .community-post-form-details, .community-post-form-sidebar { gap: 8px; }
   .community-post-form-section { padding: 12px; }
-  .community-post-form-grid textarea { height: 120px; }
+  .community-post-form-grid .community-growing-content { min-height: 150px; }
   .community-post-form-actions { padding: 10px 16px; }
 }
 @media (max-width: 900px) {
   .community-post-form-layout { grid-template-columns: minmax(0, 1fr); }
-  .community-post-form-grid textarea { height: 110px; }
+  .community-post-form-grid .community-growing-content { min-height: 150px; }
   .community-post-form-policy { display: none; }
   .community-post-form-actions { justify-content: flex-end; }
 }

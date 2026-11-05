@@ -12,6 +12,7 @@ import org.hlrcs.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ public class CommunityService {
     private final CommunityImageService images;
     private final CommunityVideoService videos;
     private final CommentRepository comments;
+    private final ObjectMapper json;
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> published() {
@@ -166,6 +168,8 @@ public class CommunityService {
                 : request.price() != null && post.getPrice().compareTo(request.price()) == 0;
         if (!type.equals(request.type()) || !Objects.equals(post.getTitle(), request.title())
                 || !Objects.equals(post.getDescription(), request.content()) || !samePrice
+                || (request.contentFormat() != null && !Objects.equals(post.getContentFormat(),
+                        CommunityPostFormatting.validate(json, request.contentFormat(), request.content())))
                 || !Objects.equals(post.getLocation(), request.location()) || !Objects.equals(post.getContactName(), request.authorName())
                 || !Objects.equals(post.getContactPhone(), request.authorPhone())
                 || !Objects.equals(Objects.toString(post.getFacebookUrl(), ""), Objects.toString(request.facebookUrl(), ""))
@@ -191,6 +195,9 @@ public class CommunityService {
         });
         post.setTitle(request.title());
         post.setDescription(request.content());
+        if (request.contentFormat() != null) {
+            post.setContentFormat(CommunityPostFormatting.validate(json, request.contentFormat(), request.content()));
+        }
         post.setPrice(request.price());
         post.setLocation(request.location());
         post.setContactName(request.authorName());
@@ -226,6 +233,7 @@ public class CommunityService {
                 post.getContactPhone(), post.getFacebookUrl(), post.getZaloUrl(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,
                 privateView && post.getReviewer() != null ? post.getReviewer().getFullName() : null,
-                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()), commentCount);
+                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()),
+                commentCount, post.getContentFormat());
     }
 }

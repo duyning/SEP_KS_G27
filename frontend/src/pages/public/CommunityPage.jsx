@@ -10,6 +10,7 @@ import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
 import CommunityPrototype from '../../components/CommunityPrototype.jsx';
+import CommunityPostEditor, { GrowingPostTextarea } from '../../components/CommunityPostEditor.jsx';
 import { communityZones } from '../../services/community-prototype.js';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
 import Modal from '../../components/common/Modal.jsx';
@@ -77,6 +78,7 @@ export default function CommunityPage() {
   const [postType, setPostType] = useState('ROOM_TRANSFER');
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
+  const [contentFormat, setContentFormat] = useState('');
   const [postPrice, setPostPrice] = useState('');
   const [priceImeActive, setPriceImeActive] = useState(false);
   const priceIme = useRef(false);
@@ -159,7 +161,7 @@ export default function CommunityPage() {
   const [facebookUrl, setFacebookUrl] = useState('');
   const [zaloUrl, setZaloUrl] = useState('');
   const revisionChanged = editingId == null || hasPostDraftChanges({
-    type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation,
+    type: postType, title: postTitle, content: postContent, contentFormat, price: postPrice, location: postLocation,
     authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
   }, initialDraft.current, true);
 
@@ -167,6 +169,7 @@ export default function CommunityPage() {
     if (!user) { navigate('/login', { state: { from: '/community' } }); return; }
     const initial = {
       type: post?.type || 'ROOM_TRANSFER', title: post?.title || '', content: post?.content || '',
+      contentFormat: post?.contentFormat || '',
       price: formatPostPrice(post?.price), location: post?.location || '',
       authorName: post?.authorName || user.fullName || '', authorPhone: post?.authorPhone || user.phoneNumber || '',
       facebookUrl: post?.facebookUrl || '', zaloUrl: post?.zaloUrl || '',
@@ -179,6 +182,7 @@ export default function CommunityPage() {
     setPostType(initial.type);
     setPostTitle(initial.title);
     setPostContent(initial.content);
+    setContentFormat(initial.contentFormat);
     priceIme.current = false;
     priceComposing.current = false;
     setPriceImeActive(false);
@@ -205,7 +209,7 @@ export default function CommunityPage() {
   };
   const requestCloseForm = () => {
     if (busy || checkingMedia) return;
-    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
+    const values = { type: postType, title: postTitle, content: postContent, contentFormat, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
     if (hasPostDraftChanges(values, initialDraft.current, editingId != null)
       && !window.confirm('Bạn đã nhập dữ liệu vào bài viết. Nếu thoát, nội dung vừa nhập sẽ bị mất. Bạn có đồng ý thoát không?')) return;
     setIsCreateModalOpen(false);
@@ -232,7 +236,7 @@ export default function CommunityPage() {
     e.preventDefault();
     if (submission.current || checkingMedia) return;
     if (!revisionChanged) { setSubmitError('Bạn cần chỉnh sửa nội dung hoặc tệp đính kèm theo yêu cầu của nhân viên trước khi gửi lại.'); return; }
-    const values = { type: postType, title: postTitle, content: postContent, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
+    const values = { type: postType, title: postTitle, content: postContent, contentFormat, price: postPrice, location: postLocation, authorName, authorPhone, facebookUrl, zaloUrl, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id) };
     const validation = validatePost(values);
     setErrors(validation);
     setSubmitError('');
@@ -408,40 +412,41 @@ export default function CommunityPage() {
               <label htmlFor="postTitle" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/100</span>
               </label>
-              <input
+              <GrowingPostTextarea
                 id="postTitle"
-                type="text"
+                className="community-growing-title"
+                rows={1}
                 required
                 minLength={10}
                 maxLength={100}
                 aria-invalid={Boolean(errors.title)}
                 aria-describedby="post-title-help title-error"
                 value={postTitle}
-                onChange={(e) => setPostTitle(e.target.value)}
+                onChange={(e) => setPostTitle(e.target.value.replaceAll('\n', ' '))}
+                onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.preventDefault(); }}
                 placeholder="Nhập tiêu đề bài viết (10–100 ký tự)"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
               <PostFieldError name="title" errors={errors} />
               <small id="post-title-help" className="community-input-help-hidden">Tiêu đề cần từ 10–100 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
             <div className="community-post-form-content">
-              <label htmlFor="postContent" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <label id="post-content-label" htmlFor="postContent" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/2.500</span>
               </label>
-              <textarea
+              <CommunityPostEditor
                 id="postContent"
-                rows={3}
-                required
-                minLength={10}
-                maxLength={2500}
-                aria-invalid={Boolean(errors.content)}
-                aria-describedby="post-content-help content-error"
+                format={contentFormat}
+                invalid={Boolean(errors.content || errors.contentFormat)}
+                disabled={busy || checkingMedia}
                 value={postContent}
-                onChange={(e) => setPostContent(e.target.value)}
+                onChange={(text, format) => {
+                  setPostContent(text);
+                  setContentFormat(format);
+                }}
                 placeholder="Mô tả phòng, vị trí, giờ giấc hoặc đồ dùng sang nhượng… (10–2.500 ký tự)"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
               <PostFieldError name="content" errors={errors} />
+              <PostFieldError name="contentFormat" errors={errors} />
               <small id="post-content-help" className="community-input-help-hidden">Mô tả cần từ 10–2.500 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
               </section>

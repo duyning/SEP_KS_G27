@@ -117,7 +117,7 @@ export default function StaffCommunityModerationDetailPage() {
         </header>
 
         <h1>{currentPost.title}</h1>
-        <CommunityPostDescription key={currentPost.id} content={currentPost.content} className="staff-community-post-content" />
+        <CommunityPostDescription key={currentPost.id} content={currentPost.content} contentFormat={currentPost.contentFormat} className="staff-community-post-content" />
         {currentPost.priceDisplay && <div className="staff-community-post-price">Chi phí: <strong>{currentPost.priceDisplay}</strong></div>}
         <div className="staff-community-post-contact">
           {currentPost.location && <div>Địa chỉ: <strong>{currentPost.location}</strong></div>}

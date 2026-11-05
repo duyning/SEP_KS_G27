@@ -57,6 +57,7 @@ export function hasPostDraftChanges(values, initial, editing = false) {
   if (values.retainedImageIds && JSON.stringify(values.retainedImageIds) !== JSON.stringify(initial.retainedImageIds || [])) return true;
   if (values.retainedVideoIds && JSON.stringify(values.retainedVideoIds) !== JSON.stringify(initial.retainedVideoIds || [])) return true;
   if (values.type !== initial.type) return true;
+  if (values.contentFormat != null && values.contentFormat !== (initial.contentFormat || '')) return true;
   return ['title', 'content', 'price', 'location', 'authorName', 'authorPhone', 'facebookUrl', 'zaloUrl'].some(field => {
     const current = String(values[field] ?? '');
     const original = String(initial[field] ?? '');
@@ -97,6 +98,7 @@ export function validatePost(values) {
 export function postPayload(values) {
   return {
     type: values.type, title: clean(values.title), content: clean(values.content),
+    ...(values.contentFormat != null ? { contentFormat: values.contentFormat } : {}),
     price: parsePostPrice(values.price), location: clean(values.location),
     authorName: clean(values.authorName), authorPhone: clean(values.authorPhone).replace(/[\s.-]/g, ''),
     ...(clean(values.facebookUrl) ? { facebookUrl: clean(values.facebookUrl) } : {}),

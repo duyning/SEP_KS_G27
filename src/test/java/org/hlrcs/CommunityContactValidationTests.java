@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommunityContactValidationTests {
     private CommunityPostRequest request(String facebook, String zalo) {
         return new CommunityPostRequest("ROOMMATE", "Tìm bạn ở ghép", "Phòng sạch sẽ thoáng mát", null,
-                "Tân Xã", "Nguyễn Văn An", "0912345678", facebook, zalo, null, null);
+                "Tân Xã", "Nguyễn Văn An", "0912345678", facebook, zalo, null, null, null);
     }
 
     @Test
