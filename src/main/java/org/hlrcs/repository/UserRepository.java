@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @org.springframework.data.jpa.repository.Query("select u from User u where u.userId = :id")
     Optional<User> findForRegistrationUpdate(@org.springframework.data.repository.query.Param("id") Integer id);
 
+    Optional<User> findByGoogleSubject(String googleSubject);
+
     Optional<User> findByEmail(String email);
 
     Optional<User> findByPhoneNumber(String phoneNumber);

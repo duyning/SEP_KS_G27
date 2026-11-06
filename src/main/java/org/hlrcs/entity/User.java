@@ -51,6 +51,12 @@ public class User {
     @Column(name = "avatar", columnDefinition = "MEDIUMTEXT")
     private String avatar;
 
+    @Column(name = "auth_provider", length = 50)
+    private String authProvider;
+
+    @Column(name = "google_subject", unique = true)
+    private String googleSubject;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

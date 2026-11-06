@@ -111,3 +111,15 @@ Production: pnpm build tao dist/. Khi deploy dist tren web server, bat SPA fallb
 va reverse proxy /api den Spring Boot. Cau hinh app.frontend-url tren backend trung voi dia chi frontend.
 
 Tham khao: https://react.dev/learn/build-a-react-app-from-scratch va https://vite.dev/guide/.
+
+## Đăng nhập bằng Google
+
+Tạo OAuth Client ID loại **Web application** trong Google Cloud. Thêm origin frontend
+vào **Authorized JavaScript origins**, ví dụ `http://localhost:5173` và
+`http://127.0.0.1:5173` nếu dùng cả hai địa chỉ khi chạy local.
+
+Đặt cùng một Client ID vào `VITE_GOOGLE_CLIENT_ID` trong `frontend/.env.local` và
+`GOOGLE_CLIENT_ID` trong môi trường chạy backend, sau đó khởi động lại hai ứng dụng.
+Mở `/login` và chọn nút Google. Tài khoản Google mới có role `USER`.
+Nếu email đã thuộc một tài khoản HL-RCS chưa liên kết Google, hãy dùng phương thức
+đăng nhập ban đầu hoặc liên hệ hỗ trợ.

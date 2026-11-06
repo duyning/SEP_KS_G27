@@ -248,7 +248,7 @@ class AccommodationTests {
         registration.setRegistrationDetails(json.writeValueAsString(Map.of(
                 "description", "Public property description", "amenities", List.of("parking", "wifi"),
                 "selectedRules", List.of("quietHours"), "rules", "Public living rules", "nearby", "Public nearby description",
-                "contactPhone", "0900 000 001", "zaloPhone", "+84 900 000 002")));
+                "managerName", "Người liên hệ công khai", "contactPhone", "0900 000 001", "zaloPhone", "+84 900 000 002")));
         registrations.save(registration);
         var type = type(property, 2200000);
         type.setCapacity(2); type.setDeposit(new BigDecimal("2200000")); type.setElectricityPrice(new BigDecimal("3500"));
@@ -288,6 +288,7 @@ class AccommodationTests {
         assertFalse(response.body().contains("0981234567"));
         assertEquals("0900000001", data.path("publicContact").path("phone").asString());
         assertEquals("+84900000002", data.path("publicContact").path("zaloPhone").asString());
+        assertEquals("Người liên hệ công khai", data.path("publicContact").path("hostName").asString());
         assertFalse(response.body().contains("@test.local"));
         assertFalse(response.body().contains("javascript:"));
         assertFalse(data.has("registrationDetails"));

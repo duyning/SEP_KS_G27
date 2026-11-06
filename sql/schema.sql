@@ -6,6 +6,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `reports`;
 DROP TABLE IF EXISTS `feedbacks`;
 DROP TABLE IF EXISTS `comments`;
+DROP TABLE IF EXISTS `viewing_notifications`;
 DROP TABLE IF EXISTS `bookings`;
 DROP TABLE IF EXISTS `wishlists`;
 DROP TABLE IF EXISTS `moderation_logs`;
@@ -44,6 +45,8 @@ CREATE TABLE `users` (
     `password_hash` VARCHAR(255) NOT NULL,
     `role` VARCHAR(50) NOT NULL COMMENT 'USER, ROOM_HOST, STAFF, ADMIN',
     `status` VARCHAR(50) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE, INACTIVE',
+    `auth_provider` VARCHAR(50) NULL,
+    `google_subject` VARCHAR(255) NULL UNIQUE,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -349,8 +352,28 @@ CREATE TABLE `bookings` (
     `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED, CANCELLED',
     `note` TEXT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `contact_name` VARCHAR(120) NULL,
+    `contact_phone` VARCHAR(20) NULL,
+    `decision_reason` VARCHAR(500) NULL,
+    `processed_by` INT NULL,
+    `processed_at` DATETIME NULL,
+    CONSTRAINT `fk_bk_processor` FOREIGN KEY (`processed_by`) REFERENCES `users` (`user_id`),
     CONSTRAINT `fk_bk_renter` FOREIGN KEY (`renter_id`) REFERENCES `users` (`user_id`),
     CONSTRAINT `fk_bk_room_type` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `viewing_notifications` (
+    `notification_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `recipient_id` INT NOT NULL,
+    `booking_id` INT NOT NULL,
+    `event_key` VARCHAR(20) NOT NULL,
+    `content` VARCHAR(500) NOT NULL,
+    `is_read` BOOLEAN NOT NULL DEFAULT FALSE,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `uk_viewing_notification_event` UNIQUE (`booking_id`, `event_key`),
+    INDEX `idx_viewing_notification_inbox` (`recipient_id`, `is_read`, `notification_id`),
+    CONSTRAINT `fk_vn_recipient` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`user_id`),
+    CONSTRAINT `fk_vn_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`booking_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 26. COMMENTS

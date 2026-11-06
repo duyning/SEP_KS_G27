@@ -12,7 +12,7 @@ public record AccommodationDetail(
         List<String> selectedRules, String rules, LocalDateTime publishedAt, String mapUrl, String nearby,
         ReviewSummary reviews, List<AccommodationSummary> similar, PublicContact publicContact,
         List<Photo> propertyGallery, List<AccommodationSummary> roomTypes) {
-    public record PublicContact(String phone, String zaloPhone) { }
+    public record PublicContact(String phone, String zaloPhone, String hostName) { }
     public record Photo(String url, String caption) { }
     public record Review(Integer reviewId, String authorName, int rating, String content, LocalDateTime createdAt) { }
     public record ReviewSummary(Double averageRating, long totalReviews, List<Long> ratingCounts, List<Review> latest) { }

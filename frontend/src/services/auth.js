@@ -45,4 +45,5 @@ export const authApi = {
   logout: () => request('/logout', { method: 'POST' }),
   updateProfile: data => request('/profile', { method: 'PUT', body: data }),
   changePassword: data => request('/change-password', { method: 'PUT', body: data }),
+  googleLogin: idToken => request('/google', { method: 'POST', body: { idToken }, authenticated: false }),
 };

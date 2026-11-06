@@ -16,6 +16,7 @@ import {
   Star,
   UserRound,
 } from 'lucide-react';
+import GoogleSignIn from '../components/GoogleSignIn.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
 import { landingFor } from '../routing/screens.js';
@@ -29,7 +30,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 export default function AuthPage({ registerMode = false }) {
-  const { login, register, user } = useAuth();
+  const { login, loginWithGoogle, register, user } = useAuth();
   const notify = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -122,6 +123,25 @@ export default function AuthPage({ registerMode = false }) {
     } catch (err) {
       setLoginAlert(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
       setLoginErrors(err.fields || {});
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  async function handleGoogleCredential(credential) {
+    if (loginBusy || isFlipped) return;
+    setLoginErrors({});
+    setLoginAlert('');
+    if (!credential) {
+      setLoginAlert('Google không trả về thông tin xác thực. Vui lòng thử lại.');
+      return;
+    }
+
+    setLoginBusy(true);
+    try {
+      await loginWithGoogle(credential, loginRemember);
+    } catch (err) {
+      setLoginAlert(err.message || 'Đăng nhập Google không thành công. Vui lòng thử lại.');
     } finally {
       setLoginBusy(false);
     }
@@ -402,6 +422,12 @@ export default function AuthPage({ registerMode = false }) {
                     )}
                   </MotionButton>
                 </form>
+
+                {!isFlipped && (
+                    <div style={{ width: '100%', margin: '1.5rem 0' }}>
+                      <GoogleSignIn onCredential={handleGoogleCredential} disabled={loginBusy} />
+                    </div>
+                )}
 
                 {/* Chuyển sang Đăng ký với hiệu ứng lật trang */}
                 <div className="signup-prompt">

@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.hlrcs.dto.request.ChangePasswordRequest;
+import org.hlrcs.dto.request.GoogleLoginRequest;
 import org.hlrcs.dto.request.LoginRequest;
 import org.hlrcs.dto.request.RegisterRequest;
 import org.hlrcs.dto.request.UpdateProfileRequest;
@@ -37,6 +38,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse response = authService.loginWithGoogle(request);
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập bằng Google thành công", response));
     }
 
     @PostMapping("/logout")
