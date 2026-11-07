@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -71,10 +72,14 @@ public class HostPropertyService {
             if (file.getDocumentType() != null && file.getDocumentType().matches("PHOTO_\\d+")) photos.add(metadata);
             else if (List.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(file.getDocumentType() == null ? "" : file.getDocumentType())) files.add(metadata);
         }
+        List<String> requestedFields = registration != null && registration.getStatus() == RegistrationStatus.NEEDS_SUPPLEMENT
+                ? safeRequested(registration) : List.of();
+        Map<String, String> fieldNotes = registration != null && registration.getStatus() == RegistrationStatus.NEEDS_SUPPLEMENT
+                ? RegistrationEditPolicy.fieldNotes(registration, json) : Map.of();
         return new PropertyDetail(property == null ? null : property.getPropertyId(), registration == null ? null : registration.getRegistrationId(),
                 property == null ? registration.getName() : property.getName(), property == null ? registration.getAddress() : property.getAddress(), status,
                 registration != null && registration.getStatus() == RegistrationStatus.APPROVED,
-                details == null ? null : details.propertyType(), details == null ? null : details.addressDetail(), details == null ? null : details.commune(),
+                details == null ? null : details.propertyType(), details == null ? null : details.addressDetail(), details == null ? null : details.commune(), details == null ? null : details.nearby(),
                 details == null ? null : details.managerName(), details == null ? null : details.contactPhone(), details == null ? null : details.zaloPhone(),
                 property == null ? registration.getContactInfo() : property.getContactInfo(),
                 property != null && property.getDescription() != null ? property.getDescription() : details == null ? null : details.description(),
@@ -82,7 +87,14 @@ public class HostPropertyService {
                 details == null ? null : details.rules(), photos, files, typeCount, property==null?null:Math.toIntExact(rooms.countByProperty_PropertyId(property.getPropertyId())), property==null?null:Math.toIntExact(rooms.countByProperty_PropertyIdAndStatus(property.getPropertyId(),"VACANT")),
                 property == null ? 0 : bookings.countByRoomType_Property_PropertyIdAndStatus(property.getPropertyId(), BookingStatus.PENDING),
                 property == null ? registration.getCreatedAt() : property.getCreatedAt(), property == null ? registration.getReviewedAt() : property.getUpdatedAt(), registration == null ? null : registration.getReasonNote(),
-                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote())).orElse(null),details==null?null:details.latitude(),details==null?null:details.longitude());
+                requestedFields, fieldNotes,
+                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote(),safeRequested(r),RegistrationEditPolicy.fieldNotes(r,json))).orElse(null),details==null?null:details.latitude(),details==null?null:details.longitude());
+    }
+
+    private List<String> safeRequested(PropertyRegistration registration) {
+        if (registration == null || registration.getStatus() != RegistrationStatus.NEEDS_SUPPLEMENT) return List.of();
+        try { return RegistrationEditPolicy.requested(registration, json); }
+        catch (Exception ignored) { return List.of(); }
     }
 
     public record Photo(byte[] content, String contentType) {}

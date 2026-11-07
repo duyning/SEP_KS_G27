@@ -84,7 +84,7 @@ export function MotionDialog({ children, ...props }) {
 
 export function MotionMenu({ children, ...props }) {
   const present = useIsPresent();
-  return <motion.div {...props} {...useSurfaceMotion('menu')} inert={!present || undefined} style={{ ...props.style, transformOrigin: 'top right' }} data-ui-motion="menu">{children}</motion.div>;
+  return <motion.div {...props} {...useSurfaceMotion('menu')} inert={!present || undefined} style={{ ...props.style, transformOrigin: props.style?.transformOrigin || 'top right' }} data-ui-motion="menu">{children}</motion.div>;
 }
 
 export function MotionToast({ children, ...props }) {
@@ -94,4 +94,96 @@ export function MotionToast({ children, ...props }) {
   useEffect(() => { trigger.current = document.activeElement; }, []);
   useEffect(() => { if (!present && ref.current?.contains(document.activeElement) && trigger.current?.isConnected) trigger.current.focus({ preventScroll:true }); }, [present]);
   return <motion.div {...props} {...useSurfaceMotion('toast')} ref={ref} inert={!present || undefined} data-ui-motion="toast">{children}</motion.div>;
+}
+
+// Right-edge sheet following Animate UI recipes/sheet.md with native top-layer modality.
+export function MotionSheet({ children, onClose, panelClassName = '', side = 'right', ...props }) {
+  const ref = useRef(null);
+  const trigger = useRef(null);
+  const leaving = useRef(false);
+  const present = useIsPresent();
+  const reduce = useShouldReduceMotion();
+  const { transition: motionTransition } = useMotionTokens();
+  const offscreen = side === 'left' ? 'translateX(-100%)' : 'translateX(100%)';
+  const shown = 'translateX(0%)';
+  const hidden = { opacity: 0, transform: reduce ? shown : offscreen };
+
+  useEffect(() => {
+    const dialog = ref.current;
+    trigger.current = document.activeElement;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      const hadFocus = dialog.contains(document.activeElement);
+      dialog.close();
+      if ((hadFocus || document.activeElement === document.body) && trigger.current?.isConnected) {
+        trigger.current.focus({ preventScroll: true });
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (present && leaving.current) {
+      leaving.current = false;
+      dialog.close();
+      dialog.inert = false;
+      for (const property of ['position', 'inset', 'width', 'height', 'margin', 'z-index']) {
+        dialog.style.removeProperty(property);
+      }
+      dialog.showModal();
+    }
+    if (!present) {
+      leaving.current = true;
+      dialog.inert = true;
+      dialog.close();
+      dialog.setAttribute('open', '');
+      Object.assign(dialog.style, {
+        position: 'fixed',
+        inset: '0',
+        width: '100vw',
+        height: '100dvh',
+        margin: '0',
+        zIndex: '1000',
+      });
+      if (trigger.current?.isConnected) trigger.current.focus({ preventScroll: true });
+    }
+  }, [present]);
+
+  return (
+    <dialog
+      {...props}
+      ref={ref}
+      className={`hm-sheet-root ${props.className || ''}`.trim()}
+      data-ui-motion="sheet"
+      aria-hidden={present ? undefined : true}
+      onCancel={event => {
+        event.preventDefault();
+        onClose?.();
+      }}
+    >
+      <motion.div
+        className="hm-sheet-backdrop"
+        data-ui-motion="sheet-backdrop"
+        aria-hidden="true"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: motionTransition.overlay }}
+        exit={{ opacity: 0, transition: motionTransition.dismiss }}
+        onClick={() => onClose?.()}
+      />
+      <motion.div
+        className={`hm-sheet-panel hm-sheet-${side} ${panelClassName}`.trim()}
+        data-ui-motion="sheet-panel"
+        initial={hidden}
+        animate={{
+          opacity: 1,
+          transform: shown,
+          transition: motionTransition.sheet,
+          transitionEnd: { transform: 'none' },
+        }}
+        exit={{ ...hidden, transition: motionTransition.dismiss }}
+      >
+        {children}
+      </motion.div>
+    </dialog>
+  );
 }

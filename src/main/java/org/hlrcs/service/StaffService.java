@@ -43,12 +43,23 @@ public class StaffService {
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(registration.getRegistrationId());
         int count = (int) files.stream().filter(file -> Set.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))).count();
         int required = (int) files.stream().filter(file -> Set.of("OWNERSHIP", "ID_CARD").contains(Objects.toString(file.getDocumentType(), ""))).map(PropertyDocumentRepository.Metadata::getDocumentType).distinct().count();
+        int photoCount = (int) files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).count();
+        boolean hasCoverPhoto = files.stream().anyMatch(file -> "PHOTO_0".equals(file.getDocumentType()));
+        boolean readyForApproval = details != null && Boolean.TRUE.equals(details.termsAccepted()) && required >= 2 && hasCoverPhoto;
         var cover = files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).findFirst().map(PropertyDocumentRepository.Metadata::getDocumentId).orElse(null);
+        var linkedProperty = registration.getTargetPropertyId() != null
+                ? properties.findById(registration.getTargetPropertyId()).orElse(null)
+                : properties.findByRegistration_RegistrationId(registration.getRegistrationId()).orElse(null);
+        Integer publishedPropertyId = linkedProperty != null && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
+        String assignedStaffName = registration.getAssignedStaff() == null ? null : registration.getAssignedStaff().getFullName();
         return new Verification(registration.getRegistrationId(), registration.getName(), registration.getAddress(),
                 registration.getUser().getFullName(), registration.getUser().getEmail(), registration.getUser().getPhoneNumber(),
                 details == null ? null : details.managerName(), details == null ? null : details.contactPhone(), details == null ? null : details.propertyType(),
                 registration.getStatus().name(), registration.getCreatedAt(), registration.getReviewedAt(),
-                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover, registration.getUser().getUserId(),registration.getTargetPropertyId(),registration.getSubmittedAt());
+                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover,
+                registration.getUser().getUserId(), registration.getTargetPropertyId(), registration.getSubmittedAt(),
+                assignedStaffName, registration.getAssignmentVersion(), verificationAccess.canReview(registration),
+                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote());
     }
     private Activity activity(ModerationLog log) {
         return new Activity(log.getLogId(), log.getStaff().getFullName(), log.getTargetType(), log.getTargetId(), log.getAction(), log.getNote(), log.getCreatedAt());
@@ -83,7 +94,11 @@ public class StaffService {
         return new FileContent(file.getFileContent(), file.getContentType());
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Detail review(Integer id, String decision, String note,List<String> requestedFields, Long assignmentVersion) {
+    public Detail review(Integer id, String decision, String note, List<String> requestedFields, Long assignmentVersion) {
+        return review(id, decision, note, requestedFields, null, assignmentVersion);
+    }
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Detail review(Integer id, String decision, String note, List<String> requestedFields, Map<String, String> fieldNotes, Long assignmentVersion) {
         verificationAccess.reviewActor();
         verificationAccess.read(id);
         if (decision == null || !Set.of("APPROVE", "REJECT", "REQUEST_SUPPLEMENT").contains(decision)) throw new BadRequestException("Quyết định xét duyệt không hợp lệ.");
@@ -97,7 +112,15 @@ public class StaffService {
         verificationAccess.decision(registration, assignmentVersion);
         boolean supplement = decision.equals("REQUEST_SUPPLEMENT");
         if (registration.getStatus() != RegistrationStatus.PENDING && (supplement || registration.getStatus() != RegistrationStatus.NEEDS_SUPPLEMENT)) throw new AppException("Hồ sơ đã được xử lý. Vui lòng tải lại để xem kết quả mới nhất.", HttpStatus.CONFLICT);
-        if(supplement)registration.setRequestedFieldsJson(requestedFields==null?null:json.writeValueAsString(RegistrationEditPolicy.check(requestedFields)));
+        if (supplement) {
+            var checkedFields = RegistrationEditPolicy.check(requestedFields);
+            var checkedNotes = RegistrationEditPolicy.checkNotes(fieldNotes, checkedFields);
+            registration.setRequestedFieldsJson(checkedFields == null ? null : json.writeValueAsString(checkedFields));
+            registration.setFieldNotesJson(checkedNotes.isEmpty() ? null : json.writeValueAsString(checkedNotes));
+        } else {
+            registration.setRequestedFieldsJson(null);
+            registration.setFieldNotesJson(null);
+        }
         var reviewer = users.findById(auth.getCurrentUser().getUserId()).orElseThrow();
         boolean approve = decision.equals("APPROVE");
         if (approve) {
@@ -144,7 +167,7 @@ public class StaffService {
         }
         for (var row : reportRows) if (row.getStatus() == ReportStatus.PENDING) queue.add(new QueueItem("REPORT-" + row.getReportId(), "REPORT", "Báo cáo #" + row.getReportId(), row.getReporter().getFullName(), row.getReason(), row.getStatus().name(), row.getCreatedAt(), null));
         for (var row : supportRows) if (row.getStatus() != SupportStatus.COMPLETED) queue.add(new QueueItem("SUPPORT-" + row.getRequestId(), "SUPPORT", row.getRequestType(), row.getRequester().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));
-        for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), "/staff/community/detail?id=" + row.getPostId()));
+        for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));
         queue.sort(Comparator.comparing(QueueItem::createdAt, Comparator.nullsLast(Comparator.naturalOrder())));
         var activityRows = actor.getRole()==UserRole.ADMIN ? logs.findAllByOrderByCreatedAtDesc() : logs.findVisibleForVerificationStaff(actor.getUserId());
         long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();

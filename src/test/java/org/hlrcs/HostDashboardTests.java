@@ -1023,4 +1023,41 @@ class HostDashboardTests {
         assertEquals(403,hostApplicationPost(jwt,"",hostApplicationFields()).statusCode());
         assertEquals(200,hostApplicationGet(reviewer,"?status=PENDING_REVIEW").statusCode());
     }
+    @Test void customQuietHoursAndInlineFieldNotesPersistAcrossRegistrationHostDetailAndEditSnapshot() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
+        var badTime=registrationDetails();badTime.put("selectedRules",java.util.List.of("quietHours:25:00"));
+        assertEquals(400,submitRegistration(host,badTime,true,false).statusCode());
+        var dupQuiet=registrationDetails();dupQuiet.put("selectedRules",java.util.List.of("quietHours","quietHours:22:00"));
+        assertEquals(400,submitRegistration(host,dupQuiet,true,false).statusCode());
+
+        var details=registrationDetails();details.put("selectedRules",java.util.List.of("quietHours:22:30","noSmoking"));
+        var created=submitRegistration(host,details,true,false);
+        assertEquals(200,created.statusCode(),created.body());
+        int id=json.readTree(created.body()).path("data").path("registrationId").asInt();
+
+        assignFixture(staff,id);
+        long version=registrations.findById(id).orElseThrow().getAssignmentVersion();
+        var reviewPayload=Map.of(
+            "decision","REQUEST_SUPPLEMENT",
+            "note","Yêu cầu bổ sung thông tin / hồ sơ:\n\nThông tin cơ bản:\n- Mô tả nhà trọ: Bổ sung giờ đóng mở cổng\n\nHồ sơ xác minh & Giấy tờ pháp lý:\n- Giấy phép kinh doanh: Tải lại bản chụp rõ nét",
+            "requestedFields",java.util.List.of("description","OWNERSHIP"),
+            "fieldNotes",Map.of("description","Bổ sung giờ đóng mở cổng","OWNERSHIP","Tải lại bản chụp rõ nét"),
+            "assignmentVersion",version
+        );
+        var supplementResp=client.send(HttpRequest.newBuilder(uri("/api/staff/verifications/"+id+"/review"))
+            .header("Authorization","Bearer "+staff).header("Content-Type","application/json")
+            .POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(reviewPayload))).build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(200,supplementResp.statusCode(),supplementResp.body());
+
+        var hostProp=json.readTree(propertyDetail(host,"").body()).path("data").path("records").get(0);
+        assertEquals("quietHours:22:30",hostProp.path("selectedRules").get(0).asString());
+        assertEquals("Bổ sung giờ đóng mở cổng",hostProp.path("fieldNotes").path("description").asString());
+        assertEquals("Tải lại bản chụp rõ nét",hostProp.path("fieldNotes").path("OWNERSHIP").asString());
+        assertEquals(2,hostProp.path("requestedFields").size());
+
+        var editSnap=json.readTree(propertyEdit(host,id).body()).path("data");
+        assertEquals("Bổ sung giờ đóng mở cổng",editSnap.path("fieldNotes").path("description").asString());
+        assertEquals("Tải lại bản chụp rõ nét",editSnap.path("fieldNotes").path("OWNERSHIP").asString());
+        assertEquals("quietHours:22:30",editSnap.path("details").path("selectedRules").get(0).asString());
+    }
 }

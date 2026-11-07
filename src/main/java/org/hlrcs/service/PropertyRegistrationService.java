@@ -51,7 +51,7 @@ public class PropertyRegistrationService {
                                                 MultipartFile ownership, MultipartFile idCard, MultipartFile fireSafety) throws IOException {
         validate(request);
         if (photos == null || photos.isEmpty() || photos.size() > 10) throw new BadRequestException("Cần từ 1 đến 10 ảnh nhà trọ.");
-        if (ownership == null || ownership.isEmpty() || idCard == null || idCard.isEmpty() || fireSafety == null || fireSafety.isEmpty()) throw new BadRequestException("Cần giấy tờ sở hữu / quản lý, căn cước và hồ sơ an toàn PCCC để gửi xét duyệt.");
+        if (ownership == null || ownership.isEmpty() || idCard == null || idCard.isEmpty() || fireSafety == null || fireSafety.isEmpty()) throw new BadRequestException("Cần giấy phép kinh doanh, căn cước và chứng nhận an toàn PCCC để gửi xét duyệt.");
         // Distinct properties may be submitted concurrently. Serialize by owner
         // so retries of the same name/address cannot create duplicate profiles.
         var owner = users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow(() -> new BadRequestException("Không tìm thấy chủ trọ."));
@@ -81,11 +81,24 @@ public class PropertyRegistrationService {
         boolean hasLongitude=value.longitude()!=null&&!value.longitude().isBlank();
         if(hasLatitude!=hasLongitude)throw new BadRequestException("Nếu cung cấp vị trí bản đồ, cần nhập đủ vĩ độ và kinh độ.");
         if(hasLatitude){coordinate(value.latitude(),90);coordinate(value.longitude(),180);}
-        if (value.amenities().stream().anyMatch(key -> key == null || !AMENITIES.contains(key)) || value.selectedRules().stream().anyMatch(key -> key == null || !RULES.contains(key))) throw new BadRequestException("Tiện ích hoặc quy định không hợp lệ.");
+        if (value.amenities().stream().anyMatch(key -> key == null || !AMENITIES.contains(key)) || !validRules(value.selectedRules())) throw new BadRequestException("Tiện ích hoặc quy định không hợp lệ.");
     }
     static String mapLink(PropertyRegistrationRequest value) {
         return value.latitude()==null||value.latitude().isBlank()||value.longitude()==null||value.longitude().isBlank()
             ? null : "https://www.google.com/maps?q="+value.latitude().trim()+","+value.longitude().trim();
+    }
+    private boolean validRules(List<String> selectedRules) {
+        if (selectedRules == null) return false;
+        long quietCount = 0;
+        for (String key : selectedRules) {
+            if (key == null) return false;
+            if (key.equals("quietHours") || key.matches("quietHours:(?:[01]\\d|2[0-3]):[0-5]\\d")) {
+                if (++quietCount > 1) return false;
+            } else if (!RULES.contains(key)) {
+                return false;
+            }
+        }
+        return true;
     }
     private boolean phone(String value) { return value.replaceAll("[\\s.-]", "").matches("(?:0|\\+84)[35789]\\d{8}"); }
     private void coordinate(String value, double limit) {

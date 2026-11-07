@@ -9,10 +9,11 @@ import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
 import { HostHeaderTarget } from '../components/HostHeaderSlot.jsx';
 import { staffHostApi } from '../services/staff-host-applications.js';
+import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
 import '../styles/host-header.css';
 
-const hostFooterTitles = { '/host/property': 'Nhà trọ của tôi', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
+const hostFooterTitles = { '/host/property': 'Quản lý nhà trọ', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
 const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Đã lưu', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare]];
 const menus = {
@@ -68,7 +69,7 @@ export default function PortalLayout({ screen, children }) {
   const sidebar = useRef();
   const popoverRef = useRef();
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
-  const topbarTitle = screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
+  const topbarTitle = ['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'Quản lý nhà trọ' : screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
   const [pendingHostApplications, setPendingHostApplications] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
@@ -313,7 +314,7 @@ export default function PortalLayout({ screen, children }) {
               <p>{group}</p>
               {links.map(([label, to, Icon]) => {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
-                const selectedPropertyId = new URLSearchParams(location.search).get('propertyId');
+                const selectedPropertyId = new URLSearchParams(location.search).get('propertyId') || new URLSearchParams(location.search).get('id') || (portal === 'host' ? getHostWorkspaceMemory(user?.userId).selectedPropertyId : null);
                 const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
                 const active = to.startsWith('/admin') ? location.pathname === '/admin' && (new URLSearchParams(to.split('?')[1] || '').get('view') || 'overview') === (new URLSearchParams(location.search).get('view') || 'overview') : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (

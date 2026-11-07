@@ -22,8 +22,9 @@ export const staffApi = {
     if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(blob.type) || blob.size === 0) throw new ApiError('Không tải được tài liệu.', 502);
     return blob;
   },
-  async review(id, decision, note, signal, requestedFields, assignmentVersion) {
+  async review(id, decision, note, signal, requestedFields, assignmentVersion, fieldNotes) {
     if (!Number.isSafeInteger(assignmentVersion) || assignmentVersion < 0) throw new ApiError('Chưa xác minh được phiên bản phân công. Vui lòng tải lại hồ sơ.', 409);
-    return detail(await request(`/verifications/${positive(id)}/review`, { basePath: '/api/staff', method: 'POST', body: { decision, note, assignmentVersion,...(requestedFields?{requestedFields}:{}) }, signal }));
+    const hasFieldNotes = fieldNotes && typeof fieldNotes === 'object' && Object.keys(fieldNotes).length > 0;
+    return detail(await request(`/verifications/${positive(id)}/review`, { basePath: '/api/staff', method: 'POST', body: { decision, note, assignmentVersion, ...(requestedFields ? { requestedFields } : {}), ...(hasFieldNotes ? { fieldNotes } : {}) }, signal }));
   },
 };

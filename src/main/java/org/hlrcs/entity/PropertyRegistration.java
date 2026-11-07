@@ -47,6 +47,8 @@ public class PropertyRegistration {
     private Integer baseRegistrationId;
     @Column(columnDefinition = "TEXT")
     private String requestedFieldsJson;
+    @Column(columnDefinition = "TEXT")
+    private String fieldNotesJson;
     @Column(columnDefinition = "DATETIME(6)")
     private LocalDateTime submittedAt;
 

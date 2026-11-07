@@ -10,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/staff")
@@ -26,8 +27,8 @@ public class StaffController {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(file.contentType()))
                 .header(HttpHeaders.CACHE_CONTROL, "private, no-store").header("X-Content-Type-Options", "nosniff").body(file.bytes());
     }
-    public record Review(@NotBlank String decision, @Size(max = 2000) String note, @Size(max=18) List<String> requestedFields, @NotNull @PositiveOrZero Long assignmentVersion) {}
+    public record Review(@NotBlank String decision, @Size(max = 2000) String note, @Size(max=18) List<String> requestedFields, @Size(max=18) Map<String, @Size(max = 500) String> fieldNotes, @NotNull @PositiveOrZero Long assignmentVersion) {}
     @PostMapping("/verifications/{id}/review")
     @PreAuthorize("hasRole('STAFF') and !hasRole('ADMIN')")
-    public ApiResponse<Detail> review(@PathVariable Integer id, @Valid @RequestBody Review review) { return ApiResponse.success(service.review(id, review.decision(), review.note(),review.requestedFields(),review.assignmentVersion())); }
+    public ApiResponse<Detail> review(@PathVariable Integer id, @Valid @RequestBody Review review) { return ApiResponse.success(service.review(id, review.decision(), review.note(),review.requestedFields(),review.fieldNotes(),review.assignmentVersion())); }
 }
