@@ -10,11 +10,14 @@ const detail = row => {
   if (!application(row?.application) || !Array.isArray(row.history)) throw new ApiError('Phản hồi hồ sơ không hợp lệ.', 502);
   return row;
 };
-export function validateServiceReview(capabilityDecision, listingDecision, reason) {
-  if (![capabilityDecision, listingDecision].every(value => ['APPROVE', 'REJECT'].includes(value))) return 'Cần chọn đủ hai quyết định.';
-  if (capabilityDecision === 'REJECT' && listingDecision === 'APPROVE') return 'Không thể công khai dịch vụ khi từ chối capability.';
-  if (reason.trim().length < 10 || reason.trim().length > 2000) return 'Lý do phải có từ 10 đến 2000 ký tự.';
-  return '';
+export function validateServiceReview(decision, reason) {
+  const errors = {};
+  if (!['APPROVE', 'SUPPLEMENT', 'REJECT'].includes(decision)) errors.decision = 'Vui lòng chọn duyệt, yêu cầu bổ sung hoặc từ chối hồ sơ.';
+  if (decision !== 'APPROVE' && (reason.trim().length < 10 || reason.length > 2000)) {
+    const label = decision === 'SUPPLEMENT' ? 'Nội dung cần bổ sung' : decision === 'REJECT' ? 'Lý do từ chối' : 'Nhận xét xét duyệt';
+    errors.reason = label + ' phải có từ 10 đến 2000 ký tự.';
+  }
+  return errors;
 }
 export const serviceReviewApi = {
   async list(signal) {
@@ -23,6 +26,7 @@ export const serviceReviewApi = {
     return rows;
   },
   detail: async (value, signal) => detail(await request(`/${id(value)}`, { basePath, signal })),
-  review: async (value, capabilityDecision, listingDecision, reason) => detail(await request(`/${id(value)}/review`, { basePath, method: 'POST', body: { capabilityDecision, listingDecision, reason } })),
+  review: async (value, capabilityDecision, listingDecision, reason, revision) => detail(await request(`/${id(value)}/review`, { basePath, method: 'POST', body: { capabilityDecision, listingDecision, reason: capabilityDecision === 'APPROVE' && listingDecision === 'APPROVE' && !reason?.trim() ? 'Đã kiểm tra và duyệt thành công.' : reason, revision } })),
+  supplement: async (value, reason, revision) => detail(await request('/' + id(value) + '/supplement-request', { basePath, method: 'POST', body: { reason, revision } })),
   file: (value, fileId) => request(`/${id(value)}/files/${id(fileId)}`, { basePath, responseType: 'blob' }),
 };

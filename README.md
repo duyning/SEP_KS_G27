@@ -151,8 +151,9 @@ liên hệ và từ 1–5 tài liệu PDF/JPG/PNG/WEBP (tối đa 10 MB/tệp).
 
 Hồ sơ và tệp được lưu trong database với trạng thái `PENDING`; chưa tạo dịch vụ công khai
 và chưa cấp capability `MANAGE_SERVICE`. Mở lại form để xem trạng thái, phản hồi và tải
-tài liệu của chính mình. Hồ sơ đang chờ duyệt/cần bổ sung/đã duyệt hoặc tài khoản đã
-có capability dịch vụ không được gửi hồ sơ onboarding mới. Hồ sơ bị từ chối được đăng ký lại.
+tài liệu của chính mình. Trước khi có capability, mỗi người có một hồ sơ onboarding đang xử lý.
+Sau khi được cấp Service Owner ACTIVE, có thể thêm nhiều dịch vụ và dùng **Dịch vụ của tôi**
+để gửi cập nhật/xóa cho Staff duyệt. Xem docs/SERVICE_MANAGEMENT.md. Hồ sơ bị từ chối được đăng ký lại.
 Danh mục mặc định được tạo khi backend khởi động; Hibernate `ddl-auto=update` thêm các cột mới.
 Danh sách `/services` và `/services/detail?id=...` đọc dữ liệu thực tế đã được duyệt.
 

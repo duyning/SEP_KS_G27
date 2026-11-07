@@ -84,4 +84,47 @@ public class ServiceRegistration {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int revision = 0;
+
+    @Column(columnDefinition = "TEXT")
+    private String requestedChanges;
+
+    private LocalDateTime supplementRequestedAt;
+    private LocalDateTime resubmittedAt;
+
+    @Column(length = 2000)
+    private String resubmissionNote;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_service_id")
+    private Service targetService;
+
+    @Builder.Default
+    @Column(length = 20)
+    private String operation = "CREATE";
+
+    private Integer serviceRevision;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] imageContent;
+
+    @Column(length = 100)
+    private String imageContentType;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "service_registration_images", joinColumns = @JoinColumn(name = "registration_id"))
+    @OrderColumn(name = "image_position")
+    @Builder.Default
+    private java.util.List<ServiceImage> additionalImages = new java.util.ArrayList<>();
+
+    public int imageCount() { return imageContent == null ? 0 : 1 + additionalImages.size(); }
+
+    public ServiceImage imageAt(int index) {
+        if (index < 0 || index >= imageCount()) throw new org.hlrcs.exception.ResourceNotFoundException("Không tìm thấy ảnh dịch vụ.");
+        return index == 0 ? new ServiceImage(imageContent, imageContentType) : additionalImages.get(index - 1);
+    }
 }

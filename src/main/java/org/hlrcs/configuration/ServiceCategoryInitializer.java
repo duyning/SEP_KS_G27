@@ -12,7 +12,7 @@ public class ServiceCategoryInitializer {
     @Bean
     CommandLineRunner serviceCategories(ServiceCategoryRepository categories) {
         return args -> {
-            for (String name : List.of("Chuyển phòng trọ", "Giặt là sinh viên", "Dọn dẹp & Vệ sinh", "Sửa chữa điện nước, khóa cổng")) {
+            for (String name : List.of("Chuyển phòng trọ", "Giặt là sinh viên", "Dọn dẹp & Vệ sinh", "Sửa chữa điện nước, khóa cổng", "Dịch vụ khác")) {
                 if (!categories.existsByName(name)) categories.save(ServiceCategory.builder().name(name).build());
             }
         };
