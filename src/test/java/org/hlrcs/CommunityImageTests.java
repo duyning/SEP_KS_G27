@@ -78,6 +78,36 @@ class CommunityImageTests {
     private String imagePath(int postId, int imageId) { return "/api/community/posts/" + postId + "/images/" + imageId; }
 
     @Test
+    void formattingSurvivesModerationAndCanBeRevisedWithoutChangingText() throws Exception {
+        var draft = details();
+        draft.put("content", "Bàn học còn mới\nCó thể nhận tại Tân Xã");
+        String richFormat = """
+                {"type":"doc","content":[{"type":"paragraph","content":[
+                {"type":"text","text":"Bàn học","marks":[{"type":"bold"}]},
+                {"type":"text","text":" còn mới"}]},
+                {"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[
+                {"type":"text","text":"Có thể nhận tại Tân Xã"}]}]}]}]}""";
+        draft.put("contentFormat", richFormat);
+        var saved = upload(null, draft, author, 201);
+        int id = saved.path("id").asInt();
+        String staffPost = "/api/staff/community/posts/" + id;
+        var review = call("GET", staffPost, null, staff, 200).path("post");
+        assertEquals(richFormat, review.path("contentFormat").asString());
+        assertEquals(draft.get("content"), review.path("content").asString());
+
+        call("POST", staffPost + "/review", Map.of("decision", "REQUEST_CHANGES", "note", "Vui lòng giảm cỡ chữ."), staff, 200);
+        draft.put("contentFormat", "");
+        var revised = call("PUT", "/api/community/posts/" + id, draft, author, 200);
+        assertEquals("PENDING", revised.path("status").asString());
+        assertNull(posts.findById(id).orElseThrow().getContentFormat());
+
+        draft.put("contentFormat", "<script>");
+        assertTrue(call("POST", "/api/community/posts", draft, author, 400).has("contentFormat"));
+        draft.put("contentFormat", richFormat.replace("Bàn học", "Nội dung khác"));
+        assertTrue(call("POST", "/api/community/posts", draft, author, 400).has("contentFormat"));
+    }
+
+    @Test
     void jpgJpegAndPngPersistAndOnlyApprovedImagesBecomePublic() throws Exception {
         byte[] png = image("png", 3, 2), jpeg = image("jpg", 2, 3);
         var saved = upload(null, details(), author, 201, photo("Ảnh.PNG", "image/png", png),

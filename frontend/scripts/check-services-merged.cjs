@@ -60,7 +60,7 @@ const { expect } = require(path.join(path.dirname(playwrightPath), 'test.js'));
     const base = (process.env.FRONTEND_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
     await page.goto(`${base}/services?category=laundry&q=giat&area=tan-xa&sort=price-asc`);
     await page.locator('.sv-service-card').waitFor();
-    const entry = page.locator('.sv-hero-actions button');
+    const entry = page.locator('.sv-provider-intro-actions button.sv-button-primary');
     await expect(entry).toBeDisabled();
     await expect(entry).toHaveAttribute('aria-busy', 'true');
     assert.equal(await page.locator('.sv-page .svc-catalog').count(), 0);

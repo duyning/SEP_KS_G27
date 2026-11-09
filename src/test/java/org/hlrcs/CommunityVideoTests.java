@@ -148,7 +148,8 @@ class CommunityVideoTests {
         assertEquals("PENDING", replaced.path("status").asString());
         int replacementId = replaced.path("videos").get(0).path("id").asInt();
         assertFalse(media.existsById(videoId));
-        call("POST", "/api/staff/community/posts/" + id + "/review", Map.of("decision", "REQUEST_CHANGES", "note", "Vui lòng kiểm tra lại video."), staff, 200);
+        call("POST", "/api/staff/community/posts/" + id + "/review",
+                Map.of("decision", "REQUEST_CHANGES", "note", "Vui lòng kiểm tra lại video.", "revision", 1), staff, 200);
         var removed = call("PUT", "/api/community/posts/" + id, updated, author, 200);
         assertEquals(0, removed.path("videos").size());
         assertFalse(media.existsById(replacementId));
@@ -200,7 +201,8 @@ class CommunityVideoTests {
         assertEquals(note, detail.path("history").get(0).path("note").asString());
         for (var post : call("GET", "/api/community/posts", null, null, 200)) assertNotEquals(id, post.path("id").asInt());
         call("PUT", "/api/community/posts/" + id, revised, author, 409);
-        var approved = call("POST", "/api/staff/community/posts/" + id + "/review", Map.of("decision", "APPROVE"), staff, 200);
+        var approved = call("POST", "/api/staff/community/posts/" + id + "/review",
+                Map.of("decision", "APPROVE", "revision", 1), staff, 200);
         assertEquals("APPROVED", approved.path("post").path("status").asString());
         assertEquals(2, approved.path("history").size());
         boolean published = false;
@@ -224,7 +226,7 @@ class CommunityVideoTests {
             String note = "Lần " + round + ": vui lòng bổ sung chi tiết tình trạng và thông tin liên hệ.";
             expectedNotes.add(note);
             var reviewed = call("POST", "/api/staff/community/posts/" + id + "/review",
-                    Map.of("decision", "REQUEST_CHANGES", "note", note), staff, 200);
+                    Map.of("decision", "REQUEST_CHANGES", "note", note, "revision", round - 1), staff, 200);
             assertEquals("NEED_CHANGES", reviewed.path("post").path("status").asString());
             assertEquals(note, reviewed.path("post").path("decisionNote").asString());
             assertEquals(round, reviewed.path("history").size());
@@ -245,7 +247,8 @@ class CommunityVideoTests {
             for (var post : call("GET", "/api/community/posts", null, null, 200)) assertNotEquals(id, post.path("id").asInt());
         }
 
-        var approved = call("POST", "/api/staff/community/posts/" + id + "/review", Map.of("decision", "APPROVE"), staff, 200);
+        var approved = call("POST", "/api/staff/community/posts/" + id + "/review",
+                Map.of("decision", "APPROVE", "revision", 10), staff, 200);
         assertEquals("APPROVED", approved.path("post").path("status").asString());
         assertEquals(11, approved.path("history").size());
         var actualNotes = new HashSet<String>();

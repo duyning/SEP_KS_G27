@@ -7,7 +7,7 @@ export default function CommunityPostMedia({ post }) {
   const visibleImages = images.slice(0, videos.length ? 3 : 4);
   const count = visibleImages.length + videos.length;
   if (!count) return null;
-  return <section className={`community-post-media community-post-media--${count}`} aria-label={`Ảnh và video của bài ${post.title}`}>
+  return <div className="community-post-media-wrap"><section className={`community-post-media community-post-media--${count}`} aria-label={`Ảnh và video của bài ${post.title}`} tabIndex={count > 1 ? 0 : undefined}>
     {visibleImages.map((image, index) => <div className="community-post-media-cell" key={`image-${image.id}`}>
       <CommunityPostImage postId={post.id} image={image} images={images} defer fit={count === 1 ? 'contain' : 'cover'}
         remainingCount={index === visibleImages.length - 1 ? images.length - visibleImages.length : 0} />
@@ -15,5 +15,5 @@ export default function CommunityPostMedia({ post }) {
     {videos.map(video => <div className="community-post-media-cell community-post-media-cell--video" key={`video-${video.id}`}>
       <CommunityPostVideo postId={post.id} video={video} />
     </div>)}
-  </section>;
+  </section>{count > 1 && <p className="community-mobile-media-hint">Ảnh &amp; video · Vuốt ngang để xem thêm</p>}</div>;
 }

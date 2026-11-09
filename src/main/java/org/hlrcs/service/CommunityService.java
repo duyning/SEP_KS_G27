@@ -12,11 +12,14 @@ import org.hlrcs.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,9 @@ public class CommunityService {
     private final CommunityImageService images;
     private final CommunityVideoService videos;
     private final CommentRepository comments;
+    private final ObjectMapper json;
+    private final CommunityScanRepository scans;
+    private final CommunityAutoModeration autoModeration;
 
     @Transactional(readOnly = true)
     public List<CommunityPostResponse> published() {
@@ -57,7 +63,8 @@ public class CommunityService {
         posts.saveAndFlush(post);
         images.replace(post, request.retainedImageIds(), photos);
         videos.replace(post, request.retainedVideoIds(), clips);
-        return response(posts.saveAndFlush(post), true);
+        autoModeration.enqueue(post);
+        return response(post, true);
     }
 
     @Transactional
@@ -90,6 +97,8 @@ public class CommunityService {
         post.setReviewer(null);
         post.setReviewedAt(null);
         post.setReviewNote(null);
+        post.setSubmissionRevision(post.revision() + 1);
+        autoModeration.enqueue(post);
         return response(posts.saveAndFlush(post), true);
     }
 
@@ -106,6 +115,7 @@ public class CommunityService {
         posts.deleteRoommateDetailForPost(id);
         posts.deleteRoomTransferDetailForPost(id);
         posts.deleteItemDetailForPost(id);
+        scans.deleteForPost(id);
         posts.delete(post);
         posts.flush();
     }
@@ -118,10 +128,19 @@ public class CommunityService {
     @Transactional(readOnly = true)
     public Detail detail(Integer id) {
         Post post = posts.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài viết."));
-        return new Detail(response(post, true), post.getAuthor().getFullName(),
-                logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("COMMUNITY_POST", id).stream()
+        var history = new ArrayList<>(logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("COMMUNITY_POST", id).stream()
                         .map(log -> new Activity(log.getLogId(), log.getAction(), log.getNote(),
                                 log.getStaff().getFullName(), log.getCreatedAt())).toList());
+        Scan current = null;
+        for (CommunityScan scan : scans.findByPostIdOrderByRevisionDesc(id)) {
+            if (scan.getRevision() == post.revision()) current = autoModeration.view(scan);
+            if (scan.getDecision() != null) {
+                history.add(new Activity(-scan.getId(), scan.getDecision().name(), scan.getDecisionNote(),
+                        "Hệ thống tự duyệt", scan.getFinishedAt()));
+            }
+        }
+        history.sort(Comparator.comparing(Activity::createdAt, Comparator.nullsLast(Comparator.reverseOrder())));
+        return new Detail(response(post, true), post.getAuthor().getFullName(), history, post.revision(), current);
     }
 
     @Transactional
@@ -130,7 +149,8 @@ public class CommunityService {
             throw new FieldValidationException("note", "Lý do / hướng dẫn chỉnh sửa cần từ 10 đến 2000 ký tự.");
         }
         Post post = locked(id);
-        if (post.getStatus() != PostStatus.PENDING) {
+        int expectedRevision = request.revision() == null ? 0 : request.revision();
+        if (post.getStatus() != PostStatus.PENDING || post.revision() != expectedRevision) {
             throw new AppException("Bài viết không còn chờ duyệt. Vui lòng tải lại trạng thái mới nhất.", HttpStatus.CONFLICT);
         }
         User reviewer = auth.getCurrentUser();
@@ -166,8 +186,12 @@ public class CommunityService {
                 : request.price() != null && post.getPrice().compareTo(request.price()) == 0;
         if (!type.equals(request.type()) || !Objects.equals(post.getTitle(), request.title())
                 || !Objects.equals(post.getDescription(), request.content()) || !samePrice
+                || (request.contentFormat() != null && !Objects.equals(post.getContentFormat(),
+                        CommunityPostFormatting.validate(json, request.contentFormat(), request.content())))
                 || !Objects.equals(post.getLocation(), request.location()) || !Objects.equals(post.getContactName(), request.authorName())
-                || !Objects.equals(post.getContactPhone(), request.authorPhone())) return true;
+                || !Objects.equals(post.getContactPhone(), request.authorPhone())
+                || !Objects.equals(Objects.toString(post.getFacebookUrl(), ""), Objects.toString(request.facebookUrl(), ""))
+                || !Objects.equals(Objects.toString(post.getZaloUrl(), ""), Objects.toString(request.zaloUrl(), ""))) return true;
         var imageIds = images.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
         var videoIds = videos.metadata(post.getPostId()).stream().map(CommunityPostResponse.Image::id).toList();
         return retainedChanged(request.retainedImageIds(), imageIds) || retainedChanged(request.retainedVideoIds(), videoIds);
@@ -189,17 +213,22 @@ public class CommunityService {
         });
         post.setTitle(request.title());
         post.setDescription(request.content());
+        if (request.contentFormat() != null) {
+            post.setContentFormat(CommunityPostFormatting.validate(json, request.contentFormat(), request.content()));
+        }
         post.setPrice(request.price());
         post.setLocation(request.location());
         post.setContactName(request.authorName());
         post.setContactPhone(request.authorPhone());
+        post.setFacebookUrl(request.facebookUrl());
+        post.setZaloUrl(request.zaloUrl());
     }
 
     private CommunityPostResponse response(Post post, boolean privateView) {
         return response(post, privateView, comments.countByPost_PostId(post.getPostId()));
     }
 
-    private List<CommunityPostResponse> responses(List<Post> values, boolean privateView) {
+    List<CommunityPostResponse> responses(List<Post> values, boolean privateView) {
         if (values.isEmpty()) return List.of();
         var counts = comments.countForPosts(values.stream().map(Post::getPostId).toList()).stream()
                 .collect(java.util.stream.Collectors.toMap(CommentRepository.PostCount::getPostId, CommentRepository.PostCount::getTotal));
@@ -217,11 +246,12 @@ public class CommunityService {
             case ROOMMATE -> "Tìm người ở ghép";
             case PASS_ITEM -> "Đồ cũ sinh viên";
         };
-        return new CommunityPostResponse(post.getPostId(), type, label, post.getTitle(), post.getDescription(),
+        return new CommunityPostResponse(post.getPostId(), post.getAuthor().getUserId(), type, label, post.getTitle(), post.getDescription(),
                 post.getPrice(), post.getLocation(), post.getContactName() == null ? post.getAuthor().getFullName() : post.getContactName(),
-                post.getContactPhone(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
+                post.getContactPhone(), post.getFacebookUrl(), post.getZaloUrl(), post.getStatus().name(), post.getCreatedAt(), post.getUpdatedAt(),
                 privateView ? post.getReviewNote() : null,
                 privateView && post.getReviewer() != null ? post.getReviewer().getFullName() : null,
-                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()), commentCount);
+                privateView ? post.getReviewedAt() : null, images.metadata(post.getPostId()), videos.metadata(post.getPostId()),
+                commentCount, post.getContentFormat());
     }
 }

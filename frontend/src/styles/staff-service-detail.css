@@ -1,0 +1,63 @@
+/* Compact review workspace: all information remains visible and wraps naturally. */
+.sa-page.sa-detail-page {max-width:1600px;font-size:14px;line-height:1.5;container-type:inline-size}
+.sa-detail-page .sa-page-heading {margin-bottom:12px;gap:12px}
+.sa-detail-page .sa-page-heading h1 {font-size:22px;line-height:1.35;margin:4px 0}
+.sa-detail-page .sa-page-heading p {font-size:13px;line-height:1.5}
+.sa-detail-page .sa-detail-top {margin-bottom:12px}
+.sa-detail-page .sa-detail-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:14px;align-items:start}
+.sa-detail-page .sa-detail-main {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;order:0}
+.sa-detail-page .sa-detail-main>.sa-panel:first-child,.sa-detail-page .sa-detail-main>.sa-panel:last-child {grid-column:1/-1}
+.sa-detail-page .sa-panel {padding:14px 16px;border-radius:10px;box-shadow:none}
+.sa-detail-page .sa-panel-heading {gap:8px;margin-bottom:10px;padding-bottom:8px}
+.sa-detail-page .sa-panel-heading>span {width:28px;height:28px;border-radius:7px}
+.sa-detail-page .sa-panel-heading h2 {font-size:15px;line-height:1.4}
+.sa-detail-page .sa-panel-heading p {font-size:12px;line-height:1.5;margin-top:2px}
+.sa-detail-page .sa-category {display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border:1px solid #99f6e4;background:#f0fdfa;color:#0f766e;border-radius:6px}
+.sa-detail-page .sa-category svg {flex-shrink:0}
+.sa-detail-page .sa-category[data-category="moving"] {background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+.sa-detail-page .sa-category[data-category="laundry"] {background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+.sa-detail-page .sa-category[data-category="cleaning"] {background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.sa-detail-page .sa-category[data-category="repair"] {background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe}
+.sa-detail-page .sa-detail-title {font-size:19px;line-height:1.45;margin:8px 0 10px}
+.sa-detail-page .sa-fact-strip {gap:12px;padding:10px 12px;margin-bottom:12px}
+.sa-detail-page .sa-fact-strip>div>span {font-size:12px;margin-bottom:3px}
+.sa-detail-page .sa-fact-strip strong {font-size:14px;line-height:1.5}
+.sa-detail-page .sa-label {font-size:12px;margin:0 0 5px}
+.sa-detail-page .sa-description {font-size:14px;line-height:1.65}
+.sa-detail-page .sa-applicant {gap:8px;margin-bottom:10px}
+.sa-detail-page .sa-applicant>span {width:32px;height:32px;font-size:14px}
+.sa-detail-page .sa-applicant h3 {font-size:14px;margin:0 0 2px;overflow-wrap:anywhere}
+.sa-detail-page .sa-applicant small {font-size:12px}
+.sa-detail-page .sa-info-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sa-detail-page .sa-info-grid dt {font-size:12px;margin-bottom:2px}
+.sa-detail-page .sa-info-grid dd {font-size:13px;line-height:1.5}
+.sa-detail-page .sa-notice {padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5;gap:7px}
+.sa-detail-page .sa-notice p {margin-top:2px}
+.sa-detail-page .sa-document-list {gap:6px;margin-top:10px}
+.sa-detail-page .sa-document {padding:8px;gap:8px;flex-wrap:wrap}
+.sa-detail-page .sa-document>span {width:28px;height:32px}
+.sa-detail-page .sa-document strong {font-size:13px;line-height:1.5}
+.sa-detail-page .sa-document small {font-size:12px;line-height:1.4;margin-top:2px}
+.sa-detail-page .sa-document>.sa-button {min-height:36px;padding:6px 9px;font-size:12px!important;margin-left:0}
+.sa-detail-page .sa-history li {gap:10px;padding-bottom:12px}
+.sa-detail-page .sa-history li:last-child {padding-bottom:0}
+.sa-detail-page .sa-history strong {font-size:13px}
+.sa-detail-page .sa-history p {font-size:12px;margin-top:2px;line-height:1.5}
+.sa-detail-page .sa-history blockquote {font-size:13px;line-height:1.6;padding:8px 10px;margin-top:6px}
+.sa-detail-page .sa-decision-column {position:sticky;top:16px;gap:8px;order:0}
+.sa-detail-page .sa-state-row {padding:8px 10px;margin-bottom:10px;font-size:12px;flex-wrap:wrap}
+.sa-detail-page .sa-status {font-size:12px}
+.sa-detail-page .sa-decision label {font-size:13px;margin:10px 0 4px;line-height:1.5}
+.sa-detail-page .sa-field-hint {font-size:12px;line-height:1.5;margin-bottom:5px}
+.sa-detail-page .sa-decision :is(select,textarea) {font-size:13px;line-height:1.5;min-height:38px;padding:7px 9px}
+.sa-detail-page .sa-decision textarea {height:84px;min-height:84px;resize:vertical}
+.sa-detail-page .sa-reason-hint {font-size:12px;margin:4px 0 8px}
+.sa-detail-page .sa-decision .sa-full {margin-top:6px;min-height:40px;padding:8px 12px}
+.sa-detail-page .sa-help {padding:4px 6px;gap:7px}
+.sa-detail-page .sa-help p {font-size:12px;line-height:1.5}
+.sa-detail-page .sa-result-facts {font-size:13px;line-height:1.5;gap:8px;margin-bottom:12px}
+.sa-detail-page .sa-review-result h3 {font-size:13px;margin-bottom:6px}
+.sa-detail-page .sa-review-result .sa-description {font-size:13px;padding:9px;line-height:1.6}
+@container(max-width:1050px){.sa-detail-page .sa-detail-main{grid-template-columns:1fr}.sa-detail-page .sa-detail-layout{grid-template-columns:minmax(0,1fr) minmax(290px,.8fr)}}
+@container(max-width:720px){.sa-detail-page .sa-detail-layout{grid-template-columns:1fr}.sa-detail-page .sa-decision-column{position:static}.sa-detail-page .sa-panel{padding:12px}.sa-detail-page .sa-page-heading{align-items:flex-start}.sa-detail-page .sa-page-heading h1{font-size:20px}}
+@media(max-height:740px){.sa-detail-page .sa-decision-column{position:static}}

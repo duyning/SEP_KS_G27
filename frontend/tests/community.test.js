@@ -1,12 +1,35 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
+import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, isOwnCommunityPost, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
 
 const original = { fetch: globalThis.fetch, sessionStorage: globalThis.sessionStorage, localStorage: globalThis.localStorage };
 globalThis.sessionStorage = { getItem: () => 'user-token' };
 globalThis.localStorage = { getItem: () => null };
 after(() => Object.assign(globalThis, original));
 const valid = { type: 'ROOM_TRANSFER', title: 'Nhượng phòng gần Đại học FPT', content: 'Phòng khép kín có ban công, sạch sẽ và đầy đủ tiện nghi.', price: '2.200.000', location: 'Tân Xã, Hòa Lạc', authorName: 'Nguyễn Văn An', authorPhone: '0912 345 678' };
+test('post ownership uses account identity independently of filters or contact information', () => {
+  for (const status of ['PENDING', 'APPROVED', 'NEED_CHANGES', 'REJECTED']) {
+    const post = { authorId: 12, status, authorName: 'Tên liên hệ khác', authorPhone: '0987654321' };
+    assert.equal(isOwnCommunityPost(post, { userId: 12 }), true);
+    assert.equal(isOwnCommunityPost(post, { userId: 13, fullName: post.authorName }), false);
+    assert.equal(isOwnCommunityPost(post, null), false);
+  }
+  assert.equal(isOwnCommunityPost({}, {}), false);
+});
+test('social contacts are optional, validated and included in edits and payloads', () => {
+  assert.deepEqual(validatePost({ ...valid, facebookUrl: '', zaloUrl: '' }), {});
+  const links = { facebookUrl: ' https://www.facebook.com/nguyenvanan ', zaloUrl: 'https://zalo.me/0912345678' };
+  assert.deepEqual(validatePost({ ...valid, ...links }), {});
+  assert.equal(postPayload({ ...valid, ...links }).facebookUrl, links.facebookUrl.trim());
+  assert.equal(postPayload({ ...valid, ...links }).zaloUrl, links.zaloUrl);
+  assert.ok(hasPostDraftChanges({ ...valid, ...links }, valid, true));
+  assert.ok(hasPostDraftChanges({ ...valid, facebookUrl: '', zaloUrl: '' }, { ...valid, ...links }, true));
+  for (const url of ['javascript:alert(1)', 'http://facebook.com/name', 'https://facebook.com.evil.test/name', 'https://facebook.com@evil.test/name', 'https://evil.test/name', 'https://facebook.com/', 'https://facebook.com/a b', `https://facebook.com/${'x'.repeat(500)}`]) {
+    assert.ok(validatePost({ ...valid, facebookUrl: url }).facebookUrl, url);
+  }
+  assert.ok(validatePost({ ...valid, zaloUrl: 'https://facebook.com/name' }).zaloUrl);
+  assert.ok(validatePost({ ...valid, authorPhone: '', ...links }).authorPhone);
+});
 const saved = { ...postPayload(valid), id: 12, status: 'PENDING', createdAt: '2026-10-27T09:00:00', decisionNote: null };
 const reply = data => new Response(JSON.stringify({ success: true, data }));
 
@@ -55,14 +78,26 @@ test('comments are paged per post and submission sends only comment text', async
   assert.equal((await communityApi.addComment(12, 'Bàn còn không?')).id, 1);
 });
 
+test('title and description require ten trimmed characters across all categories', () => {
+  for (const type of ['ROOM_TRANSFER', 'ROOMMATE', 'SECOND_HAND']) {
+    for (const field of ['title', 'content']) {
+      assert.ok(validatePost({ ...valid, type, [field]: '  123456789  ' })[field]);
+      assert.equal(validatePost({ ...valid, type, [field]: '  1234567890  ' })[field], undefined);
+    }
+  }
+});
+
 test('all categories require usable content and contact information', () => {
   for (const type of ['ROOM_TRANSFER', 'ROOMMATE', 'SECOND_HAND']) assert.deepEqual(validatePost({ ...valid, type }), {});
   const errors = validatePost({ type: 'OTHER', title: '   ', content: 'Short', location: '', authorName: '', authorPhone: '123', price: '-10' });
   for (const key of ['type', 'title', 'content', 'location', 'authorName', 'authorPhone', 'price']) assert.ok(errors[key], key);
-  assert.ok(validatePost({ ...valid, content: 'x'.repeat(5001) }).content);
-  assert.ok(validatePost({ ...valid, title: 'x'.repeat(201) }).title);
+  assert.equal(validatePost({ ...valid, content: 'x'.repeat(2500) }).content, undefined);
+  assert.ok(validatePost({ ...valid, content: 'x'.repeat(2501) }).content);
+  assert.equal(validatePost({ ...valid, title: 'x'.repeat(100) }).title, undefined);
+  assert.ok(validatePost({ ...valid, title: 'x'.repeat(101) }).title);
   assert.ok(validatePost({ ...valid, location: 'x'.repeat(256) }).location);
-  assert.ok(validatePost({ ...valid, authorName: 'x'.repeat(101) }).authorName);
+  assert.equal(validatePost({ ...valid, authorName: 'x'.repeat(50) }).authorName, undefined);
+  assert.ok(validatePost({ ...valid, authorName: 'x'.repeat(51) }).authorName);
 });
 
 test('closing only warns for remaining draft changes, not erased input or price formatting', () => {
@@ -189,14 +224,28 @@ test('author resubmission and staff reviews use the actual record and preserve s
   await communityApi.submit(postPayload(valid), undefined, 12);
   globalThis.fetch = async (url, options) => {
     assert.equal(url, '/api/staff/community/posts/12/review');
-    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_CHANGES', note: 'Bổ sung thông tin liên hệ.' });
+    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_CHANGES', note: 'Bổ sung thông tin liên hệ.', revision: 2 });
     return reply({ post: { ...saved, status: 'NEED_CHANGES' }, accountName: 'Real account', history: [] });
   };
-  assert.equal((await communityApi.review(12, 'REQUEST_CHANGES', 'Bổ sung thông tin liên hệ.')).post.status, 'NEED_CHANGES');
+  assert.equal((await communityApi.review(12, 'REQUEST_CHANGES', 'Bổ sung thông tin liên hệ.', undefined, 2)).post.status, 'NEED_CHANGES');
   globalThis.fetch = async () => { throw new Error('Invalid IDs must not issue requests'); };
   for (const id of [null, 'abc', '0', '-1', 'POST-2026-001']) await assert.rejects(communityApi.detail(undefined, id), error => error.status === 400);
   globalThis.fetch = async () => new Response(JSON.stringify({ success: false, message: 'Invalid', data: { authorPhone: 'SĐT không hợp lệ.' } }), { status: 400 });
   await assert.rejects(communityApi.submit(postPayload(valid)), error => error.fields.authorPhone === 'SĐT không hợp lệ.');
+});
+
+test('comment deletion targets its post, authenticates and preserves ownership errors', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/community/posts/12/comments/34');
+    assert.equal(options.method, 'DELETE');
+    assert.equal(options.headers.Authorization, 'Bearer user-token');
+    return reply(null);
+  };
+  await communityApi.deleteComment(12, 34);
+  globalThis.fetch = async () => { throw new Error('Invalid IDs must not issue requests'); };
+  await assert.rejects(communityApi.deleteComment(12, 0), error => error.status === 400);
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: false, message: 'Không tìm thấy bình luận của bạn.' }), { status: 404 });
+  await assert.rejects(communityApi.deleteComment(12, 34), error => error.status === 404);
 });
 
 test('deletion uses the authenticated post endpoint and propagates denied or failed requests', async () => {

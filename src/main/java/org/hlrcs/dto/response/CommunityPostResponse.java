@@ -5,12 +5,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record CommunityPostResponse(
-        Integer id, String type, String typeLabel, String title, String content,
+        Integer id, Integer authorId, String type, String typeLabel, String title, String content,
         BigDecimal price, String location, String authorName, String authorPhone,
+        String facebookUrl, String zaloUrl,
         String status, LocalDateTime createdAt, LocalDateTime updatedAt,
-        String decisionNote, String reviewedBy, LocalDateTime reviewedAt, List<Image> images, List<Image> videos, long commentCount
+        String decisionNote, String reviewedBy, LocalDateTime reviewedAt, List<Image> images, List<Image> videos, long commentCount,
+        String contentFormat
 ) {
     public record Image(Integer id, String fileName) {}
     public record Activity(Integer id, String action, String note, String staffName, LocalDateTime createdAt) {}
-    public record Detail(CommunityPostResponse post, String accountName, List<Activity> history) {}
+    public record ScanFinding(String code, Integer mediaId, String fileName, Integer timestampSeconds) {}
+    public record Scan(String state, List<ScanFinding> findings, LocalDateTime finishedAt) {}
+    public record Detail(CommunityPostResponse post, String accountName, List<Activity> history, int revision, Scan scan) {}
 }

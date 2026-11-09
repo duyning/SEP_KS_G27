@@ -38,6 +38,9 @@ public class Post {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "content_format", columnDefinition = "MEDIUMTEXT")
+    private String contentFormat;
+
     @Column(name = "price", precision = 12, scale = 0)
     private BigDecimal price;
 
@@ -49,6 +52,12 @@ public class Post {
 
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
+
+    @Column(name = "facebook_url", length = 500)
+    private String facebookUrl;
+
+    @Column(name = "zalo_url", length = 500)
+    private String zaloUrl;
 
     @Column(name = "review_note", length = 2000)
     private String reviewNote;
@@ -64,6 +73,12 @@ public class Post {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+
+    private Integer submissionRevision;
+
+    public int revision() {
+        return submissionRevision == null ? 0 : submissionRevision;
+    }
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

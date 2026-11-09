@@ -89,7 +89,10 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/properties/search", "/api/properties/location/nearby",
                                 "/api/properties/*/room-types/*", "/api/properties/*/room-types/*/details",
                                 "/api/properties/*/room-types/*/images/*").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/posts", "/api/community/posts/*/images/*", "/api/community/posts/*/videos/*", "/api/community/posts/*/comments", "/api/community/posts/*/comments/*/replies").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/posts",
+                                "/api/community/posts/feed", "/api/community/posts/feed/*",
+                                "/api/community/posts/*/images/*", "/api/community/posts/*/videos/*",
+                                "/api/community/posts/*/comments", "/api/community/posts/*/comments/*/replies").permitAll()
 
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/services", "/api/services/*", "/api/services/*/image").permitAll()
                         .requestMatchers(

@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN content_format VARCHAR(24) NULL;

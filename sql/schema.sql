@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS `pass_item_post_details`;
 DROP TABLE IF EXISTS `pass_room_post_details`;
 DROP TABLE IF EXISTS `roommate_post_details`;
 DROP TABLE IF EXISTS `post_media`;
+DROP TABLE IF EXISTS `community_scans`;
 DROP TABLE IF EXISTS `posts`;
 DROP TABLE IF EXISTS `services`;
 DROP TABLE IF EXISTS `service_documents`;
@@ -243,13 +244,32 @@ CREATE TABLE `posts` (
     `post_type` VARCHAR(50) NOT NULL COMMENT 'ROOMMATE, PASS_ROOM, PASS_ITEM',
     `title` VARCHAR(255) NOT NULL,
     `description` TEXT NULL,
-    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, APPROVED, REJECTED',
+    `content_format` MEDIUMTEXT NULL,
+    `facebook_url` VARCHAR(500) NULL,
+    `zalo_url` VARCHAR(500) NULL,
+    `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING, NEED_CHANGES, APPROVED, REJECTED',
     `reviewed_by` INT NULL,
     `reviewed_at` DATETIME NULL,
+    `submission_revision` INT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_posts_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`user_id`),
     CONSTRAINT `fk_posts_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `community_scans` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `post_id` INT NOT NULL,
+    `revision` INT NOT NULL,
+    `auto_eligible` BOOLEAN NOT NULL,
+    `state` VARCHAR(32) NOT NULL,
+    `findings` TEXT NULL,
+    `started_at` DATETIME(6) NULL,
+    `finished_at` DATETIME(6) NULL,
+    `decision` VARCHAR(50) NULL,
+    `decision_note` VARCHAR(2000) NULL,
+    UNIQUE KEY `uk_community_scan_revision` (`post_id`, `revision`),
+    KEY `idx_community_scan_queue` (`state`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 17. POST_MEDIA

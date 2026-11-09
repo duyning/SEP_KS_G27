@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Reply, CornerDownRight } from 'lucide-react';
+import { Pencil, Reply, CornerDownRight, MoreHorizontal, Trash2 } from 'lucide-react';
 import { communityApi } from '../services/community.js';
+import { commentTree, loadReplyThread } from '../services/comment-tree.js';
 
 function useCommentPage(postId, parentId, page, revision, enabled, onCount) {
   const [state, setState] = useState({ loading: true, result: null, error: '' });
@@ -10,7 +11,7 @@ function useCommentPage(postId, parentId, page, revision, enabled, onCount) {
     const controller = new AbortController();
     setState({ loading: true, result: null, error: '' });
     const task = parentId == null ? communityApi.comments(postId, page, controller.signal)
-      : communityApi.replies(postId, parentId, page, controller.signal);
+      : loadReplyThread(communityApi, postId, parentId, controller.signal);
     task.then(result => {
       if (controller.signal.aborted) return;
       onCount(result.commentCount);
@@ -25,6 +26,10 @@ export default function CommunityPostComments({ postId, panelId, user, onCount }
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
   const [state, setState] = useCommentPage(postId, null, page, revision, true, onCount);
+  const deleted = root => {
+    if (root && state.result?.content.length === 1 && page > 0) setPage(value => value - 1);
+    setRevision(value => value + 1);
+  };
   const updateRoot = updated => setState(current => ({ ...current,
     result: { ...current.result, content: current.result.content.map(item => item.id === updated.id ? updated : item) } }));
   const create = async (content, signal) => {
@@ -39,7 +44,7 @@ export default function CommunityPostComments({ postId, panelId, user, onCount }
     {state.result && <>
       {!state.result.content.length && <p>Chưa có bình luận nào.</p>}
       <ul className="community-comments-list">{state.result.content.map(comment => <CommentThread key={comment.id}
-        postId={postId} comment={comment} user={user} onCount={onCount} onRootUpdate={updateRoot} />)}</ul>
+        postId={postId} comment={comment} user={user} onCount={onCount} onRootUpdate={updateRoot} onDelete={deleted} />)}</ul>
       <Pagination result={state.result} page={page} onPage={setPage} label="Trang bình luận" />
     </>}
     {user ? <CommentForm key={user.userId} label="Viết bình luận" submitLabel="Gửi bình luận" disabled={state.loading || !state.result}
@@ -47,7 +52,7 @@ export default function CommunityPostComments({ postId, panelId, user, onCount }
   </section>;
 }
 
-function CommentThread({ postId, comment, user, onCount, onRootUpdate }) {
+function CommentThread({ postId, comment, user, onCount, onRootUpdate, onDelete }) {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState(null);
   const [page, setPage] = useState(0);
@@ -67,7 +72,7 @@ function CommentThread({ postId, comment, user, onCount, onRootUpdate }) {
   const updateReply = updated => setState(current => ({ ...current,
     result: { ...current.result, content: current.result.content.map(item => item.id === updated.id ? updated : item) } }));
   return <li className={`community-comment-thread${replyCount > 0 || open ? ' has-branches' : ''}`}>
-    <CommentBody comment={comment} postId={postId} user={user} onUpdate={onRootUpdate} onReply={() => chooseReply(comment)} />
+    <CommentBody comment={comment} postId={postId} user={user} onUpdate={onRootUpdate} onDelete={() => onDelete(true)} onReply={() => chooseReply(comment)} />
     {replyCount > 0 && <button type="button" className="community-replies-toggle" aria-expanded={open} onClick={() => {
       if (open && target) setTarget(null);
       setOpen(value => !value);
@@ -75,10 +80,8 @@ function CommentThread({ postId, comment, user, onCount, onRootUpdate }) {
     {open && <div className={`community-comment-replies${target && user ? ' has-composer' : ''}`}>
       <LoadFeedback state={state} onRetry={() => setRevision(value => value + 1)} />
       {state.result && <>
-        <ul className="community-comments-list">{state.result.content.map(reply => <li key={reply.id} className="community-reply-branch">
-          <CommentBody comment={reply} postId={postId} user={user} onUpdate={updateReply} onReply={() => chooseReply(reply)} />
-        </li>)}</ul>
-        <Pagination result={state.result} page={page} onPage={setPage} label="Trang phản hồi" />
+        <ReplyBranches nodes={commentTree(state.result.content)} postId={postId} user={user}
+          onUpdate={updateReply} onDelete={() => onDelete(false)} onReply={chooseReply} />
       </>}
       {target && user && <div className="community-reply-composer-branch">
         <CommentAvatar name={user.fullName} />
@@ -89,8 +92,33 @@ function CommentThread({ postId, comment, user, onCount, onRootUpdate }) {
   </li>;
 }
 
-function CommentBody({ comment, postId, user, onUpdate, onReply }) {
+function ReplyBranches({ nodes, postId, user, onUpdate, onDelete, onReply }) {
+  return <ul className="community-comments-list">{nodes.map(reply => <li key={reply.id}
+    className={`community-reply-branch${reply.children.length ? ' has-child-replies' : ''}`}>
+    <CommentBody comment={reply} postId={postId} user={user} onUpdate={onUpdate} onDelete={onDelete} onReply={() => onReply(reply)} />
+    {reply.children.length > 0 && <div className="community-comment-replies community-comment-nested">
+      <ReplyBranches nodes={reply.children} postId={postId} user={user} onUpdate={onUpdate} onDelete={onDelete} onReply={onReply} />
+    </div>}
+  </li>)}</ul>;
+}
+
+function CommentBody({ comment, postId, user, onUpdate, onReply, onDelete }) {
   const [editing, setEditing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const menu = useRef(null);
+  const trigger = useRef(null);
+  const deletion = useRef(null);
+  const menuId = useId();
+  useEffect(() => () => deletion.current?.abort(), []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    menu.current?.querySelector('[role="menuitem"]')?.focus();
+    const outside = event => { if (!menu.current?.contains(event.target)) setMenuOpen(false); };
+    document.addEventListener('pointerdown', outside);
+    return () => document.removeEventListener('pointerdown', outside);
+  }, [menuOpen]);
   const owner = user?.userId === comment.authorId;
   useEffect(() => { if (!owner) setEditing(false); }, [owner]);
   const save = async (content, signal) => {
@@ -98,14 +126,53 @@ function CommentBody({ comment, postId, user, onUpdate, onReply }) {
     if (signal.aborted) return;
     onUpdate(updated); setEditing(false);
   };
+  const remove = async () => {
+    setMenuOpen(false);
+    trigger.current?.focus();
+    if (deletion.current || !window.confirm(comment.replyCount > 0
+      ? `Xóa bình luận này và ${comment.replyCount} phản hồi bên dưới? Thao tác này không thể hoàn tác.`
+      : 'Xóa bình luận này? Thao tác này không thể hoàn tác.')) return;
+    const controller = new AbortController();
+    deletion.current = controller;
+    setDeleting(true); setDeleteError('');
+    try {
+      await communityApi.deleteComment(postId, comment.id, controller.signal);
+      if (!controller.signal.aborted) onDelete();
+    } catch (failure) { if (!controller.signal.aborted) setDeleteError(failure.message); }
+    finally { if (!controller.signal.aborted) { deletion.current = null; setDeleting(false); } }
+  };
   return <div className="community-comment-body">
     <CommentAvatar name={comment.authorName} />
     <div className="community-comment-content">
-    <div className="community-comment-bubble">
+    <div className={`community-comment-bubble${owner ? ' community-comment-bubble--owned' : ''}`}>
+    {owner && !editing && <div className="community-comment-menu" ref={menu} onKeyDown={event => {
+      if (event.key === 'Escape') { event.stopPropagation(); setMenuOpen(false); trigger.current?.focus(); }
+      if (event.key === 'Tab') setMenuOpen(false);
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const items = [...menu.current.querySelectorAll('[role="menuitem"]')];
+        const current = items.indexOf(document.activeElement);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (current + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length;
+        items[next]?.focus();
+      }
+    }}>
+      <button type="button" ref={trigger} className="community-comment-menu-trigger" aria-label="Tùy chọn bình luận của bạn"
+        aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={menuOpen ? menuId : undefined} disabled={deleting}
+        onClick={() => setMenuOpen(value => !value)}><MoreHorizontal size={20} aria-hidden="true" /></button>
+      {menuOpen && <div id={menuId} role="menu" aria-label="Thao tác bình luận" className="community-comment-menu-items">
+        <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setEditing(true); }}><Pencil size={16} aria-hidden="true" />Chỉnh sửa</button>
+        <button type="button" role="menuitem" className="community-comment-delete" onClick={remove}><Trash2 size={16} aria-hidden="true" />Xóa</button>
+      </div>}
+    </div>}
     <div className="community-comment-heading"><strong>{comment.authorName}</strong>
-      <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</time>
-      {comment.updatedAt && <span className="community-comment-edited" title={`Chỉnh sửa lúc ${new Date(comment.updatedAt).toLocaleString('vi-VN')}`}>Đã chỉnh sửa</span>}
+      <time className="community-comment-timestamp" dateTime={comment.createdAt}>
+        <span>{new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span aria-hidden="true">•</span>
+        <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+      </time>
     </div>
+      {deleting && <p role="status">Đang xóa bình luận...</p>}
+      {deleteError && <p role="alert">{deleteError}</p>}
     {editing ? <CommentForm label="Chỉnh sửa bình luận" initialContent={comment.content} submitLabel="Lưu thay đổi"
       autoFocus onCancel={() => setEditing(false)} onSubmit={save} /> : <>
       <p>{comment.replyToAuthorName && <span className="community-reply-mention">{comment.replyToAuthorName} </span>}{comment.content}</p>
@@ -113,7 +180,6 @@ function CommentBody({ comment, postId, user, onUpdate, onReply }) {
     </div>
       {!editing && user && <div className="community-comment-actions">
         <button type="button" onClick={onReply}><Reply size={14} aria-hidden="true" /> Trả lời</button>
-        {owner && <button type="button" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> Chỉnh sửa</button>}
       </div>}
     </div>
   </div>;

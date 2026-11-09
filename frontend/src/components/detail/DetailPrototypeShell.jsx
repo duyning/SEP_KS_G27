@@ -4,7 +4,7 @@ import {Heart,LogOut} from 'lucide-react';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {landingFor,roleLabels} from '../../routing/screens.js';
 import {MotionButton} from '../motion/MotionUI.jsx';
-export default function DetailPrototypeShell({children,savedCount=0,className='prototype-detail'}){
+export default function DetailPrototypeShell({children,savedCount=0,className='prototype-detail',footer,menuExtras}){
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
  const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
@@ -51,6 +51,7 @@ export default function DetailPrototypeShell({children,savedCount=0,className='p
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
+          {menuExtras}
         </ul>
 
 
@@ -69,7 +70,7 @@ export default function DetailPrototypeShell({children,savedCount=0,className='p
         </MotionButton>
       </div>
     </nav>
-  </header>{children}<footer className="footer-wrapper">
+  </header>{children}{footer ?? <footer className="footer-wrapper">
     <div className="container footer-grid">
 
       <div className="footer-col col-brand">
@@ -147,5 +148,5 @@ export default function DetailPrototypeShell({children,savedCount=0,className='p
         </div>
       </div>
     </div>
-  </footer></div>;
+  </footer>}</div>;
 }
