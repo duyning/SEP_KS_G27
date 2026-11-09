@@ -25,3 +25,12 @@
 @media(min-width:1101px){.sa-table th:first-child{width:32%}.sa-table th:last-child{width:12%}.sa-table td:last-child{padding-left:8px;padding-right:16px}.sa-view-link{white-space:nowrap;flex-wrap:nowrap}}
 @media(max-width:560px){.sa-page .sa-detail-title{font-size:1.2rem}.sa-page .sa-label{font-size:.65rem}}
 @media(prefers-reduced-motion:reduce){.sa-page *,.sa-confirm-modal *{animation:none!important;transition:none!important}}
+
+/* Proposal snapshots and supplement workflows share the staff UI tokens. */
+.sa-proposal-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 18px;color:var(--sa-muted);font-size:.72rem;line-height:1.7;overflow-wrap:anywhere}
+.sa-operation{display:inline-block;padding:3px 8px;border-radius:5px;background:#eef6f5;color:var(--sa-action);font-size:.68rem;font-weight:700;line-height:1.6}
+.sa-compare{margin-bottom:18px}.sa-gallery{margin:0 0 22px;min-width:0}.sa-gallery .svc-gallery{width:100%;max-width:320px;min-width:0}.sa-gallery .svc-gallery>.svc-photo{display:block;width:100%;height:220px;object-fit:contain;border:1px solid var(--sa-line);border-radius:9px;background:var(--sa-surface)}
+.sa-gallery .svc-gallery-thumbnails{display:flex;flex-wrap:wrap;gap:8px}.sa-gallery .svc-gallery-thumbnails button{width:54px;height:46px;margin:0;padding:3px;border:1px solid var(--sa-line);border-radius:7px;background:white}.sa-gallery .svc-gallery-thumbnails button[aria-pressed=true]{border-color:var(--sa-action)}
+.sa-gallery .svc-gallery-navigation button{min-height:42px;color:var(--sa-action);background:white;border:1px solid var(--sa-line);border-radius:7px}
+.sa-review-result>.sa-description{margin-bottom:18px}.sa-status.needs_supplement{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+@media(max-width:560px){.sa-proposal-meta{gap:8px}.sa-gallery .svc-gallery{margin:auto}.sa-compare{width:100%}}

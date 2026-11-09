@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ServiceRegistrationRepository extends JpaRepository<ServiceRegistration, Integer> {
+    boolean existsByTargetService_ServiceIdAndStatusIn(Integer serviceId, List<RegistrationStatus> statuses);
+    boolean existsByUser_UserIdAndServiceNameIgnoreCaseAndStatusIn(Integer userId, String name, List<RegistrationStatus> statuses);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select r from ServiceRegistration r where r.registrationId = :id")
     java.util.Optional<ServiceRegistration> findForReview(@org.springframework.data.repository.query.Param("id") Integer id);

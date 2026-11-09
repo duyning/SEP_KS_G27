@@ -17,12 +17,17 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
 public class ServiceReviewController {
     private final ServiceReviewService service;
-    public record Review(@NotBlank String capabilityDecision, @NotBlank String listingDecision, @NotBlank @Size(max = 2000) String reason) {}
+    public record Review(@NotBlank String capabilityDecision, @NotBlank String listingDecision, @Size(max = 2000) String reason, @NotNull @PositiveOrZero Integer revision) {}
+    public record Supplement(@NotBlank @Size(min = 10, max = 2000) String reason, @NotNull @PositiveOrZero Integer revision) {}
+    @PostMapping("/{id}/supplement-request")
+    public ApiResponse<ServiceReviewService.Detail> supplement(@PathVariable Integer id, @Valid @RequestBody Supplement value) {
+        return ApiResponse.success(service.requestSupplement(id, value.reason(), value.revision()));
+    }
     @GetMapping public ApiResponse<List<ServiceRegistrationService.RegistrationInfo>> list() { return ApiResponse.success(service.list()); }
     @GetMapping("/{id}") public ApiResponse<ServiceReviewService.Detail> detail(@PathVariable Integer id) { return ApiResponse.success(service.detail(id)); }
     @PostMapping("/{id}/review")
     public ApiResponse<ServiceReviewService.Detail> review(@PathVariable Integer id, @Valid @RequestBody Review value) {
-        return ApiResponse.success(service.review(id, value.capabilityDecision(), value.listingDecision(), value.reason()));
+        return ApiResponse.success(service.review(id, value.capabilityDecision(), value.listingDecision(), value.reason(), value.revision()));
     }
     @GetMapping("/{id}/files/{fileId}")
     public ResponseEntity<byte[]> file(@PathVariable Integer id, @PathVariable Integer fileId) {

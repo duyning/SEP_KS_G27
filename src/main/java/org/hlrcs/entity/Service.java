@@ -60,4 +60,8 @@ public class Service {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    @Builder.Default
+    private int revision = 0;
 }

@@ -64,11 +64,13 @@ public class ServiceReviewService {
                 .targetId(row.getRegistrationId()).action(action).note(reason).build());
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Detail review(Integer id, String capabilityDecision, String listingDecision, String reason) {
+    public Detail review(Integer id, String capabilityDecision, String listingDecision, String reason, int revision) {
         if (!Set.of("APPROVE", "REJECT").contains(Objects.toString(capabilityDecision, "")) || !Set.of("APPROVE", "REJECT").contains(Objects.toString(listingDecision, "")))
             throw new BadRequestException("Cần quyết định duyệt hoặc từ chối cho capability và nội dung dịch vụ.");
         String note = reason == null ? "" : reason.trim();
-        if (note.length() < 10 || note.length() > 2000) throw new BadRequestException("Lý do phải có từ 10 đến 2000 ký tự.");
+        boolean approved = "APPROVE".equals(capabilityDecision) && "APPROVE".equals(listingDecision);
+        if (approved && note.isEmpty()) note = "Đã kiểm tra và duyệt thành công.";
+        if ((!approved && note.length() < 10) || note.length() > 2000) throw new BadRequestException("Lý do từ chối phải có từ 10 đến 2000 ký tự.");
         if (capabilityDecision.equals("REJECT") && listingDecision.equals("APPROVE")) throw new BadRequestException("Không thể công khai dịch vụ khi từ chối capability.");
         var row = registrations.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ."));
         requireReviewer();
@@ -76,35 +78,68 @@ public class ServiceReviewService {
         if (actor.getUserId().equals(row.getUser().getUserId()))
             throw new AppException("Không được tự xét duyệt hồ sơ của mình.", HttpStatus.FORBIDDEN);
         pending(row);
+        if (row.getRevision() != revision) throw new AppException("Hồ sơ đã có phiên bản mới. Vui lòng tải lại trước khi duyệt.", HttpStatus.CONFLICT);
         var owner = users.findForRegistrationUpdate(row.getUser().getUserId()).orElseThrow();
         if (owner.getStatus() != UserStatus.ACTIVE) throw new AppException("Tài khoản người đăng ký không còn hoạt động.", HttpStatus.CONFLICT);
+        var target = row.getTargetService();
+        if (target != null && "APPROVE".equals(listingDecision) && (!submissions.canManage(owner.getUserId()) || "DELETED".equals(target.getStatus()) || !Objects.equals(row.getServiceRevision(), target.getRevision())))
+            throw new AppException("Dịch vụ gốc đã thay đổi hoặc quyền quản lý đã ngừng. Không thể áp dụng yêu cầu cũ.", HttpStatus.CONFLICT);
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id);
         boolean approveCapability = capabilityDecision.equals("APPROVE");
         if (approveCapability) {
-            if (files.isEmpty() || files.stream().anyMatch(f -> f.getFileContent() == null || f.getFileContent().length == 0))
+            if (!"DELETE".equals(row.getOperation()) && (files.isEmpty() || files.stream().anyMatch(f -> f.getFileContent() == null || f.getFileContent().length == 0)))
                 throw new BadRequestException("Hồ sơ thiếu tài liệu xác minh, chưa thể cấp capability.");
             var type = capabilityTypes.findByCode("MANAGE_SERVICE").orElseThrow(() -> new BadRequestException("Chưa cấu hình capability MANAGE_SERVICE."));
             var existing = capabilities.findByUser_UserId(owner.getUserId()).stream().filter(c -> c.getCapability().getCode().equals("MANAGE_SERVICE")).findFirst();
             var capability = existing.orElseGet(() -> UserCapability.builder().user(owner).capability(type).build());
-            capability.setStatus("ACTIVE"); capability.setGrantedAt(LocalDateTime.now()); capabilities.save(capability);
+            if (!"ACTIVE".equals(capability.getStatus())) { capability.setStatus("ACTIVE"); capability.setGrantedAt(LocalDateTime.now()); capabilities.save(capability); }
         }
         if (listingDecision.equals("APPROVE")) {
+            if (!"DELETE".equals(row.getOperation()) && listings.findByProvider_UserIdOrderByServiceIdDesc(owner.getUserId()).stream()
+                    .anyMatch(s -> (target == null || !s.getServiceId().equals(target.getServiceId())) && !"DELETED".equals(s.getStatus())
+                            && s.getServiceName().equalsIgnoreCase(row.getServiceName().trim())))
+                throw new AppException("Tên dịch vụ trùng với dịch vụ khác của nhà cung cấp.", HttpStatus.CONFLICT);
             if (row.getServiceName() == null || row.getServiceName().isBlank() || row.getDescription() == null || row.getDescription().isBlank()
                     || row.getServiceArea() == null || row.getServiceArea().isBlank() || row.getContactInfo() == null || row.getContactInfo().isBlank()
                     || !Set.of("FIXED", "FROM", "NEGOTIABLE").contains(Objects.toString(row.getPricingType(), ""))
                     || (!"NEGOTIABLE".equals(row.getPricingType()) && (row.getPrice() == null || row.getPrice().signum() <= 0)))
                 throw new BadRequestException("Thông tin dịch vụ chưa đầy đủ để công khai.");
             if (listings.existsByRegistration_RegistrationId(id)) throw new AppException("Hồ sơ đã có dịch vụ.", HttpStatus.CONFLICT);
-            listings.save(org.hlrcs.entity.Service.builder().provider(owner).registration(row).category(row.getCategory())
-                    .serviceName(row.getServiceName()).description(row.getDescription()).contactInfo(row.getContactInfo()).contactEmail(row.getContactEmail())
-                    .pricingType(row.getPricingType()).price(row.getPrice()).serviceArea(row.getServiceArea()).status("ACTIVE").build());
+            var listing = target == null ? org.hlrcs.entity.Service.builder().provider(owner).build() : target;
+            if (target != null && target.getRegistration() != null) target.getRegistration().setTargetService(target);
+            if ("DELETE".equals(row.getOperation())) listing.setStatus("DELETED");
+            else {
+                listing.setCategory(row.getCategory()); listing.setServiceName(row.getServiceName()); listing.setDescription(row.getDescription());
+                listing.setContactInfo(row.getContactInfo()); listing.setContactEmail(row.getContactEmail()); listing.setPricingType(row.getPricingType());
+                listing.setPrice(row.getPrice()); listing.setServiceArea(row.getServiceArea()); listing.setStatus("ACTIVE");
+            }
+            listing.setRegistration(row); listing.setRevision(listing.getRevision() + 1);
+            listings.saveAndFlush(listing); row.setTargetService(listing);
         }
         row.setCapabilityDecision(capabilityDecision); row.setListingDecision(listingDecision);
         row.setStatus(approveCapability ? RegistrationStatus.APPROVED : RegistrationStatus.REJECTED);
         row.setReviewer(actor); row.setReviewedAt(LocalDateTime.now()); row.setReasonNote(note);
+        row.setRevision(row.getRevision() + 1);
         files.forEach(f -> f.setVerificationStatus(approveCapability ? "APPROVED" : "REJECTED"));
         registrations.saveAndFlush(row);
         audit(row, approveCapability ? "APPROVED" : "REJECTED", "Capability: " + capabilityDecision + "; Listing: " + listingDecision + ". " + note);
+        return detail(id);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Detail requestSupplement(Integer id, String reason, int revision) {
+        requireReviewer();
+        var row = registrations.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ."));
+        if (row.getUser().getUserId().equals(auth.getCurrentUser().getUserId())) throw new AppException("Không được tự xét duyệt hồ sơ của mình.", HttpStatus.FORBIDDEN);
+        pending(row);
+        if (row.getRevision() != revision) throw new AppException("Hồ sơ đã có phiên bản mới. Vui lòng tải lại.", HttpStatus.CONFLICT);
+        String note = reason.trim();
+        if (note.length() < 10 || note.length() > 2000) throw new BadRequestException("Yêu cầu bổ sung cần từ 10 đến 2000 ký tự.");
+        row.setStatus(RegistrationStatus.NEEDS_SUPPLEMENT); row.setRequestedChanges(note);
+        row.setSupplementRequestedAt(LocalDateTime.now()); row.setReviewer(auth.getCurrentUser());
+        row.setReviewedAt(LocalDateTime.now()); row.setReasonNote(note); row.setRevision(row.getRevision() + 1);
+        registrations.saveAndFlush(row);
+        audit(row, "REQUESTED_SUPPLEMENT", "Revision " + row.getRevision() + ": " + note);
         return detail(id);
     }
 }
