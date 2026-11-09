@@ -65,3 +65,16 @@ test('a late 401 from a previous token cannot clear a newer session', async () =
   await assert.rejects(previousRequest, error => error.status === 401);
   assert.equal(getToken(), 'new-session');
 });
+
+test('Google login posts only the credential and a failed attempt preserves the existing session', async () => {
+  saveToken('existing-session', false);
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/auth/google');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers.Authorization, undefined);
+    assert.deepEqual(JSON.parse(options.body), { idToken: 'google-credential' });
+    return new Response(JSON.stringify({ success: false, message: 'Invalid credential' }), { status: 401 });
+  };
+  await assert.rejects(authApi.googleLogin('google-credential'), error => error.status === 401);
+  assert.equal(getToken(), 'existing-session');
+});

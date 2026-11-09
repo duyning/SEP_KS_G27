@@ -3,6 +3,7 @@ package org.hlrcs.service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.hlrcs.dto.request.ChangePasswordRequest;
+import org.hlrcs.dto.request.GoogleLoginRequest;
 import org.hlrcs.dto.request.LoginRequest;
 import org.hlrcs.dto.request.RegisterRequest;
 import org.hlrcs.dto.request.UpdateProfileRequest;
@@ -15,6 +16,8 @@ public interface AuthService {
     AuthResponse register(RegisterRequest request);
 
     AuthResponse login(LoginRequest request);
+
+    AuthResponse loginWithGoogle(GoogleLoginRequest request);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 

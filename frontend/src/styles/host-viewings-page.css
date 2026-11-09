@@ -8,17 +8,10 @@
 .host-viewings-register:focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
 .host-viewings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .host-viewings-heading h2 { font-size: 22px; }
-.host-viewings-counts { display: flex; flex-wrap: wrap; gap: 12px 28px; padding: 20px 0; border-block: 1px solid #e2e8f0; margin-bottom: 24px; color: #64748b; }
-.host-viewings-counts strong { color: #0f172a; margin-left: 8px; }
 .host-viewings-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
 .host-viewings-filters select, .host-viewings-filters input { border: 1px solid #dce4ef; background: #fff; border-radius: 6px; padding: 10px 12px; font: inherit; min-width: 0; max-width: 100%; color: #334155; }
 .host-viewings-search { display: flex; align-items: center; flex: 1 1 260px; min-width: 0; background: white; border: 1px solid #dce4ef; border-radius: 6px; padding-left: 12px; color: #64748b; }
 .host-viewings-search input { width: 100%; border: 0; }
-.host-viewings-result { margin-top: 16px !important; color: #64748b; }
-.host-viewings-details { display: grid; gap: 12px; }
-.host-viewings-details div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; }
-.host-viewings-details dt { color: #64748b; }
-.host-viewings-details dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .host-viewings-route > .host-footer { margin-left: var(--p-sidebar-width); }
 @media (min-width: 1600px) {
   .host-viewings-state { max-width: 650px; margin-top: 64px; padding: 75px 30px; }
@@ -34,4 +27,42 @@
   .host-viewings-register { width: 100%; }
   .host-viewings-filters > select, .host-viewings-filters > input { flex: 1 1 140px; }
   .host-viewings-route > .host-footer { padding: 18px 16px; font-size: 11px; }
+}
+
+.host-viewings-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.host-viewings-list :is(.host-viewings-heading, .host-viewings-filters) { margin-bottom: 12px; }
+.host-viewings-group { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; min-width: 0; }
+.host-viewings-table-scroll { overflow-x: auto; }
+.host-viewings-table { width: 100%; min-width: 520px; border-collapse: collapse; text-align: start; }
+.host-viewings-table :is(th, td) { padding: 8px 12px; text-align: start; border-top: 1px solid #e2e8f0; overflow-wrap: anywhere; }
+.host-viewings-table th { background: #f8fafc; color: #475569; font-size: .8125rem; }
+.host-viewings-table td small { display: block; color: #475569; }
+.host-viewings-table td .p-button { min-height: 36px; white-space: nowrap; }
+.host-viewings-table .p-badge.warning { background: #fffbeb; color: #854d0e; border-color: #fde68a; }
+.host-viewings-table .p-badge.danger { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.host-viewings-table-scroll:focus-visible { outline: 2px solid #0f766e; outline-offset: -2px; }
+.host-viewings-availability, .host-viewings-empty { margin: 0; padding: 10px 14px; background: #f0fdfa; color: #134e4a; }
+.host-viewings-availability p { margin: 0; }
+.host-viewings-availability button { margin-top: 6px; }
+@media (max-width: 600px) {
+  .host-viewings-table td .p-button { min-height: 44px; }
+  .host-viewings-table :is(th, td):last-child { position: sticky; right: 0; background: #fff; }
+  .host-viewings-table th:last-child { background: #f8fafc; }
+}
+.host-viewings-property-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.host-viewings-property-grid .hp-card-numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.host-viewings-property-grid .hp-card-numbers span { overflow-wrap: anywhere; }
+.host-viewings-property-grid .hp-card-actions .p-button { min-height: 44px; }
+.host-viewings-pending-count {
+  background: #fffbeb;
+  color: #854d0e;
+  border: 1px solid #fde68a;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: .75rem;
+}
+@media (max-width: 760px) {
+  .host-viewings-property-grid { grid-template-columns: minmax(0, 1fr); }
+  .host-viewings-property-grid .hp-card-numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .host-viewings-property-grid .hp-card-numbers > div:nth-child(3) { border-left: 0; }
 }

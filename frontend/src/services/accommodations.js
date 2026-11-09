@@ -11,6 +11,7 @@ export function accommodationQuery(values = {}) {
 const publicRequest = (path, signal) => request(path, { basePath: '/api/properties', authenticated: false, signal });
 const validPublicContact = value => value == null || (typeof value === 'object'
   && [value.phone, value.zaloPhone].every(phone => phone == null || (typeof phone === 'string' && detailPhone(phone) === phone))
+  && (value.hostName == null || typeof value.hostName === 'string')
   && Boolean(value.phone || value.zaloPhone));
 const validAccommodation = item => item && [item.propertyId, item.roomTypeId].every(id => Number.isInteger(id) && id > 0)
   && typeof item.propertyName === 'string' && typeof item.roomTypeName === 'string'

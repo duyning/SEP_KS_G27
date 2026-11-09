@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.hlrcs.dto.request.ChangePasswordRequest;
+import org.hlrcs.dto.request.GoogleLoginRequest;
 import org.hlrcs.dto.request.LoginRequest;
 import org.hlrcs.dto.request.RegisterRequest;
 import org.hlrcs.dto.request.UpdateProfileRequest;
@@ -18,8 +19,11 @@ import org.hlrcs.exception.ResourceNotFoundException;
 import org.hlrcs.repository.UserCapabilityRepository;
 import org.hlrcs.repository.UserRepository;
 import org.hlrcs.security.CustomUserDetails;
+import org.hlrcs.security.GoogleTokenVerifier;
+import org.hlrcs.security.GoogleUserInfo;
 import org.hlrcs.security.JwtTokenProvider;
 import org.hlrcs.service.AuthService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +34,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,17 +46,20 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
-                           JwtTokenProvider tokenProvider) {
+                           JwtTokenProvider tokenProvider,
+                           GoogleTokenVerifier googleTokenVerifier) {
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
+        this.googleTokenVerifier = googleTokenVerifier;
     }
 
     @Override
@@ -79,6 +88,7 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
                 .role(assignedRole)
                 .status(UserStatus.ACTIVE)
+                .authProvider("LOCAL")
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -117,6 +127,67 @@ public class AuthServiceImpl implements AuthService {
         String token = tokenProvider.generateToken(authentication);
 
         List<String> capabilities = userDetails.getCapabilities();
+
+        return AuthResponse.builder()
+                .accessToken(token)
+                .tokenType("Bearer")
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phoneNumber(user.getPhoneNumber())
+                .organization(user.getOrganization())
+                .preferredArea(user.getPreferredArea())
+                .avatar(user.getAvatar())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
+                .capabilities(capabilities)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
+        GoogleUserInfo googleUser = googleTokenVerifier.verifyToken(request.idToken());
+        User user = userRepository.findByGoogleSubject(googleUser.subject()).orElse(null);
+
+        if (user == null) {
+            String email = googleUser.email().trim().toLowerCase(Locale.ROOT);
+            if (userRepository.existsByEmail(email)) {
+                throw new AppException("Email này đã thuộc một tài khoản HL-RCS. Hãy dùng phương thức đăng nhập ban đầu hoặc liên hệ hỗ trợ.", HttpStatus.CONFLICT);
+            }
+
+            String fullName = googleUser.fullName();
+            if (fullName == null || fullName.isBlank() || fullName.length() > 255) {
+                fullName = email.substring(0, email.indexOf('@'));
+            }
+
+            user = User.builder()
+                    .email(email)
+                    .fullName(fullName.trim())
+                    .avatar(googleUser.avatar())
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .role(UserRole.USER)
+                    .status(UserStatus.ACTIVE)
+                    .authProvider("GOOGLE")
+                    .googleSubject(googleUser.subject())
+                    .build();
+            try {
+                user = userRepository.saveAndFlush(user);
+            } catch (DataIntegrityViolationException ex) {
+                throw new AppException("Không thể tạo tài khoản Google. Vui lòng thử đăng nhập lại.", HttpStatus.CONFLICT);
+            }
+        } else if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AppException("Tài khoản của bạn đã bị vô hiệu hóa.", HttpStatus.FORBIDDEN);
+        }
+
+        List<String> capabilities = userCapabilityRepository.findByUser_UserIdAndStatus(user.getUserId(), "ACTIVE")
+                .stream()
+                .filter(uc -> uc.getCapability() != null)
+                .map(uc -> uc.getCapability().getCode())
+                .collect(Collectors.toList());
+
+        String token = tokenProvider.generateTokenFromUser(user);
 
         return AuthResponse.builder()
                 .accessToken(token)

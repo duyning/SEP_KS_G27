@@ -2,7 +2,6 @@ package org.hlrcs.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hlrcs.entity.enums.BookingStatus;
 
 import java.time.LocalDateTime;
@@ -39,7 +38,27 @@ public class Booking {
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
-    @CreationTimestamp
+    @Column(name = "contact_name", length = 120)
+    private String contactName;
+
+    @Column(name = "contact_phone", length = 20)
+    private String contactPhone;
+
+    @Column(name = "decision_reason", length = 500)
+    private String decisionReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by")
+    private User processedBy;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    private void initializeCreatedAt() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 }

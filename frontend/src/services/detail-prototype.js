@@ -33,7 +33,7 @@ export function toDetailPrototype(item){
   initialEstimate:estimate,estimateDisplay:estimate==null?'Cần xác nhận thêm':detailMoney(estimate),
   description:[item.description,item.propertyDescription!==item.description?item.propertyDescription:null].filter(Boolean).join('\n\n')||'Chủ trọ chưa bổ sung mô tả chi tiết.',
   amenities:[...new Set([...amenities,...common])],rules:[...labels(item.selectedRules,RULES),...(item.rules?[item.rules]:[])],distances:referenceDistances,
-  hostInfo:{name:item.propertyName,avatar:null,role:'Chủ trọ / Đại diện nhà trọ',joined:item.publishedAt?`Hồ sơ duyệt ${detailDate(item.publishedAt)}`:'Thông tin liên hệ công khai',responseRate:'Liên hệ để xác nhận',phone:phone||'',zalo:zaloLink(item.publicContact?.zaloPhone)?.split('/').at(-1)||''},
+  hostInfo:{name:item.publicContact?.hostName?.trim()||item.propertyName,avatar:null,role:'Chủ trọ / Đại diện nhà trọ',joined:item.publishedAt?`Hồ sơ duyệt ${detailDate(item.publishedAt)}`:'Thông tin liên hệ công khai',responseRate:'Liên hệ để xác nhận',phone:phone||'',zalo:zaloLink(item.publicContact?.zaloPhone)?.split('/').at(-1)||''},
   reviews:item.reviews.latest,
  };
 }

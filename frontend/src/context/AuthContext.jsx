@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   }, [reload]);
   const acceptSession = (data, remember) => { sessionVersion.current++; saveToken(data.accessToken, remember); setUser(data); setSessionError(''); };
   const login = async (values, remember) => { const data = await authApi.login(values); acceptSession(data, remember); };
+  const loginWithGoogle = async (idToken, remember) => { const data = await authApi.googleLogin(idToken); acceptSession(data, remember); };
   const register = async values => { const data = await authApi.register(values); acceptSession(data, false); };
   const updateProfile = async values => {
     const version = sessionVersion.current;
@@ -44,6 +45,6 @@ export function AuthProvider({ children }) {
     sessionVersion.current++;
     try { await authApi.logout(); } finally { sessionVersion.current++; clearToken(); setUser(null); setSessionError(''); }
   };
-  return <AuthContext.Provider value={{ user, loading, sessionError, login, register, updateProfile, refreshUser, logout, retry: () => setReload(value => value + 1) }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, sessionError, login, loginWithGoogle, register, updateProfile, refreshUser, logout, retry: () => setReload(value => value + 1) }}>{children}</AuthContext.Provider>;
 }
 export const useAuth = () => useContext(AuthContext);

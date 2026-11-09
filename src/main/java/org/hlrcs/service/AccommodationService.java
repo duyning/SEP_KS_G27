@@ -213,7 +213,7 @@ public class AccommodationService {
         if (profile == null) return null;
         String phone = publicPhone(profile.contactPhone());
         String zalo = publicPhone(profile.zaloPhone());
-        return phone == null && zalo == null ? null : new AccommodationDetail.PublicContact(phone, zalo);
+        return phone == null && zalo == null ? null : new AccommodationDetail.PublicContact(phone, zalo, profile.managerName());
     }
 
     private String publicPhone(String value) {
