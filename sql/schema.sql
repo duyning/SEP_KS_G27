@@ -359,6 +359,7 @@ CREATE TABLE `wishlists` (
     `user_id` INT NOT NULL,
     `room_type_id` INT NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `uk_wishlist_user_room_type` UNIQUE (`user_id`, `room_type_id`),
     CONSTRAINT `fk_wl_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_wl_room_type` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

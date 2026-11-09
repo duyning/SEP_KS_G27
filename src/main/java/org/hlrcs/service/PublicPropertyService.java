@@ -17,6 +17,11 @@ import java.util.*;
 @RequiredArgsConstructor
 @Transactional(readOnly=true)
 public class PublicPropertyService {
+    // Campus center from OpenStreetMap way 800878327 (FPT University, Hòa Lạc).
+    private static final double FPT_LATITUDE = 21.01354;
+    private static final double FPT_LONGITUDE = 105.52522;
+    private static final double EARTH_RADIUS_METERS = 6_371_000;
+
     private final PropertyRepository properties;
     private final PropertyDocumentRepository documents;
     private final RoomTypeRepository types;
@@ -27,7 +32,8 @@ public class PublicPropertyService {
                        BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms) {}
     public record Listing(Integer propertyId,String name,String address,String commune,String propertyType,
                           String description,List<String> photos,List<String> amenities,
-                          List<String> rules,List<Type> roomTypes,BigDecimal minPrice,int totalRooms,int vacantRooms) {}
+                          List<String> rules,List<Type> roomTypes,BigDecimal minPrice,int totalRooms,int vacantRooms,
+                          Double distanceToFptMeters) {}
     public record Image(byte[] bytes,String contentType) {}
 
     private PropertyRegistrationRequest submission(Property property) {
@@ -62,8 +68,27 @@ public class PublicPropertyService {
             if(prices.isEmpty())values.stream().map(Type::price).filter(Objects::nonNull).forEach(prices::add);
             return new Listing(property.getPropertyId(),property.getName(),property.getAddress(),form.commune(),form.propertyType(),
                 property.getDescription(),photos,form.amenities()==null?List.of():form.amenities(),form.selectedRules()==null?List.of():form.selectedRules(),values,prices.stream().min(BigDecimal::compareTo).orElse(null),
-                values.stream().mapToInt(Type::totalRooms).sum(),values.stream().mapToInt(Type::vacantRooms).sum());
+                values.stream().mapToInt(Type::totalRooms).sum(),values.stream().mapToInt(Type::vacantRooms).sum(),
+                distanceToFptMeters(form));
         }).toList();
+    }
+    private static Double distanceToFptMeters(PropertyRegistrationRequest form) {
+        if (form.latitude() == null || form.longitude() == null) return null;
+        try {
+            double latitude = Double.parseDouble(form.latitude());
+            double longitude = Double.parseDouble(form.longitude());
+            if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
+                    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+
+            double latitudeDelta = Math.toRadians(latitude - FPT_LATITUDE);
+            double longitudeDelta = Math.toRadians(longitude - FPT_LONGITUDE);
+            double haversine = Math.pow(Math.sin(latitudeDelta / 2), 2)
+                    + Math.cos(Math.toRadians(latitude)) * Math.cos(Math.toRadians(FPT_LATITUDE))
+                    * Math.pow(Math.sin(longitudeDelta / 2), 2);
+            return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, haversine)));
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
     public Image photo(Integer id) {
         var file=documents.findById(id).orElseThrow(this::missing);

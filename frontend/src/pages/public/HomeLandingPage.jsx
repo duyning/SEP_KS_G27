@@ -1,10 +1,12 @@
+import {useFavoriteActions} from '../../context/FavoritesContext.jsx';
+import FavoriteNotice from '../../components/FavoriteNotice.jsx';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {Check, ChevronRight, Heart, LogOut, MapPin, Phone} from 'lucide-react';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {landingFor, roleLabels} from '../../routing/screens.js';
 import {PublicListingImage, publicAmenityLabel} from '../../components/PublicPropertyCard.jsx';
-import {fetchPublicProperties, filterPublicProperties, normalizeLocation, homeRoomType, homeDetailUrl} from '../../services/public-properties.js';
+import {fetchPublicProperties, filterPublicProperties, normalizeLocation, homeRoomType, homeDetailUrl, sortHomeProperties} from '../../services/public-properties.js';
 import {money} from '../../services/room-types.js';
 import HomePrototype from './HomePrototype.jsx';
 import '../../styles/home-landing.css';
@@ -12,15 +14,11 @@ import '../../styles/home-prototype.css';
 import '../../styles/home-prototype-integration.css';
 import '../../styles/home-mobile.css';
 
-const initialFilters = {location:'all', price:'all', type:'all', tab:'all', chip:'all'};
-const savedKey = 'hlrcs:public-saved-properties';
+const initialFilters = {location:'all', price:'all', type:'all', tab:'all', chip:'all', sort:'default'};
 const viewKey = 'hlrcs:home-view';
 function readHomeView(){
  const defaults={filters:{...initialFilters},visible:6};
- try{const value=JSON.parse(sessionStorage.getItem(viewKey)||'null');if(!value)return defaults;return {filters:Object.fromEntries(Object.entries(initialFilters).map(([key,fallback])=>[key,typeof value.filters?.[key]==='string'?value.filters[key]:fallback])),visible:Number.isSafeInteger(value.visible)&&value.visible>=6&&value.visible<=1000?value.visible:6};}catch{return defaults;}
-}
-function readSaved() {
-  try { const value=JSON.parse(localStorage.getItem(savedKey)||'[]'); return Array.isArray(value)?value:[]; } catch { return []; }
+ try{const value=JSON.parse(sessionStorage.getItem(viewKey)||'null');if(!value)return defaults;return {filters:Object.fromEntries(Object.entries(initialFilters).map(([key,fallback])=>[key,typeof value.filters?.[key]==='string'&&!(key==='type'&&value.filters[key]==='o-ghep')&&!(key==='tab'&&value.filters[key]==='studio')&&!(key==='sort'&&!['default','price-asc','price-desc'].includes(value.filters[key]))?value.filters[key]:fallback])),visible:Number.isSafeInteger(value.visible)&&value.visible>=6&&value.visible<=1000?value.visible:6};}catch{return defaults;}
 }
 export function filterHomeProperties(data, filters) {
   const amenity = {'dieu-hoa':'airConditioner','tu-do':'flexibleHours','ban-cong':'balcony'}[filters.chip] || 'all';
@@ -29,18 +27,17 @@ export function filterHomeProperties(data, filters) {
     const types = property.roomTypes || [];
     const text = normalizeLocation([property.propertyType, ...types.map(type=>type.name)].join(' '));
     const amenities = [...(property.amenities||[]), ...types.flatMap(type=>type.amenities||[])];
-    if (filters.tab === 'studio' && !/studio|chung cu|can ho/.test(text)) return false;
     if (['tan-xa','thach-hoa'].includes(filters.tab) && !filterPublicProperties([property],{area:filters.tab}).length) return false;
     if (filters.type === 'khep-kin' && !amenities.includes('privateBathroom') && !text.includes('khep kin')) return false;
     if (filters.type === 'gac-lung' && !amenities.includes('loft') && !text.includes('gac')) return false;
     if (filters.type === 'chung-cu-mini' && !/studio|chung cu|can ho/.test(text)) return false;
-    if (filters.type === 'o-ghep' && !text.includes('ghep')) return false;
     // Do not infer distance from an address: this shortcut requires a real measured distance.
-    if (filters.chip === 'gan-fpt' && !(property.distanceToFptMeters != null && property.distanceToFptMeters < 1000)) return false;
+    if (filters.chip === 'gan-fpt' && !(Number.isFinite(property.distanceToFptMeters)
+      && property.distanceToFptMeters >= 0 && property.distanceToFptMeters < 1000)) return false;
     return true;
   });
 }
-function PropertyCard({property, saved, onSave}) {
+function PropertyCard({property, saved, onSave,saveBusy}) {
   const type = homeRoomType(property);
   const detailUrl = homeDetailUrl(property), contactUrl = homeDetailUrl(property,true);
   const price = type?.price ?? property.minPrice;
@@ -51,7 +48,7 @@ function PropertyCard({property, saved, onSave}) {
       {detailUrl?<Link className="room-thumb-link home-image-button" to={detailUrl} aria-label={`Xem ${property.name}`}><PublicListingImage src={property.photos?.[0]} name={property.name} className="room-img"/></Link>:<div className="room-thumb-link home-image-button" title={unavailable}><PublicListingImage src={property.photos?.[0]} name={property.name} className="room-img"/></div>}
       <span className="room-badge-top"><Check size={12}/>100% Xác thực chính chủ</span>
       <span className="room-badge-avail">{property.vacantRooms>0?`Còn ${property.vacantRooms} phòng`:property.totalRooms?'Hết phòng':'Chưa cập nhật phòng'}</span>
-      <button type="button" className={`btn-card-wishlist ${saved?'active':''}`} aria-label={`${saved?'Bỏ lưu':'Lưu'} ${property.name} trên thiết bị`} aria-pressed={saved} onClick={onSave}><Heart size={18} fill={saved?'currentColor':'none'}/></button>
+      <button type="button" className={`btn-card-wishlist ${saved?'active':''}`} aria-label={`${saved?'Bỏ lưu':'Lưu'} ${property.name} — ${type?.name||'loại phòng'}`} aria-pressed={saved} disabled={!type||saveBusy} aria-busy={saveBusy} onClick={onSave}><Heart size={18} fill={saved?'currentColor':'none'}/></button>
     </div>
     <div className="room-body">
       <div className="room-location"><MapPin size={14}/><span>{property.address || property.commune || 'Chưa cập nhật địa chỉ'}</span></div>
@@ -65,7 +62,7 @@ function PropertyCard({property, saved, onSave}) {
 export default function HomeLandingPage() {
   const {user, logout} = useAuth();
   const [data,setData] = useState([]), [loading,setLoading] = useState(true), [error,setError] = useState(''), [revision,setRevision] = useState(0);
-  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible), [saved,setSaved] = useState(readSaved), [mobileOpen,setMobileOpen] = useState(false), [announcementOpen,setAnnouncementOpen] = useState(false);
+  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible), [mobileOpen,setMobileOpen] = useState(false), [announcementOpen,setAnnouncementOpen] = useState(false);
   useEffect(()=>{
     const controller=new AbortController(); setLoading(true); setError('');
     fetchPublicProperties(controller.signal).then(value=>{if(!controller.signal.aborted)setData(value);}).catch(error=>{if(!controller.signal.aborted)setError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
@@ -82,25 +79,38 @@ export default function HomeLandingPage() {
   useEffect(()=>{if(previousFilters.current!==filters){previousFilters.current=filters;setVisible(6);}},[filters]);
   useEffect(()=>{try{sessionStorage.setItem(viewKey,JSON.stringify({filters,visible}));}catch{}},[filters,visible]);
   useEffect(()=>{const previous=document.title; document.title='HL_RCS | Hệ thống kết nối phòng trọ thông minh tại Hòa Lạc';return()=>{document.title=previous;};},[]);
-  const filtered=useMemo(()=>filterHomeProperties(data,filters),[data,filters]);
-  const save=id=>setSaved(previous=>{const next=previous.includes(id)?previous.filter(value=>value!==id):[...previous,id];try{localStorage.setItem(savedKey,JSON.stringify(next));}catch{}return next;});
-  const scrollListings=()=>document.getElementById('explore')?.scrollIntoView({behavior:'smooth'});
+  const favorites=useFavoriteActions(data.map(property=>homeRoomType(property)?.roomTypeId));
+  const filtered=useMemo(()=>sortHomeProperties(filterHomeProperties(data,filters),filters.sort),[data,filters]);
+  const showResults=()=>{
+    setVisible(6);
+    const heading=document.getElementById('home-results-heading');
+    heading?.focus({preventScroll:true});
+    heading?.scrollIntoView({block:'center'});
+  };
   const onClick=event=>{
     const tab=event.target.closest('[data-tab]'), chip=event.target.closest('[data-chip]');
     if(tab)setFilters(previous=>({...previous,tab:tab.dataset.tab}));
-    if(chip)setFilters(previous=>({...previous,chip:chip.dataset.chip}));
+    if(chip){
+      setFilters(previous=>({...previous,chip:chip.dataset.chip,tab:'all'}));
+      showResults();
+    }
     if(event.target.closest('#mobileMenuBtn')){setMobileOpen(value=>!value);setAnnouncementOpen(false);}
     if(event.target.closest('.hm-menu-dismiss'))setMobileOpen(false);
     if(event.target.closest('#homeInfoToggle')){setAnnouncementOpen(value=>!value);setMobileOpen(false);}
     if(event.target.closest('.nav-menu a'))setMobileOpen(false);
   };
   const onChange=event=>{
-    const key={filterLocation:'location',filterPrice:'price',filterType:'type'}[event.target.id];
+    const key={filterLocation:'location',filterPrice:'price',filterType:'type',homePriceSort:'sort'}[event.target.id];
     if(key)setFilters(previous=>({...previous,[key]:event.target.value}));
   };
-  const onSubmit=event=>{if(event.target.id==='searchForm'){event.preventDefault();scrollListings();}};
-  const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{saved.length}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><button className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout()}><LogOut size={15}/></button></div></>:null;
-  const listings=loading?<div className="home-list-state" role="status">Đang tải danh sách nhà trọ...</div>:error?<div className="home-list-state" role="alert"><h3>Chưa thể tải danh sách nhà trọ</h3><p>{error}</p><button className="btn-primary-sm" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>:!filtered.length?<div className="home-list-state"><h3>{data.length?'Không tìm thấy phòng trọ phù hợp':'Chưa có nhà trọ được công khai'}</h3><p>{data.length?'Vui lòng thử điều chỉnh lại bộ lọc hoặc chọn mức giá khác.':'Nhà trọ sẽ xuất hiện sau khi được xét duyệt và hiển thị.'}</p>{data.length>0&&<button className="btn-primary-sm" onClick={()=>setFilters(initialFilters)}>Xem tất cả phòng</button>}</div>:filtered.slice(0,visible).map(property=><PropertyCard key={property.propertyId} property={property} saved={saved.includes(property.propertyId)} onSave={()=>save(property.propertyId)}/>);
+  const onSubmit=event=>{
+    if(event.target.id!=='searchForm')return;
+    event.preventDefault();
+    setFilters(previous=>({...previous,tab:'all'}));
+    showResults();
+  };
+  const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{favorites.total??0}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><button className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></button></div></>:null;
+  const listings=loading?<div className="home-list-state" role="status">Đang tải danh sách nhà trọ...</div>:error?<div className="home-list-state" role="alert"><h3>Chưa thể tải danh sách nhà trọ</h3><p>{error}</p><button className="btn-primary-sm" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>:!filtered.length?<div className="home-list-state"><h3>{data.length?'Không tìm thấy phòng trọ phù hợp':'Chưa có nhà trọ được công khai'}</h3><p>{data.length?'Vui lòng thử điều chỉnh lại bộ lọc hoặc chọn mức giá khác.':'Nhà trọ sẽ xuất hiện sau khi được xét duyệt và hiển thị.'}</p>{data.length>0&&<button className="btn-primary-sm" onClick={()=>setFilters(initialFilters)}>Xem tất cả phòng</button>}</div>:filtered.slice(0,visible).map(property=><PropertyCard key={property.propertyId} property={property} saved={favorites.isSaved(homeRoomType(property)?.roomTypeId)} saveBusy={favorites.busy(homeRoomType(property)?.roomTypeId)} onSave={()=>favorites.toggle(homeRoomType(property)?.roomTypeId)}/>);
   const more=!loading&&!error&&visible<filtered.length?<button className="btn-outline-lg" onClick={()=>setVisible(value=>value+6)}>Xem thêm {filtered.length-visible} nhà trọ quanh Hòa Lạc<ChevronRight size={16}/></button>:null;
-  return <HomePrototype {...{listings,more,account,filters,onClick,onSubmit,onChange,mobileOpen,announcementOpen}} savedCount={saved.length}/>;
+  return <><FavoriteNotice favorites={favorites}/><HomePrototype {...{listings,more,account,filters,onClick,onSubmit,onChange,mobileOpen,announcementOpen}} savedCount={favorites.total??0}/></>;
 }

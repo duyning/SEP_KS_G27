@@ -1,0 +1,22 @@
+.favorite-notice {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;margin:16px auto;border:1px solid #fecaca;border-radius:12px;background:#fef2f2;color:#991b1b;max-width:1200px;}
+.prototype-home button[aria-busy="true"],.prototype-home .btn-card-wishlist:disabled {cursor:wait;opacity:.6;}
+.prototype-home .favorites-page {padding-top:40px;padding-bottom:64px;min-height:65vh;}
+.favorites-heading {display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px;}
+.favorites-heading h1 {font-size:clamp(24px,3vw,34px);line-height:1.3;margin:10px 0;color:var(--slate-900);}
+.favorites-heading p {max-width:680px;color:var(--slate-600,#475569);line-height:1.7;}
+.favorites-eyebrow {display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--primary-dark,#0f766e);}
+.favorites-heading > a {flex-shrink:0;text-decoration:none;}
+.favorites-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;}
+.favorites-grid .room-card {min-width:0;}
+.favorites-state {display:flex;flex-direction:column;align-items:center;gap:16px;padding:64px 24px;background:#fff;border:1px solid var(--slate-200);border-radius:16px;text-align:center;}
+.favorites-state h2 {font-size:22px;}
+.favorites-state p,.favorite-unavailable p,.favorite-unavailable > span {color:var(--slate-600,#475569);line-height:1.7;}
+.favorite-unavailable {display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:24px;border:1px solid var(--slate-200);border-radius:16px;background:var(--slate-50);}
+.favorite-unavailable-icon {display:grid;place-items:center;width:64px;height:64px;border-radius:16px;background:var(--slate-200);color:var(--slate-600,#475569);}
+.favorite-unavailable h2 {font-size:20px;line-height:1.5;}
+.favorite-unavailable button {margin-top:auto;}
+.favorites-pagination {display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:32px;}
+.favorites-pagination [aria-current="page"] {background:var(--primary-dark,#0f766e);color:#fff;}
+.favorites-page .p-button.primary {background:var(--primary-dark,#0f766e);color:#fff;}
+@media(max-width:1024px) {.favorites-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px) {.favorites-heading {align-items:flex-start;flex-direction:column;}.favorites-grid {grid-template-columns:minmax(0,1fr);}.prototype-home .favorites-page {padding-top:24px;}}

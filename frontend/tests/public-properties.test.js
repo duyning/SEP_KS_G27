@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {filterPublicProperties,normalizeLocation,fetchPublicProperties,homeRoomType,homeDetailUrl} from '../src/services/public-properties.js';
+import {filterPublicProperties,normalizeLocation,fetchPublicProperties,homeRoomType,homeDetailUrl,sortHomeProperties} from '../src/services/public-properties.js';
 const rows=[{propertyId:1,commune:'Tân Xã',propertyType:'Chung cư mini',minPrice:2200000,amenities:['wifi'],roomTypes:[{amenities:['airConditioner']}]},{propertyId:2,address:'Bình Yên',minPrice:null,amenities:[],roomTypes:[]}];
 
 test('Home detail links use a real available room type with matching card pricing',()=>{
@@ -32,4 +32,13 @@ test('Home makes anonymous API requests and never falls back to fixtures',async(
  globalThis.fetch=async()=>({ok:false,json:async()=>({success:false})});
  await assert.rejects(fetchPublicProperties(),/Chưa thể tải/);
  }finally{globalThis.fetch=previous;}
+});
+
+test('home price sorting uses the displayed available room price, keeps missing prices last and does not mutate input',()=>{
+ const rows=[{propertyId:1,minPrice:1000000,roomTypes:[{roomTypeId:1,price:1000000,area:20,vacantRooms:0},{roomTypeId:2,price:3000000,area:25,vacantRooms:1}]},
+  {propertyId:2,minPrice:2000000,roomTypes:[]},{propertyId:3,minPrice:null,roomTypes:[]}];
+ assert.deepEqual(sortHomeProperties(rows,'price-asc').map(row=>row.propertyId),[2,1,3]);
+ assert.deepEqual(sortHomeProperties(rows,'price-desc').map(row=>row.propertyId),[1,2,3]);
+ assert.deepEqual(rows.map(row=>row.propertyId),[1,2,3]);
+ assert.equal(sortHomeProperties(rows,'default'),rows);
 });

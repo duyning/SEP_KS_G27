@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react';
 import {Link, useNavigate, useSearchParams} from 'react-router-dom';
 import {Heart, LogOut} from 'lucide-react';
 import {useAuth} from '../context/AuthContext.jsx';
+import {useFavorites} from '../context/FavoritesContext.jsx';
 import {authApi} from '../services/auth.js';
 import {landingFor, roleLabels} from '../routing/screens.js';
 import {Modal, useToast} from '../components/PortalUI.jsx';
@@ -19,6 +20,7 @@ const emptyPasswords={oldPassword:'',newPassword:'',confirmPassword:''};
 const tabs=['info','favorites','appointments','reports','security'];
 export default function ProfilePage() {
  const {user,updateProfile,logout}=useAuth();
+ const favorites=useFavorites();
  const notify=useToast(), navigate=useNavigate();
  const [params,setParams]=useSearchParams();
  const tab=tabs.includes(params.get('tab'))?params.get('tab'):'info';
@@ -68,7 +70,7 @@ export default function ProfilePage() {
   if(busy)return;setBusy(true);setAlert('');
   try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});setPasswords(emptyPasswords);setEyes({});setErrors({});notify('Đã đổi mật khẩu thành công.');}catch(error){fail(error);}finally{setBusy(false);setConfirming(false);}
  }
- async function signOut(){if(busy)return;setBusy(true);try{await logout();}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{navigate('/login',{replace:true});setBusy(false);}}
+ async function signOut(){if(busy)return;setBusy(true);try{if(await logout()===false)return;navigate('/login',{replace:true});}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{setBusy(false);}}
  function selectTab(key){
   if(busy)return;setAccountMenuOpen(false);setParams(key==='info'?{}:{tab:key});setErrors({});setAlert('');
   if(window.matchMedia('(max-width:600px)').matches)requestAnimationFrame(()=>{
@@ -98,6 +100,6 @@ export default function ProfilePage() {
   setErrors(previous=>({...previous,[name]:undefined}));setAlert('');
  }
  function onSubmit(event){event.preventDefault();if(event.target.id==='profileEditForm')saveProfile();else if(event.target.id==='changePasswordForm')validatePassword();}
- const account=<><Link to="/favorites" className="btn-wishlist-top" aria-label="Danh sách phòng yêu thích"><Heart size={18}/><span className="wishlist-count">0</span></Link>{user?.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user?.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user?.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user?.fullName}</span><span className="user-nav-role">{roleLabel}</span></div></Link><MotionButton className="user-nav-logout" onClick={signOut} disabled={busy} aria-label="Đăng xuất"><LogOut size={15}/></MotionButton></div></>;
+ const account=<><Link to="/favorites" className="btn-wishlist-top" aria-label="Danh sách phòng yêu thích"><Heart size={18}/><span className="wishlist-count">{favorites?.total??0}</span></Link>{user?.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user?.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user?.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user?.fullName}</span><span className="user-nav-role">{roleLabel}</span></div></Link><MotionButton className="user-nav-logout" onClick={signOut} disabled={busy} aria-label="Đăng xuất"><LogOut size={15}/></MotionButton></div></>;
  return <><ProfilePrototype {...{user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,accountMenuOpen,announcementOpen,account,onClick,onSubmit,onChange,alert}}/><AnimatePresence>{confirming&&<Modal className="pm-password-confirm" title="Xác nhận đổi mật khẩu" onClose={()=>{if(!busy)setConfirming(false);}}><p>Bạn muốn cập nhật mật khẩu đăng nhập mới?</p><div className="p-actions"><MotionButton className="p-button" disabled={busy} onClick={()=>setConfirming(false)}>Hủy bỏ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={changePassword}>{busy?'Đang cập nhật...':'Xác nhận đổi mật khẩu'}</MotionButton></div></Modal>}</AnimatePresence></>;
 }

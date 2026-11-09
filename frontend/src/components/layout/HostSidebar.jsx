@@ -21,7 +21,7 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
 
   const handleLogout = async () => {
     try {
-      await logout();
+      if (await logout() === false) return;
       navigate('/login');
     } catch {
       navigate('/login');

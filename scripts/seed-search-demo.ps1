@@ -40,16 +40,27 @@ SELECT COUNT(*) AS demo_photos FROM room_type_images i JOIN room_types t ON t.ro
 JOIN properties p ON p.property_id=t.property_id WHERE p.description LIKE '[HLRCS_DEMO_ACCOMMODATION_V1]%';
 '@
 $config = Get-Content (Join-Path $projectRoot 'src/main/resources/application.properties')
-$line = $config | Where-Object { $_ -match '^spring\.datasource\.password=' } | Select-Object -First 1
+$overrideConfig = Join-Path $projectRoot 'config/application.properties'
+if (Test-Path -LiteralPath $overrideConfig) { $config += Get-Content -LiteralPath $overrideConfig }
+$localConfig = Join-Path $projectRoot 'config/mysql-local.properties'
+if (Test-Path -LiteralPath $localConfig) { $config += Get-Content -LiteralPath $localConfig }
+$line = $config | Where-Object { $_ -match '^spring\.datasource\.password=' } | Select-Object -Last 1
 $value = $line.Substring($line.IndexOf('=') + 1)
+$usernameLine = $config | Where-Object { $_ -match '^spring\.datasource\.username=' } | Select-Object -Last 1
+$username = if ($usernameLine) { $usernameLine.Substring($usernameLine.IndexOf('=') + 1) } else { 'root' }
+if ($username -match '^\$\{DB_USERNAME:(.*)\}$') {
+    $username = if ($env:DB_USERNAME) { $env:DB_USERNAME } else { $Matches[1] }
+}
 $previousPassword = $env:MYSQL_PWD
 $previousEncoding = $OutputEncoding
 try {
     if ($value -match '^\$\{DB_PASSWORD:(.*)\}$') {
-        $env:MYSQL_PWD = if ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { $Matches[1] }
+        $fallbackPassword = $Matches[1]
+        $localPasswordLine = $config | Where-Object { $_ -match '^DB_PASSWORD=' } | Select-Object -Last 1
+        $env:MYSQL_PWD = if ($env:DB_PASSWORD) { $env:DB_PASSWORD } elseif ($localPasswordLine) { $localPasswordLine.Substring($localPasswordLine.IndexOf('=') + 1) } else { $fallbackPassword }
     } else { $env:MYSQL_PWD = $value }
     $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-    ($seed + "`n" + $gallery) | & $mysqlClient --host=127.0.0.1 --port=3306 --user=root --database=hlrcs --batch --default-character-set=utf8mb4 --max-allowed-packet=64M
+    ($seed + "`n" + $gallery) | & $mysqlClient --host=127.0.0.1 --port=3306 "--user=$username" --database=hlrcs --batch --default-character-set=utf8mb4 --max-allowed-packet=64M
     if ($LASTEXITCODE -ne 0) { throw 'Search demo seed failed. See SQL error above.' }
 } finally {
     $env:MYSQL_PWD = $previousPassword

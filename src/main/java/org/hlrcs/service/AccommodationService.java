@@ -239,6 +239,11 @@ public class AccommodationService {
         return new AccommodationDetail.ReviewSummary(total == 0 ? null : Math.round(10.0 * weighted / total) / 10.0, total, counts, latest);
     }
 
+    public List<AccommodationSummary> publicSummaries(Collection<Integer> ids) {
+        if (ids.isEmpty()) return List.of();
+        return summaries(roomTypes.findAll(PublicAccommodationPolicy.visible().and((root, query, cb) -> root.get("roomTypeId").in(ids))));
+    }
+
     private List<AccommodationSummary> summaries(List<RoomType> types) {
         if (types.isEmpty()) return List.of();
         var ids = types.stream().map(RoomType::getRoomTypeId).toList();

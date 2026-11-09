@@ -13,7 +13,7 @@ const validPublicContact = value => value == null || (typeof value === 'object'
   && [value.phone, value.zaloPhone].every(phone => phone == null || (typeof phone === 'string' && detailPhone(phone) === phone))
   && (value.hostName == null || typeof value.hostName === 'string')
   && Boolean(value.phone || value.zaloPhone));
-const validAccommodation = item => item && [item.propertyId, item.roomTypeId].every(id => Number.isInteger(id) && id > 0)
+export const validAccommodation = item => item && [item.propertyId, item.roomTypeId].every(id => Number.isInteger(id) && id > 0)
   && typeof item.propertyName === 'string' && typeof item.roomTypeName === 'string'
   && Number.isFinite(item.price) && item.price > 0 && Number.isFinite(item.areaSqm) && item.areaSqm > 0
   && item.verificationStatus === 'APPROVED' && Number.isInteger(item.availableRooms) && item.availableRooms >= 0

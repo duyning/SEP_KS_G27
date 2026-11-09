@@ -1,0 +1,8 @@
+.portal-modal.logout-confirm {max-width:420px;border-radius:16px;padding:24px;}
+.logout-confirm-icon {display:grid;place-items:center;width:48px;height:48px;margin-top:20px;border-radius:12px;background:#f0fdfa;color:#0f766e;}
+.logout-confirm.portal-modal > p {font-size:15px;color:#475569;}
+.logout-confirm-actions {display:flex;justify-content:flex-end;gap:12px;margin-top:24px;}
+.logout-confirm-actions button {min-height:44px;min-width:96px;}
+.logout-confirm-actions .primary {background:#0f766e;color:white;}
+.logout-confirm-actions button:focus-visible {outline:3px solid #0f766e;outline-offset:3px;}
+@media(max-width:480px){.logout-confirm-actions button{flex:1;}}

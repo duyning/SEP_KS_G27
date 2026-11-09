@@ -1,6 +1,6 @@
 // Roles mirror SecurityConfig, including ADMIN access to host/staff areas.
 export const roleLabels = { USER: 'Người thuê', ROOM_HOST: 'Chủ trọ', STAFF: 'Nhân viên vận hành', ADMIN: 'Quản trị viên' };
-export const portalRoles = { public: null, member: ['USER', 'ROOM_HOST', 'STAFF', 'ADMIN'], host: ['ROOM_HOST', 'ADMIN'], staff: ['STAFF', 'ADMIN'], admin: ['ADMIN'] };
+export const portalRoles = { public: null, favorites: ['USER', 'ROOM_HOST'], member: ['USER', 'ROOM_HOST', 'STAFF', 'ADMIN'], host: ['ROOM_HOST', 'ADMIN'], staff: ['STAFF', 'ADMIN'], admin: ['ADMIN'] };
 export function canAccess(portal, user) {
   if (!Object.hasOwn(portalRoles, portal)) return false;
   return portalRoles[portal] === null || !!user && portalRoles[portal].includes(user.role);
@@ -16,7 +16,8 @@ export const screens = [
   screen('search.html', '/search', 'public', 'Khám phá nhà trọ & Căn hộ tại Hòa Lạc', 'search'),
   screen('map-search.html', '/map', 'public', 'Bản đồ tìm nhà trọ Hòa Lạc', 'map'),
   screen('detail.html', '/properties/detail', 'public', 'Chi tiết nhà trọ', 'detail', { sections: ['Hình ảnh nhà trọ', 'Thông tin & tiện ích', 'Loại phòng & giá thuê', 'Vị trí', 'Đánh giá người thuê'], actions: ['Lưu nhà trọ', 'Đặt lịch xem phòng', 'Báo cáo tin đăng'] }),
-  screen('favorites.html', '/favorites', 'member', 'Danh sách nhà trọ đã lưu', 'list', { columns: ['Nhà trọ', 'Khu vực', 'Giá thuê', 'Tình trạng'] }),
+  screen('favorites.html', '/favorites', 'favorites', 'Danh sách nhà trọ đã lưu', 'list', { integration:'connected', columns: ['Loại phòng', 'Khu vực', 'Giá thuê', 'Tình trạng'] }),
+  screen(null, '/favorites/compare', 'favorites', 'So sánh phòng đã lưu', 'comparison', {integration:'connected'}),
   screen('bookings.html', '/bookings', 'member', 'Lịch xem phòng', 'list', { columns: ['Nhà trọ', 'Chủ trọ', 'Lịch hẹn', 'Trạng thái'], filters: ['Tất cả lịch hẹn', 'Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'] }),
   screen('community.html', '/community', 'public', 'Cộng đồng Cư dân & Sinh viên Hòa Lạc', 'community'),
   screen('services.html', '/services', 'public', 'Dịch vụ quanh trọ', 'services'),

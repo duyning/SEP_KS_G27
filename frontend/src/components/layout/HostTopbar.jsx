@@ -24,7 +24,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
     if (leaving) return;
     setLeaving(true);
     try {
-      await logout();
+      if (await logout() === false) return;
       navigate('/login');
     } catch {
       navigate('/login');
