@@ -45,7 +45,7 @@ export const screens = [
   screen('staff-community-moderation-detail.html', '/staff/community/detail', 'staff', 'Chi tiết thẩm định bài viết', 'detail', { sections: ['Nội dung bài viết', 'Tác giả & thông tin liên quan', 'Lịch sử kiểm duyệt'], actions: ['Yêu cầu chỉnh sửa', 'Từ chối bài viết', 'Duyệt bài viết'] }),
   screen('staff-assistance-requests.html', '/staff/assistance', 'staff', 'Yêu cầu hỗ trợ từ đối tác', 'list', { metrics: ['Tổng yêu cầu', 'Chờ xử lý', 'Đang xử lý', 'Đã hoàn tất'], columns: ['Mã yêu cầu & nội dung', 'Chủ trọ', 'Vấn đề', 'Ngày gửi', 'Trạng thái', 'Thao tác'], filters: ['Tất cả trạng thái', 'Chờ xử lý', 'Đang xử lý', 'Chờ chủ trọ bổ sung', 'Đã giải quyết'] }),
   screen('staff-assistance-request-detail.html', '/staff/assistance/detail', 'staff', 'Chi tiết yêu cầu hỗ trợ', 'supportDetail', { sections: ['Nội dung yêu cầu từ Chủ trọ', 'Thông tin liên quan (Nhà trọ)', 'Lịch sử xử lý & Nhật ký nghiệp vụ'] }),
-  screen('admin-dashboard.html', '/admin', 'admin', 'Bảng điều khiển quản trị', 'admin', { metrics: ['Tài khoản hệ thống', 'Hồ sơ chờ xác minh', 'Bài viết chờ duyệt', 'Công việc cần xử lý'] }),
+  screen('admin-dashboard.html', '/admin', 'admin', 'Bảng điều khiển quản trị', 'admin', { integration: 'connected', metrics: ['Tài khoản hệ thống', 'Hồ sơ chờ xác minh', 'Bài viết chờ duyệt', 'Công việc cần xử lý'] }),
 ];
 export const findScreen = pathname => screens.find(item => item.path === pathname);
 export const legacyTarget = filename => screens.find(item => item.source === filename)?.path;

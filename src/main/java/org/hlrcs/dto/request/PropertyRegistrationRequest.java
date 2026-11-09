@@ -13,9 +13,9 @@ public record PropertyRegistrationRequest(
         @NotBlank String commune,
         @NotBlank @Size(min = 10, max = 255) String addressDetail,
         @Size(max = 255) String nearby,
-        @NotBlank String latitude,
-        @NotBlank String longitude,
-        @NotNull @Size(max = 12) List<String> amenities,
-        @NotNull @Size(max = 6) List<String> selectedRules,
+        @Size(max = 40) String latitude,
+        @Size(max = 40) String longitude,
+        @NotNull @Size(max = 18) List<String> amenities,
+        @NotNull @Size(max = 12) List<String> selectedRules,
         @Size(max = 2000) String rules,
         @NotNull @AssertTrue Boolean termsAccepted) {}

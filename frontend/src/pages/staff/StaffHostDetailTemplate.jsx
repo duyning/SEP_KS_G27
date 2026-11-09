@@ -1,257 +1,33 @@
-import { MotionButton } from '../../components/motion/MotionUI.jsx';
-// Preserved from Code/giao_dien/html/staff-host-registrations.html and staff-host-registration-detail.html.
-import {Link} from 'react-router-dom';
-export default function StaffHostDetailTemplate(props){return <div className="hr-content-fragment" onClick={props.onClick} onChange={props.onChange}><section className="staff-content">
-
-
-        <nav className="dashboard-breadcrumbs" aria-label="Đường dẫn">
-          <Link to="/staff">HL_RCS</Link>
-          <span className="breadcrumb-separator">/</span>
-          <Link to="/staff">Staff Portal</Link>
-          <span className="breadcrumb-separator">/</span>
-          <Link to="/staff/host-registrations">Xác minh đăng ký chủ trọ</Link>
-          <span className="breadcrumb-separator">/</span>
-          <span className="breadcrumb-current">Chi tiết hồ sơ</span>
-        </nav>
-
-
-        <div className="detail-top-nav detail-top-nav-bar">
-          <Link className="btn-detail-back btn-back-link" title="Quay lại danh sách đăng ký làm chủ trọ" to="/staff/host-registrations">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Quay lại danh sách đăng ký</span>
-          </Link>
-
-          <div className="detail-header-badges">
-            <span className="verif-id-pill large-id" id="headerDetailId">{'HREG-' + props.application.id}</span>
-            <span className="applicant-name-tag" id="headerApplicantName">{props.application.userName}</span>
-            <div id="headerStatusBadgeSlot">{props.statusBadge}</div>
-          </div>
-        </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <div id="detailMainGrid" className="verif-detail-grid shrd-detail-grid">
-
-
-          <div className="verif-detail-main shrd-detail-main">
-
-
-            <section className="dashboard-section-card verif-card shrd-card">
-              <div className="section-card-header shrd-card-header">
-                <div className="section-title-wrap shrd-card-title-wrap">
-                  <span className="section-icon-pill shrd-card-icon">👤</span>
-                  <h3 className="section-title shrd-card-title">1. Thông tin Người đăng ký (Ứng viên Chủ trọ)</h3>
-                </div>
-                <span className="host-role-badge">Tài khoản cá nhân</span>
-              </div>
-
-
-              <div className="applicant-profile-card">
-                <div className="applicant-profile-header">
-                  <div className="applicant-avatar-box">
-                    <span id="detailApplicantAvatar">{(props.application.userName || 'U').charAt(0)}</span>
-                  </div>
-                  <div className="applicant-details">
-                    <div className="applicant-name-row">
-                      <span className="applicant-name-text" id="detailApplicantName">{props.application.userName}</span>
-                      <span className="badge-role-tag" id="detailApplicantRole">{props.application.status === 'APPROVED' ? 'Chủ trọ' : 'Người dùng'}</span>
-                    </div>
-                    <div className="applicant-meta-row">
-                      <span>Mã tài khoản: <strong id="detailApplicantUserId">{props.application.userId}</strong></span>
-                      <span>·</span>
-                      <span>Số điện thoại tài khoản: <strong>{props.application.userPhone ? "Đã cung cấp" : "Chưa cung cấp"}</strong></span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="applicant-contact-grid">
-                  <div className="contact-box">
-                    <div className="contact-box-label">Số điện thoại liên hệ:</div>
-                    <div className="contact-box-value" id="detailApplicantPhone">{props.application.userPhone || '—'}</div>
-                  </div>
-                  <div className="contact-box">
-                    <div className="contact-box-label">Địa chỉ Email:</div>
-                    <div className="contact-box-value" id="detailApplicantEmail">{props.application.userEmail || '—'}</div>
-                  </div>
-                </div>
-
-                <div className="profile-sync-note">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                  <span>
-                    Thông tin liên hệ được đồng bộ tự động từ tài khoản đăng nhập lúc gửi hồ sơ. Khi được duyệt, tài khoản này sẽ được nâng quyền lên <strong>Chủ trọ (Room Host)</strong>.
-                  </span>
-                </div>
-              </div>
-            </section>
-
-
-            <section className="dashboard-section-card verif-card shrd-card">
-              <div className="section-card-header shrd-card-header">
-                <div className="section-title-wrap shrd-card-title-wrap">
-                  <span className="section-icon-pill shrd-card-icon">📋</span>
-                  <h3 className="section-title shrd-card-title">2. Kế hoạch &amp; Thông tin đăng ký làm Chủ trọ</h3>
-                </div>
-                <span className="verif-type-pill">Phiếu đăng ký</span>
-              </div>
-
-              <div className="application-content-box">
-
-                <div className="app-fields-grid shrd-scope-highlight-row">
-                  <div className="app-field-item shrd-scope-box">
-                    <span className="app-field-label shrd-info-label">Khu vực dự kiến kinh doanh / vận hành:</span>
-                    <div className="app-field-val shrd-scope-val strong-val" id="detailTargetCommune">{props.application.targetCommune}</div>
-                    <span className="app-field-sub">Địa bàn xã/phường thuộc khu vực Hòa Lạc - Thạch Thất</span>
-                  </div>
-
-                  <div className="app-field-item shrd-scope-box">
-                    <span className="app-field-label shrd-info-label">Quy mô số phòng trọ dự kiến:</span>
-                    <div className="app-field-val shrd-scope-val strong-val" id="detailExpectedScale">{props.application.expectedScale}</div>
-                    <span className="app-field-sub">Số phòng chuẩn bị đưa vào khai thác trên hệ thống</span>
-                  </div>
-                </div>
-
-
-                <div className="app-intro-item">
-                  <span className="app-field-label shrd-info-label">Giới thiệu bản thân &amp; Cam kết chất lượng phục vụ:</span>
-                  <div className="app-intro-box shrd-intro-text-box" id="detailIntroduction">{props.application.introduction}</div>
-                </div>
-              </div>
-
-
-              <div className="boundary-callout-box shrd-scope-notice">
-                <div className="callout-icon">📌</div>
-                <div className="callout-body">
-                  <div className="callout-title">Ranh giới thẩm định nghiệp vụ HL_RCS:</div>
-                  <div className="callout-text">
-                    Đây là bước <strong>xét duyệt cấp quyền Chủ trọ (Role Registration)</strong> cho tài khoản. Sau khi được phê duyệt, người dùng mới có quyền truy cập Host Portal để <em>thêm nhà trọ cụ thể</em> và <em>gửi hồ sơ xác minh cơ sở nhà trọ (Property Verification)</em> riêng biệt.
-                  </div>
-                </div>
-              </div>
-            </section>
-
-
-            <section className="dashboard-section-card verif-card shrd-card">
-              <div className="section-card-header shrd-card-header">
-                <div className="section-title-wrap shrd-card-title-wrap">
-                  <span className="section-icon-pill shrd-card-icon">⏱️</span>
-                  <h3 className="section-title shrd-card-title">3. Tiến trình &amp; Lịch sử thẩm định hồ sơ</h3>
-                </div>
-                <span className="timeline-count-badge">Nhật ký kiểm duyệt</span>
-              </div>
-
-              <div className="timeline-container" id="detailTimelineContainer">{props.history}</div>
-            </section>
-
-          </div>
-
-
-          <div className="verif-detail-sidebar shrd-detail-sidebar">
-
-
-            <div className="sidebar-summary-card">
-              <div className="summary-card-header">
-                <span className="summary-icon">📊</span>
-                <h4 className="summary-card-title">Tổng quan hồ sơ</h4>
-              </div>
-
-              <div className="summary-metrics-list">
-                <div className="metric-row">
-                  <span className="metric-label">Thời điểm gửi:</span>
-                  <strong className="metric-value" id="overviewSubmittedAt">{props.date(props.application.submittedAt)}</strong>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Cập nhật gần nhất:</span>
-                  <strong className="metric-value" id="overviewUpdatedAt">{props.date(props.application.updatedAt)}</strong>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Trạng thái hiện tại:</span>
-                  <div id="overviewStatusBadge">{props.statusBadge}</div>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Chuyên viên phụ trách:</span>
-                  <strong className="metric-value" id="overviewReviewer">{props.application.reviewedBy || 'Chưa xử lý'}</strong>
-                </div>
-              </div>
-            </div>
-
-
-            <div className="sidebar-decision-card shrd-decision-card">
-              <div className="decision-card-header shrd-decision-header">
-                <span className="decision-icon">⚡</span>
-                <h4 className="decision-card-title">Quyết định xét duyệt</h4>
-              </div>
-
-
-              <div id="decisionActionGroup" className="decision-actions-wrap shrd-action-group" style={{display:props.application.status === "PENDING_REVIEW" ? "flex" : "none"}}>
-                <p className="decision-actions-intro">
-                  Xem xét các điều kiện và đưa ra một trong ba quyết định thẩm định cho hồ sơ này:
-                </p>
-
-
-                <MotionButton type="button" className="btn-decision-approve shrd-btn-action shrd-btn-approve" id="btnTriggerApprove" title="Phê duyệt hồ sơ và nâng quyền thành Chủ trọ">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span>Phê duyệt đăng ký</span>
-                </MotionButton>
-
-
-                <MotionButton type="button" className="btn-decision-request-changes shrd-btn-action shrd-btn-supplement" id="btnTriggerRequestChanges" title="Yêu cầu người dùng chỉnh sửa hoặc bổ sung các trường thông tin">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  <span>Yêu cầu bổ sung thông tin</span>
-                </MotionButton>
-
-
-                <MotionButton type="button" className="btn-decision-reject shrd-btn-action shrd-btn-reject" id="btnTriggerReject" title="Từ chối yêu cầu đăng ký làm chủ trọ">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                  <span>Từ chối hồ sơ</span>
-                </MotionButton>
-              </div>
-
-
-              <div id="decisionTerminalGroup" className="decision-terminal-wrap" style={{display:props.application.status !== "PENDING_REVIEW" ? "block" : "none"}}>{props.terminal}</div>
-            </div>
-
-
-            <div className="sidebar-guidance-card">
-              <div className="guidance-header">
-                <span className="guidance-icon">💡</span>
-                <h5 className="guidance-title">Nguyên tắc xét duyệt Staff:</h5>
-              </div>
-              <ul className="guidance-list">
-                <li><strong>Khu vực hợp lệ:</strong> Ưu tiên các xã thuộc khu vực Hòa Lạc (Thạch Hòa, Tân Xã, Bình Yên, Hạ Bằng, Đồng Trúc,...).</li>
-                <li><strong>Quy mô thực tế:</strong> Thông tin số phòng dự kiến khai thác cần tương xứng với nhu cầu thực tế.</li>
-                <li><strong>Thái độ &amp; cam kết:</strong> Phần giới thiệu phải rõ ràng, nghiêm túc, không chứa nội dung spam hay vi phạm thuần phong mỹ tục.</li>
-                <li><strong>Khi yêu cầu bổ sung:</strong> Chỉ chọn đúng các trường cần chỉnh sửa và ghi hướng dẫn cụ thể để người dùng biết cách hoàn thiện.</li>
-              </ul>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section></div>;}
+import {useState} from 'react';
+import {motion} from 'motion/react';
+import {useMotionTokens,useShouldReduceMotion} from '@animate-ui/react/utils/motion';
+import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
+import { Link } from 'react-router-dom';
+import {applicantCapacities,rentalExperiences,applicationFieldLabel} from '../../services/host-applications.js';
+import { ArrowLeft, ChevronDown, Check, FilePenLine, History, Info, MapPin, ShieldCheck, UserRound, Users, X } from 'lucide-react';
+export default function StaffHostDetailTemplate(props){
+ const a=props.application;
+ const [expanded,setExpanded]=useState(false),[guidance,setGuidance]=useState(false);
+ const reduce=useShouldReduceMotion(),{transition}=useMotionTokens();
+ return <div className="sha-page sha-detail" onClick={props.onClick}>
+  <div className="sha-record-toolbar"><Link className="sha-back" to={props.backHref||"/staff/host-registrations"}><ArrowLeft size={15}/>Danh sách đăng ký</Link><div><span className="sha-id" id="headerDetailId">HREG-{a.id}</span>{props.statusBadge}</div></div>
+  <div className="sha-detail-layout"><div className="sha-detail-main">
+   <section className="sha-panel sha-detail-panel"><header><h3><UserRound size={18}/>Người đăng ký</h3><span className="sha-role">{a.status==='APPROVED'?'Chủ trọ':'Người dùng'}</span></header>
+    <div className="sha-applicant"><span className="sha-avatar">{(a.userName||'U').charAt(0)}</span><div><strong id="detailApplicantName">{a.userName}</strong><span>Mã tài khoản #{a.userId}</span></div></div>
+    <dl className="sha-contact"><div><dt>Số điện thoại</dt><dd id="detailApplicantPhone">{a.userPhone||'Chưa cung cấp'}</dd></div><div><dt>Email</dt><dd id="detailApplicantEmail">{a.userEmail||'Chưa cung cấp'}</dd></div></dl>
+   </section>
+   <section className="sha-panel sha-detail-panel"><header><h3><ShieldCheck size={18}/>Thông tin đăng ký</h3></header>
+    <dl className="sha-scope"><div><dt>Tư cách cho thuê</dt><dd>{applicationFieldLabel(applicantCapacities,a.applicantCapacity)}</dd></div><div><dt>Kinh nghiệm quản lý</dt><dd>{applicationFieldLabel(rentalExperiences,a.rentalExperience)}</dd></div><div><dt><MapPin size={14}/>Khu vực dự kiến</dt><dd id="detailTargetCommune">{a.targetCommune||'Chưa cung cấp'}</dd></div><div><dt><Users size={14}/>Quy mô dự kiến</dt><dd id="detailExpectedScale">{a.expectedScale||'Chưa cung cấp'}</dd></div></dl>
+    <h4 className="sha-field-title">Giới thiệu & Kế hoạch vận hành</h4><p className={`sha-introduction ${!expanded&&a.introduction?.length>300?'is-collapsed':''}`} id="detailIntroduction">{a.introduction||'Chưa có nội dung giới thiệu.'}</p>{a.introduction?.length>300&&<MotionButton type="button" className="sha-expand" aria-expanded={expanded} aria-controls="detailIntroduction" onClick={()=>setExpanded(value=>!value)}>{expanded?'Thu gọn':'Xem đầy đủ'}</MotionButton>}
+    <div className="sha-note"><Info size={16}/><p>Phê duyệt hồ sơ sẽ cấp quyền Chủ trọ cho tài khoản. Nhà trọ cụ thể cần được đăng ký và xác minh riêng trước khi hiển thị công khai.</p></div>
+   </section>
+   <section className="sha-panel sha-detail-panel"><header><h3><History size={18}/>Lịch sử xét duyệt</h3></header><div className="sha-history" id="detailTimelineContainer">{props.history}</div></section>
+  </div><aside className={`sha-detail-aside ${a.status!=='PENDING_REVIEW'?'is-terminal':''}`}>
+   <section className="sha-panel sha-detail-panel sha-decision"><header><h3>Quyết định xét duyệt</h3></header>
+    <dl className="sha-summary"><div><dt>Trạng thái</dt><dd>{props.statusBadge}</dd></div><div><dt>Ngày gửi</dt><dd id="overviewSubmittedAt">{props.date(a.submittedAt)}</dd></div><div><dt>Cập nhật</dt><dd id="overviewUpdatedAt">{props.date(a.updatedAt)}</dd></div><div><dt>Người xử lý</dt><dd>{a.reviewedBy||'Chưa xử lý'}</dd></div></dl>
+    {a.status==='PENDING_REVIEW'?<div id="decisionActionGroup" className="sha-decisions"><MotionButton type="button" id="btnTriggerApprove" className="sha-button primary"><Check size={16}/>Phê duyệt đăng ký</MotionButton><MotionButton type="button" id="btnTriggerRequestChanges" className="sha-button warning"><FilePenLine size={16}/>Yêu cầu bổ sung thông tin</MotionButton><MotionButton type="button" id="btnTriggerReject" className="sha-button danger"><X size={16}/>Từ chối hồ sơ</MotionButton><p>Quyết định chỉ được lưu sau khi xác nhận trong hộp thoại.</p></div>:<div id="decisionTerminalGroup">{props.terminal}</div>}
+   </section>
+   <section className="sha-panel sha-guidance"><MotionButton type="button" className="sha-guidance-toggle" aria-expanded={guidance} aria-controls="sha-review-guidance" onClick={()=>setGuidance(value=>!value)}><Info size={16}/>Lưu ý khi xét duyệt<ChevronDown size={16} className={guidance?'is-open':''}/></MotionButton><AnimatePresence initial={false}>{guidance&&<motion.div id="sha-review-guidance" initial={{height:reduce?'auto':0,opacity:0}} animate={{height:'auto',opacity:1,transition:transition.disclosure}} exit={{height:reduce?'auto':0,opacity:0,transition:transition.dismiss}}><ul><li>Đối chiếu thông tin liên hệ và khu vực dự kiến hoạt động.</li><li>Đọc kỹ quy mô, kế hoạch và nội dung giới thiệu.</li><li>Khi yêu cầu bổ sung, chọn đúng trường và hướng dẫn cụ thể.</li></ul></motion.div>}</AnimatePresence></section>
+  </aside></div>
+ </div>;
+}

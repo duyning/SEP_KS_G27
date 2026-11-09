@@ -29,8 +29,9 @@ public class PropertyEditService {
     private final PropertySubmissionEventRepository events;
     private final PropertyRegistrationService validation;
     private final ObjectMapper json;
+    private final org.springframework.context.ApplicationEventPublisher publisher;
     public record Edit(Integer registrationId,Integer propertyId,String mode,String status,String reasonNote,
-        List<String> requestedFields,Set<String> editableFields,boolean legacyScope,PropertyRegistrationRequest details,
+        List<String> requestedFields,Map<String,String> fieldNotes,Set<String> editableFields,boolean legacyScope,PropertyRegistrationRequest details,
         List<Attachment> photos,List<Attachment> documents,String versionToken) {}
     private PropertyRegistration owned(Integer id) {
         var registration=registrations.findById(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
@@ -50,7 +51,7 @@ public class PropertyEditService {
     private String token(PropertyRegistration row) {
         try {
             String ids=documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(row.getRegistrationId()).stream().map(file->file.getDocumentId().toString()).reduce("",(a,b)->a+","+b);
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest((row.getRegistrationId()+"|"+row.getStatus()+"|"+row.getReviewedAt()+"|"+row.getSubmittedAt()+"|"+row.getRegistrationDetails()+"|"+row.getRequestedFieldsJson()+"|"+ids).getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest((row.getRegistrationId()+"|"+row.getStatus()+"|"+row.getReviewedAt()+"|"+row.getSubmittedAt()+"|"+row.getRegistrationDetails()+"|"+row.getRequestedFieldsJson()+"|"+Objects.toString(row.getFieldNotesJson(),"")+"|"+ids).getBytes(StandardCharsets.UTF_8)));
         }catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}
     }
     @Transactional(readOnly=true)
@@ -64,7 +65,7 @@ public class PropertyEditService {
             if(Objects.toString(file.getDocumentType(),"").matches("PHOTO_\\d+"))photos.add(item);else files.add(item);
         }
         var requested=RegistrationEditPolicy.requested(row,json);
-        return new Edit(id,property==null?null:property.getPropertyId(),row.getStatus()==RegistrationStatus.APPROVED?"CHANGE_REQUEST":"RESUBMIT",row.getStatus().name(),row.getReasonNote(),requested,
+        return new Edit(id,property==null?null:property.getPropertyId(),row.getStatus()==RegistrationStatus.APPROVED?"CHANGE_REQUEST":"RESUBMIT",row.getStatus().name(),row.getReasonNote(),requested,RegistrationEditPolicy.fieldNotes(row,json),
             RegistrationEditPolicy.allowed(row,json),row.getStatus()==RegistrationStatus.NEEDS_SUPPLEMENT&&requested.isEmpty(),form,photos,files,token(row));
     }
     @Transactional(rollbackFor=Exception.class,isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
@@ -116,11 +117,12 @@ public class PropertyEditService {
         for(var file:uploads)validation.saveFile(destination,"PHOTO_"+(photoIndex++),file,false);
         for(var replacement:replacements.entrySet())validation.saveFile(destination,replacement.getKey(),replacement.getValue(),true);
         destination.setName(value.name().trim());destination.setAddress(address);destination.setContactInfo(value.managerName().trim()+" · "+value.contactPhone());
-        destination.setGoogleMapLink("https://www.google.com/maps?q="+value.latitude()+","+value.longitude());destination.setRegistrationDetails(json.writeValueAsString(value));
-        var previousNote=destination.getReasonNote();destination.setStatus(RegistrationStatus.PENDING);destination.setSubmittedAt(now);destination.setReasonNote(revision?"Chủ trọ gửi đề nghị thay đổi thông tin. Bản đã duyệt tiếp tục hiển thị.":"Chủ trọ đã bổ sung thông tin và gửi lại xét duyệt.");
+        destination.setGoogleMapLink(PropertyRegistrationService.mapLink(value));destination.setRegistrationDetails(json.writeValueAsString(value));
+        var previousNote=destination.getReasonNote();destination.setStatus(RegistrationStatus.PENDING);destination.setSubmittedAt(now);destination.setRequestedFieldsJson(null);destination.setFieldNotesJson(null);destination.setReasonNote(revision?"Chủ trọ gửi đề nghị thay đổi thông tin. Bản đã duyệt tiếp tục hiển thị.":"Chủ trọ đã bổ sung thông tin và gửi lại xét duyệt.");
         registrations.saveAndFlush(destination);documents.flush();
-        if(!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"OWNERSHIP")||!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"ID_CARD"))throw new BadRequestException("Cần giấy tờ sở hữu và CCCD để gửi xét duyệt.");
+        if(!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"OWNERSHIP")||!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"ID_CARD"))throw new BadRequestException("Cần giấy phép kinh doanh và CCCD để gửi xét duyệt.");
         events.save(PropertySubmissionEvent.builder().registration(destination).actor(owner).action(revision?"CHANGE_REQUESTED":"RESUBMITTED").previousDetails(json.writeValueAsString(old)).submittedDetails(json.writeValueAsString(value)).previousDocumentIds(json.writeValueAsString(previousIds)).previousReviewNote(previousNote).build());
+        publisher.publishEvent(new AutomaticVerificationAssignment.Submitted(destination.getRegistrationId()));
         return PropertyRegistrationResponse.from(destination);
     }
 }

@@ -22,6 +22,14 @@ import java.util.List;
 public class PropertyRegistrationController {
     private final PropertyRegistrationService service;
     private final PropertyEditService edits;
+    private final org.hlrcs.service.PropertyLocationService locations;
+
+    public record LocationInput(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=1500) String input) {}
+
+    @PostMapping("/location/resolve")
+    public ApiResponse<org.hlrcs.service.PropertyLocationService.Location> resolveLocation(@Valid @RequestBody LocationInput input) {
+        return ApiResponse.success(locations.lookup(input.input()));
+    }
 
     @GetMapping("/{id}/edit")
     public ApiResponse<PropertyEditService.Edit> edit(@PathVariable Integer id) { return ApiResponse.success(edits.edit(id)); }

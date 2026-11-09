@@ -1,4 +1,46 @@
 .host-property-page{min-width:0;display:flex;flex-direction:column}
+.hp-welcome{--hpw-ink:#142b35;--hpw-muted:#526573;--hpw-line:#dce7e9;--hpw-action:#0f766e;max-width:1280px;margin:auto;color:var(--hpw-ink)}
+.hp-welcome-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px}
+.hp-welcome-eyebrow{font-size:.65rem;font-weight:800;letter-spacing:.11em;color:var(--hpw-action);line-height:1.7}
+.hp-welcome-heading h1{font-size:1.75rem;letter-spacing:-.04em;margin:8px 0;color:var(--hpw-ink)}
+.hp-welcome-heading p{font-size:.85rem;line-height:1.75;margin:0;color:var(--hpw-muted)}
+.hp-welcome-refresh{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid var(--hpw-line);border-radius:10px;background:white;color:var(--hpw-ink);font:inherit;font-size:.8rem;font-weight:650;cursor:pointer;flex-shrink:0}
+.hp-welcome-intro{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);border:1px solid var(--hpw-line);border-radius:20px;overflow:hidden;background:white}
+.hp-welcome-main{padding:42px 44px;display:flex;flex-direction:column;align-items:flex-start}
+.hp-welcome-mark{position:relative;display:grid;place-items:center;width:72px;height:72px;border:1px solid #cce7de;border-radius:20px;background:#eff8f4;color:var(--hpw-action);margin-bottom:26px}
+.hp-welcome-mark>span{position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;width:25px;height:25px;background:var(--hpw-action);border:3px solid white;border-radius:50%;color:white}
+.hp-welcome-empty-label{color:var(--hpw-muted);font-size:.62rem;font-weight:750;letter-spacing:.09em}
+.host-property-page .hp-welcome-main h2{font-size:clamp(1.8rem,2.8vw,2.6rem);letter-spacing:-.05em;line-height:1.25;margin:14px 0 18px;color:var(--hpw-ink)}
+.host-property-page .hp-welcome-main>p{font-size:.86rem;line-height:1.9;color:var(--hpw-muted);max-width:510px;margin:0 0 25px}
+.hp-welcome-primary{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:13px 19px;border-radius:10px;background:var(--hpw-action);color:white;font-size:.81rem;font-weight:750;text-decoration:none;box-shadow:0 4px 12px #0f766e19;line-height:1.6}
+.hp-welcome-primary:hover{background:#115e59;color:white}
+.hp-welcome-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:10px;color:var(--hpw-muted);font-size:.76rem;text-decoration:none}
+.hp-welcome-back:hover{color:var(--hpw-action);text-decoration:underline}
+.hp-welcome-aside{padding:42px 34px;background:linear-gradient(145deg,#eef8f4,#e8f3ef);border-left:1px solid #d5e8e0}
+.host-property-page .hp-welcome-aside h3{font-size:1.5rem;line-height:1.4;letter-spacing:-.035em;margin:15px 0 28px;color:var(--hpw-ink)}
+.hp-welcome-aside ul{padding:0;margin:0;list-style:none;display:grid;gap:24px}
+.hp-welcome-aside li{display:flex;align-items:flex-start;gap:13px}
+.hp-welcome-aside li>span{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;background:#ffffffbd;border:1px solid #d6e7df;border-radius:10px;color:var(--hpw-action)}
+.hp-welcome-aside strong{display:block;font-size:.8rem;line-height:1.6;margin-bottom:4px}
+.hp-welcome-aside li p{font-size:.75rem;line-height:1.8;color:var(--hpw-muted);margin:0}
+.host-property-page .hp-welcome-private{display:flex;gap:9px;align-items:flex-start;font-size:.7rem;line-height:1.8;color:var(--hpw-muted);border-top:1px solid #cce0d6;padding-top:20px;margin:27px 0 0}
+.hp-welcome-private svg{flex-shrink:0;margin-top:3px;color:var(--hpw-action)}
+.hp-welcome-process{padding:28px 30px;margin-top:24px;border:1px solid var(--hpw-line);border-radius:16px;background:white}
+.host-property-page .hp-welcome-process h3{margin:8px 0 25px;font-size:1.1rem;line-height:1.5;letter-spacing:-.025em}
+.hp-welcome-process ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;padding:0;margin:0;gap:26px}
+.hp-welcome-process li+li{border-left:1px solid var(--hpw-line);padding-left:26px}
+.hp-welcome-process li>span{display:block;color:var(--hpw-action);font-size:.75rem;font-weight:800;margin-bottom:12px}
+.hp-welcome-process h4{font-size:.82rem;line-height:1.6;margin:0 0 8px}
+.hp-welcome-process li p{font-size:.76rem;line-height:1.85;color:var(--hpw-muted);margin:0}
+.hp-welcome-help{display:flex;align-items:center;gap:14px;padding:22px 8px}
+.hp-welcome-help>svg{flex-shrink:0;color:var(--hpw-action)}
+.hp-welcome-help p{flex:1;margin:0;font-size:.75rem;line-height:1.8;color:var(--hpw-muted)}
+.hp-welcome-help strong{display:block;color:var(--hpw-ink);font-size:.78rem}
+.hp-welcome-help a{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;min-height:44px;color:var(--hpw-action);font-size:.76rem;font-weight:700;text-decoration:none}
+.hp-welcome :is(a,button):focus-visible{outline:3px solid var(--hpw-action);outline-offset:4px}
+@media(max-width:1100px){.hp-welcome-main{padding:32px}.hp-welcome-aside{padding:32px 26px}.host-property-route:has(.hp-welcome)>.host-footer{margin-left:0;width:100%}}
+@media(max-width:800px){.hp-welcome-intro{grid-template-columns:1fr}.hp-welcome-aside{border-left:0;border-top:1px solid #d5e8e0}.hp-welcome-process ol{grid-template-columns:1fr;gap:22px}.hp-welcome-process li+li{border-left:0;border-top:1px solid var(--hpw-line);padding:20px 0 0}.hp-welcome-help{align-items:flex-start;flex-wrap:wrap}.hp-welcome-help a{margin-left:34px}.hp-welcome-help p{flex-basis:calc(100% - 40px)}}
+@media(max-width:500px){.hp-welcome-heading{align-items:flex-start;gap:12px}.hp-welcome-heading h1{font-size:1.4rem}.hp-welcome-heading p{font-size:.78rem}.hp-welcome-eyebrow{font-size:.6rem}.hp-welcome-refresh{padding:10px;font-size:.7rem}.hp-welcome-main,.hp-welcome-aside{padding:26px 23px}.hp-welcome-intro{border-radius:15px}.hp-welcome-primary{width:100%;font-size:.75rem;padding:12px 9px;gap:8px}.hp-welcome-main>p{font-size:.81rem}.hp-welcome-process{padding:24px}.hp-welcome-help{padding:20px 4px}}
 .host-property-route .portal-content{min-height:calc(100dvh - 126px)}
 .host-property-route>.host-footer{margin-left:var(--p-sidebar-width);background:white;border-top:1px solid #e2e8f0;padding:18px 32px;font-size:12px;color:#64748b}
 .host-property-route>.host-footer .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}

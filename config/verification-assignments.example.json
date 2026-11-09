@@ -1,0 +1,4 @@
+[
+  {"registrationId": 101, "expectedVersion": 0, "expectedStaffId": null, "newStaffId": 201},
+  {"registrationId": 102, "expectedVersion": 0, "expectedStaffId": null, "newStaffId": 202}
+]

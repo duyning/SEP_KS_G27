@@ -1,5 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { LoaderCircle, ShieldAlert } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
@@ -10,11 +10,11 @@ import { ToastProvider } from './components/PortalUI.jsx';
 import { canAccess, landingFor, screens } from './routing/screens.js';
 
 function ScreenRoute({ screen }) {
-  const { user } = useAuth();
+  const { user, explicitLogout } = useAuth();
   const location = useLocation();
   if (!canAccess(screen.portal, user)) {
-    if (!user) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}${location.hash}` }} />;
-    return <div className="session-screen"><ShieldAlert size={34} /><h1>Không có quyền truy cập</h1><p>Tài khoản hiện tại không có quyền truy cập khu vực này.</p><Link className="p-button primary" to={landingFor(user)}>Về khu vực của tôi</Link><Link to="/">Trang chủ</Link></div>;
+    if (!user) return <Navigate to="/login" replace state={explicitLogout ? null : { from: `${location.pathname}${location.search}${location.hash}` }} />;
+    return <Navigate to={landingFor(user)} replace />;
   }
   if (screen.kind === 'redirect') return <Navigate to={`${screen.to}${location.search}${location.hash}`} replace />;
   if (screen.kind === 'auth') return <AuthPage registerMode={screen.path === '/register'} />;
@@ -29,8 +29,8 @@ function LegacyRedirect({ screen }) {
 }
 
 export default function App() {
-  const { loading, sessionError, retry, logout } = useAuth();
+  const { user, loading, sessionError, retry, logout } = useAuth();
   if (loading) return <div className="session-screen" role="status"><LoaderCircle className="spin" /> Đang kiểm tra phiên đăng nhập...</div>;
   if (sessionError) return <div className="session-screen"><p role="alert">{sessionError}</p><button className="submit-button" onClick={retry}>Thử lại</button><button className="text-button" onClick={() => logout().catch(() => {})}>Về đăng nhập</button></div>;
-  return <ToastProvider><Routes>{screens.map(screen => <Route key={screen.path} path={screen.path} element={<ScreenRoute screen={screen} />} />)}{screens.filter(screen => screen.source).map(screen => <Route key={screen.source} path={`/${screen.source}`} element={<LegacyRedirect screen={screen} />} />)}<Route path="/account" element={<Navigate to="/profile" replace />} /><Route path="*" element={<div className="session-screen"><h1>Không tìm thấy trang</h1><Link className="p-button primary" to="/">Về trang chủ</Link></div>} /></Routes></ToastProvider>;
+  return <ToastProvider key={`${user?.userId || "guest"}:${user?.role || "public"}`}><Routes>{screens.map(screen => <Route key={screen.path} path={screen.path} element={<ScreenRoute screen={screen} />} />)}{screens.filter(screen => screen.source).map(screen => <Route key={screen.source} path={`/${screen.source}`} element={<LegacyRedirect screen={screen} />} />)}<Route path="/account" element={<Navigate to="/profile" replace />} /><Route path="*" element={<div className="session-screen"><h1>Không tìm thấy trang</h1><Link className="p-button primary" to="/">Về trang chủ</Link></div>} /></Routes></ToastProvider>;
 }

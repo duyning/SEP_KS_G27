@@ -9,6 +9,15 @@ function fill(book,values={}){
  EXCEL_FIELDS.forEach(([key],index)=>{if(data[key]!=null)book.getWorksheet(TYPE_SHEET).getCell(index+2,2).value=data[key];});
  book.getWorksheet(ROOM_SHEET).getCell('A2').value='001';book.getWorksheet(ROOM_SHEET).getCell('B2').value='Tầng 1';return book;
 }
+
+test('new room amenities are supported by exported template and XLSX import',async()=>{
+ const added={ceilingFan:'Có',window:'Có',curtains:'Có',smartLock:'Có',television:'Có',sofa:'Có',diningTable:'Có',inductionCooker:'Có',microwave:'Có',kitchenHood:'Có',privateDrying:'Có'};
+ const book=fill(await workbook(),added);
+ const result=await readRoomTypeExcel(new File([await book.xlsx.writeBuffer()],'amenities.xlsx'));
+ assert.deepEqual(result.issues,[]);
+ for(const key of Object.keys(added))assert.ok(result.data.amenities.includes(key),key);
+ assert.equal(result.data.amenities.length,12);
+});
 test('downloaded template has empty input sheets, guidance and Excel validation',async()=>{
  const book=await workbook();assert.deepEqual(book.worksheets.map(sheet=>sheet.name),[TYPE_SHEET,ROOM_SHEET,'Hướng dẫn']);
  assert.equal(book.getWorksheet(TYPE_SHEET).getCell('B2').value,null);assert.equal(book.getWorksheet(ROOM_SHEET).getCell('A2').value,null);

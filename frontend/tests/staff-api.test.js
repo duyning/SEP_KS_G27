@@ -24,10 +24,19 @@ test('staff reviews are POSTed, not local fake mutations', async () => {
   globalThis.fetch = async (url,options) => {
     assert.equal(url,'/api/staff/verifications/12/review');
     assert.equal(options.method,'POST');
-    assert.deepEqual(JSON.parse(options.body),{decision:'APPROVE',note:'Checked'});
+    assert.deepEqual(JSON.parse(options.body),{decision:'APPROVE',note:'Checked',assignmentVersion:3});
     return new Response(JSON.stringify({success:true,data:{...detail,summary:{...detail.summary,status:'APPROVED'}}}));
   };
-  assert.equal((await staffApi.review(12,'APPROVE','Checked')).summary.status,'APPROVED');
+  assert.equal((await staffApi.review(12,'APPROVE','Checked',undefined,undefined,3)).summary.status,'APPROVED');
+});
+
+test('review cannot omit the server assignment version and preserves authorization failures', async () => {
+  let calls=0;
+  globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({success:false,message:'Bạn không còn được phân công.'}),{status:404});};
+  for(const version of [undefined,null,-1,'1']) await assert.rejects(staffApi.review(12,'APPROVE','Checked',undefined,undefined,version),error=>error.status===409);
+  assert.equal(calls,0);
+  await assert.rejects(staffApi.review(12,'APPROVE','Checked',undefined,undefined,2),error=>error.status===404);
+  assert.equal(calls,1);
 });
 test('invalid IDs and malformed/error responses never fall back to sample records', async () => {
   globalThis.fetch = async () => { throw new Error('Must not fetch'); };
@@ -46,10 +55,10 @@ test('supplement requests persist via review API and accept the new status', asy
     assert.equal(url, '/api/staff/verifications/12/review');
     assert.equal(options.method, 'POST');
     assert.equal(options.headers.Authorization, 'Bearer staff-token');
-    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_SUPPLEMENT', note: reply.reasonNote });
+    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_SUPPLEMENT', note: reply.reasonNote, assignmentVersion:3 });
     return new Response(JSON.stringify({ success: true, data: reply }));
   };
-  assert.deepEqual(await staffApi.review(12, 'REQUEST_SUPPLEMENT', reply.reasonNote), reply);
+  assert.deepEqual(await staffApi.review(12, 'REQUEST_SUPPLEMENT', reply.reasonNote,undefined,undefined,3), reply);
   globalThis.fetch = async () => new Response(JSON.stringify({ success: true, data: [reply.summary] }));
   assert.equal((await staffApi.verifications())[0].status, 'NEEDS_SUPPLEMENT');
 });

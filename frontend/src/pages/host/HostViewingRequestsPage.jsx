@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Eye, MapPin, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { hostApi } from '../../services/host.js';
+import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 import PropertyCardCover from '../../components/PropertyCardCover.jsx';
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
 import { useViewingData, ViewingDetails, ViewingStatus } from '../../components/ViewingUI.jsx';
@@ -14,12 +15,7 @@ import '../../styles/host-viewings-page.css';
 
 
 export function ViewingsNoProperty() {
-  return <section id="noPropertyState" className="host-viewings-state">
-    <div className="host-viewings-state-icon" aria-hidden="true">🏠</div>
-    <h2>Bạn chưa đăng ký nhà trọ</h2>
-    <p>Bạn cần đăng ký nhà trọ trước khi nhận yêu cầu xem phòng từ khách thuê.</p>
-    <Link to="/host/property/new" className="host-viewings-register">Đăng ký nhà trọ ngay</Link>
-  </section>;
+ return <HostSetupRequired kind="viewings"/>;
 }
 
 function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }) {

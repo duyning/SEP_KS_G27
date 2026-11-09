@@ -30,6 +30,8 @@ public class StaffService {
     private final PropertySubmissionEventRepository submissionEvents;
 
     private final ServiceRegistrationRepository serviceApplications;
+    private final PropertyVerificationAccess verificationAccess;
+    private final jakarta.persistence.EntityManager entityManager;
 
     private PropertyRegistrationRequest submission(PropertyRegistration registration) {
         if (registration.getRegistrationDetails() == null) return null;
@@ -41,22 +43,33 @@ public class StaffService {
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(registration.getRegistrationId());
         int count = (int) files.stream().filter(file -> Set.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))).count();
         int required = (int) files.stream().filter(file -> Set.of("OWNERSHIP", "ID_CARD").contains(Objects.toString(file.getDocumentType(), ""))).map(PropertyDocumentRepository.Metadata::getDocumentType).distinct().count();
+        int photoCount = (int) files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).count();
+        boolean hasCoverPhoto = files.stream().anyMatch(file -> "PHOTO_0".equals(file.getDocumentType()));
+        boolean readyForApproval = details != null && Boolean.TRUE.equals(details.termsAccepted()) && required >= 2 && hasCoverPhoto;
         var cover = files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).findFirst().map(PropertyDocumentRepository.Metadata::getDocumentId).orElse(null);
+        var linkedProperty = registration.getTargetPropertyId() != null
+                ? properties.findById(registration.getTargetPropertyId()).orElse(null)
+                : properties.findByRegistration_RegistrationId(registration.getRegistrationId()).orElse(null);
+        Integer publishedPropertyId = linkedProperty != null && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
+        String assignedStaffName = registration.getAssignedStaff() == null ? null : registration.getAssignedStaff().getFullName();
         return new Verification(registration.getRegistrationId(), registration.getName(), registration.getAddress(),
                 registration.getUser().getFullName(), registration.getUser().getEmail(), registration.getUser().getPhoneNumber(),
                 details == null ? null : details.managerName(), details == null ? null : details.contactPhone(), details == null ? null : details.propertyType(),
                 registration.getStatus().name(), registration.getCreatedAt(), registration.getReviewedAt(),
-                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover, registration.getUser().getUserId(),registration.getTargetPropertyId(),registration.getSubmittedAt());
+                registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover,
+                registration.getUser().getUserId(), registration.getTargetPropertyId(), registration.getSubmittedAt(),
+                assignedStaffName, registration.getAssignmentVersion(), verificationAccess.canReview(registration),
+                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote());
     }
     private Activity activity(ModerationLog log) {
         return new Activity(log.getLogId(), log.getStaff().getFullName(), log.getTargetType(), log.getTargetId(), log.getAction(), log.getNote(), log.getCreatedAt());
     }
     @Transactional(readOnly = true)
-    public List<Verification> verifications() { return registrations.findAllByOrderByCreatedAtDesc().stream().map(this::summary).toList(); }
+    public List<Verification> verifications() { return verificationAccess.list().stream().map(this::summary).toList(); }
 
     @Transactional(readOnly = true)
     public Detail detail(Integer id) {
-        var registration = registrations.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ xác minh."));
+        var registration = verificationAccess.read(id);
         var photos = new ArrayList<Attachment>();
         var privateFiles = new ArrayList<Attachment>();
         for (var file : documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id)) {
@@ -67,27 +80,47 @@ public class StaffService {
         var published=registration.getTargetPropertyId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).map(Property::getRegistration).map(this::submission).orElse(null);
         return new Detail(summary(registration), submission(registration), photos, privateFiles, registration.getReasonNote(),
                 logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).stream().map(this::activity).toList(),published,
-                submissionEvents.findByRegistration_RegistrationIdOrderByCreatedAtAsc(id).stream().map(event->new SubmissionEvent(event.getEventId(),event.getActor().getFullName(),event.getAction(),event.getCreatedAt())).toList());
+                submissionEvents.findByRegistration_RegistrationIdOrderByCreatedAtAsc(id).stream().map(event->new SubmissionEvent(event.getEventId(),event.getActor().getFullName(),event.getAction(),event.getCreatedAt())).toList(),
+                registration.getAssignedStaff()==null?null:registration.getAssignedStaff().getUserId(), registration.getAssignedStaff()==null?null:registration.getAssignedStaff().getFullName(), registration.getAssignmentVersion(),
+                verificationAccess.canReview(registration));
     }
     public record FileContent(byte[] bytes, String contentType) {}
     @Transactional(readOnly = true)
     public FileContent file(Integer registrationId, Integer documentId) {
+        verificationAccess.read(registrationId);
         var file = documents.findById(documentId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài liệu."));
-        if (!file.getRegistration().getRegistrationId().equals(registrationId) || file.getFileContent() == null
+        if (file.getArchivedAt()!=null || !file.getRegistration().getRegistrationId().equals(registrationId) || file.getFileContent() == null
                 || !Set.of("image/jpeg", "image/png", "image/webp", "application/pdf").contains(Objects.toString(file.getContentType(), ""))) throw new ResourceNotFoundException("Không tìm thấy tài liệu.");
         return new FileContent(file.getFileContent(), file.getContentType());
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Detail review(Integer id, String decision, String note,List<String> requestedFields) {
+    public Detail review(Integer id, String decision, String note, List<String> requestedFields, Long assignmentVersion) {
+        return review(id, decision, note, requestedFields, null, assignmentVersion);
+    }
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Detail review(Integer id, String decision, String note, List<String> requestedFields, Map<String, String> fieldNotes, Long assignmentVersion) {
+        verificationAccess.reviewActor();
+        verificationAccess.read(id);
         if (decision == null || !Set.of("APPROVE", "REJECT", "REQUEST_SUPPLEMENT").contains(decision)) throw new BadRequestException("Quyết định xét duyệt không hợp lệ.");
         String reason = note == null ? "" : note.trim();
         if (reason.length() > 2000 || (!decision.equals("APPROVE") && reason.length() < 10)) throw new BadRequestException("Nội dung phản hồi cần từ 10 đến 2000 ký tự.");
         var ownerId=registrations.findOwnerId(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
         var owner=users.findForRegistrationUpdate(ownerId).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy chủ trọ."));
         var registration = registrations.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ."));
+        // A pre-lock read may have put an older assignment in the persistence context.
+        entityManager.refresh(registration, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        verificationAccess.decision(registration, assignmentVersion);
         boolean supplement = decision.equals("REQUEST_SUPPLEMENT");
         if (registration.getStatus() != RegistrationStatus.PENDING && (supplement || registration.getStatus() != RegistrationStatus.NEEDS_SUPPLEMENT)) throw new AppException("Hồ sơ đã được xử lý. Vui lòng tải lại để xem kết quả mới nhất.", HttpStatus.CONFLICT);
-        if(supplement)registration.setRequestedFieldsJson(requestedFields==null?null:json.writeValueAsString(RegistrationEditPolicy.check(requestedFields)));
+        if (supplement) {
+            var checkedFields = RegistrationEditPolicy.check(requestedFields);
+            var checkedNotes = RegistrationEditPolicy.checkNotes(fieldNotes, checkedFields);
+            registration.setRequestedFieldsJson(checkedFields == null ? null : json.writeValueAsString(checkedFields));
+            registration.setFieldNotesJson(checkedNotes.isEmpty() ? null : json.writeValueAsString(checkedNotes));
+        } else {
+            registration.setRequestedFieldsJson(null);
+            registration.setFieldNotesJson(null);
+        }
         var reviewer = users.findById(auth.getCurrentUser().getUserId()).orElseThrow();
         boolean approve = decision.equals("APPROVE");
         if (approve) {
@@ -117,7 +150,8 @@ public class StaffService {
     }
     @Transactional(readOnly = true)
     public Dashboard dashboard() {
-        var verification = registrations.findAllByOrderByCreatedAtDesc();
+        var actor = verificationAccess.actor();
+        var verification = verificationAccess.list();
         var reportRows = reports.findAllByOrderByCreatedAtAsc();
         var supportRows = support.findAllByOrderByCreatedAtAsc();
         var postRows = posts.findAllByOrderByCreatedAtAsc();
@@ -135,10 +169,10 @@ public class StaffService {
         for (var row : supportRows) if (row.getStatus() != SupportStatus.COMPLETED) queue.add(new QueueItem("SUPPORT-" + row.getRequestId(), "SUPPORT", row.getRequestType(), row.getRequester().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), null));
         for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), "/staff/community/detail?id=" + row.getPostId()));
         queue.sort(Comparator.comparing(QueueItem::createdAt, Comparator.nullsLast(Comparator.naturalOrder())));
-        var activityRows = logs.findAllByOrderByCreatedAtDesc();
+        var activityRows = actor.getRole()==UserRole.ADMIN ? logs.findAllByOrderByCreatedAtDesc() : logs.findVisibleForVerificationStaff(actor.getUserId());
         long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
         return new Dashboard(verification.stream().filter(row -> row.getStatus() == RegistrationStatus.PENDING).count(), reportRows.stream().filter(row -> row.getStatus() == ReportStatus.PENDING).count(), null,
                 supportRows.stream().filter(row -> row.getStatus() != SupportStatus.COMPLETED).count(), postRows.stream().filter(row -> row.getStatus() == PostStatus.PENDING).count(),
-                properties.findAll().stream().filter(row -> "ACTIVE".equalsIgnoreCase(row.getStatus())).count(), processed, null, null, queue, activityRows.stream().limit(20).map(this::activity).toList());
+                actor.getRole()==UserRole.ADMIN ? properties.findAll().stream().filter(row -> "ACTIVE".equalsIgnoreCase(row.getStatus())).count() : properties.countActiveForAssignedStaff(actor.getUserId()), processed, null, null, queue, activityRows.stream().limit(20).map(this::activity).toList());
     }
 }

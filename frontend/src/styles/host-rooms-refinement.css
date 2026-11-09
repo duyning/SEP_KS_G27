@@ -1,0 +1,124 @@
+/* Room inventory: consistent property context, controls and aligned results. */
+.host-workspace .host-rooms-page{--hr-action:#0f766e;--hr-ink:#1d3540;--hr-muted:#526571;--hr-line:#e2e8f0;font:14px/1.6 'Segoe UI',system-ui,-apple-system,Arial,sans-serif;color:var(--hr-ink);min-width:0}
+.host-workspace .host-rooms-page :is(button,input,select){font-family:inherit}
+.host-workspace .host-rooms-page .hmc-compact{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);align-items:center;gap:18px 28px;padding:20px 22px;background:white;border:1px solid var(--hr-line);border-radius:14px;margin:0 0 20px}
+.host-workspace .host-rooms-page .hmc-heading{gap:14px;min-width:0;flex-wrap:nowrap}
+.host-workspace .host-rooms-page .hmc-title-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 7px;min-width:0}
+.host-workspace .host-rooms-page .hmc-title-line h2{font:650 20px/1.5 'Segoe UI',system-ui,sans-serif;letter-spacing:-.015em;margin:0;overflow-wrap:anywhere}
+.host-workspace .host-rooms-page .hmc-title-line .hmc-status{margin:0;align-self:center;white-space:nowrap;font-size:11px;padding:4px 9px;line-height:1.5}
+.host-workspace .host-rooms-page .hmc-eyebrow{font-size:12px;font-weight:400;letter-spacing:0;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hmc-icon{width:46px;height:46px;border:1px solid #dfefeb;background:#eff8f6;color:var(--hr-action);border-radius:10px}
+.host-workspace .host-rooms-page .hmc-heading p{font-size:13px;line-height:1.6;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hmc-compact .host-property-selector{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;padding:0;margin:0;background:transparent;border:0;font-size:12px;font-weight:400;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .host-property-selector select{width:100%;max-width:100%;min-height:42px;height:42px;font-family:inherit;font-size:14px;border:1px solid #d4e0e5;border-radius:7px;background:white}
+.host-workspace .host-rooms-page .hmc-compact footer{grid-column:1/-1;padding-top:16px;border-top:1px solid var(--hr-line);margin:0;gap:12px}
+.host-workspace .host-rooms-page .hmc-compact nav{display:flex;gap:3px;padding:3px;border:1px solid #e9eef2;border-radius:9px;background:#f6f8fa}
+.host-workspace .host-rooms-page .hmc-compact nav a{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border:1px solid transparent;border-radius:6px;font-size:12px;font-weight:400;white-space:nowrap}
+.host-workspace .host-rooms-page .hmc-compact nav a[aria-current=page]{background:white;color:var(--hr-action);border-color:#dce7e5;font-weight:600;box-shadow:0 1px 2px #0f172a08}
+.host-workspace .host-rooms-page .hr-metrics{gap:16px;margin:0 0 20px;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+.host-workspace .host-rooms-page .hr-metric{display:block;position:relative;min-height:138px;padding:18px 20px;border-radius:12px;background:white;border:1px solid var(--hr-line);box-shadow:none;min-width:0;overflow:hidden}
+.host-workspace .host-rooms-page .hr-metric>svg{position:absolute;top:18px;right:18px;width:30px;height:30px;padding:7px;border-radius:8px;background:#f1f5f9;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-metric>div{display:flex;flex-direction:column;align-items:flex-start;height:100%}
+.host-workspace .host-rooms-page .hr-metric span{padding-right:27px;font-size:13px;font-weight:500;color:var(--hr-muted);line-height:1.5}
+.host-workspace .host-rooms-page .hr-metric strong{font-size:30px;font-weight:650;line-height:1.4;margin:9px 0 5px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.host-workspace .host-rooms-page .hr-metric small{margin-top:auto;font-size:12px;line-height:1.6;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-metric.active{border-color:var(--hr-action);background:#f5fbf9;box-shadow:inset 0 0 0 1px var(--hr-action)}
+.host-workspace .host-rooms-page .hr-metric.vacant strong{color:var(--hr-action)}
+.host-workspace .host-rooms-page .hr-metric.vacant>svg{color:#047857;background:#eaf8f1}
+.host-workspace .host-rooms-page .hr-metric.unconfirmed>svg{color:#b45309;background:#fff6e6}
+.host-workspace .host-rooms-page .hr-results{background:white;border:1px solid var(--hr-line);border-radius:14px;overflow:hidden;min-width:0}
+.host-workspace .host-rooms-page .hr-toolbar{padding:20px;margin:0;border:0;border-bottom:1px solid var(--hr-line);border-radius:0;background:white;box-shadow:none}
+.host-workspace .host-rooms-page .hr-filter-row{display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(150px,1fr) minmax(115px,.7fr) minmax(130px,.8fr) auto;gap:12px;align-items:end}
+.host-workspace .host-rooms-page .hr-search{height:44px;border-color:#cbd5e1;border-radius:8px;min-width:0;align-self:end}
+.host-workspace .host-rooms-page .hr-search input{font:400 14px/1.5 'Segoe UI',system-ui,sans-serif;min-width:0;background:transparent;color:var(--hr-ink)}
+.host-workspace .host-rooms-page .hr-search:focus-within{outline:2px solid var(--hr-action);outline-offset:2px}
+.host-workspace .host-rooms-page .hr-select{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-select select{min-width:0;max-width:100%;width:100%;height:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:400 13px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--hr-ink);padding:8px 10px}
+.host-workspace .host-rooms-page .hr-view-switch{height:44px;gap:3px;padding:3px;border:1px solid var(--hr-line);border-radius:9px;background:#f1f5f9}
+.host-workspace .host-rooms-page .hr-view-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:7px 9px;font-size:12px;border-radius:6px;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-view-switch button[aria-pressed=true]{color:white;background:var(--hr-action);box-shadow:none}
+.host-workspace .host-rooms-page .hr-status-row{gap:14px;padding-top:16px;margin-top:16px;align-items:center;border-top:1px solid #edf1f5}
+.host-workspace .host-rooms-page .hr-status-row>div{gap:7px}
+.host-workspace .host-rooms-page .hr-status-row button{font-size:12px;font-weight:500;min-height:34px;border-radius:7px;padding:6px 10px;background:#f8fafc;color:var(--hr-muted);border-color:var(--hr-line)}
+.host-workspace .host-rooms-page .hr-status-row button.active{background:#eff8f6;color:#115e59;border-color:#aacfc7}
+.host-workspace .host-rooms-page .hr-status-row button>span{font-size:11px;padding:0 5px;background:#e9eff2}
+.host-workspace .host-rooms-page .hr-status-row button.active>span{background:#d7ede5}
+.host-workspace .host-rooms-page .hr-result-count{color:var(--hr-muted);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.host-workspace .host-rooms-page .hr-grid{padding:20px;gap:18px;background:#f8fafc;grid-template-columns:repeat(3,minmax(0,1fr))}
+.host-workspace .host-rooms-page .hr-room-card{display:flex;flex-direction:column;height:100%;min-width:0;border:1px solid var(--hr-line);border-top:3px solid #748592;border-radius:12px;background:white;box-shadow:none}
+.host-workspace .host-rooms-page .hr-room-card.vacant{border-top-color:#218870}
+.host-workspace .host-rooms-page .hr-room-card>header{display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;min-height:86px;padding:16px 18px;background:white;gap:12px;border-bottom:1px solid #edf1f5}
+.host-workspace .host-rooms-page .hr-room-card h3{font:650 21px/1.4 'Segoe UI',system-ui,sans-serif;margin:0;letter-spacing:-.02em;overflow-wrap:anywhere}
+.host-workspace .host-rooms-page .hr-room-card>header>div{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;max-width:64%}
+.host-workspace .host-rooms-page .hr-floor{font-size:11px;line-height:1.5;border-radius:5px;padding:2px 7px;color:var(--hr-muted);background:#f1f5f9;max-width:100%;overflow-wrap:anywhere}
+.host-workspace .host-rooms-page .hr-status{font-size:11px;font-weight:500;border-radius:6px;line-height:1.5;padding:4px 8px;white-space:nowrap}
+.host-workspace .host-rooms-page .hr-room-body{display:flex;flex-direction:column;flex:1;padding:18px;min-width:0}
+.host-workspace .host-rooms-page .hr-room-body h4{font:600 14px/1.6 'Segoe UI',system-ui,sans-serif;min-height:44px;margin:0 0 8px;overflow-wrap:anywhere}
+.host-workspace .host-rooms-page .hr-room-specs{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 12px;font-size:12px;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-room-specs>span{display:inline-flex;align-items:center;gap:5px}
+.host-workspace .host-rooms-page .hr-price{font-size:17px;font-weight:650;line-height:1.5;color:var(--hr-action);font-variant-numeric:tabular-nums;white-space:nowrap}
+.host-workspace .host-rooms-page .hr-price small{font-size:12px;font-weight:400;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-amenities{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;min-width:0}
+.host-workspace .host-rooms-page .hr-amenities .rt-amenity-preview{display:flex;flex-wrap:wrap;gap:5px;max-width:none}
+.host-workspace .host-rooms-page .hr-amenities span{font-size:11px;line-height:1.5;padding:3px 7px;border:1px solid #e8eef3;border-radius:5px;background:#f5f8fb;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-amenities small{font-size:12px;color:var(--hr-muted)}
+.host-workspace .host-rooms-page .hr-confirmed{display:flex;align-items:flex-start;gap:6px;margin:auto 0 0!important;padding-top:12px;border-top:1px solid #edf1f5;font-size:11px;line-height:1.6;color:#047857}
+.host-workspace .host-rooms-page .hr-confirmed svg{flex-shrink:0;margin-top:2px}
+.host-workspace .host-rooms-page .hr-confirmed.pending{color:#92400e}
+.host-workspace .host-rooms-page .hr-actions{display:grid;grid-template-columns:1fr;gap:10px;padding:12px 18px;background:#fafcfd;border-top:1px solid #edf1f5;margin-top:auto}
+.host-workspace .host-rooms-page .hr-actions>.p-button{display:inline-flex;justify-content:center;gap:6px;font-size:12px;font-weight:600;min-height:36px;border-radius:7px;padding:7px 10px;line-height:1.5;background:white;color:var(--hr-ink)}
+.host-workspace .host-rooms-page .hr-actions>div{justify-content:flex-end;gap:7px}
+.host-workspace .host-rooms-page .hr-actions .p-icon{width:34px;height:34px;border-radius:7px;color:var(--hr-muted);border:1px solid var(--hr-line)}
+.host-workspace .host-rooms-page .hr-actions .p-icon:last-child{color:#be123c}
+.host-workspace .host-rooms-page .hr-table-wrap{border:0;border-radius:0;box-shadow:none;max-width:100%}
+.host-workspace .host-rooms-page .hr-table{min-width:1130px;table-layout:fixed;font-size:13px}
+.host-workspace .host-rooms-page .hr-table th{font-size:12px;font-weight:600;text-transform:none;white-space:normal;line-height:1.5;padding:14px 16px;color:var(--hr-muted);background:#f5f8fa}
+.host-workspace .host-rooms-page .hr-table td{padding:18px 16px;line-height:1.6;overflow-wrap:anywhere}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(1){width:10%}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(2){width:19%}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(3){width:10%}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(4){width:13%;text-align:right}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(5){width:15%}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(6){width:15%}
+.host-workspace .host-rooms-page .hr-table :is(th,td):nth-child(7){width:18%}
+.host-workspace .host-rooms-page .hr-table .hr-price{font-size:13px}
+.host-workspace .host-rooms-page .hr-table .hr-actions{padding:0;background:none;border:0;min-width:0;gap:8px}
+.host-workspace .host-rooms-page .hr-table .hr-actions>.p-button{font-size:11px;white-space:nowrap;padding:7px 8px}
+.host-workspace .host-rooms-page .hr-availability-note{display:flex;align-items:flex-start;gap:7px;color:var(--hr-muted);font-size:12px;line-height:1.6;padding:14px 20px;margin:0;border-top:1px solid var(--hr-line);background:white}
+.host-workspace .host-rooms-page .hr-availability-note svg{color:var(--hr-action);flex-shrink:0;margin-top:2px}
+.host-workspace .host-rooms-page .hr-empty{border:0;border-radius:0;padding:40px 24px;margin:0}
+.host-workspace .host-rooms-page .hr-empty h3{font-family:inherit;font-weight:650}
+.host-workspace .host-rooms-page .hr-empty .p-button.primary{background:var(--hr-action);border-color:var(--hr-action)}
+.host-workspace .host-rooms-page :is(button,a,select):focus-visible{outline:2px solid var(--hr-action);outline-offset:3px}
+@media(min-width:1550px){.host-workspace .host-rooms-page .hr-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.host-workspace .host-rooms-page .hr-room-card .hr-actions{grid-template-columns:minmax(0,1fr) auto;align-items:center}}
+@media(min-width:1440px){.host-workspace .host-rooms-page .hr-grid .hr-actions{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px}.host-workspace .host-rooms-page .hr-grid .hr-actions>.p-button{font-size:11px;padding:7px 8px;white-space:nowrap}.host-workspace .host-rooms-page .hr-grid .hr-actions>div{gap:5px}.host-workspace .host-rooms-page .hr-grid .hr-actions .p-icon{width:32px;height:34px}}
+@media(max-width:1250px){.host-workspace .host-rooms-page .hr-filter-row{grid-template-columns:minmax(140px,1fr) minmax(110px,.75fr) minmax(120px,.85fr) auto}.host-workspace .host-rooms-page .hr-search{grid-column:1/-1}.host-workspace .host-rooms-page .hr-view-switch{grid-column:4;justify-self:end}.host-workspace .host-rooms-page .hr-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.host-workspace .host-rooms-page .hr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.host-workspace .host-rooms-page .hmc-compact{grid-template-columns:1fr;gap:16px}.host-workspace .host-rooms-page .hr-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.host-workspace .host-rooms-page .hr-view-switch{grid-column:2;align-self:end}.host-workspace .host-rooms-page .hr-status-row{align-items:flex-start;gap:12px}}
+@media(max-width:600px){
+ .host-workspace .host-rooms-page .hmc-compact{padding:16px}
+ .host-workspace .host-rooms-page .hmc-heading{display:grid;grid-template-columns:40px minmax(0,1fr);align-items:start;gap:10px}
+ .host-workspace .host-rooms-page .hmc-heading>div{grid-column:2;min-width:0}
+ .host-workspace .host-rooms-page .hmc-icon{width:40px;height:40px}
+ .host-workspace .host-rooms-page .hmc-title-line{gap:6px 10px}
+ .host-workspace .host-rooms-page .hmc-title-line h2{font-size:18px}
+ .host-workspace .host-rooms-page .hmc-compact nav{width:100%;flex-wrap:nowrap;overflow:auto}
+ .host-workspace .host-rooms-page .hmc-compact nav a{flex:1;justify-content:center;font-size:11px;padding:6px 7px}
+ .host-workspace .host-rooms-page .hr-metrics{gap:10px;margin-bottom:16px}
+ .host-workspace .host-rooms-page .hr-metric{padding:14px;min-height:142px}
+ .host-workspace .host-rooms-page .hr-metric>svg{width:24px;height:24px;top:12px;right:12px;padding:5px}
+ .host-workspace .host-rooms-page .hr-metric span{font-size:12px;padding-right:20px}
+ .host-workspace .host-rooms-page .hr-metric strong{font-size:26px}
+ .host-workspace .host-rooms-page .hr-metric small{font-size:11px}
+ .host-workspace .host-rooms-page .hr-toolbar{padding:16px}
+ .host-workspace .host-rooms-page .hr-filter-row{gap:12px}
+ .host-workspace .host-rooms-page .hr-search input{font-size:16px}
+ .host-workspace .host-rooms-page .hr-select select{font-size:13px}
+ .host-workspace .host-rooms-page .hr-view-switch button{font-size:11px;padding:7px 8px}
+ .host-workspace .host-rooms-page .hr-status-row>div{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:7px}
+ .host-workspace .host-rooms-page .hr-status-row button{justify-content:space-between;font-size:11px;padding:6px 8px}
+ .host-workspace .host-rooms-page .hr-grid{grid-template-columns:1fr;padding:14px;gap:14px}
+ .host-workspace .host-rooms-page .hr-room-card .hr-actions{grid-template-columns:1fr}
+ .host-workspace .host-rooms-page .hr-actions>div{display:grid;grid-template-columns:repeat(3,1fr)}
+ .host-workspace .host-rooms-page .hr-actions .p-icon{width:100%;height:36px}
+ .host-workspace .host-rooms-page .hr-availability-note{padding:14px 16px;font-size:11px}
+}

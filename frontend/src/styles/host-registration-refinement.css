@@ -1,0 +1,55 @@
+/* Match the property detail view's readable Vietnamese system typography. */
+.property-registration,.registration-pending{font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;font-size:.9rem;color:#182e37;line-height:1.65}
+.host-portal .property-registration :is(input,select,textarea,button){font-family:inherit}
+.host-portal .property-registration .registration-panel-header h3{font-family:inherit;font-size:1.25rem;font-weight:650;line-height:1.45;letter-spacing:-.02em;margin:0 0 8px}
+.host-portal .property-registration .registration-panel-header p{font-size:.85rem;line-height:1.8;color:#60717c;margin:0}
+.host-portal .property-registration .registration-label label{font-size:.84rem;font-weight:600;color:#263f49}
+.host-portal .property-registration :is(input,select,textarea){font-size:.88rem;line-height:1.6}
+.host-portal .property-registration .registration-hint{font-size:.75rem;line-height:1.8;color:#60717c}
+.host-portal .property-registration .registration-steps button{font-family:inherit;font-size:.8rem;font-weight:600}
+.host-portal .property-registration .registration-aside h3{font-family:inherit;font-weight:650;font-size:.95rem}
+.host-portal .property-registration .registration-map-heading{display:flex;align-items:flex-start;flex-direction:column;gap:6px;margin-bottom:14px}
+.host-portal .property-registration .registration-map-heading strong{font-size:.86rem;font-weight:600}
+.host-portal .property-registration .registration-map-heading span{font-size:.76rem;color:#60717c;line-height:1.7}
+.host-portal .property-registration .registration-actions button{font-family:inherit;font-size:.83rem;font-weight:600}
+@media(max-width:600px){.host-portal .property-registration :is(input,select,textarea){font-size:1rem}.host-portal .property-registration .registration-panel-header h3{font-size:1.15rem}}
+
+/* Review is a readable record, with a clear action for each section. */
+.host-portal .property-registration{--registration-border:#e2e8f0;--registration-muted:#526571;--registration-action:#0f766e}
+.host-portal .property-registration .registration-review-summary{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid #bce3da;background:#f0fdfa;border-radius:12px;margin-bottom:24px}
+.registration-review-summary-icon{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;border-radius:10px;background:white;color:var(--registration-action)}
+.registration-review-summary strong{font-size:1rem;font-weight:650}
+.registration-review-summary p{margin:4px 0 0;font-size:.82rem;color:var(--registration-muted)}
+.registration-review-count{margin-left:auto;white-space:nowrap;color:var(--registration-action);font-size:.8rem;font-weight:600}
+.host-portal .property-registration .registration-review-groups{display:grid;gap:18px}
+.host-portal .property-registration .registration-review-section{padding:22px;border:1px solid var(--registration-border);border-radius:12px;min-width:0}
+.host-portal .property-registration .registration-review-section header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--registration-border);padding-bottom:14px;margin-bottom:16px}
+.host-portal .property-registration .registration-review-section h4{margin:0;font-size:.95rem;font-weight:650;line-height:1.5}
+.host-portal .property-registration .registration-review-section header button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:7px 11px;background:white;border:1px solid var(--registration-border);border-radius:8px;color:var(--registration-action);font-weight:600;white-space:nowrap}
+.host-portal .property-registration .registration-review{margin:0;display:grid;gap:13px}
+.host-portal .property-registration .registration-review>div{display:grid;grid-template-columns:145px minmax(0,1fr);gap:16px}
+.host-portal .property-registration .registration-review dt{color:var(--registration-muted);font-size:.83rem;font-weight:400}
+.host-portal .property-registration .registration-review dd{margin:0;font-size:.87rem;line-height:1.7;overflow-wrap:anywhere;white-space:pre-line}
+.host-portal .property-registration .registration-review-tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+.host-portal .property-registration .registration-review-tags span{padding:5px 10px;height:auto;border-radius:7px;line-height:1.6;font-size:.77rem;display:inline-flex;align-items:baseline;gap:5px}
+.host-portal .property-registration .registration-review-tags svg{flex-shrink:0}
+.host-portal .property-registration .registration-review-documents{padding:0;margin:0;list-style:none;display:grid;gap:12px}
+.host-portal .property-registration .registration-review-documents li{display:flex;gap:10px;align-items:flex-start;padding:13px;background:#f8fafc;border:1px solid var(--registration-border);border-radius:8px;font-size:.82rem;overflow-wrap:anywhere;min-width:0}
+.registration-review-documents li>svg{flex-shrink:0;margin-top:4px;color:var(--registration-action)}
+.registration-review-documents li span{min-width:0}
+.host-portal .property-registration .registration-review-documents strong{font-weight:600}
+.host-portal .property-registration .registration-consent{align-items:flex-start;padding:18px;background:#f8fafc;border:1px solid var(--registration-border);border-radius:10px;font-size:.86rem;line-height:1.7;margin-top:24px}
+.registration-consent input{flex-shrink:0;margin-top:5px}
+.registration-draft-status{display:flex;align-items:flex-start;gap:8px;margin:16px 0;color:var(--registration-muted);font-size:.78rem;line-height:1.6}
+.registration-draft-status>svg{flex-shrink:0;margin-top:3px;color:var(--registration-action)}
+.registration-draft-status small{display:block;font-size:.74rem;margin-top:3px}
+.host-portal .property-registration :is(button,input,summary):focus-visible{outline:2px solid var(--registration-action);outline-offset:3px}
+@media(max-width:600px){
+ .host-portal .property-registration .registration-review-summary{display:grid;grid-template-columns:44px minmax(0,1fr);padding:14px;gap:10px;align-items:start}
+ .registration-review-summary>div{min-width:0}
+ .registration-review-count{grid-column:2;margin-left:0;white-space:normal}
+ .host-portal .property-registration .registration-review-section{padding:16px}
+ .host-portal .property-registration .registration-review>div{grid-template-columns:1fr;gap:3px}
+ .host-portal .property-registration .registration-review-section header{align-items:flex-start}
+ .host-portal .property-registration .registration-review-section header button{font-size:.75rem}
+}

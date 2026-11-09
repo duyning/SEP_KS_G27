@@ -14,11 +14,9 @@ import NotificationsPage from './public/NotificationsPage.jsx';
 
 // Host Pages
 import HostDashboardPage from './host/HostDashboardPage.jsx';
-import HostPropertyPage from './host/HostPropertyPage.jsx';
+import HostManagementWorkspace from './host/HostManagementWorkspace.jsx';
 import HostPropertyCreatePage from './host/HostPropertyCreatePage.jsx';
 import HostPropertyEditPage from './host/HostPropertyEditPage.jsx';
-import HostRoomTypesPage from './host/HostRoomTypesPage.jsx';
-import HostRoomsPage from './host/HostRoomsPage.jsx';
 import HostViewingRequestsPage from './host/HostViewingRequestsPage.jsx';
 import HostSupportPage from './host/HostSupportPage.jsx';
 import HostNotificationsPage from './host/HostNotificationsPage.jsx';
@@ -40,6 +38,10 @@ import StaffHostRegistrationDetailPage from './staff/StaffHostRegistrationDetail
 import AdminDashboardPage from './admin/AdminDashboardPage.jsx';
 
 export default function PortalScreens({ screen }) {
+  if (['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path)) {
+    return <HostManagementWorkspace activePath={screen.path} />;
+  }
+
   switch (screen.path) {
     case '/staff/host-registrations': return <StaffHostRegistrationsPage />;
     case '/staff/host-registrations/detail': return <StaffHostRegistrationDetailPage />;
@@ -68,16 +70,10 @@ export default function PortalScreens({ screen }) {
     // Host Routes
     case '/host':
       return <HostDashboardPage />;
-    case '/host/property':
-      return <HostPropertyPage />;
     case '/host/property/new':
       return <HostPropertyCreatePage />;
     case '/host/property/edit':
       return <HostPropertyEditPage />;
-    case '/host/room-types':
-      return <HostRoomTypesPage />;
-    case '/host/rooms':
-      return <HostRoomsPage />;
     case '/host/viewings':
       return <HostViewingRequestsPage />;
     case '/host/support':

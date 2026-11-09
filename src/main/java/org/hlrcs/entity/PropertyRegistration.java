@@ -8,7 +8,7 @@ import org.hlrcs.entity.enums.RegistrationStatus;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "property_registrations")
+@Table(name = "property_registrations", indexes = @Index(name = "idx_property_assignment_queue", columnList = "assigned_staff_id,created_at"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -47,12 +47,23 @@ public class PropertyRegistration {
     private Integer baseRegistrationId;
     @Column(columnDefinition = "TEXT")
     private String requestedFieldsJson;
+    @Column(columnDefinition = "TEXT")
+    private String fieldNotesJson;
     @Column(columnDefinition = "DATETIME(6)")
     private LocalDateTime submittedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by")
     private User reviewer;
+
+    // Responsibility is independent of the actor who recorded the last decision.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_staff_id")
+    private User assignedStaff;
+
+    @Builder.Default
+    @Column(name = "assignment_version", nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private long assignmentVersion = 0;
 
     @Column(name = "reason_note", columnDefinition = "TEXT")
     private String reasonNote;

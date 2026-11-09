@@ -1,11 +1,13 @@
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original user-facing markup from Code/giao_dien/html/become-host.html.
 import {Link} from 'react-router-dom';
-export default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {
-return <div className="prototype-home prototype-become-host" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
+import {ChevronDown,X} from 'lucide-react';
+import {applicantCapacities,rentalExperiences,applicationFieldLabel} from '../services/host-applications.js';
+export default function BecomeHostPrototype({user,roleLabel,application,values,errors,state,alert,busy,mobileOpen,announcementOpen,progressOpen,account,missingContact,formatDate,stepClass,stepLabel,onClick,onSubmit,onChange}) {
+return <div className="prototype-home prototype-become-host become-host-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 <header className="navbar-wrapper">
-    <div className="top-announcement">
-      <div className="container top-announcement-inner">
+    <div className={`top-announcement ${announcementOpen?'bm-info-open':''}`}><MotionButton type="button" id="becomeHostInfoToggle" className="bm-info-toggle" aria-expanded={announcementOpen} aria-controls="becomeHostInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
+      <div className="container top-announcement-inner" id="becomeHostInformation">
         <div className="announcement-left">
           <span className="badge-tag">Hòa Lạc Campus</span>
           <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
@@ -45,91 +47,31 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
-          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
+          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li><li className="bm-menu-account">{account}</li>
         </ul>
 
 
         <div className="nav-actions">{account}</div>
 
 
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
+          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
         </MotionButton>
       </div>
     </nav>
   </header>
+  {mobileOpen&&<button type="button" className="bm-menu-backdrop bm-menu-dismiss" aria-label="Đóng thực đơn và quay lại đăng ký"/>}
 
 
-  <div className="bh-breadcrumb-bar">
-    <div className="container bh-breadcrumb-inner">
-      <ul className="bh-breadcrumb-list">
-        <li><Link to="/">Trang chủ</Link></li>
-        <li><span className="bh-breadcrumb-sep">/</span></li>
-        <li><Link to="/profile">Hồ sơ cá nhân</Link></li>
-        <li><span className="bh-breadcrumb-sep">/</span></li>
-        <li><span className="bh-breadcrumb-active">Đăng ký làm chủ trọ</span></li>
-      </ul>
-      <span className="bh-breadcrumb-meta">Hợp tác đối tác nhà trọ sinh viên Hòa Lạc</span>
-    </div>
-  </div>
-
-
-  <section className="bh-hero-section">
-    <div className="container">
-      <span className="bh-hero-eyebrow">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-        Hợp tác đối tác lưu trú
-      </span>
-      <h1 className="bh-hero-title">Đăng ký trở thành Chủ trọ HL-RCS</h1>
-      <p className="bh-hero-desc">
-        Gia nhập mạng lưới chủ nhà trọ đối tác uy tín tại Đô thị vệ tinh Hòa Lạc. Tiếp cận hơn 20.000 sinh viên FPT và ĐHQG, số hóa quy trình quản lý phòng và tiếp nhận lịch xem phòng trực tiếp, minh bạch.
-      </p>
-    </div>
+  <section className="bh-page-intro container" aria-labelledby="become-host-title">
+    <div><span className="bh-page-eyebrow">DÀNH CHO CHỦ NHÀ</span><h1 id="become-host-title">Đăng ký làm chủ trọ</h1><p>Hoàn thiện hồ sơ để sử dụng không gian quản lý nhà trọ trên HL_RCS.</p></div>
   </section>
-
-
-  <section className="bh-benefits-wrapper">
-    <div className="container">
-      <div className="bh-benefits-grid">
-        <div className="bh-benefit-card">
-          <div className="bh-benefit-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          </div>
-          <h2 className="bh-benefit-title">Tiếp cận 20.000+ sinh viên</h2>
-          <p className="bh-benefit-desc">
-            Nhà trọ của bạn xuất hiện nổi bật trước hàng chục ngàn sinh viên ĐH FPT và ĐHQG Hà Nội đang tìm phòng trọ tại Thạch Hòa, Tân Xã, Bình Yên.
-          </p>
-        </div>
-
-        <div className="bh-benefit-card">
-          <div className="bh-benefit-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-          </div>
-          <h2 className="bh-benefit-title">Quản lý số hóa tiện lợi</h2>
-          <p className="bh-benefit-desc">
-            Bảng điều khiển chuyên nghiệp giúp theo dõi phòng trống, quản lý loại phòng, tiếp nhận lịch hẹn xem phòng và nhận tin nhắn trực tiếp không qua trung gian.
-          </p>
-        </div>
-
-        <div className="bh-benefit-card">
-          <div className="bh-benefit-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          </div>
-          <h2 className="bh-benefit-title">Hỗ trợ xác minh uy tín</h2>
-          <p className="bh-benefit-desc">
-            Được đội ngũ Staff HL-RCS hỗ trợ xác thực thông tin cơ sở, gắn huy hiệu phòng trọ uy tín, gia tăng độ tin cậy và tỷ lệ lấp đầy phòng nhanh chóng.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <section className="bh-stepper-wrapper">
-    <div className="bh-stepper-card" id="bhStepperCard">
+  <div className="bh-application-workspace container">
+  <section className={`bh-stepper-wrapper ${progressOpen?'bm-progress-open':''}`}>
+    <div className="bh-stepper-card" id="bhStepperCard"><MotionButton type="button" id="becomeHostProgressToggle" className="bm-progress-toggle" aria-expanded={progressOpen} aria-controls="becomeHostProgressHelp"><span>Tiến trình đăng ký</span><span className="bm-progress-count">{['approved','already_host'].includes(state)?4:['pending','needs_changes','rejected'].includes(state)?3:1}/4</span><ChevronDown size={18}/></MotionButton>
       <div className="bh-stepper-title">
-        <span>Tiến trình xét duyệt quyền đối tác</span>
-        <span style={{"fontSize": "11.5px", "fontWeight": "600", "color": "var(--slate-400)"}}>HL-RCS Verification Process</span>
+        <span>Tiến trình đăng ký</span>
+
       </div>
       <div className="bh-stepper-steps">
         <div data-step="1" className={`bh-step-item ${stepClass(1)}`}>
@@ -141,7 +83,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
         <div data-step="2" className={`bh-step-item ${stepClass(2)}`}>
           <div className="bh-step-node">{stepLabel(2)}</div>
           <span className="bh-step-label">Gửi hồ sơ</span>
-          <span className="bh-step-sub">Chuyển tiếp BQT</span>
+          <span className="bh-step-sub">Ghi nhận yêu cầu</span>
         </div>
 
         <div data-step="3" className={`bh-step-item ${stepClass(3)}`}>
@@ -157,6 +99,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
         </div>
       </div>
     </div>
+    <div className="bh-process-note" id="becomeHostProgressHelp"><h2>Sau khi được duyệt</h2><p>Bạn có thể đăng ký nhà trọ, thiết lập loại phòng và quản lý lịch xem phòng tại Host Portal.</p><p className="bh-process-private">Hồ sơ nhà trọ và giấy tờ xác minh sẽ được gửi riêng sau khi tài khoản được cấp quyền.</p></div>
   </section>
 
 
@@ -229,7 +172,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
             <div className="bh-form-section">
               <div className="bh-section-title-wrap">
                 <span className="bh-section-num">1</span>
-                <h3 className="bh-section-title">Thông tin tài khoản đăng ký (Chỉ đọc)</h3>
+                <h3 className="bh-section-title">Thông tin tài khoản</h3>
               </div>
 
               <div className="bh-account-summary-box">
@@ -254,7 +197,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
               </div>
 
               <div className="bh-account-tip">
-                <span>💡 Thông tin tài khoản được đồng bộ từ hồ sơ cá nhân. Nếu cần sửa thông tin liên hệ, vui lòng chỉnh sửa trước tại <Link to="/profile">Hồ sơ cá nhân</Link>.</span>
+                <span>Thông tin liên hệ được lấy từ tài khoản của bạn. Cập nhật tại <Link to="/profile">Hồ sơ cá nhân</Link>.</span>
               </div>
             </div>
 
@@ -262,16 +205,20 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
             <div className="bh-form-section">
               <div className="bh-section-title-wrap">
                 <span className="bh-section-num">2</span>
-                <h3 className="bh-section-title">Thông tin nguyện vọng đối tác</h3>
+                <h3 className="bh-section-title">Kế hoạch cho thuê</h3>
               </div>
 
+              <div className="bh-form-row">
+                <div className="bh-form-group"><label htmlFor="applicantCapacity" className="bh-form-label"><span>Tư cách cho thuê <span className="bh-req-star">*</span></span></label><select id="applicantCapacity" name="applicantCapacity" className="bh-form-select" value={values.applicantCapacity} required disabled={busy} aria-invalid={!!errors.applicantCapacity} aria-describedby="capacityHint errCapacity" data-requested={application?.requestedFields?.includes('applicantCapacity')===true}><option value="">Chọn tư cách cho thuê</option>{applicantCapacities.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><span id="capacityHint" className="bh-field-hint">Nếu được ủy quyền hoặc cho thuê lại, bạn cần có quyền cho thuê hợp lệ và cung cấp giấy tờ khi đăng ký nhà trọ.</span><span id="errCapacity" className={`bh-field-error ${errors.applicantCapacity?'show':''}`} role="alert">{errors.applicantCapacity||''}</span></div>
+                <div className="bh-form-group"><label htmlFor="rentalExperience" className="bh-form-label"><span>Kinh nghiệm quản lý cho thuê <span className="bh-req-star">*</span></span></label><select id="rentalExperience" name="rentalExperience" className="bh-form-select" value={values.rentalExperience} required disabled={busy} aria-invalid={!!errors.rentalExperience} aria-describedby="experienceHint errExperience" data-requested={application?.requestedFields?.includes('rentalExperience')===true}><option value="">Chọn kinh nghiệm quản lý</option>{rentalExperiences.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select><span id="experienceHint" className="bh-field-hint">Bạn có thể đăng ký ngay cả khi chưa từng quản lý nhà trọ.</span><span id="errExperience" className={`bh-field-error ${errors.rentalExperience?'show':''}`} role="alert">{errors.rentalExperience||''}</span></div>
+              </div>
               <div className="bh-form-row">
 
                 <div className="bh-form-group">
                   <label htmlFor="targetCommune" className="bh-form-label">
                     <span>Khu vực hoạt động chính <span className="bh-req-star">*</span></span>
                   </label>
-                  <select id="targetCommune" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("targetCommune") === true} className="bh-form-select" required name="targetCommune" value={values.targetCommune} disabled={busy} aria-invalid={!!errors.targetCommune}>
+                  <select id="targetCommune" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("targetCommune") === true} className="bh-form-select" required name="targetCommune" value={values.targetCommune} disabled={busy} aria-invalid={!!errors.targetCommune} aria-describedby="errCommune">
                     <option value="">-- Chọn xã / khu vực hoạt động --</option>
                     <option value="Tân Xã">Xã Tân Xã (Gần ĐH FPT, Hồ Tân Xã)</option>
                     <option value="Thạch Hòa">Xã Thạch Hòa (Cổng số 1, Ký túc xá CNC)</option>
@@ -290,7 +237,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
                   <label htmlFor="expectedScale" className="bh-form-label">
                     <span>Quy mô phòng dự kiến <span className="bh-req-star">*</span></span>
                   </label>
-                  <select id="expectedScale" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("expectedScale") === true} className="bh-form-select" required name="expectedScale" value={values.expectedScale} disabled={busy} aria-invalid={!!errors.expectedScale}>
+                  <select id="expectedScale" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("expectedScale") === true} className="bh-form-select" required name="expectedScale" value={values.expectedScale} disabled={busy} aria-invalid={!!errors.expectedScale} aria-describedby="errScale">
                     <option value="">-- Chọn quy mô số phòng --</option>
                     <option value="Dưới 5 phòng">Dưới 5 phòng (Nhà riêng cho thuê / Dãy phòng nhỏ)</option>
                     <option value="5 - 15 phòng">5 - 15 phòng (Nhà trọ quy mô vừa phải)</option>
@@ -309,8 +256,8 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
                   <span>Giới thiệu bản thân &amp; cơ sở cho thuê <span className="bh-req-star">*</span></span>
                   <span className="bh-char-counter" id="introCharCounter">{values.introduction.length + ' / 1000 ký tự'}</span>
                 </label>
-                <textarea id="introduction" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("introduction") === true} className="bh-form-textarea" rows="4" maxLength="1000" placeholder="Chia sẻ ngắn gọn về kinh nghiệm cho thuê phòng, địa chỉ sơ bộ cơ sở nhà trọ, tiện ích nổi bật hoặc mong muốn hợp tác cùng sinh viên ĐH FPT / ĐHQG trên nền tảng HL-RCS (tối thiểu 20 ký tự)..." required name="introduction" value={values.introduction} disabled={busy} aria-invalid={!!errors.introduction}></textarea>
-                <span className="bh-field-hint">Nội dung này giúp Ban Quản Trị Staff hiểu rõ nguyện vọng và quy mô của bạn để phê duyệt nhanh hơn.</span>
+                <textarea id="introduction" data-requested={application?.status === "NEEDS_CHANGES" && application?.requestedFields?.includes("introduction") === true} className="bh-form-textarea" rows="4" maxLength="1000" placeholder="Giới thiệu kinh nghiệm quản lý, khu vực nhà trọ và kế hoạch cho thuê của bạn..." required name="introduction" value={values.introduction} disabled={busy} aria-invalid={!!errors.introduction} aria-describedby="errIntro"></textarea>
+                <span className="bh-field-hint">Từ 20 đến 1000 ký tự. Staff sẽ sử dụng thông tin này để thẩm định yêu cầu của bạn.</span>
                 <span id="errIntro" className={`bh-field-error ${errors.introduction ? "show" : ""}`} role="alert">{errors.introduction || ''}</span>
               </div>
             </div>
@@ -318,7 +265,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
 
             <div className="bh-agreement-card">
               <label className="bh-checkbox-label">
-                <input type="checkbox" id="agreementCheck" required name="agreementAccepted" checked={values.agreementAccepted} disabled={busy} aria-invalid={!!errors.agreementAccepted}/>
+                <input type="checkbox" id="agreementCheck" required name="agreementAccepted" checked={values.agreementAccepted} disabled={busy} aria-invalid={!!errors.agreementAccepted} aria-describedby="errAgreement"/>
                 <span>
                   Tôi cam kết thông tin cung cấp là chính xác, đồng ý tuân thủ <strong>Quy chế hoạt động đối tác HL-RCS</strong>, bảo đảm cung cấp giá điện nước minh bạch và tạo môi trường lưu trú an toàn, văn minh cho sinh viên.
                 </span>
@@ -360,7 +307,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
             <span className="dot"></span>
             <span>Đang chờ xét duyệt</span>
           </div>
-          <h2 className="bh-state-title">Hồ sơ của bạn đang được Staff thẩm định</h2>
+          <h2 className="bh-state-title">Hồ sơ đang chờ xét duyệt</h2>
           <p className="bh-state-desc">
             Hồ sơ xin cấp quyền Chủ trọ đã được tiếp nhận thành công. Đội ngũ kiểm duyệt HL-RCS đang đối soát thông tin tài khoản và sẽ thông báo kết quả cho bạn trong thời gian sớm nhất.
           </p>
@@ -371,7 +318,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
               <span>Thông tin hồ sơ đã ghi nhận</span>
               <span className="bh-sic-meta">Thời gian gửi: <strong id="pendingSubmittedDate">{formatDate(application?.submittedAt)}</strong></span>
             </div>
-            <div className="bh-sic-grid">
+            <div className="bh-sic-grid"><div className="bh-sic-item"><span className="bh-sic-label">Tư cách cho thuê</span><span className="bh-sic-val">{applicationFieldLabel(applicantCapacities,application?.applicantCapacity)}</span></div><div className="bh-sic-item"><span className="bh-sic-label">Kinh nghiệm quản lý</span><span className="bh-sic-val">{applicationFieldLabel(rentalExperiences,application?.rentalExperience)}</span></div>
               <div className="bh-sic-item">
                 <span className="bh-sic-label">Họ và tên đăng ký</span>
                 <span className="bh-sic-val" id="pendingUserName">{application?.userName || '—'}</span>
@@ -524,7 +471,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
             <span className="dot"></span>
             <span>Tài khoản Chủ trọ</span>
           </div>
-          <h2 className="bh-state-title">Bạn đã là Đối tác Chủ trọ trên hệ thống</h2>
+          <h2 className="bh-state-title">Tài khoản đã có quyền Chủ trọ</h2>
           <p className="bh-state-desc">
             Tài khoản hiện tại của bạn đã được kích hoạt vai trò Chủ trọ (Host). Bạn không cần thực hiện thêm bước đăng ký này nữa.
           </p>
@@ -556,6 +503,7 @@ return <div className="prototype-home prototype-become-host" onClick={onClick} o
 
     </div>
   </main>
+  </div>
 
 
 

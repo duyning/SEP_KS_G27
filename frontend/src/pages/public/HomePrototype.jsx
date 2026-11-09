@@ -1,13 +1,14 @@
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Layout and static content preserved from Code/giao_dien/html/home.html.
 import {Link} from 'react-router-dom';
-export default function HomePrototype({listings,more,account,filters,savedCount,mobileOpen,onClick,onSubmit,onChange}) {
- return <div className="prototype-home" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
+import {ChevronDown,X} from 'lucide-react';
+export default function HomePrototype({listings,more,account,filters,savedCount,mobileOpen,announcementOpen,onClick,onSubmit,onChange}) {
+ return <div className="prototype-home home-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 
 
   <header className="navbar-wrapper">
-    <div className="top-announcement">
-      <div className="container top-announcement-inner">
+    <div className={`top-announcement ${announcementOpen?'hm-info-open':''}`}><MotionButton type="button" id="homeInfoToggle" className="hm-info-toggle" aria-expanded={announcementOpen} aria-controls="homeInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
+      <div className="container top-announcement-inner" id="homeInformation">
         <div className="announcement-left">
           <span className="badge-tag">Hòa Lạc Campus</span>
           <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
@@ -48,6 +49,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
+          <li className="hm-menu-account">{account || <><Link className="btn-ghost" to="/login">Đăng nhập</Link><Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link></>}</li>
         </ul>
 
 
@@ -61,12 +63,13 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
         </>}</div>
 
 
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
+          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
         </MotionButton>
       </div>
     </nav>
   </header>
+  {mobileOpen&&<button type="button" className="hm-menu-backdrop hm-menu-dismiss" aria-label="Đóng thực đơn và quay lại trang"/>}
 
 
   <section className="hero-section">

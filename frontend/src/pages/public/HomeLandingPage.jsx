@@ -10,6 +10,7 @@ import HomePrototype from './HomePrototype.jsx';
 import '../../styles/home-landing.css';
 import '../../styles/home-prototype.css';
 import '../../styles/home-prototype-integration.css';
+import '../../styles/home-mobile.css';
 
 const initialFilters = {location:'all', price:'all', type:'all', tab:'all', chip:'all'};
 const savedKey = 'hlrcs:public-saved-properties';
@@ -64,12 +65,19 @@ function PropertyCard({property, saved, onSave}) {
 export default function HomeLandingPage() {
   const {user, logout} = useAuth();
   const [data,setData] = useState([]), [loading,setLoading] = useState(true), [error,setError] = useState(''), [revision,setRevision] = useState(0);
-  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible), [saved,setSaved] = useState(readSaved), [mobileOpen,setMobileOpen] = useState(false);
+  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible), [saved,setSaved] = useState(readSaved), [mobileOpen,setMobileOpen] = useState(false), [announcementOpen,setAnnouncementOpen] = useState(false);
   useEffect(()=>{
     const controller=new AbortController(); setLoading(true); setError('');
     fetchPublicProperties(controller.signal).then(value=>{if(!controller.signal.aborted)setData(value);}).catch(error=>{if(!controller.signal.aborted)setError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
     return ()=>controller.abort();
   },[revision]);
+  useEffect(()=>{
+    if(!mobileOpen)return;
+    const closeOnEscape=event=>{if(event.key==='Escape'){setMobileOpen(false);document.getElementById('mobileMenuBtn')?.focus();}};
+    const closeOnResize=()=>{if(window.innerWidth>600)setMobileOpen(false);};
+    document.addEventListener('keydown',closeOnEscape);window.addEventListener('resize',closeOnResize);
+    return()=>{document.removeEventListener('keydown',closeOnEscape);window.removeEventListener('resize',closeOnResize);};
+  },[mobileOpen]);
   const previousFilters=useRef(filters);
   useEffect(()=>{if(previousFilters.current!==filters){previousFilters.current=filters;setVisible(6);}},[filters]);
   useEffect(()=>{try{sessionStorage.setItem(viewKey,JSON.stringify({filters,visible}));}catch{}},[filters,visible]);
@@ -81,7 +89,9 @@ export default function HomeLandingPage() {
     const tab=event.target.closest('[data-tab]'), chip=event.target.closest('[data-chip]');
     if(tab)setFilters(previous=>({...previous,tab:tab.dataset.tab}));
     if(chip)setFilters(previous=>({...previous,chip:chip.dataset.chip}));
-    if(event.target.closest('#mobileMenuBtn'))setMobileOpen(value=>!value);
+    if(event.target.closest('#mobileMenuBtn')){setMobileOpen(value=>!value);setAnnouncementOpen(false);}
+    if(event.target.closest('.hm-menu-dismiss'))setMobileOpen(false);
+    if(event.target.closest('#homeInfoToggle')){setAnnouncementOpen(value=>!value);setMobileOpen(false);}
     if(event.target.closest('.nav-menu a'))setMobileOpen(false);
   };
   const onChange=event=>{
@@ -92,5 +102,5 @@ export default function HomeLandingPage() {
   const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{saved.length}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><button className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout()}><LogOut size={15}/></button></div></>:null;
   const listings=loading?<div className="home-list-state" role="status">Đang tải danh sách nhà trọ...</div>:error?<div className="home-list-state" role="alert"><h3>Chưa thể tải danh sách nhà trọ</h3><p>{error}</p><button className="btn-primary-sm" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>:!filtered.length?<div className="home-list-state"><h3>{data.length?'Không tìm thấy phòng trọ phù hợp':'Chưa có nhà trọ được công khai'}</h3><p>{data.length?'Vui lòng thử điều chỉnh lại bộ lọc hoặc chọn mức giá khác.':'Nhà trọ sẽ xuất hiện sau khi được xét duyệt và hiển thị.'}</p>{data.length>0&&<button className="btn-primary-sm" onClick={()=>setFilters(initialFilters)}>Xem tất cả phòng</button>}</div>:filtered.slice(0,visible).map(property=><PropertyCard key={property.propertyId} property={property} saved={saved.includes(property.propertyId)} onSave={()=>save(property.propertyId)}/>);
   const more=!loading&&!error&&visible<filtered.length?<button className="btn-outline-lg" onClick={()=>setVisible(value=>value+6)}>Xem thêm {filtered.length-visible} nhà trọ quanh Hòa Lạc<ChevronRight size={16}/></button>:null;
-  return <HomePrototype {...{listings,more,account,filters,onClick,onSubmit,onChange,mobileOpen}} savedCount={saved.length}/>;
+  return <HomePrototype {...{listings,more,account,filters,onClick,onSubmit,onChange,mobileOpen,announcementOpen}} savedCount={saved.length}/>;
 }

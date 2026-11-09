@@ -3,6 +3,14 @@ export const ROOM_AMENITIES = [
   ['kitchen','Kệ bếp nấu ăn'], ['loft','Gác lửng ngủ'], ['refrigerator','Tủ lạnh riêng'],
   ['washingMachine','Máy giặt riêng'], ['bed','Giường & Đệm'], ['wardrobe','Tủ quần áo'],
   ['desk','Bàn ghế làm việc'], ['wifi','Wifi tốc độ cao'], ['privateBathroom','Vệ sinh khép kín'],
+  ['ceilingFan','Quạt trần'], ['window','Cửa sổ thoáng'], ['curtains','Rèm cửa'], ['smartLock','Khóa cửa thông minh'],
+  ['television','Tivi'], ['sofa','Sofa'], ['diningTable','Bàn ăn'], ['inductionCooker','Bếp từ'],
+  ['microwave','Lò vi sóng'], ['kitchenHood','Máy hút mùi'], ['privateDrying','Khu phơi đồ riêng'],
+];
+export const ROOM_AMENITY_GROUPS = [
+  ['Không gian & Tiện nghi', ['airConditioner','ceilingFan','waterHeater','window','curtains','balcony','wifi','smartLock']],
+  ['Nội thất & Sinh hoạt', ['bed','wardrobe','desk','loft','television','sofa','diningTable']],
+  ['Bếp & Vệ sinh', ['kitchen','refrigerator','inductionCooker','microwave','kitchenHood','washingMachine','privateBathroom','privateDrying']],
 ];
 export const money = value => value == null ? 'Chưa có dữ liệu' : `${new Intl.NumberFormat('vi-VN').format(value)} đ`;
 export const emptyRoomType = () => ({ roomType:'', areaSqm:'', capacity:'2', price:'', deposit:'', imageUrl:'', description:'', amenities:[], electricityPrice:'', waterPrice:'', internetPrice:'', servicePrice:'', photos:[], retainedImages:[] });
@@ -31,7 +39,7 @@ export function validateRoomType(data) {
     const url = new URL(data.imageUrl.trim());
     if (url.protocol !== 'https:' || url.username || url.password || data.imageUrl.trim().length > 1000) throw new Error();
   } catch { errors.imageUrl = 'Nhập đường dẫn ảnh HTTPS hợp lệ, tối đa 1000 ký tự.'; }
-  if (data.amenities.length > 12 || data.amenities.some(key => !ROOM_AMENITIES.some(([value]) => key === value)) || new Set(data.amenities).size !== data.amenities.length) errors.amenities = 'Tiện nghi không hợp lệ.';
+  if (data.amenities.length > ROOM_AMENITIES.length || data.amenities.some(key => !ROOM_AMENITIES.some(([value]) => key === value)) || new Set(data.amenities).size !== data.amenities.length) errors.amenities = 'Tiện nghi không hợp lệ.';
   return errors;
 }
 export function roomTypePayload(data, propertyId) {

@@ -1,7 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { editRoomType, emptyRoomType, roomTypePayload, validateRoomPhotos, validateRoomType } from '../src/services/room-types.js';
+import { ROOM_AMENITIES, ROOM_AMENITY_GROUPS, editRoomType, emptyRoomType, roomTypePayload, validateRoomPhotos, validateRoomType } from '../src/services/room-types.js';
 const valid = () => ({...emptyRoomType(),roomType:'Studio ban công',areaSqm:'25.5',price:'2200000',capacity:'2',amenities:['wifi']});
+
+test('expanded room amenities validate, persist in payloads and restore for editing',()=>{
+  const keys=ROOM_AMENITIES.map(([key])=>key);
+  const grouped=ROOM_AMENITY_GROUPS.flatMap(([,values])=>values);
+  assert.deepEqual([...grouped].sort(),[...keys].sort());
+  assert.equal(new Set(grouped).size,keys.length);
+  const data={...valid(),amenities:keys};
+  assert.deepEqual(validateRoomType(data),{});
+  assert.deepEqual(roomTypePayload(data,12).amenities,keys);
+  assert.deepEqual(editRoomType({...roomTypePayload(data,12),images:[]}).amenities,keys);
+  assert.ok(validateRoomType({...data,amenities:[...keys,'unknown']}).amenities);
+  assert.ok(validateRoomType({...data,amenities:['ceilingFan','ceilingFan']}).amenities);
+});
 test('room type starts without sample content and requires name, area, capacity and price',()=>{
   const form=emptyRoomType();
   assert.deepEqual(form.amenities,[]);

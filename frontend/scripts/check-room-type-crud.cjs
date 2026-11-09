@@ -7,7 +7,7 @@ async function main(){
  const browser=await chromium.launch({channel:'msedge',headless:true});
  const output=process.env.CHECK_OUTPUT||path.resolve(__dirname,'../migration/room-type-crud-check');fs.mkdirSync(output,{recursive:true});
  try{
-  const page=await browser.newPage({viewport:{width:1536,height:1000}});const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const page=await browser.newPage({viewport:{width:1536,height:1000},reducedMotion:'reduce'});const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>sessionStorage.setItem('hlrcs_access_token','browser-only'));
   const property={propertyId:12,name:'Browser-only property',status:'ACTIVE'};
   const base={propertyId:12,price:2400000,areaSqm:22,capacity:2,deposit:2400000,amenities:['airConditioner','wifi'],description:'Thông tin kiểm tra chỉ trong trình duyệt.',electricityPrice:3500,waterPrice:30000,internetPrice:80000,servicePrice:30000,totalRooms:null,vacantRooms:null};
@@ -21,6 +21,7 @@ async function main(){
    else if(url==='/api/host/room-types/with-rooms'&&method==='POST'||/\/room-types\/\d+$/.test(url)&&method==='PUT'){
     const form=await new Response(req.postDataBuffer(),{headers:{'Content-Type':req.headers()['content-type']}}).formData();
     const details=JSON.parse(await form.get('details').text());const files=form.getAll('photos');assert.equal(details.propertyId,12);
+    assert.ok(details.amenities.includes('ceilingFan'));assert.ok(details.amenities.includes('smartLock'));
     if(method==='POST'){
      creates++;assert.equal(files.length,2);assert.equal(details.roomType,'New type');
      const layout=JSON.parse(await form.get('layout').text());
@@ -40,17 +41,38 @@ async function main(){
   });
   await page.goto('http://127.0.0.1:5173/host/room-types');await page.getByText('Type A',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Thêm loại phòng mới',exact:true}).click();
+  const createDialog=page.getByRole('dialog',{name:'Thêm loại phòng mới',exact:true});
+  assert.equal(await createDialog.getByRole('checkbox').count(),23);
+  await createDialog.getByRole('checkbox',{name:'Quạt trần',exact:true}).check();
+  await createDialog.getByRole('checkbox',{name:'Khóa cửa thông minh',exact:true}).focus();await page.keyboard.press('Space');
+  assert.equal(await createDialog.getByRole('checkbox',{name:'Khóa cửa thông minh',exact:true}).isChecked(),true);
+  for(const width of [1440,1024,768,375]){
+   await page.setViewportSize({width,height:1000});
+   await createDialog.locator('.rtc-scroll').evaluate(el=>el.scrollTop=0);
+   assert.ok(await createDialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1),`create modal overflow at ${width}`);
+   assert.ok(await createDialog.locator('.rtc-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1),`create form overflow at ${width}`);
+   const footer=await createDialog.locator('.rt-modal-footer').boundingBox();assert.ok(footer.y>=0&&footer.y+footer.height<=1001);
+   if([1440,375].includes(width))await page.screenshot({path:path.join(output,`create-${width}.png`)});
+   await createDialog.locator('.rtc-amenity-section').scrollIntoViewIfNeeded();
+   assert.ok(await createDialog.locator('.rtc-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1),`amenities overflow at ${width}`);
+   if([1440,375].includes(width))await page.screenshot({path:path.join(output,`create-amenities-${width}.png`)});
+  }
+  await page.setViewportSize({width:1536,height:1000});
   await page.getByLabel('Tên loại phòng',{exact:false}).fill('New type');await page.getByLabel('Diện tích (m²)',{exact:false}).fill('25');await page.getByLabel('Giá thuê niêm yết',{exact:false}).fill('2400000');
   await page.locator('#rt-photos').setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await page.getByRole('alert').waitFor();assert.equal(creates,0);
   await page.locator('#rt-photos').setInputFiles([{name:'create-1.png',mimeType:'image/png',buffer:png},{name:'create-2.png',mimeType:'image/png',buffer:png}]);assert.equal(await page.locator('.rt-upload-previews figure').count(),2);
+  await page.getByRole('button',{name:'Tiếp theo: Thiết lập danh sách phòng',exact:true}).click();
+  await page.getByRole('button',{name:'Quay lại',exact:true}).click();
+  assert.equal(await page.getByLabel('Tên loại phòng',{exact:false}).inputValue(),'New type');
+  assert.equal(await createDialog.getByRole('checkbox',{name:'Quạt trần',exact:true}).isChecked(),true);
   await page.getByRole('button',{name:'Tiếp theo: Thiết lập danh sách phòng',exact:true}).click();await page.getByRole('button',{name:'Nhập danh sách thủ công',exact:true}).click();await page.getByRole('button',{name:'Thêm 1 dòng',exact:true}).click();
   await page.getByLabel('Số phòng dòng 1',{exact:true}).fill('P.101');await page.getByLabel('Tầng / khu dòng 1',{exact:true}).fill('Tầng 1');
   await page.getByRole('button',{name:'Tạo loại phòng và 1 phòng',exact:true}).click();await page.getByText('Đã tạo loại phòng và 1 phòng thành công.',{exact:true}).waitFor();
   const row=()=>page.locator('.rt-table tbody tr').filter({has:page.getByText('New type',{exact:true})});
   await row().getByRole('button',{name:'Chi tiết',exact:true}).click();let dialog=page.getByRole('dialog',{name:'New type',exact:true});await dialog.waitFor();
-  await page.waitForFunction(()=>document.querySelectorAll('.rt-info-gallery img').length===2&&[...document.querySelectorAll('.rt-info-gallery img')].every(image=>image.naturalWidth>0));
+  await page.waitForFunction(()=>document.querySelectorAll('.rtd-thumbnails img').length===2&&[...document.querySelectorAll('.rtd-thumbnails img')].every(image=>image.naturalWidth>0));
   assert.ok(imageReads.includes('/api/host/room-types/36/images/201'));assert.ok(imageReads.includes('/api/host/room-types/36/images/202'));
-  assert.equal(await dialog.locator('.rt-info-gallery button').count(),2);
+  assert.equal(await dialog.locator('.rtd-thumbnails button').count(),2);
   for(const width of [1536,768,390]){await page.setViewportSize({width,height:1000});await dialog.evaluate(element=>element.scrollTop=0);assert.ok(await dialog.evaluate(element=>element.scrollWidth<=element.clientWidth+1));if(width!==768)await page.screenshot({path:path.join(output,`detail-${width}.png`)});}
   await page.getByRole('button',{name:'Chỉnh sửa thông tin',exact:true}).click();dialog=page.getByRole('dialog',{name:'Chỉnh sửa loại phòng',exact:true});await dialog.waitFor();
   await page.getByLabel('Giá thuê niêm yết',{exact:false}).fill('2800000');await page.getByRole('button',{name:'Bỏ ảnh create-1.png',exact:true}).click();await page.locator('#rt-photos').setInputFiles({name:'edit.png',mimeType:'image/png',buffer:png});
