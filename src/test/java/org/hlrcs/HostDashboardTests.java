@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.hlrcs.entity.*;
 import org.hlrcs.entity.enums.*;
 import org.hlrcs.repository.*;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@TestPropertySource("classpath:application-test.properties")
 class HostDashboardTests {
     @Autowired Environment environment;
     @Autowired ObjectMapper json;
@@ -114,8 +116,11 @@ class HostDashboardTests {
 
     @Test void publicHomeOnlyExposesPublishedPropertiesAndListingPhotos() throws Exception {
         var owner=account(UserRole.ROOM_HOST);
+        var details=registrationDetails();
+        details.put("latitude","21.01454");
+        details.put("longitude","105.52522");
         var registration=registrations.save(PropertyRegistration.builder().user(owner).name("Public approved test")
-            .status(RegistrationStatus.APPROVED).registrationDetails(json.writeValueAsString(registrationDetails())).build());
+            .status(RegistrationStatus.APPROVED).registrationDetails(json.writeValueAsString(details)).build());
         var property=properties.save(Property.builder().owner(owner).registration(registration).name("Public approved test").address("Tân Xã")
             .status("ACTIVE").description("Description for public listing").build());
         var type=roomTypes.save(RoomType.builder().property(property).roomType("Public studio").price(new BigDecimal("2400000")).amenitiesJson("[\"wifi\"]").build());
@@ -134,6 +139,7 @@ class HostDashboardTests {
             assertNotEquals(hidden.getPropertyId().intValue(),row.path("propertyId").asInt());
             if(row.path("propertyId").asInt()==property.getPropertyId()){
                 found=true;assertEquals(2,row.path("totalRooms").asInt());assertEquals(1,row.path("vacantRooms").asInt());
+                assertEquals(111.2,row.path("distanceToFptMeters").asDouble(),0.1);
                 assertEquals(2100000,row.path("minPrice").asInt());assertFalse(row.has("phone"));assertFalse(row.has("owner"));
                 assertEquals(1,row.path("photos").size());assertFalse(row.toString().contains("private-id.pdf"));
             }

@@ -177,7 +177,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
       <div className="section-header">
         <div>
           <span className="section-eyebrow">Dữ liệu kiểm duyệt 2026</span>
-          <h2 className="section-title">Khám phá phòng trọ tại Hòa Lạc</h2>
+          <h2 className="section-title" id="home-results-heading" tabIndex={-1}>Khám phá phòng trọ tại Hòa Lạc</h2>
           <p className="section-desc">Tất cả phòng đều được xác minh hình ảnh, tiện nghi và tình trạng thực tế trước khi hiển thị.</p>
         </div>
       </div>

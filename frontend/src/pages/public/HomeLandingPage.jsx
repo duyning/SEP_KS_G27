@@ -31,7 +31,8 @@ export function filterHomeProperties(data, filters) {
     if (filters.type === 'gac-lung' && !amenities.includes('loft') && !text.includes('gac')) return false;
     if (filters.type === 'chung-cu-mini' && !/studio|chung cu|can ho/.test(text)) return false;
     // Do not infer distance from an address: this shortcut requires a real measured distance.
-    if (filters.chip === 'gan-fpt' && !(property.distanceToFptMeters != null && property.distanceToFptMeters < 1000)) return false;
+    if (filters.chip === 'gan-fpt' && !(Number.isFinite(property.distanceToFptMeters)
+      && property.distanceToFptMeters >= 0 && property.distanceToFptMeters < 1000)) return false;
     return true;
   });
 }
@@ -72,11 +73,19 @@ export default function HomeLandingPage() {
   useEffect(()=>{const previous=document.title; document.title='HL_RCS | Hệ thống kết nối phòng trọ thông minh tại Hòa Lạc';return()=>{document.title=previous;};},[]);
   const favorites=useFavoriteActions(data.map(property=>homeRoomType(property)?.roomTypeId));
   const filtered=useMemo(()=>sortHomeProperties(filterHomeProperties(data,filters),filters.sort),[data,filters]);
-  const scrollListings=()=>document.getElementById('explore')?.scrollIntoView({behavior:'smooth'});
+  const showResults=()=>{
+    setVisible(6);
+    const heading=document.getElementById('home-results-heading');
+    heading?.focus({preventScroll:true});
+    heading?.scrollIntoView({block:'center'});
+  };
   const onClick=event=>{
     const tab=event.target.closest('[data-tab]'), chip=event.target.closest('[data-chip]');
     if(tab)setFilters(previous=>({...previous,tab:tab.dataset.tab}));
-    if(chip)setFilters(previous=>({...previous,chip:chip.dataset.chip}));
+    if(chip){
+      setFilters(previous=>({...previous,chip:chip.dataset.chip,tab:'all'}));
+      showResults();
+    }
     if(event.target.closest('#mobileMenuBtn'))setMobileOpen(value=>!value);
     if(event.target.closest('.nav-menu a'))setMobileOpen(false);
   };
@@ -84,7 +93,12 @@ export default function HomeLandingPage() {
     const key={filterLocation:'location',filterPrice:'price',filterType:'type',homePriceSort:'sort'}[event.target.id];
     if(key)setFilters(previous=>({...previous,[key]:event.target.value}));
   };
-  const onSubmit=event=>{if(event.target.id==='searchForm'){event.preventDefault();scrollListings();}};
+  const onSubmit=event=>{
+    if(event.target.id!=='searchForm')return;
+    event.preventDefault();
+    setFilters(previous=>({...previous,tab:'all'}));
+    showResults();
+  };
   const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{favorites.total??0}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><button className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></button></div></>:null;
   const listings=loading?<div className="home-list-state" role="status">Đang tải danh sách nhà trọ...</div>:error?<div className="home-list-state" role="alert"><h3>Chưa thể tải danh sách nhà trọ</h3><p>{error}</p><button className="btn-primary-sm" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>:!filtered.length?<div className="home-list-state"><h3>{data.length?'Không tìm thấy phòng trọ phù hợp':'Chưa có nhà trọ được công khai'}</h3><p>{data.length?'Vui lòng thử điều chỉnh lại bộ lọc hoặc chọn mức giá khác.':'Nhà trọ sẽ xuất hiện sau khi được xét duyệt và hiển thị.'}</p>{data.length>0&&<button className="btn-primary-sm" onClick={()=>setFilters(initialFilters)}>Xem tất cả phòng</button>}</div>:filtered.slice(0,visible).map(property=><PropertyCard key={property.propertyId} property={property} saved={favorites.isSaved(homeRoomType(property)?.roomTypeId)} saveBusy={favorites.busy(homeRoomType(property)?.roomTypeId)} onSave={()=>favorites.toggle(homeRoomType(property)?.roomTypeId)}/>);
   const more=!loading&&!error&&visible<filtered.length?<button className="btn-outline-lg" onClick={()=>setVisible(value=>value+6)}>Xem thêm {filtered.length-visible} nhà trọ quanh Hòa Lạc<ChevronRight size={16}/></button>:null;

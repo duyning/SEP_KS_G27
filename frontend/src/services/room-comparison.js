@@ -53,6 +53,7 @@ export function comparisonRows(columns) {
     row('availableRooms','Phòng trống',data=>data.availableRooms,value=>value>0?`Còn ${value} phòng`:'Hết phòng'),
   ];
   const options=new Map([...ROOM_AMENITIES,...AMENITIES]);
+  options.set('airConditioner','Điều hòa');
   const declared=[...new Set(ready.flatMap(column=>[...(column.data.amenities||[]),...(column.data.propertyAmenities||[])]))];
   const keys=[...new Set(['airConditioner','waterHeater','balcony','loft','privateBathroom','kitchen',...declared])];
   for(const key of keys)rows.push(row(`amenity-${key}`,options.get(key)||key,data=>
