@@ -1,7 +1,7 @@
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { MotionDialog } from '../../components/motion/MotionUI.jsx';
-import {useEffect,useState} from 'react';
-import {useSearchParams} from 'react-router-dom';
+import {useEffect,useRef,useState} from 'react';
+import {useLocation,useSearchParams} from 'react-router-dom';
 import {StateView,useToast} from '../../components/PortalUI.jsx';
 import {staffHostApi} from '../../services/staff-host-applications.js';
 import StaffHostShell,{HostApplicationStatus,date,applicationLabels} from './StaffHostShell.jsx';
@@ -23,6 +23,8 @@ function DecisionDialog({children,modal,busy,onClose}){
  return <MotionDialog className="hr-native-modal hr-decision-dialog" aria-describedby="hostDecisionDescription" aria-labelledby={{approve:'modalApproveTitle',reject:'modalRejectTitle',supplement:'modalReqChangesTitle'}[modal]} onCancel={event=>{event.preventDefault();if(!busy)onClose();}}>{children}</MotionDialog>;
 }
 export default function StaffHostRegistrationDetailPage(){
+ const location=useLocation(),pendingRequest=useRef(false);
+ const backQuery=typeof location.state?.hostRegistrationSearch==='string'&&location.state.hostRegistrationSearch.startsWith('?')?location.state.hostRegistrationSearch:'';
  const [params]=useSearchParams(),id=Number(params.get('id')),notify=useToast();
  const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0),[modal,setModal]=useState(null),[values,setValues]=useState({approveNote:'',rejectReason:'',commonNote:'',allowResubmit:true}),[selected,setSelected]=useState({}),[modalError,setModalError]=useState(''),[busy,setBusy]=useState(false),[stale,setStale]=useState(false);
  useEffect(()=>{const controller=new AbortController();setLoading(true);setError('');setStale(false);if(!Number.isSafeInteger(id)||id<1){setError('Mã hồ sơ không hợp lệ.');setLoading(false);return()=>controller.abort();}staffHostApi.detail(id,controller.signal).then(detail=>{if(!controller.signal.aborted)setData(detail);}).catch(error=>{if(!controller.signal.aborted)setError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[id,revision]);
@@ -31,7 +33,7 @@ export default function StaffHostRegistrationDetailPage(){
  function openModal(kind){if(a.status!=='PENDING_REVIEW'||busy)return;setValues({approveNote:'',rejectReason:'',commonNote:'',allowResubmit:true});setSelected({});setModalError('');setModal(kind);}
  const onClick=event=>{const target=event.target;if(target.closest('#btnTriggerApprove'))openModal('approve');if(target.closest('#btnTriggerReject'))openModal('reject');if(target.closest('#btnTriggerRequestChanges'))openModal('supplement');};
  async function submit(){
-  if(busy)return;let note='',requestedFields=[];
+  if(busy||pendingRequest.current)return;let note='',requestedFields=[];
   if(modal==='approve')note=values.approveNote.trim();
   else if(modal==='reject'){note=values.rejectReason.trim();if(note.length<10){setModalError('Vui lòng nêu lý do từ chối cụ thể, ít nhất 10 ký tự.');return;}}
   else{
@@ -41,9 +43,9 @@ export default function StaffHostRegistrationDetailPage(){
    note=supplementNote(selected,values.commonNote);
   }
   if(note.length>2000){setModalError('Tổng nội dung gửi tối đa 2000 ký tự.');return;}
-  setBusy(true);setModalError('');
+  pendingRequest.current=true;setBusy(true);setModalError('');
   try{const result=await staffHostApi.review(id,{decision:{approve:'APPROVED',reject:'REJECTED',supplement:'NEEDS_CHANGES'}[modal],note,allowResubmit:modal==='reject'?values.allowResubmit:true,version:a.version,requestedFields});setData(previous=>({...previous,application:result}));setModal(null);notify(result.status==='APPROVED'?'Đã phê duyệt và cấp quyền Chủ trọ.':result.status==='NEEDS_CHANGES'?'Đã gửi yêu cầu bổ sung cho người đăng ký.':'Đã từ chối hồ sơ đăng ký.');window.dispatchEvent(new Event('hlrcs:staff-updated'));setRevision(value=>value+1);}
-  catch(error){setModalError(error.message);if(error.status===409){setStale(true);setModal(null);}}finally{setBusy(false);}
+  catch(error){setModalError(error.message);if(error.status===409){setStale(true);setModal(null);}}finally{pendingRequest.current=false;setBusy(false);}
  }
  function modalClick(event){if(event.target.closest('.btn-close-modal,.btn-modal-secondary')&&!busy)setModal(null);if(event.target.closest('#btnConfirmApprove,#btnConfirmReject,#btnConfirmReqChanges'))submit();}
  function onChange(event){const {name,value,type,checked}=event.target;if(!name)return;setValues(previous=>({...previous,[name]:type==='checkbox'?checked:value}));setModalError('');}
@@ -52,5 +54,5 @@ export default function StaffHostRegistrationDetailPage(){
  const events=[...data.history,{action:'SUBMITTED',note:'Người dùng gửi hồ sơ xin cấp quyền Chủ trọ.',reviewer:a.userName,createdAt:a.submittedAt}].sort((x,y)=>new Date(y.createdAt)-new Date(x.createdAt));
  const history=events.map((event,index)=><article className="shrd-timeline-item" key={index}><div className="shrd-timeline-node"/><header className="shrd-timeline-header"><strong className="shrd-timeline-title">{event.action==='SUBMITTED'?'Gửi hồ sơ đăng ký':applicationLabels[event.action]||event.action}</strong><span className="shrd-timeline-time">{date(event.createdAt)}</span></header><p className="shrd-timeline-actor">Bởi: <strong>{event.reviewer}</strong></p>{event.note&&<div className="shrd-timeline-note">{event.note}</div>}</article>);
  const terminal=<div className="shrd-terminal-box"><h4 className="shrd-terminal-title">{applicationLabels[a.status]}</h4>{a.reviewerNote&&<p className="hr-preserve-lines">{a.reviewerNote}</p>}<p className="shrd-terminal-meta">{a.reviewedBy?`Đã xử lý bởi ${a.reviewedBy}`:'Đang chờ người đăng ký cập nhật'} · {date(a.reviewedAt)}</p></div>;
- return <StaffHostShell><StaffHostDetailTemplate application={a} {...{date,onClick,history,terminal}} statusBadge={<HostApplicationStatus status={a.status}/>}/>{stale&&<p className="hr-stale" role="alert">Hồ sơ đã thay đổi. <MotionButton onClick={()=>{setModal(null);setRevision(value=>value+1);}}>Tải lại dữ liệu</MotionButton></p>}<AnimatePresence>{modal&&<DecisionDialog {...{modal,busy}} onClose={()=>setModal(null)}><StaffHostModalTemplate {...{modal,values,busy,checklist}} application={a} selectedCount={Object.keys(selected).length} error={modalError} totalCharacters={supplementNote(selected,values.commonNote).length} onClick={modalClick} onChange={onChange}/></DecisionDialog>}</AnimatePresence></StaffHostShell>;
+ return <StaffHostShell><StaffHostDetailTemplate backHref={`/staff/host-registrations${backQuery}`} application={a} {...{date,onClick,history,terminal}} statusBadge={<HostApplicationStatus status={a.status}/>}/>{stale&&<p className="hr-stale" role="alert">Hồ sơ đã thay đổi. <MotionButton onClick={()=>{setModal(null);setRevision(value=>value+1);}}>Tải lại dữ liệu</MotionButton></p>}<AnimatePresence>{modal&&<DecisionDialog {...{modal,busy}} onClose={()=>setModal(null)}><StaffHostModalTemplate {...{modal,values,busy,checklist}} application={a} selectedCount={Object.keys(selected).length} error={modalError} totalCharacters={supplementNote(selected,values.commonNote).length} onClick={modalClick} onChange={onChange}/></DecisionDialog>}</AnimatePresence></StaffHostShell>;
 }

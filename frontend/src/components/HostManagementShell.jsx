@@ -1,11 +1,12 @@
-import { createContext, useContext, useMemo, useRef } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, useAnimationControls } from 'motion/react';
 import { Highlight, HighlightItem } from '@animate-ui/react/primitives/effects/highlight';
 import { SlidingNumber } from '@animate-ui/react/primitives/texts/sliding-number';
 import { useMotionTokens, useShouldReduceMotion, useTempoTransition } from '@animate-ui/react/utils/motion';
-import { Building2, ChevronDown, DoorOpen, Layers } from 'lucide-react';
+import { Building2, ChevronDown, DoorOpen, Layers, X } from 'lucide-react';
+import HostDrawer from './HostDrawer.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AnimatePresence, MotionButton } from './motion/MotionUI.jsx';
 import { getHostWorkspaceMemory, updateHostWorkspaceMemory } from '../services/host-management.js';
@@ -17,6 +18,55 @@ export const HOST_MANAGEMENT_TABS = [
 ];
 
 export const HostWorkspaceContext = createContext(null);
+
+const subscribeToCompactFilters = listener => {
+  const media = window.matchMedia('(max-width: 640px)');
+  media.addEventListener('change', listener);
+  return () => media.removeEventListener('change', listener);
+};
+const compactFiltersSnapshot = () => window.matchMedia('(max-width: 640px)').matches;
+export const useCompactHostFilters = () => useSyncExternalStore(subscribeToCompactFilters, compactFiltersSnapshot, () => false);
+
+// One set of controls, inline on desktop and in the existing modal sheet on phones.
+export function HostFilterPanel({ open, onClose, triggerId, title = 'Bộ lọc phòng', children }) {
+  const compact = useCompactHostFilters();
+  const titleId = useId();
+  const reduce = useShouldReduceMotion();
+  const { transition } = useMotionTokens();
+  useEffect(() => {
+    if (!open || compact) return;
+    const handleKey = event => { if (event.key === 'Escape') { event.preventDefault(); onClose(); document.getElementById(triggerId)?.focus(); } };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open, compact, onClose, triggerId]);
+  const close = () => { onClose(); document.getElementById(triggerId)?.focus(); };
+  return <AnimatePresence initial={false}>{open && (compact ?
+    <HostDrawer key="filter-sheet" title={title} onClose={close} side="bottom" className="hm-filter-drawer"
+      footer={<MotionButton type="button" className="hm-btn hm-btn-primary" onClick={close}>Xem kết quả</MotionButton>}>
+      <div className="hm-filter-fields">{children}</div>
+    </HostDrawer> :
+    <motion.section key="filter-panel" role="region" aria-labelledby={titleId} className="hm-filter-panel"
+      initial={{ opacity: 0, height: reduce ? 'auto' : 0 }}
+      animate={{ opacity: 1, height: 'auto', transition: reduce ? transition.fade : transition.disclosure }}
+      exit={{ opacity: 0, height: reduce ? 'auto' : 0, transition: transition.dismiss }}>
+      <div className="hm-filter-heading"><h3 id={titleId}>{title}</h3><MotionButton type="button" className="hm-icon-btn" aria-label="Đóng bộ lọc" onClick={close}><X size={16}/></MotionButton></div>
+      <div className="hm-filter-fields">{children}</div>
+    </motion.section>)}</AnimatePresence>;
+}
+
+// Keep results mounted (including image state and focused actions) during filter/view updates.
+// Opacity is the only animated property; intrinsic grid/table sizing remains immediate.
+export function HostResults({ revision, children }) {
+  const controls = useAnimationControls();
+  const reduce = useShouldReduceMotion();
+  const { transition } = useMotionTokens();
+  useEffect(() => {
+    controls.set({ opacity: reduce ? 1 : 0.9 });
+    if (!reduce) void controls.start({ opacity: 1, transition: transition.swap });
+    return () => controls.stop();
+  }, [revision, reduce, controls, transition.swap]);
+  return <motion.div className="hm-results" initial={false} animate={controls}>{children}</motion.div>;
+}
 
 function resolveScopedTabHref(targetPath, selectedPropertyId) {
   if (!selectedPropertyId) return targetPath;
@@ -133,7 +183,7 @@ export function HostSummaryStrip({ metrics = [], ariaLabel = 'Thống kê nhanh'
   if (!visible.length) return null;
 
   return (
-    <section className="hm-kpi-strip" aria-label={ariaLabel}>
+    <section className="hm-kpi-strip" style={{ '--hm-metric-count': visible.length }} aria-label={ariaLabel}>
       {visible.map(metric => {
         const Icon = metric.icon;
         const isNumeric = typeof metric.value === 'number' && Number.isFinite(metric.value);
@@ -260,10 +310,11 @@ export function HostSegmentedToggle({ value, onChange, options = [], ariaLabel =
 }
 
 export function HostManagementSkeleton({ kind = 'property' }) {
+  const metricCount = kind === 'property' ? 5 : kind === 'rooms' ? 3 : 4;
   return (
-    <div className="hm-skeleton-wrap" role="status" aria-live="polite" aria-label="Đang tải dữ liệu quản lý nhà trọ">
-      <div className="hm-skel-strip">
-        {Array.from({ length: 4 }, (_, index) => (
+    <div className="hm-skeleton-wrap" data-kind={kind} role="status" aria-live="polite" aria-label="Đang tải dữ liệu quản lý nhà trọ">
+      <div className="hm-skel-strip" style={{ '--hm-metric-count': metricCount }}>
+        {Array.from({ length: metricCount }, (_, index) => (
           <div key={index} className="hm-skel-pill" />
         ))}
       </div>
@@ -324,7 +375,7 @@ export default function HostManagementShell({
   ) : null;
 
   return (
-    <div className="hm-shell">
+    <div className="hm-shell" data-management-tab={activePath}>
       {workspace ? (
         workspace.actionTarget && animatedActions
           ? createPortal(animatedActions, workspace.actionTarget)

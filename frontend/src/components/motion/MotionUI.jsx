@@ -8,7 +8,7 @@ export { AnimatePresence } from 'motion/react';
 // One pace for all portals. No route/content entrance or API timing lives here.
 export function AppMotionProvider({ children }) {
   useEffect(() => {
-    const selector = '.spin,.animate-spin,.btn-spinner,.loading-spinner,.svcd-spinner,.spinning svg';
+    const selector = '.spin,.animate-spin,.btn-spinner,.loading-spinner,.svcd-spinner,.spinning svg,.hm-skel-pill,.hm-skel-toolbar,.hm-skel-card,.hm-skel-floor-card';
     const visible = new Map();
     const update = () => visible.forEach((inView, element) => {
       if (!element.isConnected) { observer.unobserve(element); visible.delete(element); }
@@ -104,8 +104,8 @@ export function MotionSheet({ children, onClose, panelClassName = '', side = 'ri
   const present = useIsPresent();
   const reduce = useShouldReduceMotion();
   const { transition: motionTransition } = useMotionTokens();
-  const offscreen = side === 'left' ? 'translateX(-100%)' : 'translateX(100%)';
-  const shown = 'translateX(0%)';
+  const offscreen = side === 'bottom' ? 'translateY(100%)' : side === 'left' ? 'translateX(-100%)' : 'translateX(100%)';
+  const shown = side === 'bottom' ? 'translateY(0%)' : 'translateX(0%)';
   const hidden = { opacity: 0, transform: reduce ? shown : offscreen };
 
   useEffect(() => {

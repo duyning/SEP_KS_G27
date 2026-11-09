@@ -50,6 +50,7 @@ import HostEmptyState from '../../components/HostEmptyState.jsx';
 import HostActionMenu from '../../components/HostActionMenu.jsx';
 import HostManagementShell, {
   HostManagementSkeleton,
+  HostResults,
   HostSegmentedToggle,
 } from '../../components/HostManagementShell.jsx';
 import '../../styles/host-property-page.css';
@@ -637,6 +638,16 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
   const memory = getHostWorkspaceMemory(user?.userId);
   const [viewMode, setViewMode] = useState(memory.propertyView || 'grid');
 
+  // Keep hooks unconditional when switching between the portfolio and a detail URL.
+  const search = params.get('search') || '';
+  const status = params.get('status') || 'ALL';
+  const sort = params.get('sort') || 'NEWEST';
+  const portfolio = useMemo(() => computePortfolioSummary(data.records), [data.records]);
+  const filtered = useMemo(
+    () => filterPropertyRecords(data.records, { search, status, sort }),
+    [data.records, search, status, sort]
+  );
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedId, selectedRegistrationId]);
@@ -732,15 +743,6 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
     );
   }
 
-  const search = params.get('search') || '';
-  const status = params.get('status') || 'ALL';
-  const sort = params.get('sort') || 'NEWEST';
-
-  const portfolio = useMemo(() => computePortfolioSummary(data.records), [data.records]);
-  const filtered = useMemo(
-    () => filterPropertyRecords(data.records, { search, status, sort }),
-    [data.records, search, status, sort]
-  );
   const current = propertyPage(filtered, params.get('page') || 1);
 
   const detailLink = record => {
@@ -847,7 +849,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
       summaryLabel="Tổng quan danh mục nhà trọ"
     >
       <section className="hm-surface" aria-label="Danh sách nhà trọ của tôi">
-        <div className="hm-toolbar">
+        <div className="hm-toolbar hm-property-toolbar">
           <label className="hm-search-box">
             <Search size={15} aria-hidden="true" />
             <input
@@ -888,7 +890,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
             </select>
 
             {(search || status !== 'ALL' || sort !== 'NEWEST') && (
-              <MotionButton type="button" className="hm-btn hm-btn-ghost hm-btn-sm" onClick={reset}>
+              <MotionButton type="button" className="hm-btn hm-btn-ghost hm-btn-sm hm-filter-reset" onClick={reset}>
                 <RotateCcw size={14} />
                 <span>Đặt lại</span>
               </MotionButton>
@@ -906,6 +908,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
           </div>
         </div>
 
+        <HostResults revision={`${viewMode}:${search}:${status}:${sort}:${current.page}`}>
         {!current.items.length ? (
           <div className="hm-empty-box">
             <Search size={28} aria-hidden="true" />
@@ -941,7 +944,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                   <div className="hm-prop-body">
                     <div className="hm-prop-head">
                       <h2 className="hm-prop-name">
-                        <Link to={detailLink(record)} onClick={() => rememberProperty(record)}>
+                        <Link to={detailLink(record)} title={record.name} onClick={() => rememberProperty(record)}>
                           {record.name}
                         </Link>
                       </h2>
@@ -1075,6 +1078,8 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
             </table>
           </div>
         )}
+
+        </HostResults>
 
         {filtered.length > PROPERTY_PAGE_SIZE && (
           <footer className="hm-pagination" aria-label="Phân trang nhà trọ">

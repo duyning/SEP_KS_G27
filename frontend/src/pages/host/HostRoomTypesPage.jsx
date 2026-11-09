@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Download,
   DoorOpen,
   Eye,
   FileSpreadsheet,
+  Filter,
   Grid2X2,
   House,
   ImageOff,
@@ -30,7 +31,10 @@ import RoomTypeExcelImportModal from '../../components/RoomTypeExcelImportModal.
 import HostActionMenu from '../../components/HostActionMenu.jsx';
 import HostManagementShell, {
   HostInlinePropertySelect,
+  HostFilterPanel,
+  useCompactHostFilters,
   HostManagementSkeleton,
+  HostResults,
   HostSegmentedToggle,
 } from '../../components/HostManagementShell.jsx';
 import { downloadRoomTypeTemplate } from '../../services/room-type-excel.js';
@@ -70,10 +74,75 @@ function renderRoomTypeStatusBadge(type) {
   return <span className="hm-badge tone-info">Đã lấp đầy</span>;
 }
 
+function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
+  return <><label className="hm-filter-field"><span>Trạng thái phòng</span><select
+              className="hm-select hm-type-status"
+              aria-label="Lọc trạng thái loại phòng"
+              value={filter}
+              onChange={event => setFilter(event.target.value)}
+            >
+              <option value="ALL">Tất cả ({types.length})</option>
+              <option value="AVAILABLE">
+                Còn phòng trống ({types.filter(item => (item.vacantRooms ?? 0) > 0).length})
+              </option>
+              <option value="FULL">
+                Đã lấp đầy (
+                {types.filter(item => (item.totalRooms ?? 0) > 0 && item.vacantRooms === 0).length})
+              </option>
+              <option value="EMPTY">
+                Chưa tạo phòng ({types.filter(item => (item.totalRooms ?? 0) === 0).length})
+              </option>
+            </select></label><label className="hm-filter-field"><span>Sắp xếp</span><select
+              className="hm-select hm-type-sort"
+              aria-label="Sắp xếp loại phòng"
+              value={sort}
+              onChange={event => setSort(event.target.value)}
+            >
+              <option value="NEWEST">Mới nhất</option>
+              <option value="PRICE_ASC">Giá thấp → cao</option>
+              <option value="PRICE_DESC">Giá cao → thấp</option>
+              <option value="ROOMS_DESC">Nhiều phòng nhất</option>
+              <option value="NAME">Tên A–Z</option>
+            </select></label></>;
+}
+
+function RoomTypeCard({ type, onSelect, actions }) {
+  const total = Number.isInteger(type.totalRooms) ? type.totalRooms : null;
+  const vacant = Number.isInteger(type.vacantRooms) ? type.vacantRooms : null;
+  const occupied = total != null && vacant != null ? Math.max(0, total - vacant) : null;
+  const roomLink = `/host/rooms?propertyId=${type.propertyId}&roomTypeId=${type.roomTypeId}`;
+  return <article className="hm-rt-card">
+    <div className="hm-rt-card-hero">
+      <button type="button" className="hm-rt-thumb-trigger" onClick={() => onSelect(type)} aria-label={`Xem chi tiết ${type.roomType}`}><TypeImage type={type}/></button>
+      <div className="hm-rt-card-info">
+        <header className="hm-rt-card-top">
+          <h2 className="hm-rt-card-title"><button type="button" onClick={() => onSelect(type)} title={type.roomType}>{type.roomType}</button></h2>
+          <div className="hm-rt-card-status">{renderRoomTypeStatusBadge(type)}</div>
+        </header>
+        <div className="hm-rt-card-body">
+          <p className="hm-rt-price-line"><strong className="hm-rt-price">{money(type.price)}</strong><span>/ tháng</span></p>
+          <p className="hm-rt-spec-line"><span>{type.areaSqm != null ? `${type.areaSqm} m²` : 'Chưa rõ diện tích'}</span><span className="hm-dot-sep" aria-hidden="true">·</span><span>{type.capacity != null ? `Tối đa ${type.capacity} người` : 'Chưa rõ sức chứa'}</span></p>
+        </div>
+      </div>
+    </div>
+    <dl className="hm-rt-inventory" aria-label="Tình trạng phòng">
+      <div><dt>Tổng số phòng</dt><dd>{total ?? '—'}</dd></div>
+      <div className="is-vacant"><dt>Còn trống</dt><dd>{vacant ?? '—'}<House size={15} aria-hidden="true"/></dd></div>
+      <div><dt>Đang thuê</dt><dd>{occupied ?? '—'}</dd></div>
+    </dl>
+    <footer className="hm-rt-card-footer">
+      <Link className="hm-rt-manage-link" to={roomLink}><DoorOpen size={15}/><span>Quản lý phòng</span></Link>
+      {actions}
+    </footer>
+  </article>;
+}
+
 export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDeleted }) {
   const { user } = useAuth();
   const notify = useToast();
   const memory = getHostWorkspaceMemory(user?.userId);
+  const compactFilters = useCompactHostFilters();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [search, setSearch] = useState(memory.roomTypes.search || '');
   const [filter, setFilter] = useState(memory.roomTypes.filter || 'ALL');
@@ -346,7 +415,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
       )}
 
       <section className="hm-surface" aria-label="Danh sách loại phòng">
-        <div className="hm-toolbar">
+        <div className={`hm-toolbar hm-types-toolbar ${compactFilters ? "is-compact" : ""}`}>
           <HostInlinePropertySelect
             properties={data.properties}
             selectedPropertyId={property.propertyId}
@@ -363,42 +432,12 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
           </label>
 
           <div className="hm-toolbar-controls">
-            <select
-              className="hm-select"
-              aria-label="Lọc trạng thái loại phòng"
-              value={filter}
-              onChange={event => setFilter(event.target.value)}
-            >
-              <option value="ALL">Tất cả ({types.length})</option>
-              <option value="AVAILABLE">
-                Còn phòng trống ({types.filter(item => (item.vacantRooms ?? 0) > 0).length})
-              </option>
-              <option value="FULL">
-                Đã lấp đầy (
-                {types.filter(item => (item.totalRooms ?? 0) > 0 && item.vacantRooms === 0).length})
-              </option>
-              <option value="EMPTY">
-                Chưa tạo phòng ({types.filter(item => (item.totalRooms ?? 0) === 0).length})
-              </option>
-            </select>
+            {compactFilters ? <MotionButton type="button" id="hm-type-filter-toggle" className={`hm-btn hm-btn-subtle hm-type-filter-toggle ${filter !== 'ALL' || sort !== 'NEWEST' ? 'is-active' : ''}`} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(value => !value)}><Filter size={15}/>Bộ lọc{filter !== 'ALL' || sort !== 'NEWEST' ? ' •' : ''}</MotionButton> : <RoomTypeFilters {...{types, filter, setFilter, sort, setSort}} />}
 
-            <select
-              className="hm-select"
-              aria-label="Sắp xếp loại phòng"
-              value={sort}
-              onChange={event => setSort(event.target.value)}
-            >
-              <option value="NEWEST">Mới nhất</option>
-              <option value="PRICE_ASC">Giá thấp → cao</option>
-              <option value="PRICE_DESC">Giá cao → thấp</option>
-              <option value="ROOMS_DESC">Nhiều phòng nhất</option>
-              <option value="NAME">Tên A–Z</option>
-            </select>
-
-            {(search || filter !== 'ALL' || sort !== 'NEWEST') && (
+            {!compactFilters && (search || filter !== 'ALL' || sort !== 'NEWEST') && (
               <MotionButton
                 type="button"
-                className="hm-btn hm-btn-ghost hm-btn-sm"
+                className="hm-btn hm-btn-ghost hm-btn-sm hm-filter-reset"
                 onClick={resetFilters}
               >
                 <RotateCcw size={14} />
@@ -418,6 +457,11 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
           </div>
         </div>
 
+        <HostFilterPanel open={compactFilters && filtersOpen} onClose={() => setFiltersOpen(false)} triggerId="hm-type-filter-toggle" title="Bộ lọc loại phòng">
+          <RoomTypeFilters {...{types, filter, setFilter, sort, setSort}} />
+          {(search || filter !== 'ALL' || sort !== 'NEWEST') && <div className="hm-filter-actions"><MotionButton type="button" className="hm-btn hm-btn-ghost" onClick={resetFilters}><RotateCcw size={14}/>Đặt lại</MotionButton></div>}
+        </HostFilterPanel>
+        <HostResults revision={`${view}:${search}:${filter}:${sort}:${property.propertyId}`}>
         {!types.length ? (
           <div className="hm-empty-box">
             <Layers size={30} aria-hidden="true" />
@@ -447,64 +491,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
           </div>
         ) : view === 'cards' ? (
           <div className="hm-rt-grid">
-            {shown.map(type => {
-              const total = type.totalRooms ?? 0;
-              const vacant = type.vacantRooms ?? 0;
-              return (
-                <article key={type.roomTypeId} className="hm-rt-card">
-                  <div className="hm-rt-card-top">
-                    <button
-                      type="button"
-                      className="hm-rt-thumb-trigger"
-                      onClick={() => setSelected(type)}
-                      aria-label={`Xem chi tiết ${type.roomType}`}
-                    >
-                      <TypeImage type={type} />
-                    </button>
-
-                    <div className="hm-rt-card-info">
-                      <div className="hm-rt-card-title-row">
-                        <h2 className="hm-rt-card-title">
-                          <button type="button" onClick={() => setSelected(type)}>
-                            {type.roomType}
-                          </button>
-                        </h2>
-                        {renderRoomTypeStatusBadge(type)}
-                      </div>
-
-                      <p className="hm-rt-spec-line">
-                        <strong className="hm-rt-price">{money(type.price)}/tháng</strong>
-                        <span className="hm-dot-sep" aria-hidden="true">·</span>
-                        <span>{type.areaSqm != null ? `${type.areaSqm}m²` : 'Chưa rõ diện tích'}</span>
-                        <span className="hm-dot-sep" aria-hidden="true">·</span>
-                        <span>
-                          {type.capacity != null ? `Tối đa ${type.capacity} người` : 'Chưa rõ sức chứa'}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <footer className="hm-rt-card-footer">
-                    <div className="hm-rt-room-summary">
-                      {type.totalRooms != null ? (
-                        <>
-                          <span>
-                            <strong>{total}</strong> phòng
-                          </span>
-                          <span className="hm-dot-sep" aria-hidden="true">·</span>
-                          <span className={vacant > 0 ? 'is-emerald' : 'hm-muted'}>
-                            <strong>{vacant}</strong> phòng trống
-                          </span>
-                        </>
-                      ) : (
-                        <span className="hm-muted">Chưa có dữ liệu phòng</span>
-                      )}
-                    </div>
-                    {renderTypeActions(type)}
-                  </footer>
-                </article>
-              );
-            })}
+            {shown.map(type => <RoomTypeCard key={type.roomTypeId} type={type} onSelect={setSelected} actions={renderTypeActions(type)} />)}
           </div>
         ) : (
           <div className="hm-table-wrap">
@@ -565,6 +552,8 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
             </table>
           </div>
         )}
+        </HostResults>
+
       </section>
 
       <AnimatePresence>

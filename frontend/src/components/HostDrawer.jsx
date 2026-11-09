@@ -12,12 +12,14 @@ export default function HostDrawer({
   children,
   className = '',
   size = 'md',
+  side = 'right',
 }) {
   const titleId = useId();
   const subtitleId = useId();
 
   return (
     <MotionSheet
+      side={side}
       aria-labelledby={titleId}
       aria-describedby={subtitle ? subtitleId : undefined}
       onClose={onClose}

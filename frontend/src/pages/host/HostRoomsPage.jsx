@@ -24,6 +24,7 @@ import {
   Search,
   Trash2,
   Users,
+  X,
 } from 'lucide-react';
 import { AnimatePresence, MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -35,7 +36,9 @@ import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 import HostActionMenu from '../../components/HostActionMenu.jsx';
 import HostManagementShell, {
   HostInlinePropertySelect,
+  HostFilterPanel,
   HostManagementSkeleton,
+  HostResults,
   HostSegmentedToggle,
 } from '../../components/HostManagementShell.jsx';
 import { money } from '../../services/room-types.js';
@@ -173,7 +176,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
   const [status, setStatus] = useState(memory.rooms.status || 'ALL');
   const [sort, setSort] = useState(memory.rooms.sort || 'ASC');
   const [page, setPage] = useState(1);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [collapsedFloors, setCollapsedFloors] = useState(() => new Set());
 
   const [editor, setEditor] = useState(null);
@@ -538,79 +541,14 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
 
           <MotionButton
             type="button"
-            className={`hm-btn hm-btn-subtle hm-mobile-filter-btn ${mobileFiltersOpen || activeFilterCount ? 'is-active' : ''}`}
-            aria-expanded={mobileFiltersOpen}
-            onClick={() => setMobileFiltersOpen(prev => !prev)}
+            id="hm-room-filter-toggle"
+            className={`hm-btn hm-btn-subtle hm-room-filter-toggle ${filtersOpen || activeFilterCount ? 'is-active' : ''}`}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen(prev => !prev)}
           >
             <Filter size={15} />
             <span>Bộ lọc{activeFilterCount ? ` (${activeFilterCount})` : ''}</span>
           </MotionButton>
-
-          <div className={`hm-toolbar-controls hm-rooms-filters ${mobileFiltersOpen ? 'is-open' : ''}`}>
-            <select
-              className="hm-select"
-              aria-label="Lọc theo tầng"
-              value={floor}
-              onChange={event => setFloor(event.target.value)}
-            >
-              <option value="ALL">Tất cả tầng ({floors.length})</option>
-              {floors.map(item => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="hm-select"
-              aria-label="Lọc theo loại phòng"
-              value={typeFilter}
-              onChange={event => setTypeFilter(event.target.value)}
-            >
-              <option value="ALL">Tất cả loại phòng</option>
-              {types.map(type => (
-                <option key={type.roomTypeId} value={String(type.roomTypeId)}>
-                  {type.roomType}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="hm-select"
-              aria-label="Lọc theo trạng thái phòng"
-              value={status}
-              onChange={event => setStatus(event.target.value)}
-            >
-              <option value="ALL">Tất cả trạng thái</option>
-              <option value="VACANT">Còn trống ({vacant})</option>
-              <option value="OCCUPIED">Đang thuê ({occupied})</option>
-              {unconfirmed > 0 && <option value="UNCONFIRMED">Chưa xác nhận ({unconfirmed})</option>}
-            </select>
-
-            <select
-              className="hm-select"
-              aria-label="Sắp xếp phòng"
-              value={sort}
-              onChange={event => setSort(event.target.value)}
-            >
-              <option value="ASC">Số phòng tăng dần</option>
-              <option value="DESC">Số phòng giảm dần</option>
-              <option value="FLOOR">Theo tầng</option>
-              <option value="PRICE_ASC">Giá thấp → cao</option>
-              <option value="PRICE_DESC">Giá cao → thấp</option>
-            </select>
-
-            {(search || activeFilterCount > 0) && (
-              <MotionButton
-                type="button"
-                className="hm-btn hm-btn-ghost hm-btn-sm"
-                onClick={resetFilters}
-              >
-                <RotateCcw size={14} />
-                <span>Đặt lại</span>
-              </MotionButton>
-            )}
-          </div>
 
           <HostSegmentedToggle
             value={view}
@@ -623,6 +561,70 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
           />
         </div>
 
+        <HostFilterPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} triggerId="hm-room-filter-toggle">
+            <label className="hm-filter-field"><span>Tầng / khu vực</span><select
+              className="hm-select"
+              aria-label="Lọc theo tầng"
+              value={floor}
+              onChange={event => setFloor(event.target.value)}
+            >
+              <option value="ALL">Tất cả tầng ({floors.length})</option>
+              {floors.map(item => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select></label>
+            <label className="hm-filter-field"><span>Loại phòng</span><select
+              className="hm-select"
+              aria-label="Lọc theo loại phòng"
+              value={typeFilter}
+              onChange={event => setTypeFilter(event.target.value)}
+            >
+              <option value="ALL">Tất cả loại phòng</option>
+              {types.map(type => (
+                <option key={type.roomTypeId} value={String(type.roomTypeId)}>
+                  {type.roomType}
+                </option>
+              ))}
+            </select></label>
+            <label className="hm-filter-field"><span>Trạng thái</span><select
+              className="hm-select"
+              aria-label="Lọc theo trạng thái phòng"
+              value={status}
+              onChange={event => setStatus(event.target.value)}
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="VACANT">Còn trống ({vacant})</option>
+              <option value="OCCUPIED">Đang thuê ({occupied})</option>
+              {unconfirmed > 0 && <option value="UNCONFIRMED">Chưa xác nhận ({unconfirmed})</option>}
+            </select></label>
+            <label className="hm-filter-field"><span>Sắp xếp</span><select
+              className="hm-select"
+              aria-label="Sắp xếp phòng"
+              value={sort}
+              onChange={event => setSort(event.target.value)}
+            >
+              <option value="ASC">Số phòng tăng dần</option>
+              <option value="DESC">Số phòng giảm dần</option>
+              <option value="FLOOR">Theo tầng</option>
+              <option value="PRICE_ASC">Giá thấp → cao</option>
+              <option value="PRICE_DESC">Giá cao → thấp</option>
+              <option value="STATUS">Theo trạng thái</option>
+            </select></label>
+          <div className="hm-filter-actions">
+            {(search || activeFilterCount > 0) && <MotionButton type="button" className="hm-btn hm-btn-ghost" onClick={resetFilters}><RotateCcw size={14}/>Đặt lại</MotionButton>}
+          </div>
+        </HostFilterPanel>
+        {activeFilterCount > 0 && <div className="hm-active-filters" aria-label="Bộ lọc đang áp dụng">
+          {floor !== 'ALL' && <MotionButton type="button" className="hm-filter-chip" onClick={() => setFloor('ALL')} aria-label="Bỏ lọc tầng">{floor}<X size={12}/></MotionButton>}
+          {typeFilter !== 'ALL' && <MotionButton type="button" className="hm-filter-chip" onClick={() => setTypeFilter('ALL')} aria-label="Bỏ lọc loại phòng">{types.find(type => String(type.roomTypeId) === String(typeFilter))?.roomType || 'Loại phòng'}<X size={12}/></MotionButton>}
+          {status !== 'ALL' && <MotionButton type="button" className="hm-filter-chip" onClick={() => setStatus('ALL')} aria-label="Bỏ lọc trạng thái">{({VACANT:'Còn trống',OCCUPIED:'Đang thuê',UNCONFIRMED:'Chưa xác nhận'})[status] || status}<X size={12}/></MotionButton>}
+          {sort !== 'ASC' && <MotionButton type="button" className="hm-filter-chip" onClick={() => setSort('ASC')} aria-label="Bỏ sắp xếp">{({DESC:'Số phòng giảm dần',FLOOR:'Theo tầng',PRICE_ASC:'Giá thấp → cao',PRICE_DESC:'Giá cao → thấp',STATUS:'Theo trạng thái'})[sort]}<X size={12}/></MotionButton>}
+          <MotionButton type="button" className="hm-text-btn" onClick={resetFilters}>Xóa bộ lọc</MotionButton>
+        </div>}
+
+        <HostResults revision={`${view}:${search}:${floor}:${typeFilter}:${status}:${sort}`}>
         {!types.length ? (
           <div className="hm-empty-box">
             <Layers size={30} aria-hidden="true" />
@@ -845,6 +847,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
             )}
           </>
         )}
+
+        </HostResults>
 
         <p className="hm-footnote">
           <Info size={14} aria-hidden="true" />
