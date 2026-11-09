@@ -26,8 +26,10 @@ export default function CommunityPostDescription({ content, contentFormat, class
   useEffect(() => {
     const element = text.current;
     const measure = () => {
-      const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
-      setLong(element.scrollHeight > lineHeight * 5 + 1);
+      const style = getComputedStyle(element);
+      const lineHeight = parseFloat(style.lineHeight);
+      const previewLines = parseInt(style.getPropertyValue('--community-preview-lines'), 10) || 5;
+      setLong(element.scrollHeight > lineHeight * previewLines + 1);
     };
     measure();
     const observer = new ResizeObserver(measure);

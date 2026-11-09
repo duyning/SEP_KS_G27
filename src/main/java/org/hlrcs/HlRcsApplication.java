@@ -3,8 +3,10 @@ package org.hlrcs;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.hlrcs.development.LocalFrontend;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class HlRcsApplication {
 
     public static void main(String[] args) {

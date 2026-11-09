@@ -152,6 +152,29 @@ function commentPage(result) {
 const basePath = '/api/community/posts';
 const staffPath = '/api/staff/community/posts';
 export const communityApi = {
+  async feed({ mine = false, category = 'ALL', q = '', location = 'all', sort = 'newest', cursor = null } = {}, signal) {
+    const params = new URLSearchParams({ category, q, location, sort });
+    if (cursor) params.set('cursor', cursor);
+    const data = await request(`${mine ? '/mine' : ''}/feed?${params}`, { basePath, signal });
+    if (!data || !Array.isArray(data.items) || typeof data.hasMore !== 'boolean'
+        || (data.hasMore ? typeof data.nextCursor !== 'string' || !data.nextCursor || data.nextCursor === cursor : data.nextCursor !== null)
+        || !data.counts || ['ALL', ...Object.keys(postTypes)].some(key => !Number.isSafeInteger(data.counts[key]) || data.counts[key] < 0)) {
+      throw new ApiError('Phản hồi tải thêm bài viết không hợp lệ.', 502);
+    }
+    const items = list(data.items);
+    if (!mine && items.some(item => item.status !== 'APPROVED')) throw new ApiError('Danh sách công khai chứa bài chưa được duyệt.', 502);
+    return { ...data, items };
+  },
+  async feedPost(postId, mine, signal) {
+    const saved = post(await request(`${mine ? '/mine' : ''}/feed/${id(postId)}`, { basePath, signal }));
+    if (!mine && saved.status !== 'APPROVED') throw new ApiError('Bài viết chưa được công khai.', 502);
+    return saved;
+  },
+  async mineCount(signal) {
+    const count = await request('/mine/count', { basePath, signal });
+    if (!Number.isSafeInteger(count) || count < 0) throw new ApiError('Số bài viết không hợp lệ.', 502);
+    return count;
+  },
   async published(signal) {
     const posts = list(await request('', { basePath, signal }));
     if (posts.some(item => item.status !== 'APPROVED')) throw new ApiError('Danh sách công khai chứa bài chưa được duyệt.', 502);
@@ -191,7 +214,7 @@ export const communityApi = {
   async video(postId, videoId, signal) { return request(`/${id(postId)}/videos/${id(videoId)}`, { basePath, signal, responseType: 'blob' }); },
   async moderation(signal) { return list(await request('', { basePath: staffPath, signal })); },
   async detail(signal, postId) { return detail(await request(`/${id(postId)}`, { basePath: staffPath, signal })); },
-  async review(postId, decision, note, signal) {
-    return detail(await request(`/${id(postId)}/review`, { basePath: staffPath, method: 'POST', body: { decision, note }, signal }));
+  async review(postId, decision, note, signal, revision) {
+    return detail(await request(`/${id(postId)}/review`, { basePath: staffPath, method: 'POST', body: { decision, note, revision }, signal }));
   },
 };

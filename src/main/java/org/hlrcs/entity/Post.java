@@ -74,6 +74,12 @@ public class Post {
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
 
+    private Integer submissionRevision;
+
+    public int revision() {
+        return submissionRevision == null ? 0 : submissionRevision;
+    }
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

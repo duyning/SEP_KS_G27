@@ -1,4 +1,4 @@
-.community-post-description .community-description-collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+.community-post-description .community-description-collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--community-preview-lines, 5); overflow: hidden; }
 .community-post-description .community-description-toggle { display: inline-flex; align-items: center; min-height: 36px; margin: -8px 0 12px; padding: 4px 0; border: 0; background: transparent; color: #0f766e; font: inherit; font-weight: 650; cursor: pointer; }
 .community-post-description .community-description-toggle:hover { text-decoration: underline; }
 .community-post-description .community-description-toggle:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }

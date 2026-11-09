@@ -8,6 +8,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import Modal from '../../components/common/Modal.jsx';
+import StaffCommunityReasonDialog from '../../components/StaffCommunityReasonDialog.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 import { useCommunityLoad } from '../../components/CommunityUI.jsx';
 import { communityApi } from '../../services/community.js';
@@ -18,29 +19,57 @@ import CommunityPostContactLinks from '../../components/CommunityPostContactLink
 import { useToast } from '../../components/PortalUI.jsx';
 import '../../styles/staff-community-detail.css';
 
+const scanMessages = {
+  QUEUED: 'Đang chờ AI kiểm tra.',
+  PAUSED: 'Đang tạm dừng kiểm tra AI. Bạn có thể duyệt thủ công.',
+  RUNNING: 'AI đang kiểm tra. Bạn vẫn có thể duyệt ngay.',
+  CLEAR: 'AI chưa phát hiện vấn đề.',
+  FLAGGED: 'AI đánh dấu nội dung cần xem lại.',
+  OFF_TOPIC: 'AI phát hiện ảnh có thể không liên quan.',
+  FAILED: 'AI chưa kiểm tra xong. Vui lòng xem xét thủ công.',
+  SKIPPED: 'Đã bỏ qua kiểm tra AI cho lần gửi này.',
+};
+const findingLabels = {
+  SEXUAL: 'Nghi có nội dung 18+',
+  FLAGGED: 'Nghi vi phạm quy định cộng đồng',
+  OFF_TOPIC: 'Ảnh không liên quan đến bài',
+  UNSURE: 'AI không đủ thông tin để kết luận',
+};
+
 export default function StaffCommunityModerationDetailPage() {
   const [params] = useSearchParams();
   const notify = useToast();
   const postId = params.get('id');
   const state = useCommunityLoad('detail', postId);
   const currentPost = state.data?.post;
+  const scan = state.data?.scan;
   const [busy, setBusy] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const activeReview = useRef(null);
+  const reviewRevision = useRef(0);
   useEffect(() => {
     setReviewError('');
     setBusy(false);
     setIsApproveOpen(false);
-    setIsChangesOpen(false);
-    setIsRejectOpen(false);
+    setNoteDecision(null);
     return () => { activeReview.current?.abort(); activeReview.current = null; };
   }, [postId]);
 
   // Modals
   const [isApproveOpen, setIsApproveOpen] = useState(false);
-  const [isChangesOpen, setIsChangesOpen] = useState(false);
-  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [noteDecision, setNoteDecision] = useState(null);
   const [decisionNote, setDecisionNote] = useState('');
+  const dialogOpen = isApproveOpen || Boolean(noteDecision);
+  const scanPending = scan?.state === 'QUEUED' || scan?.state === 'RUNNING';
+  const reloadRef = useRef(state.reload);
+  reloadRef.current = state.reload;
+  useEffect(() => {
+    if (!scanPending || dialogOpen || busy) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') reloadRef.current();
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [postId, scanPending, dialogOpen, busy]);
 
   if (state.loading) return <p role="status">Đang tải chi tiết bài viết...</p>;
   if (state.error || !currentPost) {
@@ -56,6 +85,13 @@ export default function StaffCommunityModerationDetailPage() {
   }
 
   const isTerminal = currentPost.status !== 'PENDING';
+  const openReview = decision => {
+    reviewRevision.current = state.data.revision;
+    setDecisionNote('');
+    setReviewError('');
+    if (decision === 'APPROVE') setIsApproveOpen(true);
+    else setNoteDecision(decision);
+  };
   const review = async decision => {
     if (activeReview.current) return;
     const note = decisionNote.trim();
@@ -68,24 +104,28 @@ export default function StaffCommunityModerationDetailPage() {
     setBusy(true);
     setReviewError('');
     try {
-      const data = await communityApi.review(postId, decision, note, controller.signal);
+      const data = await communityApi.review(postId, decision, note, controller.signal, reviewRevision.current);
       if (controller.signal.aborted) return;
       state.replace(data);
       setIsApproveOpen(false);
-      setIsChangesOpen(false);
-      setIsRejectOpen(false);
+      setNoteDecision(null);
       setDecisionNote('');
       window.dispatchEvent(new Event('hlrcs:staff-updated'));
       notify?.(decision === 'APPROVE' ? 'Đã duyệt bài viết. Bài viết hiện được hiển thị công khai.' : decision === 'REQUEST_CHANGES' ? 'Đã lưu yêu cầu chỉnh sửa. Tác giả xem phản hồi tại Bài viết của tôi.' : 'Đã từ chối bài viết và lưu lý do.', 'success');
     } catch (error) {
-      if (!controller.signal.aborted) setReviewError(error.fields?.note || error.message);
+      if (!controller.signal.aborted) {
+        if (error.status === 409) {
+          setIsApproveOpen(false);
+          setNoteDecision(null);
+          state.reload();
+          notify?.(error.message, 'error');
+        } else setReviewError(error.fields?.note || error.message);
+      }
     } finally {
       if (activeReview.current === controller) { activeReview.current = null; setBusy(false); }
     }
   };
   const handleApprove = () => review('APPROVE');
-  const handleRequestChanges = () => review('REQUEST_CHANGES');
-  const handleReject = () => review('REJECT');
 
   return (
     <div className="portal-page-container staff-content staff-community-detail">
@@ -145,6 +185,20 @@ export default function StaffCommunityModerationDetailPage() {
           <StatusBadge status={currentPost.status} label={currentPost.statusLabel} />
         </div>
 
+        {scan && <div className="staff-community-decision-note staff-community-scan" data-state={scan.state} role="status">
+          <strong>Kiểm tra tự động</strong>
+          <p>{scanMessages[scan.state]}</p>
+          {scan.state === 'FLAGGED' && currentPost.status === 'APPROVED' &&
+            <p>Bài đang công khai. Vui lòng xem lại nội dung được đánh dấu.</p>}
+          {scan.findings?.length > 0 && <ul>
+            {scan.findings.map(finding => <li key={finding.mediaId ?? 'text'}>
+              <strong>{finding.fileName || (finding.mediaId == null ? 'Tiêu đề và mô tả' : `Tệp #${finding.mediaId}`)}</strong>
+              {' · '}{findingLabels[finding.code]}
+              {finding.timestampSeconds != null && ` · khoảng ${Math.floor(finding.timestampSeconds / 60)}:${String(finding.timestampSeconds % 60).padStart(2, '0')}`}
+            </li>)}
+          </ul>}
+        </div>}
+
         {currentPost.decisionNote && <div className="staff-community-decision-note" data-status={currentPost.status}>
           <strong>{currentPost.status === 'NEED_CHANGES' ? 'Nội dung yêu cầu chỉnh sửa' : 'Ghi chú xử lý'}</strong>
           <p>{currentPost.decisionNote}</p>
@@ -154,15 +208,15 @@ export default function StaffCommunityModerationDetailPage() {
           <p className="staff-community-moderation-hint">Xem nội dung và tệp đính kèm trước khi đưa ra quyết định.</p>
           <div className="staff-community-moderation-actions">
             <MotionButton type="button" className="p-button primary" disabled={busy}
-              onClick={() => { setDecisionNote(''); setReviewError(''); setIsApproveOpen(true); }}>
+              onClick={() => openReview('APPROVE')}>
               <CheckCircle2 size={16} /> Duyệt bài viết
             </MotionButton>
             <MotionButton type="button" className="p-button staff-community-request-changes" disabled={busy}
-              onClick={() => { setDecisionNote(''); setReviewError(''); setIsChangesOpen(true); }}>
+              onClick={() => openReview('REQUEST_CHANGES')}>
               <AlertCircle size={16} /> Yêu cầu chỉnh sửa
             </MotionButton>
             <MotionButton type="button" className="p-button staff-community-reject" disabled={busy}
-              onClick={() => { setDecisionNote(''); setReviewError(''); setIsRejectOpen(true); }}>
+              onClick={() => openReview('REJECT')}>
               <XCircle size={16} /> Từ chối bài viết
             </MotionButton>
           </div>
@@ -230,86 +284,22 @@ export default function StaffCommunityModerationDetailPage() {
         </Modal>
       )}</AnimatePresence>
 
-      {/* MODAL: REQUEST CHANGES */}
-      <AnimatePresence>{isChangesOpen && (
-        <Modal
-          isOpen={true}
-          onClose={() => { if (!busy) setIsChangesOpen(false); }}
-          title="Yêu cầu chỉnh sửa bài viết"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#334155' }}>
-              Nhập nội dung hướng dẫn tác giả chỉnh sửa (ví dụ: bổ sung giá cụ thể, thay đổi hình ảnh rõ nét...):
-            </p>
-            <textarea
-              rows={4}
-              aria-label="Hướng dẫn chỉnh sửa (10–2000 ký tự)"
-              maxLength={2000}
-              disabled={busy}
-              placeholder="Nhập yêu cầu chỉnh sửa..."
-              value={decisionNote}
-              onChange={e => setDecisionNote(e.target.value)}
-              style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
-            />
-            {reviewError && <p role="alert" style={{ color: '#b91c1c' }}>{reviewError}</p>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <MotionButton disabled={busy} type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
-                Hủy
-              </MotionButton>
-              <MotionButton
-                type="button"
-                className="p-button primary"
-                style={{ background: '#ea580c', borderColor: '#ea580c' }}
-                onClick={handleRequestChanges}
-                disabled={busy}
-              >
-                {busy ? 'Đang lưu...' : 'Gửi yêu cầu chỉnh sửa'}
-              </MotionButton>
-            </div>
-          </div>
-        </Modal>
-      )}</AnimatePresence>
-
-      {/* MODAL: REJECT */}
-      <AnimatePresence>{isRejectOpen && (
-        <Modal
-          isOpen={true}
-          onClose={() => { if (!busy) setIsRejectOpen(false); }}
-          title="Từ chối đăng bài viết"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#334155' }}>
-              Nhập lý do từ chối bài viết này (vi phạm quy chuẩn, nội dung lừa đảo hoặc không phù hợp...):
-            </p>
-            <textarea
-              rows={4}
-              aria-label="Lý do từ chối (10–2000 ký tự)"
-              maxLength={2000}
-              disabled={busy}
-              placeholder="Nhập lý do từ chối..."
-              value={decisionNote}
-              onChange={e => setDecisionNote(e.target.value)}
-              style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
-            />
-            {reviewError && <p role="alert" style={{ color: '#b91c1c' }}>{reviewError}</p>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <MotionButton disabled={busy} type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
-                Hủy
-              </MotionButton>
-              <MotionButton
-                type="button"
-                className="p-button primary"
-                style={{ background: '#ef4444', borderColor: '#ef4444' }}
-                onClick={handleReject}
-                disabled={busy}
-              >
-                {busy ? 'Đang lưu...' : 'Xác nhận từ chối'}
-              </MotionButton>
-            </div>
-          </div>
-        </Modal>
-      )}</AnimatePresence>
-
+      {noteDecision && (
+        <StaffCommunityReasonDialog
+          key={noteDecision}
+          decision={noteDecision}
+          post={currentPost}
+          note={decisionNote}
+          error={reviewError}
+          busy={busy}
+          onNoteChange={note => {
+            setDecisionNote(note);
+            setReviewError('');
+          }}
+          onClose={() => { if (!busy) setNoteDecision(null); }}
+          onSubmit={() => review(noteDecision)}
+        />
+      )}
     </div>
   );
 }

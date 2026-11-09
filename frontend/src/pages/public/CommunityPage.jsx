@@ -4,12 +4,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { X, ImagePlus, Video, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../../services/community.js';
-import { PostFieldError, useCommunityLoad } from '../../components/CommunityUI.jsx';
+import { PostFieldError } from '../../components/CommunityUI.jsx';
+import useCommunityFeed from '../../components/useCommunityFeed.js';
 import CommunityPostImage, { LocalPostImage } from '../../components/CommunityPostImage.jsx';
 import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-images.js';
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
 import CommunityPrototype from '../../components/CommunityPrototype.jsx';
+import CommunityFooter, { CommunityMenuSupport } from '../../components/CommunityFooter.jsx';
 import CommunityPostEditor, { GrowingPostTextarea } from '../../components/CommunityPostEditor.jsx';
 import { communityZones } from '../../services/community-prototype.js';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
@@ -21,6 +23,8 @@ import '../../styles/home-prototype.css';
 import '../../styles/home-prototype-integration.css';
 import '../../styles/community-prototype.css';
 import '../../styles/community-prototype-integration.css';
+import '../../styles/community-mobile.css';
+import '../../styles/community-scroll.css';
 
 export default function CommunityPage() {
   const [params, setParams] = useSearchParams();
@@ -28,7 +32,7 @@ export default function CommunityPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const mine = Boolean(user) && params.get('view') === 'mine';
-  const state = useCommunityLoad(mine ? 'mine' : 'published');
+  const state = useCommunityFeed(mine, params);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -257,7 +261,7 @@ export default function CommunityPage() {
       setPhotos([]);
       setVideos([]);
       state.reload();
-      notify?.(editingId ? 'Đã gửi lại bài viết sau chỉnh sửa. Bài đang chờ nhân viên kiểm duyệt lại.' : 'Bài viết đã được gửi, đang chờ nhân viên kiểm duyệt. Bạn có thể theo dõi tại Bài viết của tôi.', 'success');
+      notify?.(editingId ? 'Đã gửi lại bài viết sau chỉnh sửa. Bạn có thể theo dõi kết quả tại Bài viết của tôi.' : 'Đã gửi bài, đang chờ kiểm duyệt. Bạn có thể theo dõi tại Bài viết của tôi.', 'success');
     } catch (error) {
       if (!controller.signal.aborted) { setSubmitError(error.message); setErrors(error.fields || {}); }
     } finally {
@@ -288,8 +292,8 @@ export default function CommunityPage() {
     try {
       await communityApi.remove(postToDelete.id, controller.signal);
       if (controller.signal.aborted) return;
+      state.remove(postToDelete.id);
       setPostToDelete(null);
-      state.reload();
       notify?.('Đã xóa bài viết.', 'success');
     } catch (error) {
       if (!controller.signal.aborted) setDeleteError(error.message);
@@ -341,7 +345,7 @@ export default function CommunityPage() {
   }, [errors, isCreateModalOpen]);
 
   return (
-    <DetailPrototypeShell className="prototype-community">
+    <DetailPrototypeShell className="prototype-community" footer={<CommunityFooter />} menuExtras={<CommunityMenuSupport />}>
       <CommunityPrototype state={state} mine={mine} user={user} params={params} setParams={setParams}
         onCreate={() => openForm()} onEdit={openForm} deleting={deleting}
         onDelete={post => { setPostToDelete(post); setDeleteError(''); }} />
@@ -393,7 +397,7 @@ export default function CommunityPage() {
               <section className="community-post-form-section community-post-form-main" aria-labelledby="post-content-heading">
                 <h4 id="post-content-heading">Nội dung bài viết</h4>
             <div className="community-post-form-category">
-              <label htmlFor="postType" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <label htmlFor="postType" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Chuyên mục bài viết *
               </label>
               <select
@@ -409,7 +413,7 @@ export default function CommunityPage() {
               <PostFieldError name="type" errors={errors} />
             </div>
             <div className="community-post-form-title">
-              <label htmlFor="postTitle" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <label htmlFor="postTitle" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/100</span>
               </label>
               <GrowingPostTextarea
@@ -430,7 +434,7 @@ export default function CommunityPage() {
               <small id="post-title-help" className="community-input-help-hidden">Tiêu đề cần từ 10–100 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
             <div className="community-post-form-content">
-              <label id="post-content-label" htmlFor="postContent" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <label id="post-content-label" htmlFor="postContent" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/2.500</span>
               </label>
               <CommunityPostEditor
@@ -474,7 +478,7 @@ export default function CommunityPage() {
                   onCompositionEnd={endPriceComposition}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder={postType === 'SECOND_HAND' ? 'VD: 200.000 · Trống = thỏa thuận, 0 = miễn phí' : 'VD: 2.200.000 · Để trống nếu thỏa thuận'}
+                  placeholder="Để trống nếu tự thỏa thuận giá"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
                 {priceImeActive && postPrice.trim() && !Number.isNaN(parsePostPrice(postPrice)) && <output htmlFor="postPrice" aria-live="polite" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0d9488', marginTop: 4 }}>Số tiền: {new Intl.NumberFormat('vi-VN').format(parsePostPrice(postPrice))} đ</output>}
@@ -482,7 +486,7 @@ export default function CommunityPage() {
                 <PostFieldError name="price" errors={errors} />
               </div>
               <div>
-                <label htmlFor="postZone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <label htmlFor="postZone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Khu vực *
                 </label>
                 <select id="postZone" required value={postZone} onChange={changeZone}
@@ -492,7 +496,7 @@ export default function CommunityPage() {
                   {communityZones.filter(([key]) => key !== 'all').map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                 </select>
                 {postZone === 'khac' && <>
-                <label htmlFor="postLocation" className="community-post-custom-location-label">Nhập khu vực / địa chỉ *</label>
+                <label htmlFor="postLocation" className="community-post-custom-location-label community-post-required-label">Nhập khu vực / địa chỉ *</label>
                 <input
                   id="postLocation"
                   type="text"
@@ -511,7 +515,7 @@ export default function CommunityPage() {
             </div>
             <div className="community-post-form-row">
               <div>
-                <label htmlFor="authorName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <label htmlFor="authorName" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Tên liên hệ *
                 </label>
                 <input
@@ -530,7 +534,7 @@ export default function CommunityPage() {
                 <small id="authorName-help" className="community-input-help-hidden">Tên liên hệ cần từ 2–50 ký tự.</small>
               </div>
               <div>
-                <label htmlFor="authorPhone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <label htmlFor="authorPhone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Số điện thoại *
                 </label>
                 <input

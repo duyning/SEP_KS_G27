@@ -14,5 +14,7 @@ public record CommunityPostResponse(
 ) {
     public record Image(Integer id, String fileName) {}
     public record Activity(Integer id, String action, String note, String staffName, LocalDateTime createdAt) {}
-    public record Detail(CommunityPostResponse post, String accountName, List<Activity> history) {}
+    public record ScanFinding(String code, Integer mediaId, String fileName, Integer timestampSeconds) {}
+    public record Scan(String state, List<ScanFinding> findings, LocalDateTime finishedAt) {}
+    public record Detail(CommunityPostResponse post, String accountName, List<Activity> history, int revision, Scan scan) {}
 }

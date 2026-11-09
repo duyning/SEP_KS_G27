@@ -6,6 +6,7 @@ import org.hlrcs.dto.request.CommunityPostRequest;
 import org.hlrcs.dto.response.ApiResponse;
 import org.hlrcs.dto.response.CommunityPostResponse;
 import org.hlrcs.service.CommunityService;
+import org.hlrcs.service.CommunityFeedService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,39 @@ import java.util.List;
 public class CommunityController {
     private final CommunityService service;
     private final org.hlrcs.service.CommunityImageService images;
+    private final CommunityFeedService feed;
+
+    @GetMapping("/feed")
+    public ApiResponse<CommunityFeedService.Page> feed(
+            @RequestParam(defaultValue = "ALL") String category, @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "all") String location, @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(required = false) String cursor) {
+        return ApiResponse.success(feed.page(false, category, q, location, sort, cursor));
+    }
+
+    @GetMapping("/mine/feed")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<CommunityFeedService.Page> myFeed(
+            @RequestParam(defaultValue = "ALL") String category, @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "all") String location, @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(required = false) String cursor) {
+        return ApiResponse.success(feed.page(true, category, q, location, sort, cursor));
+    }
+
+    @GetMapping("/mine/count")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Long> myCount() { return ApiResponse.success(feed.mineCount()); }
+
+    @GetMapping("/feed/{id}")
+    public ApiResponse<CommunityPostResponse> feedPost(@PathVariable Integer id) {
+        return ApiResponse.success(feed.one(id, false));
+    }
+
+    @GetMapping("/mine/feed/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<CommunityPostResponse> myFeedPost(@PathVariable Integer id) {
+        return ApiResponse.success(feed.one(id, true));
+    }
 
     @GetMapping
     public ApiResponse<List<CommunityPostResponse>> published() { return ApiResponse.success(service.published()); }

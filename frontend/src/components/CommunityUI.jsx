@@ -68,6 +68,8 @@ export function useCommunityLoad(view, id) {
   return { ...current,
     reload: () => { if (!requestActive.current) setRevision(value => value + 1); },
     replace: data => {
+      requestVersion.current += 1;
+      requestActive.current = false;
       const next = { loading: false, refreshing: false, data, error: '', refreshError: '', scope };
       lastSuccess.current = { scope, at: Date.now() };
       stateRef.current = next;

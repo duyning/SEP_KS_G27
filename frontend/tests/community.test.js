@@ -224,10 +224,10 @@ test('author resubmission and staff reviews use the actual record and preserve s
   await communityApi.submit(postPayload(valid), undefined, 12);
   globalThis.fetch = async (url, options) => {
     assert.equal(url, '/api/staff/community/posts/12/review');
-    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_CHANGES', note: 'Bổ sung thông tin liên hệ.' });
+    assert.deepEqual(JSON.parse(options.body), { decision: 'REQUEST_CHANGES', note: 'Bổ sung thông tin liên hệ.', revision: 2 });
     return reply({ post: { ...saved, status: 'NEED_CHANGES' }, accountName: 'Real account', history: [] });
   };
-  assert.equal((await communityApi.review(12, 'REQUEST_CHANGES', 'Bổ sung thông tin liên hệ.')).post.status, 'NEED_CHANGES');
+  assert.equal((await communityApi.review(12, 'REQUEST_CHANGES', 'Bổ sung thông tin liên hệ.', undefined, 2)).post.status, 'NEED_CHANGES');
   globalThis.fetch = async () => { throw new Error('Invalid IDs must not issue requests'); };
   for (const id of [null, 'abc', '0', '-1', 'POST-2026-001']) await assert.rejects(communityApi.detail(undefined, id), error => error.status === 400);
   globalThis.fetch = async () => new Response(JSON.stringify({ success: false, message: 'Invalid', data: { authorPhone: 'SĐT không hợp lệ.' } }), { status: 400 });

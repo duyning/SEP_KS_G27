@@ -9,6 +9,7 @@
 .community-post-modal .community-post-form-section h4 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; font-size: 14px; font-weight: 750; color: #0f172a; line-height: 1.5; }
 .community-post-form-section h4 > span { color: #64748b; font-size: 11px; font-weight: 400; }
 .community-post-form-grid label { display: flex !important; justify-content: space-between; align-items: baseline; gap: 8px; color: #334155; }
+.community-post-form-grid .community-post-required-label { color: #b91c1c; }
 .community-post-form-grid label > span { color: #64748b; font-size: 11px; font-weight: 400; white-space: nowrap; }
 .community-post-form-hint { margin: 0 !important; color: #b91c1c; font-size: 13px !important; line-height: 1.5; }
 .community-post-form-error { margin: 0 !important; color: #b91c1c; font-size: 13px; }
