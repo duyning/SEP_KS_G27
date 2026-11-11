@@ -29,7 +29,7 @@ public class PublicPropertyService {
     private final RoomTypeImageRepository images;
     private final ObjectMapper json;
     public record Type(Integer roomTypeId,String name,BigDecimal price,Float area,Integer capacity,
-                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms) {}
+                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms,java.time.Instant availabilityConfirmedAt,String availabilityConfirmationStatus,boolean availabilityStale) {}
     public record Listing(Integer propertyId,String name,String address,String commune,String propertyType,
                           String description,List<String> photos,List<String> amenities,
                           List<String> rules,List<Type> roomTypes,BigDecimal minPrice,int totalRooms,int vacantRooms,
@@ -42,7 +42,7 @@ public class PublicPropertyService {
         catch(Exception ignored){return null;}
     }
     private boolean published(Property property) {
-        if(!"ACTIVE".equals(property.getStatus())||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
+        if(property.isReverificationRequired()||!"ACTIVE".equals(property.getStatus())||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
         var form=submission(property);
         return form!=null&&Boolean.TRUE.equals(form.termsAccepted());
     }
@@ -61,7 +61,8 @@ public class PublicPropertyService {
             for(var type:types.findByProperty_PropertyId(property.getPropertyId())) {
                 var actual=rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(type.getRoomTypeId());
                 int vacant=(int)actual.stream().filter(room->"VACANT".equals(room.getStatus())).count();
-                values.add(new Type(type.getRoomTypeId(),type.getRoomType(),type.getPrice(),type.getAreaSqm(),type.getCapacity(),type.getElectricityPrice(),type.getWaterPrice(),amenities(type),actual.size(),vacant));
+                var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
+                values.add(new Type(type.getRoomTypeId(),type.getRoomType(),type.getPrice(),type.getAreaSqm(),type.getCapacity(),type.getElectricityPrice(),type.getWaterPrice(),amenities(type),actual.size(),vacant,type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness)));
                 actual.stream().filter(room->"VACANT".equals(room.getStatus())).map(room->room.getCustomPrice()!=null?room.getCustomPrice():type.getPrice()).filter(Objects::nonNull).forEach(prices::add);
                 images.findByRoomType_RoomTypeIdOrderByImageIdAsc(type.getRoomTypeId()).forEach(image->photos.add("/api/public/properties/room-images/"+image.getImageId()));
             }

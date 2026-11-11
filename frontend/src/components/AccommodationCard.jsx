@@ -1,3 +1,4 @@
+import AvailabilityNotice from './AvailabilityNotice.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ImageOff, MapPin, ShieldCheck } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function AccommodationCard({ item }) {
       <span className="acc-vacancy">{item.availableRooms > 0 ? `Còn ${item.availableRooms} phòng trống` : 'Hết phòng'}</span>
     </Link>
     <div className="acc-card-body"><span className="acc-area">{item.areaSqm} m²</span><h3><Link to={detailUrl}>{item.propertyName}</Link></h3><p className="acc-type">{item.roomTypeName}</p><p className="acc-address"><MapPin size={15} />{item.address || 'Chưa cập nhật địa chỉ'}</p>
+      <AvailabilityNotice value={item}/>
       <div className="acc-card-footer"><div><strong>{rent(item.price)}</strong><small>/tháng</small></div><Link className="acc-link" to={detailUrl}>Xem phòng</Link></div>
     </div>
   </article>;

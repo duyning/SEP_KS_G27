@@ -7,5 +7,6 @@ public record AccommodationSummary(
         Integer propertyId, Integer roomTypeId, String propertyName, String roomTypeName,
         String address, String imageUrl, BigDecimal price, Float areaSqm,
         String verificationStatus, long availableRooms, Integer capacity, java.util.List<String> amenities,
-        BigDecimal electricityPrice, BigDecimal waterPrice, BigDecimal latitude, BigDecimal longitude) {
+        BigDecimal electricityPrice, BigDecimal waterPrice, BigDecimal latitude, BigDecimal longitude,
+        java.time.Instant availabilityConfirmedAt, String availabilityConfirmationStatus, boolean availabilityStale) {
 }

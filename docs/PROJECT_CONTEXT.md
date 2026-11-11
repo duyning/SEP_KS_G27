@@ -6,6 +6,16 @@ không truy vấn database đang chạy và không xác minh triển khai thực
 
 ## 1. Mục tiêu và nguồn đối chiếu
 
+Cập nhật 2026-11-11: [Tái xác minh N05–N08](PROPERTY_REVERIFICATION.md) phân loại
+địa chỉ/tọa độ/người quản lý/giấy tờ quan trọng. Property.reverificationRequired
+chặn các đường công khai đến khi Staff duyệt đúng phiên bản; yêu cầu bổ sung hoặc
+từ chối không tự mở lại. Sửa nội dung thông thường giữ bản đã duyệt công khai.
+
+Cập nhật 2026-11-11: [Xác nhận phòng trống N01–N04](ROOM_AVAILABILITY_CONFIRMATION.md)
+thêm mốc UTC/người xác nhận ở RoomType, API xác nhận theo loại phòng, ba trạng thái
+UNCONFIRMED/CURRENT/STALE và cảnh báo quá 7 ngày trên host/public. Không lấy
+Room.confirmedAt hoặc RoomType.updatedAt làm mốc xác nhận toàn loại.
+
 HL-RCS kết nối người thuê, chủ trọ và nhà cung cấp dịch vụ hỗ trợ tại Hòa Lạc.
 Các miền nghiệp vụ gồm tài khoản/quyền, nhà trọ/phòng, lịch xem phòng, dịch vụ,
 cộng đồng, hỗ trợ, kiểm duyệt, đánh giá và báo cáo vi phạm.

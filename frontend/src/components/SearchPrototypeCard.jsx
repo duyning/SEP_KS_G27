@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import AvailabilityNotice from './AvailabilityNotice.jsx';
 import {Heart,MapPin,Phone,Check} from 'lucide-react';
 import {DetailImage} from './detail/DetailPrototypeParts.jsx';
 import {ROOM_AMENITIES} from '../services/room-types.js';
@@ -14,6 +15,7 @@ export default function SearchPrototypeCard({item,saved,onSave,saveBusy=false,co
   <div className="room-body"><div className="room-location"><MapPin size={14}/><span>{item.address||'Chưa cập nhật địa chỉ'}</span></div>
    <h3 className="room-title" title={`${item.propertyName} — ${item.roomTypeName}`}><Link to={url}>{item.propertyName} — {item.roomTypeName}</Link></h3>
    <div className="room-amenities"><span className="amenity-pill">📐 {item.areaSqm} m²</span>{amenities.slice(0,3).map((text,index)=><span className="amenity-pill" key={index}>{text}</span>)}{amenities.length>3&&<span className="amenity-pill">+{amenities.length-3}</span>}</div>
+   <AvailabilityNotice value={item}/>
    <div className="room-price-row"><div><span className="price-main">{detailMoney(item.price)}</span><span className="price-unit">/tháng</span></div><div className="utility-rates">⚡ {Number.isFinite(item.electricityPrice)?`${detailMoney(item.electricityPrice)}/kWh`:'Chưa cập nhật'}<br/>💧 {Number.isFinite(item.waterPrice)?`${detailMoney(item.waterPrice)}/m³`:'Chưa cập nhật'}</div></div>
    <div className="room-actions"><Link to={url} className="btn-card-detail">Chi tiết phòng</Link><Link to={`${url}#host-contact`} className="btn-card-contact"><Phone size={14}/><span>Gọi chủ trọ</span></Link></div>
   </div>

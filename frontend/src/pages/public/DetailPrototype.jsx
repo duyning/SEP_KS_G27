@@ -1,3 +1,4 @@
+import AvailabilityNotice from '../../components/AvailabilityNotice.jsx';
 import {Link} from 'react-router-dom';
 import {RoomLocationMap} from '../../components/AccommodationMap.jsx';
 import {roomCoordinates} from '../../services/map-location.js';
@@ -22,6 +23,7 @@ export default function DetailPrototype({room,item,isWishlisted,onSave,onShare,o
    <div className="rtd-layout"><div className="rtd-summary-column">
     <aside className="rtd-summary" aria-label="Thông tin thuê và liên hệ">
      <div className="rtd-status-row"><span className="rtd-approved"><ShieldCheck size={16}/>Hồ sơ đã duyệt</span><span className={`rtd-availability${item.availableRooms===0?' is-full':''}`}>{room.availability}</span></div>
+     <AvailabilityNotice value={item}/>
      <div className="rtd-price"><span>Giá thuê / tháng</span><strong>{room.priceDisplay}</strong></div>
      <dl className="rtd-key-facts">{[['Diện tích',room.area],['Sức chứa',room.specs.capacity],['Tiền cọc',room.deposit],['Nhận phòng',room.moveInDate]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
      <div className="rtd-upfront"><span>Tiền phòng + tiền cọc</span><strong>{room.estimateDisplay}</strong><small>Chưa gồm điện, nước và các phí khác.</small></div>

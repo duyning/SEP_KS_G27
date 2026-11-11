@@ -32,7 +32,7 @@ public class PropertyEditService {
     private final org.springframework.context.ApplicationEventPublisher publisher;
     public record Edit(Integer registrationId,Integer propertyId,String mode,String status,String reasonNote,
         List<String> requestedFields,Map<String,String> fieldNotes,Set<String> editableFields,boolean legacyScope,PropertyRegistrationRequest details,
-        List<Attachment> photos,List<Attachment> documents,String versionToken) {}
+        List<Attachment> photos,List<Attachment> documents,String versionToken,boolean reverificationRequired,List<String> reverificationReasons) {}
     private PropertyRegistration owned(Integer id) {
         var registration=registrations.findById(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
         if(!registration.getUser().getUserId().equals(auth.getCurrentUser().getUserId()))throw new ResourceNotFoundException("Không tìm thấy hồ sơ.");
@@ -43,6 +43,8 @@ public class PropertyEditService {
         return candidates.stream().filter(p->row.getTargetPropertyId()!=null?row.getTargetPropertyId().equals(p.getPropertyId()):p.getRegistration()!=null&&row.getRegistrationId().equals(p.getRegistration().getRegistrationId())).findFirst().orElse(null);
     }
     private void assertEditable(PropertyRegistration row,Property property) {
+        if(row.getStatus()==RegistrationStatus.APPROVED && property!=null && property.isReverificationRequired())
+            throw new AppException("Nhà trọ đang chờ tái xác minh. Vui lòng mở hồ sơ thay đổi cần bổ sung hoặc bị từ chối để gửi lại.",HttpStatus.CONFLICT);
         if(row.getStatus()==RegistrationStatus.PENDING)throw new AppException("Hồ sơ đang chờ xét duyệt, chưa thể chỉnh sửa.",HttpStatus.CONFLICT);
         if(row.getStatus()==RegistrationStatus.APPROVED && (property==null||property.getRegistration()==null||!property.getRegistration().getRegistrationId().equals(row.getRegistrationId())))throw new AppException("Đây là phiên bản cũ. Vui lòng mở nhà trọ hiện tại để cập nhật.",HttpStatus.CONFLICT);
         if(row.getTargetPropertyId()!=null&&row.getStatus()!=RegistrationStatus.APPROVED && (property==null||property.getRegistration()==null||!Objects.equals(row.getBaseRegistrationId(),property.getRegistration().getRegistrationId())))throw new AppException("Nhà trọ đã có phiên bản mới hơn. Vui lòng tải lại.",HttpStatus.CONFLICT);
@@ -66,7 +68,7 @@ public class PropertyEditService {
         }
         var requested=RegistrationEditPolicy.requested(row,json);
         return new Edit(id,property==null?null:property.getPropertyId(),row.getStatus()==RegistrationStatus.APPROVED?"CHANGE_REQUEST":"RESUBMIT",row.getStatus().name(),row.getReasonNote(),requested,RegistrationEditPolicy.fieldNotes(row,json),
-            RegistrationEditPolicy.allowed(row,json),row.getStatus()==RegistrationStatus.NEEDS_SUPPLEMENT&&requested.isEmpty(),form,photos,files,token(row));
+            RegistrationEditPolicy.allowed(row,json),row.getStatus()==RegistrationStatus.NEEDS_SUPPLEMENT&&requested.isEmpty(),form,photos,files,token(row),property!=null&&property.isReverificationRequired(),PropertyReverification.reasons(row.getReverificationReasonsJson(),json));
     }
     @Transactional(rollbackFor=Exception.class,isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public PropertyRegistrationResponse submit(Integer id,PropertyResubmissionRequest edit,List<MultipartFile> photos,MultipartFile ownership,MultipartFile idCard,MultipartFile fireSafety) throws IOException {
@@ -105,6 +107,20 @@ public class PropertyEditService {
         if(registrations.findByUser_UserIdOrderByCreatedAtDesc(owner.getUserId()).stream().anyMatch(r->!r.getRegistrationId().equals(id)&&!r.getRegistrationId().equals(approvedId)&&r.getTargetPropertyId()==null&&r.getStatus()!=RegistrationStatus.REJECTED&&r.getName().trim().equalsIgnoreCase(value.name().trim())&&Objects.toString(r.getAddress(),"").equalsIgnoreCase(address)))throw new AppException("Tên và địa chỉ đã thuộc một hồ sơ nhà trọ khác.",HttpStatus.CONFLICT);
         boolean revision=row.getStatus()==RegistrationStatus.APPROVED;
         var destination=revision?registrations.save(PropertyRegistration.builder().user(owner).targetPropertyId(property.getPropertyId()).baseRegistrationId(row.getRegistrationId()).name(value.name().trim()).status(RegistrationStatus.PENDING).build()):row;
+        if(property!=null && destination.getTargetPropertyId()!=null) {
+            var baseline=property.getRegistration().getRegistrationDetails()==null?null:json.readValue(property.getRegistration().getRegistrationDetails(),PropertyRegistrationRequest.class);
+            var reasons=new java.util.LinkedHashSet<>(PropertyReverification.reasons(destination.getReverificationReasonsJson(),json));
+            reasons.addAll(PropertyReverification.changes(baseline,value,
+                changedDocument(current,replacements.get("OWNERSHIP"),"OWNERSHIP"),
+                changedDocument(current,replacements.get("ID_CARD"),"ID_CARD")));
+            if(property.isReverificationRequired()) reasons.addAll(PropertyReverification.reasons(property.getReverificationReasonsJson(),json));
+            if(!reasons.isEmpty()) {
+                destination.setReverificationReasonsJson(json.writeValueAsString(reasons));
+                property.setReverificationRequired(true);
+                property.setReverificationReasonsJson(json.writeValueAsString(reasons));
+                properties.save(property);
+            }
+        }
         var previousIds=current.stream().map(PropertyDocument::getDocumentId).toList();
         var now=LocalDateTime.now();int photoIndex=0;
         for(var file:current){
@@ -118,11 +134,16 @@ public class PropertyEditService {
         for(var replacement:replacements.entrySet())validation.saveFile(destination,replacement.getKey(),replacement.getValue(),true);
         destination.setName(value.name().trim());destination.setAddress(address);destination.setContactInfo(value.managerName().trim()+" · "+value.contactPhone());
         destination.setGoogleMapLink(PropertyRegistrationService.mapLink(value));destination.setRegistrationDetails(json.writeValueAsString(value));
-        var previousNote=destination.getReasonNote();destination.setStatus(RegistrationStatus.PENDING);destination.setSubmittedAt(now);destination.setRequestedFieldsJson(null);destination.setFieldNotesJson(null);destination.setReasonNote(revision?"Chủ trọ gửi đề nghị thay đổi thông tin. Bản đã duyệt tiếp tục hiển thị.":"Chủ trọ đã bổ sung thông tin và gửi lại xét duyệt.");
+        var previousNote=destination.getReasonNote();destination.setStatus(RegistrationStatus.PENDING);destination.setSubmittedAt(now);destination.setRequestedFieldsJson(null);destination.setFieldNotesJson(null);destination.setReasonNote(!PropertyReverification.reasons(destination.getReverificationReasonsJson(),json).isEmpty()?"Đã gửi tái xác minh thông tin quan trọng. Nhà trọ tạm ẩn đến khi được phê duyệt.":revision?"Chủ trọ gửi đề nghị thay đổi thông tin. Bản đã duyệt tiếp tục hiển thị.":"Chủ trọ đã bổ sung thông tin và gửi lại xét duyệt.");
         registrations.saveAndFlush(destination);documents.flush();
         if(!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"OWNERSHIP")||!documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(destination.getRegistrationId(),"ID_CARD"))throw new BadRequestException("Cần giấy phép kinh doanh và CCCD để gửi xét duyệt.");
-        events.save(PropertySubmissionEvent.builder().registration(destination).actor(owner).action(revision?"CHANGE_REQUESTED":"RESUBMITTED").previousDetails(json.writeValueAsString(old)).submittedDetails(json.writeValueAsString(value)).previousDocumentIds(json.writeValueAsString(previousIds)).previousReviewNote(previousNote).build());
+        events.save(PropertySubmissionEvent.builder().registration(destination).actor(owner).action(!PropertyReverification.reasons(destination.getReverificationReasonsJson(),json).isEmpty()?"REVERIFICATION_SUBMITTED":revision?"CHANGE_REQUESTED":"RESUBMITTED").previousDetails(json.writeValueAsString(old)).submittedDetails(json.writeValueAsString(value)).previousDocumentIds(json.writeValueAsString(previousIds)).previousReviewNote(previousNote).build());
         publisher.publishEvent(new AutomaticVerificationAssignment.Submitted(destination.getRegistrationId()));
         return PropertyRegistrationResponse.from(destination);
+    }
+    private boolean changedDocument(List<PropertyDocument> current, MultipartFile replacement, String kind) throws IOException {
+        if(replacement==null)return false;
+        var previous=current.stream().filter(file->kind.equals(file.getDocumentType())).findFirst().orElse(null);
+        return previous==null || !Arrays.equals(previous.getFileContent(),replacement.getBytes());
     }
 }

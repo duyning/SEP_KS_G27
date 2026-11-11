@@ -47,6 +47,13 @@ public class Property {
     @Column(name = "status")
     private String status;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean reverificationRequired = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String reverificationReasonsJson;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,3 +1,4 @@
+import AvailabilityNotice from '../AvailabilityNotice.jsx';
 import {Link} from 'react-router-dom';
 import {DetailImage} from './DetailPrototypeParts.jsx';
 import {detailMoney} from '../../services/detail-prototype.js';
@@ -12,7 +13,7 @@ export default function PropertyRoomTypes({item,separateCurrent=false}) {
    const selected=type.roomTypeId===item.roomTypeId;
    return <Link key={type.roomTypeId} className={`property-room-choice${selected?' is-selected':''}`} aria-current={selected?'true':undefined} to={`/properties/detail?${new URLSearchParams({propertyId:item.propertyId,roomTypeId:type.roomTypeId})}#room-type-details`}>
     <div className="property-room-choice-photo"><DetailImage src={type.imageUrl} alt={type.roomTypeName}/></div>
-    <div className="property-room-choice-body"><h3>{type.roomTypeName}</h3><strong>{detailMoney(type.price)} <small>/ tháng</small></strong><p>{type.areaSqm} m² · {type.availableRooms>0?`Còn ${type.availableRooms} phòng trống`:'Hết phòng'}</p><span>{selected?'✓ Đang xem loại phòng này':'Xem thông tin loại phòng →'}</span></div>
+    <div className="property-room-choice-body"><h3>{type.roomTypeName}</h3><strong>{detailMoney(type.price)} <small>/ tháng</small></strong><p>{type.areaSqm} m² · {type.availableRooms>0?`Còn ${type.availableRooms} phòng trống`:'Hết phòng'}</p><AvailabilityNotice value={type}/><span>{selected?'✓ Đang xem loại phòng này':'Xem thông tin loại phòng →'}</span></div>
    </Link>;
   })}</div> : <p className="detail-empty-note">{separateCurrent&&types.length?'Nhà trọ chưa có loại phòng khác.':'Chưa tải được danh sách loại phòng. Thông tin bên dưới thuộc loại phòng đang xem.'}</p>}
  </section>;

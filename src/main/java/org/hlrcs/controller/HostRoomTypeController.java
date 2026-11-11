@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class HostRoomTypeController {
     private final HostRoomTypeService service;
 
+    @PostMapping("/{id}/availability-confirmation")
+    public ApiResponse<HostRoomTypesResponse.RoomTypeSummary> confirmAvailability(@PathVariable Integer id) {
+        return ApiResponse.success(service.confirmAvailability(id));
+    }
+
     @PostMapping(value="/with-rooms",consumes="multipart/form-data")
     public ApiResponse<HostRoomTypesResponse.RoomTypeSummary> createWithRooms(
             @jakarta.validation.Valid @RequestPart org.hlrcs.dto.request.RoomTypeRequest details,

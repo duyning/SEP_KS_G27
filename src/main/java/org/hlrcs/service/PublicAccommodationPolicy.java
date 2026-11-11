@@ -16,6 +16,7 @@ public final class PublicAccommodationPolicy {
             var owner = property.join("owner");
             return cb.and(
                     cb.equal(property.get("status"), "ACTIVE"),
+                    cb.isFalse(property.get("reverificationRequired")),
                     cb.equal(registration.get("status"), RegistrationStatus.APPROVED),
                     cb.equal(owner.get("status"), UserStatus.ACTIVE),
                     cb.greaterThan(root.get("price"), java.math.BigDecimal.ZERO),

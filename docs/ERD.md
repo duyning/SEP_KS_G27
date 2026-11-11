@@ -35,6 +35,8 @@ erDiagram
     }
     properties {
         int property_id PK
+        boolean reverification_required
+        text reverification_reasons_json
     }
     room_types {
         int room_type_id PK
@@ -61,6 +63,7 @@ erDiagram
     users ||--o{ properties : owner
     property_registrations |o--o| properties : registration
     properties ||--o{ room_types : property
+    users |o--o{ room_types : availabilityConfirmedBy
     properties ||--o{ rooms : property
     room_types ||--o{ rooms : roomType
     room_types ||--o{ room_type_images : roomType

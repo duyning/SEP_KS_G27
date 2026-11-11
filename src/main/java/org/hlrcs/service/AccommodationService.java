@@ -259,9 +259,10 @@ public class AccommodationService {
             if (coverIds.containsKey(type.getRoomTypeId())) imageUrl = "/api/properties/" + property.getPropertyId()
                     + "/room-types/" + type.getRoomTypeId() + "/images/" + coverIds.get(type.getRoomTypeId());
             var coordinates = publishedCoordinates(property);
+            var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
                     property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
-                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1]);
+                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1],type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness));
         }).toList();
     }
 

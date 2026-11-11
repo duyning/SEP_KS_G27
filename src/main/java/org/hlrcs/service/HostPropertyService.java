@@ -60,10 +60,11 @@ public class HostPropertyService {
             catch (tools.jackson.core.JacksonException ignored) { /* Legacy profiles can predate structured registration details. */ }
         }
         String status = "INACTIVE";
-        if (registration != null && registration.getStatus() == RegistrationStatus.PENDING) status = "PENDING";
+        if (property != null && property.isReverificationRequired()) status = "INACTIVE";
+        else if (registration != null && registration.getStatus() == RegistrationStatus.PENDING) status = "PENDING";
         else if (registration != null && registration.getStatus() == RegistrationStatus.NEEDS_SUPPLEMENT) status = "NEEDS_SUPPLEMENT";
         else if (registration != null && registration.getStatus() == RegistrationStatus.REJECTED) status = "REJECTED";
-        else if (property != null && "ACTIVE".equalsIgnoreCase(property.getStatus())) status = "VISIBLE";
+        else if (property != null && !property.isReverificationRequired() && "ACTIVE".equalsIgnoreCase(property.getStatus())) status = "VISIBLE";
         else if (registration != null && registration.getStatus() == RegistrationStatus.APPROVED) status = "APPROVED";
         var photos = new ArrayList<Attachment>();
         var files = new ArrayList<Attachment>();
@@ -78,7 +79,7 @@ public class HostPropertyService {
                 ? RegistrationEditPolicy.fieldNotes(registration, json) : Map.of();
         return new PropertyDetail(property == null ? null : property.getPropertyId(), registration == null ? null : registration.getRegistrationId(),
                 property == null ? registration.getName() : property.getName(), property == null ? registration.getAddress() : property.getAddress(), status,
-                registration != null && registration.getStatus() == RegistrationStatus.APPROVED,
+                registration != null && registration.getStatus() == RegistrationStatus.APPROVED && (property == null || !property.isReverificationRequired()),
                 details == null ? null : details.propertyType(), details == null ? null : details.addressDetail(), details == null ? null : details.commune(), details == null ? null : details.nearby(),
                 details == null ? null : details.managerName(), details == null ? null : details.contactPhone(), details == null ? null : details.zaloPhone(),
                 property == null ? registration.getContactInfo() : property.getContactInfo(),
@@ -88,7 +89,7 @@ public class HostPropertyService {
                 property == null ? 0 : bookings.countByRoomType_Property_PropertyIdAndStatus(property.getPropertyId(), BookingStatus.PENDING),
                 property == null ? registration.getCreatedAt() : property.getCreatedAt(), property == null ? registration.getReviewedAt() : property.getUpdatedAt(), registration == null ? null : registration.getReasonNote(),
                 requestedFields, fieldNotes,
-                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote(),safeRequested(r),RegistrationEditPolicy.fieldNotes(r,json))).orElse(null),details==null?null:details.latitude(),details==null?null:details.longitude());
+                property==null?null:registrations.findByUser_UserIdOrderByCreatedAtDesc(property.getOwner().getUserId()).stream().filter(r->property.getPropertyId().equals(r.getTargetPropertyId())&&registrationId(property).equals(r.getBaseRegistrationId())&&r.getStatus()!=RegistrationStatus.APPROVED).findFirst().map(r->new HostPropertyResponse.ChangeRequest(r.getRegistrationId(),r.getStatus().name(),r.getReasonNote(),safeRequested(r),RegistrationEditPolicy.fieldNotes(r,json))).orElse(null),details==null?null:details.latitude(),details==null?null:details.longitude(),property!=null&&property.isReverificationRequired(),property==null?List.of():PropertyReverification.reasons(property.getReverificationReasonsJson(),json));
     }
 
     private List<String> safeRequested(PropertyRegistration registration) {

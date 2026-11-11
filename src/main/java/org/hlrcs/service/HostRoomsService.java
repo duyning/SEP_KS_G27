@@ -46,13 +46,25 @@ public class HostRoomsService {
         String number=RoomRules.number(value.roomNumber());
         String floor=RoomRules.floor(value.floor());
         if(rooms.existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot(property.getPropertyId(),number,id==null?-1:id))throw new AppException("Số phòng đã tồn tại trong nhà trọ. Vui lòng chọn số phòng khác.",HttpStatus.CONFLICT);
-        room.setRoomType(type);room.setRoomNumber(number);room.setFloor(floor);room.setStatus(value.status());room.setCustomPrice(value.customPrice());room.setConfirmedAt(LocalDateTime.now());
+        var oldType = room.getRoomType();
+        boolean inventoryChanged = id == null || oldType == null || !oldType.getRoomTypeId().equals(type.getRoomTypeId()) || !java.util.Objects.equals(room.getStatus(),value.status());
+        if (inventoryChanged) {
+            invalidate(type);
+            if (oldType != null && !oldType.getRoomTypeId().equals(type.getRoomTypeId())) invalidate(oldType);
+        }
+        room.setConfirmedAt(LocalDateTime.now());
+        room.setRoomType(type);room.setRoomNumber(number);room.setFloor(floor);room.setStatus(value.status());room.setCustomPrice(value.customPrice());
         try{rooms.saveAndFlush(room);}catch(org.springframework.dao.DataIntegrityViolationException error){throw new AppException("Số phòng đã tồn tại. Vui lòng tải lại và chọn ký hiệu khác.",HttpStatus.CONFLICT);}return mapper.summary(room);
+    }
+    private void invalidate(org.hlrcs.entity.RoomType type) {
+        type.setAvailabilityConfirmedAt(null);
+        type.setAvailabilityConfirmedBy(null);
     }
     @Transactional(isolation=Isolation.READ_COMMITTED)
     public void delete(Integer id) {
         users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow();var room=owned(id);
         if("OCCUPIED".equals(room.getStatus()))throw new AppException("Phòng đang có người thuê. Cần cập nhật trạng thái thực tế trước khi xóa.",HttpStatus.CONFLICT);
+        invalidate(room.getRoomType());
         rooms.delete(room);rooms.flush();
     }
 }

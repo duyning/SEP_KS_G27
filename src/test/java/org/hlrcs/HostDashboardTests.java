@@ -96,6 +96,71 @@ class HostDashboardTests {
         assertTrue(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0).getDescription().contains("Mô tả đã bổ sung"));
     }
 
+    @Test void importantChangesHidePublicDataUntilReverificationAndPreserveRoomInventory() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
+        var fields=registrationDetails();String name="Reverification-"+System.nanoTime();fields.put("name",name);
+        int base=json.readTree(submitRegistration(host,fields,true,false).body()).path("data").path("registrationId").asInt();
+        assertEquals(200,staffReview(staff,base,"APPROVE","").statusCode());
+        var property=properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0);int propertyId=property.getPropertyId();
+        var type=roomTypes.save(RoomType.builder().property(property).roomType("Studio").price(new BigDecimal("2200000")).areaSqm(25F).build());
+        var room=physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("P101").floor("1").status("VACANT").build());
+        var image=typeImages.save(RoomTypeImage.builder().roomType(type).imageUrl("").fileContent(new byte[]{1,2,3}).contentType("image/png").fileName("test.png").build());
+        wishlists.save(Wishlist.builder().user(owner).roomType(type).build());
+        int photo=retainedPhotos(base).get(0);
+        String detail="/api/properties/"+propertyId+"/room-types/"+type.getRoomTypeId();
+        assertEquals(200,publicRead(detail).statusCode());
+        var edit=json.readTree(propertyEdit(host,base).body()).path("data");
+        fields.put("addressDetail","House 99, alley 4, village 2");
+        var result=resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),null,null);
+        assertEquals(200,result.statusCode(),result.body());int proposal=json.readTree(result.body()).path("data").path("registrationId").asInt();
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(404,publicRead(detail).statusCode());assertEquals(404,publicRead(detail+"/details").statusCode());
+        assertEquals(404,publicRead(detail+"/images/"+image.getImageId()).statusCode());
+        assertEquals(404,publicRead("/api/public/properties/photos/"+photo).statusCode());
+        assertEquals(404,publicRead("/api/public/properties/room-images/"+image.getImageId()).statusCode());
+        assertFalse(publicRead("/api/public/properties").body().contains(name));
+        assertEquals(0,json.readTree(publicRead("/api/properties/search?q="+name).body()).path("data").path("totalElements").asInt());
+        var favorites=client.send(HttpRequest.newBuilder(uri("/api/favorites")).header("Authorization","Bearer "+host).GET().build(),HttpResponse.BodyHandlers.ofString());
+        var favorite=json.readTree(favorites.body()).path("data").path("items").get(0);
+        assertFalse(favorite.path("available").asBoolean());assertTrue(favorite.path("accommodation").isNull());
+        var owned=json.readTree(propertyDetail(host,"").body()).path("data").path("records").get(0);
+        assertTrue(owned.path("reverificationRequired").asBoolean());assertFalse(owned.path("verified").asBoolean());
+        assertEquals(404,staffGet(staff,"/verifications/"+proposal).statusCode(),"New proposal needs its own valid assignment");
+        assertEquals(200,scopedSupplement(staff,proposal,java.util.List.of("description")).statusCode());
+        var staffDetail=json.readTree(staffGet(staff,"/verifications/"+proposal).body()).path("data");
+        assertTrue(staffDetail.path("summary").path("reverificationRequired").asBoolean());assertTrue(staffDetail.path("summary").path("publishedPropertyId").isNull());
+        assertTrue(staffDetail.path("summary").path("reverificationReasons").toString().contains("Địa chỉ"));
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(409,propertyEdit(host,base).statusCode(),"Old approved profile cannot bypass pending reverification");
+        edit=json.readTree(propertyEdit(host,proposal).body()).path("data");fields.put("description","Đã bổ sung mô tả đầy đủ theo yêu cầu xét duyệt lại nhà trọ.");
+        assertEquals(200,resubmit(host,proposal,edit.path("versionToken").asString(),fields,retainedPhotos(proposal),null,null).statusCode());
+        assertEquals(200,staffReview(staff,proposal,"REJECT","Vui lòng bổ sung nội dung chính xác hơn.").statusCode());
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());assertEquals(404,publicRead(detail).statusCode());
+        edit=json.readTree(propertyEdit(host,proposal).body()).path("data");fields.put("description","Đã kiểm tra và hoàn thiện nội dung hồ sơ để xét duyệt lần tiếp theo.");
+        assertEquals(200,resubmit(host,proposal,edit.path("versionToken").asString(),fields,retainedPhotos(proposal),null,null).statusCode());
+        assertEquals(200,staffReview(staff,proposal,"APPROVE","").statusCode());
+        assertFalse(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(200,publicRead(detail).statusCode());assertTrue(publicRead("/api/public/properties").body().contains(name));
+        assertEquals(409,staffReview(staff,proposal,"APPROVE","").statusCode());
+        assertEquals("VACANT",physicalRooms.findById(room.getRoomId()).orElseThrow().getStatus());
+        assertEquals(1,properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).size());
+    }
+    private HttpResponse<String> publicRead(String path) throws Exception {
+        return client.send(HttpRequest.newBuilder(uri(path)).GET().build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void replacingIdentityEvidenceTriggersReverificationWithoutChangingAddress() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
+        var fields=registrationDetails();int base=json.readTree(submitRegistration(host,fields,true,false).body()).path("data").path("registrationId").asInt();
+        assertEquals(200,staffReview(staff,base,"APPROVE","").statusCode());
+        var edit=json.readTree(propertyEdit(host,base).body()).path("data");
+        assertEquals(400,resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),"idCard","invalid pdf").statusCode());
+        assertFalse(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0).isReverificationRequired(),"Rejected upload must roll back the hidden flag");
+        var result=resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),"idCard","%PDF-1.7 new identity evidence");
+        assertEquals(200,result.statusCode(),result.body());
+        var property=properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0);
+        assertTrue(property.isReverificationRequired());assertTrue(property.getReverificationReasonsJson().contains("định danh"));
+    }
+
     @Test void approvedChangesKeepPublicVersionAndRoomsUntilStaffApprovesSameProperty() throws Exception {
         var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
         int base=json.readTree(submitRegistration(host,registrationDetails(),true,false).body()).path("data").path("registrationId").asInt();

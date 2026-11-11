@@ -43,6 +43,13 @@ public class RoomType {
 
     private Integer capacity;
 
+    // Null for legacy/unconfirmed inventory. Never inferred from updatedAt.
+    private java.time.Instant availabilityConfirmedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "availability_confirmed_by")
+    private User availabilityConfirmedBy;
+
     @Column(precision = 12, scale = 2)
     private BigDecimal deposit;
 

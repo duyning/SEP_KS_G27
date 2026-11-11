@@ -1,3 +1,4 @@
+import ReverificationNotice from '../../components/ReverificationNotice.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -365,6 +366,7 @@ export default function StaffPropertyVerificationDetailPage() {
         </section>
       )}
 
+      <ReverificationNotice required={summary.reverificationRequired} reasons={summary.reverificationReasons} status={summary.status} staff/>
       <div className="sw-detail-layout svd-grid">
         <div className="svd-main">
           <VerificationChangeComparison

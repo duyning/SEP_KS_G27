@@ -11,6 +11,7 @@ public record HostRoomTypesResponse(List<PropertySummary> properties, long pendi
                                    String description, Integer capacity, BigDecimal deposit, String imageUrl,
                                    List<String> amenities, BigDecimal electricityPrice, BigDecimal waterPrice,
                                    BigDecimal internetPrice, Integer totalRooms, Integer vacantRooms,
-                                   java.time.LocalDateTime createdAt, List<Image> images, List<HostRoomsResponse.RoomSummary> rooms) {}
+                                   java.time.LocalDateTime createdAt, List<Image> images, List<HostRoomsResponse.RoomSummary> rooms,
+                                   java.time.Instant availabilityConfirmedAt, String availabilityConfirmationStatus, boolean availabilityStale) {}
     public record Image(Integer imageId, String fileName) {}
 }
