@@ -2,6 +2,8 @@ package org.hlrcs.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +31,7 @@ public class ViewingNotification {
     private Booking booking;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "event_key", nullable = false, length = 20)
     private Event event;
 
@@ -41,5 +44,5 @@ public class ViewingNotification {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public enum Event { REQUESTED, APPROVED, REJECTED }
+    public enum Event { REQUESTED, APPROVED, REJECTED, CANCELLED }
 }

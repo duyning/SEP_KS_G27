@@ -2087,3 +2087,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.prototype-shared-shell .shell-mobile-dashboard { display: none; }
+@media (max-width: 560px) {
+  .prototype-shared-shell .nav-actions > .shell-desktop-dashboard { display: none; }
+  .prototype-shared-shell .shell-mobile-dashboard { display: list-item; }
+}

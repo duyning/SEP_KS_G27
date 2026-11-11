@@ -3,6 +3,7 @@ package org.hlrcs.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.ViewingRequests.Create;
+import org.hlrcs.dto.request.ViewingRequests.Cancel;
 import org.hlrcs.dto.response.ApiResponse;
 import org.hlrcs.dto.response.ViewingResponses.*;
 import org.hlrcs.entity.enums.BookingStatus;
@@ -39,6 +40,12 @@ public class ViewingController {
     @PreAuthorize("hasAnyRole('USER', 'ROOM_HOST')")
     public ApiResponse<Viewing> update(@PathVariable Integer id, @Valid @RequestBody Create request) {
         return ApiResponse.success(service.update(id, request));
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('USER', 'ROOM_HOST')")
+    public ApiResponse<Viewing> cancel(@PathVariable Integer id, @Valid @RequestBody Cancel request) {
+        return ApiResponse.success(service.cancel(id, request));
     }
 
     @GetMapping("/{id}")

@@ -15,5 +15,7 @@ public final class ViewingRequests {
                          @NotNull LocalDateTime scheduledDate, @NotBlank @Size(max = 120) String contactName,
                          @NotBlank @Size(max = 40) String contactPhone, @Size(max = 1000) String note) {}
 
+    public record Cancel(@Size(max = 500) String reason) {}
+
     public record Decision(@NotNull BookingStatus status, @Size(max = 500) String reason, LocalDateTime expectedScheduledDate) {}
 }

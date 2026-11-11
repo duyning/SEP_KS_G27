@@ -2,6 +2,7 @@ package org.hlrcs.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.ViewingRequests.Create;
+import org.hlrcs.dto.request.ViewingRequests.Cancel;
 import org.hlrcs.dto.request.ViewingRequests.Decision;
 import org.hlrcs.dto.response.ViewingResponses.*;
 import org.hlrcs.entity.Booking;
@@ -39,6 +40,7 @@ public class ViewingService {
     private final AuthService auth;
     private final UserRepository users;
     private final RoomTypeRepository roomTypes;
+    private final AccommodationService accommodations;
     private final RoomRepository rooms;
     private final BookingRepository bookings;
     private final ViewingNotificationRepository notifications;
@@ -121,13 +123,33 @@ public class ViewingService {
         var pageable = page(page, "bookingId");
         var result = status == null ? bookings.findByRenter_UserId(userId, pageable)
                 : bookings.findByRenter_UserIdAndStatus(userId, status, pageable);
-        return new ViewingPage(result.map(Viewing::from).getContent(), result.hasNext());
+        var items = result.map(Viewing::from).getContent();
+        var covers = accommodations.publicCoverImages(items.stream().map(Viewing::roomTypeId).distinct().toList());
+        return new ViewingPage(items, result.hasNext(), covers);
     }
 
     @Transactional(readOnly = true)
     public Viewing detail(Integer id) {
         return bookings.findByBookingIdAndRenter_UserId(id, currentId()).map(Viewing::from)
                 .orElseThrow(ViewingService::missing);
+    }
+
+    @Transactional
+    public Viewing cancel(Integer id, Cancel request) {
+        var renter = auth.getCurrentUser();
+        if (!bookings.existsByBookingIdAndRenter_UserId(id, renter.getUserId())) throw missing();
+        var booking = bookings.findForDecision(id).orElseThrow(ViewingService::missing);
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new AppException("Chỉ lịch đang chờ xác nhận mới có thể hủy.", HttpStatus.CONFLICT);
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setProcessedBy(renter);
+        booking.setProcessedAt(LocalDateTime.now(VIEWING_ZONE));
+        booking.setDecisionReason(optionalText(request.reason()));
+        notify(booking, booking.getRoomType().getProperty().getOwner(), Event.CANCELLED,
+                "Người đặt đã hủy lịch xem phòng.");
+        return Viewing.from(booking);
     }
 
     @Transactional

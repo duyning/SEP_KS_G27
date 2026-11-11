@@ -241,19 +241,39 @@ public class AccommodationService {
         var ids = types.stream().map(RoomType::getRoomTypeId).toList();
         var vacancies = rooms.countPublicVacancies(ids).stream().collect(Collectors.toMap(
                 RoomRepository.VacancyCount::getRoomTypeId, RoomRepository.VacancyCount::getAvailableRooms));
-        Map<Integer, Integer> coverIds = new HashMap<>();
-        for (var image : images.findPublicImageMetadata(ids)) {
-            if (IMAGE_TYPES.contains(Objects.toString(image.getContentType(), ""))) coverIds.putIfAbsent(image.getRoomTypeId(), image.getImageId());
-        }
+        var covers = coverImages(types);
         return types.stream().map(type -> {
             var property = type.getProperty();
-            String imageUrl = safeImageUrl(type.getImageUrl());
-            if (coverIds.containsKey(type.getRoomTypeId())) imageUrl = "/api/properties/" + property.getPropertyId()
-                    + "/room-types/" + type.getRoomTypeId() + "/images/" + coverIds.get(type.getRoomTypeId());
+            String imageUrl = covers.get(type.getRoomTypeId());
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
                     property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
                     type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice());
         }).toList();
+    }
+
+    public Map<Integer, String> publicCoverImages(List<Integer> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return coverImages(roomTypes.findAll(PublicAccommodationPolicy.visible().and(
+                (root, query, cb) -> root.get("roomTypeId").in(ids))));
+    }
+
+    private Map<Integer, String> coverImages(List<RoomType> types) {
+        if (types.isEmpty()) return Map.of();
+        var ids = types.stream().map(RoomType::getRoomTypeId).toList();
+        Map<Integer, Integer> coverIds = new HashMap<>();
+        for (var image : images.findPublicImageMetadata(ids)) {
+            if (IMAGE_TYPES.contains(Objects.toString(image.getContentType(), ""))) coverIds.putIfAbsent(image.getRoomTypeId(), image.getImageId());
+        }
+        Map<Integer, String> covers = new HashMap<>();
+        for (var type : types) {
+            int id = type.getRoomTypeId();
+            var coverId = coverIds.get(id);
+            String url = coverId == null ? safeImageUrl(type.getImageUrl())
+                    : "/api/properties/" + type.getProperty().getPropertyId()
+                            + "/room-types/" + id + "/images/" + coverId;
+            if (url != null) covers.put(id, url);
+        }
+        return covers;
     }
 
     private String safeImageUrl(String value) {

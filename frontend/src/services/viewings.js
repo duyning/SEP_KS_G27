@@ -23,6 +23,12 @@ export const formatViewingDate = value => {
   const date = asInstant(value);
   return Number.isNaN(date.getTime()) ? 'Chưa cập nhật' : dateFormatter.format(date);
 };
+const slotDate = new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' });
+const slotTime = new Intl.DateTimeFormat('en-GB', { timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' });
+export function formatViewingSlot(value) {
+  const date = asInstant(value);
+  return Number.isNaN(date.getTime()) ? 'Chưa cập nhật' : `${slotDate.format(date)} • ${slotTime.format(date)}`;
+}
 export const viewingIsFuture = value => asInstant(value).getTime() > Date.now();
 export const viewingLink = id => '/bookings?id=' + encodeURIComponent(id);
 export const hostViewingLink = id => '/host/viewings?id=' + encodeURIComponent(id);
@@ -39,6 +45,7 @@ export const viewingApi = {
     page, ...(status ? { status } : {}),
   }), { signal }),
   detail: (id, signal) => call('/' + encodeURIComponent(id), { signal }),
+  cancel: (id, body) => call('/' + encodeURIComponent(id) + '/cancel', { method: 'POST', body }),
   decide: (id, body) => request('/viewings/' + encodeURIComponent(id) + '/decision', {
     basePath: '/api/host', method: 'POST', body,
   }),
