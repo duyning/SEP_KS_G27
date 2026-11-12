@@ -50,7 +50,7 @@ public class CommunityImageService {
         }
         if (keep.size() + files.size() > MAX_IMAGES) throw invalid("Mỗi bài viết được tối đa 6 ảnh. Vui lòng bỏ bớt ảnh.");
         // Validate every file before replacing anything; the surrounding post transaction is atomic.
-        var validated = files.stream().map(this::validate).toList();
+        var validated = files.stream().map(file -> validate(file, "images")).toList();
         for (var row : existing) if (!keep.contains(row.id())) media.deleteById(row.id());
         for (var file : validated) media.save(PostMedia.builder().post(post).mediaType(MediaType.IMAGE)
                 .mediaUrl("").fileName(file.fileName()).contentType(file.contentType()).fileContent(file.bytes()).build());
@@ -78,39 +78,39 @@ public class CommunityImageService {
         return new ImageContent(image.getFileContent(), image.getContentType(), image.getFileName());
     }
 
-    private ImageContent validate(MultipartFile file) {
+    static ImageContent validate(MultipartFile file, String field) {
         String name = Objects.toString(file.getOriginalFilename(), "ảnh").replaceAll("[\\p{Cntrl}\\\\/]", "_");
         name = name.substring(0, Math.min(name.length(), 200));
         String prefix = "Ảnh “" + name + "”: ";
-        if (file.isEmpty()) throw invalid(prefix + "Tệp rỗng, vui lòng chọn ảnh khác.");
-        if (file.getSize() > MAX_BYTES) throw invalid(prefix + "Vượt quá 5 MB/ảnh.");
+        if (file.isEmpty()) throw new FieldValidationException(field, prefix + "Tệp rỗng, vui lòng chọn ảnh khác.");
+        if (file.getSize() > MAX_BYTES) throw new FieldValidationException(field, prefix + "Vượt quá 5 MB/ảnh.");
         String extension = name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
         String mime = Objects.toString(file.getContentType(), "").toLowerCase(Locale.ROOT);
         boolean jpeg = (extension.equals("jpg") || extension.equals("jpeg")) && mime.equals("image/jpeg");
         boolean png = extension.equals("png") && mime.equals("image/png");
-        if (!jpeg && !png) throw invalid(prefix + "Chỉ nhận JPG/JPEG (.jpg, .jpeg) hoặc PNG (.png). Không nhận WEBP, GIF, HEIC, SVG, PDF, video hay tệp đổi đuôi giả.");
+        if (!jpeg && !png) throw new FieldValidationException(field, prefix + "Chỉ nhận JPG/JPEG (.jpg, .jpeg) hoặc PNG (.png). Không nhận WEBP, GIF, HEIC, SVG, PDF, video hay tệp đổi đuôi giả.");
         try {
             byte[] bytes = file.getBytes();
             try (var stream = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
                 var readers = ImageIO.getImageReaders(stream);
-                if (!readers.hasNext()) throw invalid(prefix + "Nội dung không phải ảnh JPG/PNG hợp lệ hoặc ảnh đã bị hỏng.");
+                if (!readers.hasNext()) throw new FieldValidationException(field, prefix + "Nội dung không phải ảnh JPG/PNG hợp lệ hoặc ảnh đã bị hỏng.");
                 var reader = readers.next();
                 try {
                     reader.setInput(stream, true, true);
                     String actual = reader.getFormatName();
                     if (!(jpeg && actual.equalsIgnoreCase("JPEG") || png && actual.equalsIgnoreCase("PNG"))) {
-                        throw invalid(prefix + "Định dạng thực tế không khớp với đuôi tệp và loại ảnh.");
+                        throw new FieldValidationException(field, prefix + "Định dạng thực tế không khớp với đuôi tệp và loại ảnh.");
                     }
                     int width = reader.getWidth(0), height = reader.getHeight(0);
                     if (width < 1 || height < 1 || width > 10000 || height > 10000 || (long) width * height > MAX_PIXELS) {
-                        throw invalid(prefix + "Tối đa 20 megapixel, mỗi chiều không quá 10.000 px.");
+                        throw new FieldValidationException(field, prefix + "Tối đa 20 megapixel, mỗi chiều không quá 10.000 px.");
                     }
-                    if (reader.read(0) == null) throw invalid(prefix + "Không đọc được nội dung ảnh.");
+                    if (reader.read(0) == null) throw new FieldValidationException(field, prefix + "Không đọc được nội dung ảnh.");
                 } finally { reader.dispose(); }
             }
             return new ImageContent(bytes, mime, name);
         } catch (IOException | IllegalArgumentException error) {
-            throw invalid(prefix + "Không đọc được ảnh; tệp bị hỏng hoặc không đúng định dạng JPG/PNG.");
+            throw new FieldValidationException(field, prefix + "Không đọc được ảnh; tệp bị hỏng hoặc không đúng định dạng JPG/PNG.");
         }
     }
 

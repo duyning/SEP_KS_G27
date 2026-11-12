@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Copy, Link as LinkIcon, MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Copy, Flag, Link as LinkIcon, MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from './PortalUI.jsx';
 import Comments from './CommunityPostComments.jsx';
 import { isOwnCommunityPost } from '../services/community.js';
 
-export default function CommunityPostFooter({ post, deleting, onDelete }) {
+export default function CommunityPostFooter({ post, deleting, onDelete, onReport }) {
   const { user } = useAuth();
   const notify = useToast();
   const [expanded, setExpanded] = useState(false);
@@ -53,6 +53,11 @@ export default function CommunityPostFooter({ post, deleting, onDelete }) {
             <button type="button" disabled={!approved} onClick={() => copy(`${window.location.origin}/community#post-${post.id}`, 'Đã sao chép liên kết bài viết')}>
               <LinkIcon size={17} aria-hidden="true" /> Sao chép liên kết bài viết
             </button>
+            {approved && <button type="button" onClick={() => {
+              setMenuOpen(false);
+              trigger.current?.focus();
+              onReport(post);
+            }}><Flag size={17} aria-hidden="true" /> Báo cáo bài viết</button>}
             {owner && <button type="button" className="community-post-delete-option" disabled={deleting} onClick={() => {
               setMenuOpen(false);
               trigger.current?.focus();

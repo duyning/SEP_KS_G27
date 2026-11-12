@@ -9,7 +9,7 @@ import {readModerationFilters,moderationSummary,filterModerationPosts,moderation
 import '../../styles/staff-community-prototype.css';
 import '../../styles/staff-community-integration.css';
 
-const pageSize=15,categoryClass={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'},statusClass={PENDING:'badge-amber',NEED_CHANGES:'badge-orange',APPROVED:'badge-emerald',REJECTED:'badge-rose'};
+const pageSize=15,categoryClass={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'},statusClass={PENDING:'badge-amber',NEED_CHANGES:'badge-orange',APPROVED:'badge-emerald',REJECTED:'badge-rose',HIDDEN:'badge-rose'};
 const detailUrl=post=>`/staff/community/detail?id=${post.id}`;
 function PostThumb({post,className='comm-thumb'}){return <div className={className}>{post.images.length?<CommunityPostImage postId={post.id} image={post.images[0]} images={post.images} defer/>:<ImageOff size={20} aria-label="Chưa có ảnh bài viết"/>}</div>}
 function Category({post}){return <span className={categoryClass[post.type]}>{post.typeLabel}</span>}
@@ -21,7 +21,7 @@ export default function StaffCommunityModerationPage(){
  useEffect(()=>{if(known&&filters.page>totalPages){const next=new URLSearchParams(params);next.set('page',String(totalPages));setParams(next,{replace:true});}},[known,filters.page,totalPages,params,setParams]);
  function change(values){const next=new URLSearchParams(params);for(const [key,value] of Object.entries(values)){if(!value||key==='category'&&value==='ALL'||key==='sort'&&value==='newest'||key==='page'&&value===1)next.delete(key);else next.set(key,String(value));}if(!('page' in values))next.delete('page');setParams(next,{replace:Object.keys(values).length===1&&'q' in values});}
  const actionLabel=post=>post.status==='PENDING'?'Kiểm duyệt':'Xem chi tiết';
- const metrics=[['ALL','blue','Tổng bài viết','📁',stats.total,'Tất cả trạng thái','kpiTotalCount'],['PENDING','amber','Chờ kiểm duyệt','⏳',stats.pending,'Ưu tiên xử lý','kpiPendingCount'],['NEED_CHANGES','purple','Cần chỉnh sửa','✏️',stats.needsChanges,'Chờ tác giả sửa','kpiNeedChangesCount'],['PROCESSED','teal','Đã xử lý','✓',stats.processed,'Duyệt & từ chối','kpiProcessedCount']];
+ const metrics=[['ALL','blue','Tổng bài viết','📁',stats.total,'Tất cả trạng thái','kpiTotalCount'],['PENDING','amber','Chờ kiểm duyệt','⏳',stats.pending,'Ưu tiên xử lý','kpiPendingCount'],['NEED_CHANGES','purple','Cần chỉnh sửa','✏️',stats.needsChanges,'Chờ tác giả sửa','kpiNeedChangesCount'],['PROCESSED','teal','Đã xử lý','✓',stats.processed,'Đã duyệt, từ chối hoặc ẩn','kpiProcessedCount']];
  return <div className="staff-community-prototype">
   {state.refreshing&&<p className="staff-community-refresh-status" role="status"><LoaderCircle className="spin" size={16}/>Đang cập nhật danh sách; dữ liệu hiện tại vẫn được giữ.</p>}
   {state.refreshError&&<div className="staff-community-refresh-status staff-community-refresh-status--error" role="alert"><span>Không thể cập nhật danh sách: {state.refreshError}</span><MotionButton type="button" onClick={state.reload}>Thử lại</MotionButton></div>}

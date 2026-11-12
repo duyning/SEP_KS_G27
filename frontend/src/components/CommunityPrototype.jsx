@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {useLocation,useNavigate} from 'react-router-dom';
+import {Link,useLocation,useNavigate} from 'react-router-dom';
 import {Plus,FileText,Search,MapPin,Phone,RotateCcw,X,ArrowUp,LoaderCircle,SlidersHorizontal} from 'lucide-react';
 import {communityApi} from '../services/community.js';
 import {communityCategories,communityZones,communitySorts,communityDate} from '../services/community-prototype.js';
@@ -13,6 +13,7 @@ import CommunityPostMedia from './CommunityPostMedia.jsx';
 import CommunityPostDescription from './CommunityPostDescription.jsx';
 import CommunityPostContactLinks from './CommunityPostContactLinks.jsx';
 import CommunityPhoneDialog from './CommunityPhoneDialog.jsx';
+import CommunityReportDialog from './CommunityReportDialog.jsx';
 import Modal from './common/Modal.jsx';
 import StatusBadge from './common/StatusBadge.jsx';
 import {AnimatePresence,MotionButton} from './motion/MotionUI.jsx';
@@ -33,6 +34,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
  const [mineCount,setMineCount]=useState(null);
  const [filtersOpen,setFiltersOpen]=useState(false);
  const [contactPhone,setContactPhone]=useState(null);
+ const [reportPost,setReportPost]=useState(null);
  useEffect(()=>{
   const update=()=>setShowBackToTop(window.scrollY>400);
   update();window.addEventListener('scroll',update,{passive:true});
@@ -85,6 +87,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
    </div></div></section>
   {shared?.scope===sharedScope&&shared.error&&<div className="container community-background-status community-background-status--error" role="alert"><span>{shared.error}</span><button type="button" onClick={closeDetail}>Đóng</button></div>}
   <main className="community-main-section"><div className="container community-layout-grid"><section className="community-feed-column" aria-label={mine?'Bài viết của tôi':'Bài viết công khai'} aria-busy={state.loading||state.refreshing}>
+   {user && <Link className="community-report-history-link" to="/community/reports">Báo cáo của tôi</Link>}
    {state.refreshing&&<p className="community-background-status" role="status"><LoaderCircle className="spin" size={16}/>Đang cập nhật dữ liệu mới. Nội dung hiện tại vẫn được giữ nguyên.</p>}
    {state.refreshError&&<div className="community-background-status community-background-status--error" role="alert"><span>Không thể cập nhật dữ liệu mới: {state.refreshError}</span><button type="button" onClick={state.reload}>Thử lại</button></div>}
    {state.loading&&<div className="community-empty-state" role="status">Đang tải bài viết...</div>}{state.error&&<div className="community-empty-state" role="alert"><h2>Không thể tải bài viết</h2><p>{state.error}</p><button type="button" className="btn-empty-reset" onClick={state.reload}>Thử lại</button></div>}
@@ -112,7 +115,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
       </div>{hasMedia&&<CommunityPostMedia post={post}/>}</div>
      {mine&&post.status==='NEED_CHANGES'&&<section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên"><strong>Nhân viên yêu cầu chỉnh sửa</strong><p>{post.decisionNote||'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p><button type="button" className="btn-view-detail" onClick={()=>onEdit(post)}>Chỉnh sửa và gửi duyệt lại</button></section>}
      {mine&&post.status==='REJECTED'&&<p className="community-rejected-note">Lý do từ chối: {post.decisionNote||'Nội dung không phù hợp tiêu chuẩn cộng đồng.'}</p>}
-     <CommunityPostFooter post={post} mine={mine} deleting={deleting} onDelete={()=>onDelete(post)}/>
+     <CommunityPostFooter post={post} deleting={deleting} onDelete={()=>onDelete(post)} onReport={setReportPost}/>
      </article>;
    })}</div>
    <div ref={sentinel} className="community-feed-load-more" aria-busy={state.loadingMore}>
@@ -124,6 +127,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
   </section><CommunityPrototypeSidebar onZone={value=>change({location:value})}/></div></main>
   {showBackToTop&&<button type="button" className="community-back-to-top" aria-label="Cuộn lên đầu trang" title="Cuộn lên đầu trang" onClick={scrollToTop}><ArrowUp size={22} aria-hidden="true"/></button>}
   {contactPhone&&<CommunityPhoneDialog number={contactPhone} onClose={()=>setContactPhone(null)}/>}
-  <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><Badge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p><div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
+  {reportPost&&<CommunityReportDialog post={reportPost} user={user} onClose={()=>setReportPost(null)}/>}
+  <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} closeOnEscape={!reportPost} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}{selected.status==='APPROVED'&&<MotionButton className="p-button" onClick={()=>setReportPost(selected)}>Báo cáo bài viết</MotionButton>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><Badge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p><div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
  </>;
 }

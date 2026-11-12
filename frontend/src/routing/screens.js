@@ -20,6 +20,7 @@ export const screens = [
   screen(null, '/favorites/compare', 'favorites', 'So sánh phòng đã lưu', 'comparison', {integration:'connected'}),
   screen('bookings.html', '/bookings', 'member', 'Lịch xem phòng', 'list', { columns: ['Nhà trọ', 'Chủ trọ', 'Lịch hẹn', 'Trạng thái'], filters: ['Tất cả lịch hẹn', 'Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'] }),
   screen('community.html', '/community', 'public', 'Cộng đồng Cư dân & Sinh viên Hòa Lạc', 'community'),
+  screen(null, '/community/reports', 'member', 'Báo cáo của tôi', 'communityReports', { integration: 'connected' }),
   screen('services.html', '/services', 'public', 'Dịch vụ quanh trọ', 'services'),
   screen('service-detail.html', '/services/detail', 'public', 'Chi tiết dịch vụ', 'detail', { sections: ['Thông tin dịch vụ', 'Loại dịch vụ', 'Khu vực phục vụ', 'Nhà cung cấp'], actions: ['Liên hệ nhà cung cấp'] }),
   screen('notifications.html', '/notifications', 'member', 'Thông báo của bạn', 'notifications'),
@@ -47,6 +48,7 @@ export const screens = [
   screen('staff-assistance-requests.html', '/staff/assistance', 'staff', 'Yêu cầu hỗ trợ từ đối tác', 'list', { metrics: ['Tổng yêu cầu', 'Chờ xử lý', 'Đang xử lý', 'Đã hoàn tất'], columns: ['Mã yêu cầu & nội dung', 'Chủ trọ', 'Vấn đề', 'Ngày gửi', 'Trạng thái', 'Thao tác'], filters: ['Tất cả trạng thái', 'Chờ xử lý', 'Đang xử lý', 'Chờ chủ trọ bổ sung', 'Đã giải quyết'] }),
   screen('staff-assistance-request-detail.html', '/staff/assistance/detail', 'staff', 'Chi tiết yêu cầu hỗ trợ', 'supportDetail', { sections: ['Nội dung yêu cầu từ Chủ trọ', 'Thông tin liên quan (Nhà trọ)', 'Lịch sử xử lý & Nhật ký nghiệp vụ'] }),
   screen('admin-dashboard.html', '/admin', 'admin', 'Bảng điều khiển quản trị', 'admin', { integration: 'connected', metrics: ['Tài khoản hệ thống', 'Hồ sơ chờ xác minh', 'Bài viết chờ duyệt', 'Công việc cần xử lý'] }),
+  screen(null, '/admin/community/reports', 'admin', 'Báo cáo bài viết cộng đồng', 'communityReports', { integration: 'connected' }),
 ];
 export const findScreen = pathname => screens.find(item => item.path === pathname);
 export const legacyTarget = filename => screens.find(item => item.source === filename)?.path;

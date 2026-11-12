@@ -1,0 +1,37 @@
+.community-report-dialog .community-report-post-title { color: #334155; overflow-wrap: anywhere; }
+.community-report-form { display: grid; gap: 8px; }
+.community-report-form label { color: #334155; font-weight: 600; }
+.community-report-form :is(select, textarea, input) {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+}
+.community-report-form textarea { resize: vertical; }
+.community-report-form small { color: #475569; }
+.community-report-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.community-report-actions .p-button, .community-report-page .p-button { min-height: 44px; }
+.community-report-page { display: grid; gap: 16px; max-width: 1100px; margin-inline: auto; }
+.community-report-page h1, .community-report-page h2 { margin: 0; overflow-wrap: anywhere; }
+.community-report-page .community-report-form { max-width: 550px; }
+.community-report-page .community-report-panel { min-width: 0; padding: 16px; }
+.community-report-list { padding: 0; margin: 0; list-style: none; }
+.community-report-list li { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; overflow-wrap: anywhere; }
+.community-report-list li:last-child { border-bottom: 0; }
+.community-report-list time { color: #475569; }
+.community-report-page .community-report-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.community-report-page dl { display: grid; gap: 8px; margin: 12px 0; }
+.community-report-page dl > div { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.community-report-page dt { color: #475569; }
+.community-report-page dd { margin: 0; overflow-wrap: anywhere; }
+.community-report-evidence { display: block; max-width: 100%; max-height: 420px; object-fit: contain; margin: 12px 0; }
+.community-report-detail-controls { display: grid; gap: 12px; }
+.community-report-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.community-report-filter select { min-height: 44px; max-width: 100%; }
+.community-report-history-link { display: inline-flex; align-items: center; min-height: 44px; color: #0f766e; font-weight: 600; }

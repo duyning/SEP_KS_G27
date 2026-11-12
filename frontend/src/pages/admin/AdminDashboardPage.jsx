@@ -9,8 +9,8 @@ import '../../styles/admin-dashboard.css';
 
 const views={overview:['Tổng quan',LayoutDashboard],accounts:['Tài khoản',Users],assignment:['Phân công xác minh',ClipboardList],activity:['Nhật ký kiểm duyệt',Activity]};
 const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Ngừng hoạt động'};
-const actions={APPROVED:'Phê duyệt',REJECTED:'Từ chối',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',REQUEST_SUPPLEMENT:'Yêu cầu bổ sung',RESOLVED:'Đã xử lý',COMPLETED:'Hoàn tất',DISMISSED:'Bỏ qua báo cáo'};
-const types={PROPERTY_REGISTRATION:'Hồ sơ nhà trọ',SERVICE_REGISTRATION:'Hồ sơ dịch vụ',HOST_APPLICATION:'Đăng ký chủ trọ',COMMUNITY_POST:'Bài đăng cộng đồng'};
+const actions={APPROVED:'Phê duyệt',REJECTED:'Từ chối',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',REQUEST_SUPPLEMENT:'Yêu cầu bổ sung',RESOLVED:'Đã xử lý',COMPLETED:'Hoàn tất',DISMISSED:'Bỏ qua báo cáo',HIDDEN:'Ẩn bài viết'};
+const types={PROPERTY_REGISTRATION:'Hồ sơ nhà trọ',SERVICE_REGISTRATION:'Hồ sơ dịch vụ',HOST_APPLICATION:'Đăng ký chủ trọ',COMMUNITY_POST:'Bài đăng cộng đồng',COMMUNITY_POST_REPORT:'Báo cáo cộng đồng'};
 const date=value=>value&&!Number.isNaN(Date.parse(value))?new Date(value).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Chưa có thời gian';
 const count=value=>value==null?'—':value.toLocaleString('vi-VN');
 function Status({value}){return <span className={`ad-status ${value?.toLowerCase()}`}><span/>{statuses[value]||value||'Chưa cập nhật'}</span>;}

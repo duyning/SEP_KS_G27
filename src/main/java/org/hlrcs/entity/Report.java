@@ -9,7 +9,10 @@ import org.hlrcs.entity.enums.ReportTargetType;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reports")
+@Table(name = "reports", indexes = {
+        @Index(name = "idx_report_target", columnList = "target_type,target_id"),
+        @Index(name = "idx_report_queue", columnList = "target_type,status,created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,13 +39,24 @@ public class Report {
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
+    @Column(length = 40)
+    private String reasonCode;
+
+    private String postTitle;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false, length = 50)
     private ReportStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "handler_id")
     private User handler;
+
+    @Column(length = 1000)
+    private String resolutionNote;
+
+    private LocalDateTime resolvedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

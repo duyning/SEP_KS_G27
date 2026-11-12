@@ -152,7 +152,7 @@ public class StaffService {
     public Dashboard dashboard() {
         var actor = verificationAccess.actor();
         var verification = verificationAccess.list();
-        var reportRows = reports.findAllByOrderByCreatedAtAsc();
+        var reportRows = reports.findByTargetTypeNotOrderByCreatedAtAsc(ReportTargetType.POST);
         var supportRows = support.findAllByOrderByCreatedAtAsc();
         var postRows = posts.findAllByOrderByCreatedAtAsc();
         var queue = new ArrayList<QueueItem>();

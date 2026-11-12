@@ -35,7 +35,7 @@ const menus = {
     ]]
   ],
   staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
-  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Giám sát phân công', '/admin?view=assignment', ClipboardCheck], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench]]], ['HỆ THỐNG', [['Nhật ký kiểm duyệt', '/admin?view=activity', History]]]],
+  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Giám sát phân công', '/admin?view=assignment', ClipboardCheck], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo cộng đồng', '/admin/community/reports', Flag]]], ['HỆ THỐNG', [['Nhật ký kiểm duyệt', '/admin?view=activity', History]]]],
 };
 export function Brand({ portal = 'public', onClick }) {
   return (
@@ -316,7 +316,7 @@ export default function PortalLayout({ screen, children }) {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
                 const selectedPropertyId = new URLSearchParams(location.search).get('propertyId') || new URLSearchParams(location.search).get('id') || (portal === 'host' ? getHostWorkspaceMemory(user?.userId).selectedPropertyId : null);
                 const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
-                const active = to.startsWith('/admin') ? location.pathname === '/admin' && (new URLSearchParams(to.split('?')[1] || '').get('view') || 'overview') === (new URLSearchParams(location.search).get('view') || 'overview') : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
+                const active = (to === '/admin' || to.startsWith('/admin?')) ? location.pathname === '/admin' && (new URLSearchParams(to.split('?')[1] || '').get('view') || 'overview') === (new URLSearchParams(location.search).get('view') || 'overview') : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (
                   <Link key={to} to={scopedLink} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
                     <Icon size={19} />
