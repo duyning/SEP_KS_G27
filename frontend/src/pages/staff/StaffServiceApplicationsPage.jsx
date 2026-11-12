@@ -8,6 +8,7 @@ import ServiceGallery from '../../components/ServiceGallery.jsx';
 import { ArrowLeft, CheckCircle2, Download, Eye, MessageSquarePlus, RefreshCw, XCircle } from 'lucide-react';
 
 const status = { PENDING: 'Chờ xét duyệt', APPROVED: 'Đã xét duyệt', REJECTED: 'Đã từ chối', NEEDS_SUPPLEMENT: 'Cần bổ sung' };
+const statusFilters = ['ALL', 'APPROVED', 'PENDING', 'NEEDS_SUPPLEMENT', 'REJECTED'];
 const reviewChoices = [
   { value: 'APPROVE', label: 'Duyệt hồ sơ', description: 'Chấp nhận thông tin và tài liệu.', Icon: CheckCircle2 },
   { value: 'SUPPLEMENT', label: 'Yêu cầu bổ sung', description: 'Trả hồ sơ để người đăng ký hoàn thiện.', Icon: MessageSquarePlus },
@@ -18,7 +19,8 @@ const time = value => value ? new Date(value).toLocaleString('vi-VN') : '—';
 
 export default function StaffServiceApplicationsPage() {
   const { user } = useAuth();
-  const [params] = useSearchParams(); const selected = params.get('id');
+  const [params, setParams] = useSearchParams(); const selected = params.get('id');
+  const activeStatus = statusFilters.includes(params.get('status')) ? params.get('status') : 'ALL';
   const activeSelection = useRef(selected); activeSelection.current = selected;
   const [rows, setRows] = useState([]); const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
@@ -36,6 +38,8 @@ export default function StaffServiceApplicationsPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [selected, user.userId, revision]);
+  const visibleRows = activeStatus === 'ALL' ? rows : rows.filter(item => item.status === activeStatus);
+  const listUrl = '/staff/service-applications' + (activeStatus === 'ALL' ? '' : `?status=${activeStatus}`);
   const row = detail?.application;
   const reasonLabel = decision === 'SUPPLEMENT' ? 'Nội dung cần bổ sung' : decision === 'REJECT' ? 'Lý do từ chối' : 'Nhận xét xét duyệt';
   const submitLabel = decision === 'SUPPLEMENT' ? 'Gửi yêu cầu bổ sung' : decision === 'REJECT' ? 'Xác nhận từ chối' : decision === 'APPROVE' ? 'Xác nhận duyệt hồ sơ' : 'Xác nhận quyết định';
@@ -69,11 +73,18 @@ export default function StaffServiceApplicationsPage() {
   return <main className="service-applications">
     <div className="service-applications-heading"><h1>{selected ? `Hồ sơ dịch vụ #${selected}` : 'Xét duyệt hồ sơ cung cấp dịch vụ'}</h1><button className="service-app-action" disabled={busy || loading} onClick={() => setRevision(v => v + 1)}><RefreshCw size={16} aria-hidden="true" />Tải lại</button></div>
     <p>Staff và Admin đều có thể xem tài liệu và xét duyệt các hồ sơ chờ xử lý.</p>
-    {selected && <Link className="service-app-action" to="/staff/service-applications"><ArrowLeft size={16} aria-hidden="true" />Danh sách hồ sơ</Link>}
+    {selected && <Link className="service-app-action" to={listUrl}><ArrowLeft size={16} aria-hidden="true" />Danh sách hồ sơ</Link>}
     {error && <p role="alert" className="service-error">{error}</p>}
     {loading ? <p role="status">Đang tải hồ sơ...</p> : !selected ? <>
-      {!rows.length && !error && <p>Chưa có hồ sơ dịch vụ.</p>}
-      <div className="service-table-wrap"><table><thead><tr><th>Hồ sơ / Dịch vụ</th><th>Người đăng ký</th><th>Người duyệt</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>{rows.map(row => <tr key={row.registrationId}><td><strong>#{row.registrationId} · {row.serviceName}</strong><small className="service-table-category">{row.categoryName}</small></td><td>{row.applicantName}</td><td>{row.reviewerName || 'Chưa xét duyệt'}</td><td>{statusBadge(row.status)}</td><td>{time(row.createdAt)}</td><td><Link className="service-app-action service-app-action-primary" to={`/staff/service-applications?id=${row.registrationId}`}><Eye size={16} aria-hidden="true" />Xem hồ sơ</Link></td></tr>)}</tbody></table></div>
+      <div className="service-status-filters" role="group" aria-label="Lọc hồ sơ theo trạng thái">
+        {statusFilters.map(value => <button type="button" key={value} className={`service-status-filter service-filter-${value.toLowerCase()}${activeStatus === value ? ' is-active' : ''}`} aria-pressed={activeStatus === value} onClick={() => setParams(previous => {
+          const next = new URLSearchParams(previous);
+          if (value === 'ALL') next.delete('status'); else next.set('status', value);
+          return next;
+        })}><span>{value === 'ALL' ? 'Tất cả' : status[value]}</span><span className="service-status-count">{value === 'ALL' ? rows.length : rows.filter(item => item.status === value).length}</span></button>)}
+      </div>
+      {!visibleRows.length && !error && <p role="status">{rows.length ? 'Không có hồ sơ ở trạng thái này.' : 'Chưa có hồ sơ dịch vụ.'}</p>}
+      <div className="service-table-wrap"><table><thead><tr><th>Hồ sơ / Dịch vụ</th><th>Người đăng ký</th><th>Người duyệt</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>{visibleRows.map(row => <tr key={row.registrationId}><td><strong>#{row.registrationId} · {row.serviceName}</strong><small className="service-table-category">{row.categoryName}</small></td><td>{row.applicantName}</td><td>{row.reviewerName || 'Chưa xét duyệt'}</td><td>{statusBadge(row.status)}</td><td>{time(row.createdAt)}</td><td><Link className="service-app-action service-app-action-primary" to={`/staff/service-applications?id=${row.registrationId}${activeStatus === 'ALL' ? '' : `&status=${activeStatus}`}`}><Eye size={16} aria-hidden="true" />Xem hồ sơ</Link></td></tr>)}</tbody></table></div>
     </> : row && <>
       <section className="service-application-detail"><header className="service-application-title"><h2>{row.serviceName}</h2><div className="service-application-category"><span>Danh mục đăng ký</span><strong>{row.categoryName || 'Chưa có danh mục'}</strong></div><p className="service-application-meta"><span>{({ CREATE: 'Thêm dịch vụ', UPDATE: 'Cập nhật dịch vụ', DELETE: 'Yêu cầu xóa dịch vụ' })[row.operation] || 'Thêm dịch vụ'}{row.targetServiceId && ' · Dịch vụ #' + row.targetServiceId}</span>{statusBadge(row.status)}</p></header>
         {row.resubmissionNote && <p className="service-text">Lý do thay đổi: {row.resubmissionNote}</p>}

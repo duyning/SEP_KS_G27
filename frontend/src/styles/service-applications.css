@@ -20,3 +20,25 @@
 .service-application-overview{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);align-items:start;gap:24px}.service-application-overview.without-image{grid-template-columns:minmax(0,1fr)}.service-applications .service-application-overview dl{margin:0;grid-template-columns:120px minmax(0,1fr);font-size:14px;line-height:1.6}.service-application-overview .svc-gallery{min-width:0;width:100%;max-width:320px}.service-application-overview .svc-gallery>.svc-photo{width:100%;height:220px;aspect-ratio:auto;object-fit:contain;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;box-sizing:border-box}.service-applications .service-application-overview .svc-gallery-thumbnails button{width:54px;height:46px;margin:0;padding:3px;background:white;border-radius:7px}.service-review-documents{display:flex;flex-wrap:wrap;gap:8px;min-width:0}.service-applications .service-review-document{min-width:0;justify-content:flex-start;max-width:320px}.service-review-document span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 @media(max-width:1000px){.service-application-overview{grid-template-columns:minmax(0,1fr)}}@media(max-width:600px){.service-applications .service-application-title h2{font-size:24px}.service-applications .service-application-overview dl{grid-template-columns:minmax(0,1fr)}.service-application-overview{gap:18px}.service-application-overview .svc-gallery{margin:0 auto}.service-applications .service-review-document{width:100%;max-width:100%}}
 .service-status-badge{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:5px 11px;border:1px solid #cbd5e1;border-radius:999px;background:#f1f5f9;color:#475569;font-size:13px;font-weight:700;line-height:1.5;white-space:nowrap}.service-status-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}.service-status-approved{background:#ecfdf5;border-color:#a7f3d0;color:#047857}.service-status-pending{background:#fffbeb;border-color:#fde68a;color:#92400e}.service-status-needs_supplement{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}.service-status-rejected{background:#fef2f2;border-color:#fecaca;color:#b91c1c}.service-application-title>.service-application-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+
+.service-status-filters{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 18px;padding-bottom:16px;border-bottom:1px solid #e2e8f0}
+.service-applications .service-status-filter{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:10px 14px;min-height:44px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;color:#475569;font:inherit;font-size:14px;font-weight:600;transition:background .15s,border-color .15s}
+.service-status-filter{--filter-bg:#f1f5f9;--filter-border:#cbd5e1;--filter-color:#475569}
+.service-filter-all{--filter-bg:#f5f3ff;--filter-border:#ddd6fe;--filter-color:#6d28d9}
+.service-filter-approved{--filter-bg:#ecfdf5;--filter-border:#a7f3d0;--filter-color:#047857}
+.service-filter-pending{--filter-bg:#fffbeb;--filter-border:#fde68a;--filter-color:#92400e}
+.service-filter-needs_supplement{--filter-bg:#eff6ff;--filter-border:#bfdbfe;--filter-color:#1d4ed8}
+.service-filter-rejected{--filter-bg:#fef2f2;--filter-border:#fecaca;--filter-color:#b91c1c}
+.service-applications .service-status-filter{background:var(--filter-bg);border-color:var(--filter-border);color:var(--filter-color)}
+.service-applications .service-status-filter:hover{border-color:var(--filter-color)}
+.service-applications .service-status-filter.is-active{background:var(--filter-color);border-color:var(--filter-color);color:#fff}
+.service-status-filter:focus-visible{outline:3px solid var(--filter-color);outline-offset:3px}
+.service-status-count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;padding:1px 6px;box-sizing:border-box;border-radius:999px;background:#f1f5f9;color:#475569;font-size:12px;font-variant-numeric:tabular-nums}
+.service-status-filter .service-status-count{background:var(--filter-border);color:var(--filter-color)}
+.service-status-filter.is-active .service-status-count{background:#ffffff26;color:#fff}
+@media(max-width:600px){.service-status-filters{gap:8px}.service-applications .service-status-filter{flex:1 1 auto;padding:9px 10px;font-size:13px}}
+
+/* Avoid stacking page padding with the portal breadcrumb spacing. */
+.portal-content > .service-applications{padding-top:0}
+.portal-content:has(> .service-applications) > .portal-breadcrumbs{margin-bottom:16px}
+.service-applications-heading h1{margin-top:0;margin-bottom:0}
