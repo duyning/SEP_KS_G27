@@ -1,7 +1,7 @@
 import {useFavorites} from '../../context/FavoritesContext.jsx';
 import {useEffect,useState} from 'react';
 import {Link,NavLink} from 'react-router-dom';
-import {Heart,LogOut} from 'lucide-react';
+import {Bell,Heart,LogOut} from 'lucide-react';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {landingFor,roleLabels} from '../../routing/screens.js';
 import {MotionButton} from '../motion/MotionUI.jsx';
@@ -9,8 +9,8 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
  const favorites=useFavorites(),savedCount=favorites?.total??providedSavedCount;
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
- const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
- return <div className={`prototype-home ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
+ const account=user?<>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm shell-desktop-dashboard">Bảng điều khiển</Link>}<Link to="/notifications" className="btn-wishlist-top" aria-label="Thông báo" title="Thông báo"><Bell size={18} aria-hidden="true"/></Link><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link><div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
+ return <div className={`prototype-home prototype-shared-shell ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
     <div className="top-announcement">
       <div className="container top-announcement-inner">
         <div className="announcement-left">
@@ -49,11 +49,12 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/search">Tìm phòng</NavLink></li>
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
           <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
-          <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
+          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/bookings">Lịch xem phòng</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
           {menuExtras}
+          {user && user.role !== 'USER' && <li className="shell-mobile-dashboard"><Link className="nav-item" to={landingFor(user)}>Bảng điều khiển</Link></li>}
         </ul>
 
 

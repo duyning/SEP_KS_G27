@@ -37,8 +37,8 @@ export function ViewingDetails({ item, showAccommodationLink = false }) {
     ['Lịch hẹn (giờ Việt Nam)', formatViewingDate(item.scheduledDate)],
     ['Người liên hệ', item.renterName], ['Số điện thoại', item.renterPhone], ['Ghi chú', item.note],
     ['Thời điểm gửi', item.createdAt && formatViewingDate(item.createdAt)],
-    ['Thời điểm phản hồi', item.processedAt && formatViewingDate(item.processedAt)],
-    ['Lý do phản hồi', item.decisionReason],
+    [item.status === 'CANCELLED' ? 'Thời điểm hủy' : 'Thời điểm phản hồi', item.processedAt && formatViewingDate(item.processedAt)],
+    [item.status === 'CANCELLED' ? 'Lý do hủy' : 'Lý do phản hồi', item.decisionReason],
   ];
   return <div className="viewing-details">
     <ViewingStatus status={item.status} />

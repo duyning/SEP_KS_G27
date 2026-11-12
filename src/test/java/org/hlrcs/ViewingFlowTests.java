@@ -196,6 +196,43 @@ class ViewingFlowTests {
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)));
     }
 
+    @Test
+    void onlyRequesterCancelsPendingAndNotifiesThePropertyOwnerOnce() throws Exception {
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        cancel(host, id).andExpect(status().isNotFound());
+        cancel(account(UserRole.USER), id).andExpect(status().isNotFound());
+
+        cancel(renter, id).andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.processedAt").isNotEmpty())
+                .andExpect(jsonPath("$.data.decisionReason").value("Đã đổi kế hoạch"));
+        cancel(renter, id).andExpect(status().isConflict());
+        decide(host, id, "REJECTED", "Không còn phòng").andExpect(status().isConflict());
+        getAs("/api/host/viewings", host).andExpect(jsonPath("$.data.viewings[0].status").value("CANCELLED"));
+        getAs(INBOX, host).andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.items[0].event").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.items[0].bookingId").value(id))
+                .andExpect(jsonPath("$.data.items[0].read").value(false));
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(0));
+    }
+
+    @Test
+    void cancellationAndHostDecisionShareOneFinalTransition() throws Exception {
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        var results = race(() -> cancel(renter, id), () -> decide(host, id, "REJECTED", "Không còn phòng"));
+        var statuses = new int[]{results[0].andReturn().getResponse().getStatus(), results[1].andReturn().getResponse().getStatus()};
+        java.util.Arrays.sort(statuses);
+        assertArrayEquals(new int[]{200, 409}, statuses);
+        int hostCount = data(getAs(INBOX, host)).path("items").size();
+        int renterCount = data(getAs(INBOX, renter)).path("items").size();
+        assertEquals(2, hostCount + renterCount);
+        cancel(renter, id).andExpect(status().isConflict());
+    }
+
+    private ResultActions cancel(User user, int id) throws Exception {
+        return mvc.perform(post(VIEWINGS + "/" + id + "/cancel").header("Authorization", token(user))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("reason", "Đã đổi kế hoạch"))));
+    }
+
     private ResultActions[] race(Callable<ResultActions> first, Callable<ResultActions> second) throws Exception {
         var executor = Executors.newFixedThreadPool(2);
         var ready = new CountDownLatch(2);

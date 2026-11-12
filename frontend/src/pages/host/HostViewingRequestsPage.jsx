@@ -1,7 +1,7 @@
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Eye, MapPin, RefreshCw, Search } from 'lucide-react';
+import { ArrowLeft, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Eye, House, MapPin, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { hostApi } from '../../services/host.js';
 import HostSetupRequired from '../../components/HostSetupRequired.jsx';
@@ -93,23 +93,66 @@ function ViewingProperties({ data, onRefresh }) {
     if (item.status === 'PENDING') count.pending++;
     counts.set(item.propertyId, count);
   }
-  const current = propertyPage(data.properties, params.get('page'));
+  const filters = [
+    ['', 'Tất cả nhà trọ', House],
+    ['pending', 'Có lịch chờ duyệt', Clock3],
+    ['processed', 'Đã xử lý hết lịch', CheckCircle2],
+    ['empty', 'Chưa có lịch xem', CalendarDays],
+  ];
+  const group = filters.some(([key]) => key === params.get('group')) ? params.get('group') : '';
+  const search = params.get('q') || '';
+  const sort = params.get('sort') === 'name' ? 'name' : 'pending';
+  const summaries = data.properties.map(property => ({
+    ...property,
+    record: records.get(property.propertyId),
+    count: counts.get(property.propertyId) ?? { total: 0, pending: 0 },
+  }));
+  const category = ({ count }) => count.pending ? 'pending' : count.total ? 'processed' : 'empty';
+  const query = search.trim().toLocaleLowerCase('vi');
+  const filtered = summaries.filter(item => (!group || category(item) === group)
+    && [item.name, item.record?.address].some(value => (value || '').toLocaleLowerCase('vi').includes(query)))
+    .sort((a, b) => (sort === 'pending' ? b.count.pending - a.count.pending : 0) || a.name.localeCompare(b.name, 'vi'));
+  const current = propertyPage(filtered, params.get('page'));
+
+  function changeFilter(key, value) {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value); else next.delete(key);
+    next.delete('page');
+    setParams(next, { replace: key === 'q' });
+  }
   function changePage(page) {
     const next = new URLSearchParams(params);
     if (page > 1) next.set('page', page); else next.delete('page');
     setParams(next);
   }
 
-  return <section className="host-viewings-list">
-    <div className="host-viewings-heading">
-      <div><h2>Yêu cầu xem phòng theo nhà trọ</h2><p>Chọn một nhà trọ để xem và xử lý các lịch đã gửi.</p></div>
-      <MotionButton type="button" className="p-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton>
+  return <section className="hp-portfolio host-viewings-portfolio">
+    <header className="hp-portfolio-heading">
+      <div><h2>Yêu cầu xem phòng</h2><p>Theo dõi lịch hẹn và phản hồi yêu cầu theo từng nhà trọ.</p></div>
+      <MotionButton type="button" className="hp-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton>
+    </header>
+    <div className="hp-portfolio-stats" role="group" aria-label="Lọc nhà trọ theo yêu cầu xem phòng">
+      {filters.map(([key, label, Icon]) => <button key={key} type="button" aria-pressed={group === key}
+        className={group === key ? 'selected' : undefined} onClick={() => changeFilter('group', key)}>
+        <span>{label}<Icon size={18} aria-hidden="true" /></span>
+        <strong>{key ? summaries.filter(item => category(item) === key).length : summaries.length}</strong>
+      </button>)}
     </div>
-    {error && <p role="status" className="host-viewings-empty">Chưa tải được ảnh và thông tin phòng. <button type="button" className="p-button" onClick={reload}>Thử lại</button></p>}
-    <p className="hp-portfolio-result">{data.properties.length} nhà trọ</p>
-    <div className="hp-property-grid host-viewings-property-grid">{current.items.map(property => {
-      const record = records.get(property.propertyId);
-      const count = counts.get(property.propertyId) ?? { total: 0, pending: 0 };
+    <div className="hp-portfolio-toolbar host-viewings-property-toolbar">
+      <label className="hp-portfolio-search"><Search size={17} aria-hidden="true" /><input aria-label="Tìm nhà trọ"
+        placeholder="Tìm tên nhà trọ hoặc địa chỉ…" value={search} onChange={event => changeFilter('q', event.target.value)} /></label>
+      <select aria-label="Trạng thái yêu cầu" value={group} onChange={event => changeFilter('group', event.target.value)}>
+        {filters.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+      </select>
+      <select aria-label="Sắp xếp nhà trọ" value={sort} onChange={event => changeFilter('sort', event.target.value)}>
+        <option value="pending">Nhiều lịch chờ duyệt trước</option><option value="name">Tên nhà trọ A–Z</option>
+      </select>
+    </div>
+    {error && <p role="status" className="host-viewings-empty">Chưa tải được ảnh và địa chỉ. <button type="button" className="hp-button" onClick={reload}>Thử lại</button></p>}
+    <div className="hp-portfolio-result"><strong>{filtered.length} nhà trọ</strong></div>
+    {!filtered.length && <p className="hp-portfolio-empty" role="status">Không có nhà trọ phù hợp với bộ lọc.</p>}
+    <div className="hp-property-grid">{current.items.map(property => {
+      const { record, count } = property;
       const target = new URLSearchParams(params);
       target.set('propertyId', property.propertyId);
       if (!count.pending && count.total) target.set('tab', 'processed'); else target.delete('tab');
@@ -121,13 +164,12 @@ function ViewingProperties({ data, onRefresh }) {
           <h3><Link to={href}>{property.name}</Link></h3>
           {record?.address && <p className="hp-card-address"><MapPin size={14} aria-hidden="true" /><span>{record.address}</span></p>}
           <div className="hp-card-numbers">
-            {[['Loại phòng', record?.roomTypeCount], ['Tổng phòng', record?.totalRooms],
-              ['Còn trống', record?.vacantRooms], ['Yêu cầu xem phòng', count.total]].map(([label, value]) =>
+            {[['Tổng yêu cầu', count.total], ['Chờ duyệt', count.pending], ['Đã xử lý', count.total - count.pending]].map(([label, value]) =>
                 <div key={label}><strong>{value ?? '—'}</strong><span>{label}</span></div>)}
           </div>
         </div>
         <footer className="hp-card-actions">
-          <Link className="p-button" to={href} aria-label={`Xem yêu cầu của ${property.name}`}><Eye size={16} />Xem yêu cầu</Link>
+          <Link className="hp-button subtle" to={href} aria-label={`Xem yêu cầu của ${property.name}`}><Eye size={16} />Xem yêu cầu</Link>
         </footer>
       </article>;
     })}</div>
@@ -183,17 +225,19 @@ function ViewingList({ data, property, onRefresh, onDecision, canDecide }) {
     notify?.(item.status === 'APPROVED' ? 'Đã xác nhận lịch xem phòng.' : 'Đã gửi phản hồi từ chối.');
   }
 
-  return <section className="host-viewings-list">
-    <Link className="hp-back-link" to={params.get('page') ? `/host/viewings?page=${encodeURIComponent(params.get('page'))}` : '/host/viewings'}>
+  const back = new URLSearchParams(params);
+  for (const key of ['propertyId', 'id', 'tab']) back.delete(key);
+  return <section className="hp-portfolio host-viewings-portfolio">
+    <Link className="hp-back-link" to={`/host/viewings${back.size ? '?' + back : ''}`}>
       <ArrowLeft size={16} />Danh sách nhà trọ
     </Link>
-    <div className="host-viewings-heading"><h2>{property.name}</h2><MotionButton type="button" className="p-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton></div>
+    <div className="hp-portfolio-heading"><div><h2>{property.name}</h2><p>Xem và phản hồi lịch hẹn của nhà trọ này.</p></div><MotionButton type="button" className="p-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton></div>
     <div className="host-viewings-tabs" role="group" aria-label="Nhóm trạng thái lịch">
       <button type="button" className={`p-button ${tab === 'pending' ? 'primary' : ''}`} aria-pressed={tab === 'pending'} onClick={() => changeTab('pending')}>Chờ duyệt ({pendingCount})</button>
       <button type="button" className={`p-button ${tab === 'processed' ? 'primary' : ''}`} aria-pressed={tab === 'processed'} onClick={() => changeTab('processed')}>Đã xử lý ({ownedRequests.length - pendingCount})</button>
     </div>
-    <div className="host-viewings-filters">
-      <label className="host-viewings-search"><Search size={16} /><input aria-label="Tìm yêu cầu" placeholder="Tên khách, số điện thoại, loại phòng…" value={search} onChange={event => setSearch(event.target.value)} /></label>
+    <div className="hp-portfolio-toolbar host-viewings-filters">
+      <label className="hp-portfolio-search"><Search size={16} /><input aria-label="Tìm yêu cầu" placeholder="Tên khách, số điện thoại, loại phòng…" value={search} onChange={event => setSearch(event.target.value)} /></label>
       <input type="date" aria-label="Ngày xem phòng" value={date} onChange={event => setDate(event.target.value)} />
       <select aria-label="Sắp xếp" value={sort} onChange={event => setSort(event.target.value)}><option value="NEWEST">Mới nhất trước</option><option value="APPOINTMENT">Giờ hẹn sớm trước</option></select>
     </div>

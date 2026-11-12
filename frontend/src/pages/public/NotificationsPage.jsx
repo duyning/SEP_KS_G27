@@ -38,7 +38,7 @@ export default function NotificationsPage({ host = false }) {
 
   return <section className="viewing-flow">
     <header className="viewing-heading">
-      <div>{!host && <h1>Thông báo của bạn</h1>}<p>Yêu cầu mới và phản hồi về lịch xem phòng.</p></div>
+      <div>{!host && <h1>Thông báo của bạn</h1>}<p>Yêu cầu mới, phản hồi và lịch xem phòng đã hủy.</p></div>
       <button type="button" className="p-button" disabled={busy !== null} onClick={reload}>Làm mới</button>
     </header>
     <div className="viewing-actions">
@@ -51,7 +51,7 @@ export default function NotificationsPage({ host = false }) {
         <div className="viewing-list">{data.items.map(item => <article className={`viewing-card${item.read ? '' : ' unread'}`} key={item.notificationId}>
           <div><h2>{item.content}</h2><p>{item.read ? 'Đã đọc' : 'Chưa đọc'} · {formatViewingDate(item.createdAt)}</p></div>
           <div className="viewing-actions">
-            <Link className="p-button" to={(item.event === 'REQUESTED' ? hostViewingLink : viewingLink)(item.bookingId)}>Xem lịch #{item.bookingId}</Link>
+            <Link className="p-button" to={(['REQUESTED', 'CANCELLED'].includes(item.event) ? hostViewingLink : viewingLink)(item.bookingId)}>Xem lịch #{item.bookingId}</Link>
             {!item.read && <button type="button" className="p-button" disabled={busy !== null} onClick={() => markRead(item.notificationId)}>
               {busy === item.notificationId ? 'Đang lưu…' : 'Đánh dấu đã đọc'}
             </button>}

@@ -6,6 +6,7 @@ import org.hlrcs.entity.ViewingNotification;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public final class ViewingResponses {
     private ViewingResponses() {}
@@ -26,7 +27,7 @@ public final class ViewingResponses {
         }
     }
 
-    public record ViewingPage(List<Viewing> items, boolean hasNext) {}
+    public record ViewingPage(List<Viewing> items, boolean hasNext, Map<Integer, String> coverImages) {}
 
     public record Notification(Integer notificationId, Integer bookingId, ViewingNotification.Event event,
                                String content, boolean read, LocalDateTime createdAt) {
