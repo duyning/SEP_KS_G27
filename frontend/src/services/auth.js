@@ -27,6 +27,10 @@ export async function request(path, { method = 'GET', body, signal, basePath = '
     throw new ApiError('Không thể kết nối máy chủ. Vui lòng thử lại sau.', 0);
   }
   if (response.ok && responseType === 'blob') return response.blob();
+  if (response.ok && responseType === 'event-stream') {
+    if (response.body && response.headers.get('content-type')?.startsWith('text/event-stream')) return response.body;
+    throw new ApiError('Không thể nhận cập nhật trực tiếp.', 502);
+  }
   const result = await response.json().catch(() => null);
   if (response.status === 401 && token && getToken() === token && !['/login', '/register'].includes(path)) {
     clearToken();

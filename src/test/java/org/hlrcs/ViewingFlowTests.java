@@ -47,6 +47,7 @@ class ViewingFlowTests {
     @Autowired RoomTypeRepository types;
     @Autowired RoomRepository rooms;
     @Autowired BookingRepository bookings;
+    @Autowired org.hlrcs.service.ViewingService viewingService;
 
     private User host;
     private User renter;
@@ -64,6 +65,22 @@ class ViewingFlowTests {
         type = types.save(RoomType.builder().property(property).roomType("Studio")
                 .price(BigDecimal.valueOf(2000000)).areaSqm(20F).build());
         appointment = LocalDateTime.now(ZONE).plusDays(1).withSecond(0).withNano(0);
+    }
+
+    @Test
+    void streamsCommittedChangesOnlyToTheRequesterAndPropertyOwner() throws Exception {
+        String updates = VIEWINGS + "/updates";
+        mvc.perform(get(updates)).andExpect(status().isUnauthorized());
+        var hostStream = getAs(updates, host).andExpect(request().asyncStarted()).andReturn();
+        var renterStream = getAs(updates, renter).andExpect(request().asyncStarted()).andReturn();
+        var otherStream = getAs(updates, account(UserRole.ROOM_HOST)).andExpect(request().asyncStarted()).andReturn();
+
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        update(renter, id, payload(appointment.plusMinutes(5))).andExpect(status().isOk());
+        decide(host, id, "REJECTED", "Bận").andExpect(status().isOk());
+        assertEquals(4, hostStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
+        assertEquals(4, renterStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
+        assertEquals(1, otherStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
     }
 
     @Test
@@ -141,7 +158,7 @@ class ViewingFlowTests {
         int expiredId = bookings.save(Booking.builder().roomType(type).renter(renter).status(BookingStatus.PENDING)
                 .scheduledDate(appointment.minusDays(2)).build()).getBookingId();
         decide(host, expiredId, "APPROVED", "").andExpect(status().isConflict());
-        decide(host, expiredId, "REJECTED", "Giờ hẹn đã qua.").andExpect(status().isOk());
+        decide(host, expiredId, "REJECTED", "Giờ hẹn đã qua.").andExpect(status().isConflict());
     }
 
     @Test
@@ -231,6 +248,71 @@ class ViewingFlowTests {
     private ResultActions cancel(User user, int id) throws Exception {
         return mvc.perform(post(VIEWINGS + "/" + id + "/cancel").header("Authorization", token(user))
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("reason", "Đã đổi kế hoạch"))));
+    }
+
+    @Test
+    void enforcesLeadTimeAndCancelsOnlyPendingRequestsAtTheDeadline() throws Exception {
+        var now = LocalDateTime.now(ZONE);
+        create(renter, payload(now.plusMinutes(29))).andExpect(status().isBadRequest());
+        int id = data(create(renter, payload(now.plusMinutes(31))).andExpect(status().isOk())).path("bookingId").asInt();
+        update(renter, id, payload(now.plusMinutes(29))).andExpect(status().isBadRequest());
+
+        var expired = bookings.findById(id).orElseThrow();
+        expired.setScheduledDate(now.plusMinutes(15));
+        bookings.save(expired);
+        var approved = bookings.save(Booking.builder().roomType(type).renter(renter)
+                .scheduledDate(now.plusMinutes(5)).status(BookingStatus.APPROVED).build());
+        var pending = bookings.save(Booking.builder().roomType(type).renter(renter)
+                .scheduledDate(now.plusMinutes(16)).status(BookingStatus.PENDING).build());
+
+        decide(host, id, "APPROVED", "").andExpect(status().isConflict());
+        update(renter, id, payload(appointment)).andExpect(status().isConflict());
+        viewingService.expirePending();
+        viewingService.expirePending();
+
+        getAs(VIEWINGS + "/" + id, renter).andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.processedAt").isNotEmpty());
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].event").value("EXPIRED"));
+        assertEquals(BookingStatus.APPROVED, bookings.findById(approved.getBookingId()).orElseThrow().getStatus());
+        assertEquals(BookingStatus.PENDING, bookings.findById(pending.getBookingId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    void approvesSelectedViewingsAtomicallyWithinHostWindow() throws Exception {
+        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+                .roomNumber("101").floor("1").status("VACANT").build());
+        var firstSlot = appointment.toLocalDate().atTime(10, 0);
+        int firstId = data(create(renter, payload(firstSlot)).andExpect(status().isOk())).path("bookingId").asInt();
+        var otherRenter = account(UserRole.USER);
+        var later = firstSlot.plusMinutes(30);
+        int secondId = data(create(otherRenter, payload(later)).andExpect(status().isOk())).path("bookingId").asInt();
+
+        var first = Map.of("bookingId", firstId, "expectedScheduledDate", firstSlot.toString());
+        var stale = Map.of("bookingId", secondId, "expectedScheduledDate", later.plusMinutes(1).toString());
+        var second = Map.of("bookingId", secondId, "expectedScheduledDate", later.toString());
+        String endpoint = "/api/host/viewings/batch-approval";
+        var window = new java.util.HashMap<String, Object>();
+        window.put("from", firstSlot.toString());
+        window.put("to", later.toString());
+        window.put("items", java.util.List.of(first, second));
+        mvc.perform(post(endpoint).header("Authorization", token(account(UserRole.ROOM_HOST)))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isNotFound());
+        window.put("items", java.util.List.of(first, stale));
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isBadRequest());
+        window.put("to", later.plusMinutes(10).toString());
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isConflict());
+        assertEquals(BookingStatus.PENDING, bookings.findById(firstId).orElseThrow().getStatus());
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(0));
+
+        window.put("items", java.util.List.of(first, second));
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.length()").value(2));
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items[0].event").value("APPROVED"));
+        getAs(INBOX, otherRenter).andExpect(jsonPath("$.data.items[0].event").value("APPROVED"));
     }
 
     private ResultActions[] race(Callable<ResultActions> first, Callable<ResultActions> second) throws Exception {

@@ -1,16 +1,17 @@
-import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
+import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Eye, House, MapPin, RefreshCw, Search } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Eye, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useViewingUpdates } from '../../hooks/useViewingUpdates.js';
 import { hostApi } from '../../services/host.js';
 import HostSetupRequired from '../../components/HostSetupRequired.jsx';
-import PropertyCardCover from '../../components/PropertyCardCover.jsx';
+
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
 import { useViewingData, ViewingDetails, ViewingStatus } from '../../components/ViewingUI.jsx';
-import { formatViewingDate, viewingApi, viewingIsFuture } from '../../services/viewings.js';
-import { propertyPage } from '../../services/host-property-list.js';
-import '../../styles/host-property-page.css';
+import { viewingApi, canReviewViewing, viewingStatuses, viewingDateRange } from '../../services/viewings.js';
+
+
 import '../../styles/host-viewings-page.css';
 
 
@@ -24,8 +25,8 @@ function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const future = viewingIsFuture(item.scheduledDate);
-  const canApprove = future && availableRooms > 0;
+  const withinReviewWindow = canReviewViewing(item.scheduledDate);
+  const canApprove = withinReviewWindow && availableRooms > 0;
 
   async function decide(status) {
     if (inFlight.current) return;
@@ -49,16 +50,16 @@ function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }
   }
 
   return <form className="viewing-decision" onSubmit={event => { event.preventDefault(); void decide('REJECTED'); }}>
-    {!future && <p>Giờ hẹn đã qua. Bạn có thể từ chối và đề nghị khách gửi lịch mới.</p>}
+    {!withinReviewWindow && <p>Lịch đã quá hạn phản hồi và sẽ được hệ thống hủy.</p>}
     {rejecting && <label>Lý do từ chối<textarea autoFocus required rows={3} maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} /></label>}
     {error && <p role="alert" className="viewing-error">{error.message}</p>}
     <div className="viewing-actions">
       {rejecting ? <>
         <button type="button" className="p-button" disabled={busy} onClick={() => { setRejecting(false); setError(null); }}>Quay lại</button>
-        <button type="submit" className="p-button primary" disabled={busy}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</button>
+        <button type="submit" className="p-button primary" disabled={busy || !withinReviewWindow}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</button>
       </> : <>
         <button type="button" className="p-button primary" disabled={busy || !canApprove} onClick={() => decide('APPROVED')}>{busy ? 'Đang lưu…' : 'Xác nhận lịch'}</button>
-        <button type="button" className="p-button" disabled={busy} onClick={() => setRejecting(true)}>Từ chối</button>
+        <button type="button" className="p-button" disabled={busy || !withinReviewWindow} onClick={() => setRejecting(true)}>Từ chối</button>
       </>}
       {error?.status === 409 && <button type="button" className="p-button" onClick={onRefresh}>Tải lại kết quả</button>}
     </div>
@@ -80,190 +81,214 @@ function HostViewingDetail({ item, canDecide, onDecision, onRefresh, onBusy }) {
   </>;
 }
 
-function ViewingProperties({ data, onRefresh }) {
-  const [params, setParams] = useSearchParams();
-  const load = useCallback(signal => hostApi.property(signal), []);
-  const { data: portfolio, error, reload } = useViewingData(load, 'property-cards');
-  const records = new Map(portfolio?.records.filter(record => record.propertyId != null)
-    .map(record => [record.propertyId, record]));
-  const counts = new Map();
-  for (const item of data.viewings) {
-    const count = counts.get(item.propertyId) ?? { total: 0, pending: 0 };
-    count.total++;
-    if (item.status === 'PENDING') count.pending++;
-    counts.set(item.propertyId, count);
-  }
-  const filters = [
-    ['', 'Tất cả nhà trọ', House],
-    ['pending', 'Có lịch chờ duyệt', Clock3],
-    ['processed', 'Đã xử lý hết lịch', CheckCircle2],
-    ['empty', 'Chưa có lịch xem', CalendarDays],
-  ];
-  const group = filters.some(([key]) => key === params.get('group')) ? params.get('group') : '';
-  const search = params.get('q') || '';
-  const sort = params.get('sort') === 'name' ? 'name' : 'pending';
-  const summaries = data.properties.map(property => ({
-    ...property,
-    record: records.get(property.propertyId),
-    count: counts.get(property.propertyId) ?? { total: 0, pending: 0 },
-  }));
-  const category = ({ count }) => count.pending ? 'pending' : count.total ? 'processed' : 'empty';
-  const query = search.trim().toLocaleLowerCase('vi');
-  const filtered = summaries.filter(item => (!group || category(item) === group)
-    && [item.name, item.record?.address].some(value => (value || '').toLocaleLowerCase('vi').includes(query)))
-    .sort((a, b) => (sort === 'pending' ? b.count.pending - a.count.pending : 0) || a.name.localeCompare(b.name, 'vi'));
-  const current = propertyPage(filtered, params.get('page'));
+const weekdays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const colors = ['#0f766e', '#2563eb', '#be185d', '#a16207', '#7c3aed', '#c2410c'];
+const dateKey = date => date.toISOString().slice(0, 10);
+const displayDate = key => key.split('-').reverse().join('/');
 
-  function changeFilter(key, value) {
-    const next = new URLSearchParams(params);
-    if (value) next.set(key, value); else next.delete(key);
-    next.delete('page');
-    setParams(next, { replace: key === 'q' });
-  }
-  function changePage(page) {
-    const next = new URLSearchParams(params);
-    if (page > 1) next.set('page', page); else next.delete('page');
-    setParams(next);
+function ViewingCalendar({ day, today, month, requests, properties, propertyColors, onDay, onMonth }) {
+  const first = new Date(month + '-01T00:00:00Z');
+  const year = first.getUTCFullYear();
+  const monthIndex = first.getUTCMonth();
+  const offset = (first.getUTCDay() + 6) % 7;
+  const days = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const byDay = new Map();
+  for (const item of requests) {
+    const key = item.scheduledDate.slice(0, 10);
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push(item);
   }
 
-  return <section className="hp-portfolio host-viewings-portfolio">
-    <header className="hp-portfolio-heading">
-      <div><h2>Yêu cầu xem phòng</h2><p>Theo dõi lịch hẹn và phản hồi yêu cầu theo từng nhà trọ.</p></div>
-      <MotionButton type="button" className="hp-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton>
-    </header>
-    <div className="hp-portfolio-stats" role="group" aria-label="Lọc nhà trọ theo yêu cầu xem phòng">
-      {filters.map(([key, label, Icon]) => <button key={key} type="button" aria-pressed={group === key}
-        className={group === key ? 'selected' : undefined} onClick={() => changeFilter('group', key)}>
-        <span>{label}<Icon size={18} aria-hidden="true" /></span>
-        <strong>{key ? summaries.filter(item => category(item) === key).length : summaries.length}</strong>
-      </button>)}
+  return <section className="host-calendar-panel" aria-label="Lịch xem phòng">
+    <div className="host-calendar-heading">
+      <h2><CalendarDays size={20} aria-hidden="true" />Lịch xem phòng</h2>
+      <div className="host-calendar-month">
+        <button type="button" className="p-button" aria-label="Tháng trước" onClick={() => onMonth(-1)}><ChevronLeft size={17} /></button>
+        <strong aria-live="polite">Tháng {monthIndex + 1}/{year}</strong>
+        <button type="button" className="p-button" aria-label="Tháng sau" onClick={() => onMonth(1)}><ChevronRight size={17} /></button>
+        <button type="button" className="p-button" onClick={() => onDay(today)}>Hôm nay</button>
+      </div>
     </div>
-    <div className="hp-portfolio-toolbar host-viewings-property-toolbar">
-      <label className="hp-portfolio-search"><Search size={17} aria-hidden="true" /><input aria-label="Tìm nhà trọ"
-        placeholder="Tìm tên nhà trọ hoặc địa chỉ…" value={search} onChange={event => changeFilter('q', event.target.value)} /></label>
-      <select aria-label="Trạng thái yêu cầu" value={group} onChange={event => changeFilter('group', event.target.value)}>
-        {filters.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-      </select>
-      <select aria-label="Sắp xếp nhà trọ" value={sort} onChange={event => changeFilter('sort', event.target.value)}>
-        <option value="pending">Nhiều lịch chờ duyệt trước</option><option value="name">Tên nhà trọ A–Z</option>
-      </select>
+    <ul className="host-calendar-legend" aria-label="Màu theo nhà trọ">{properties.map(property =>
+      <li key={property.propertyId}><span className="host-calendar-dot" style={{ backgroundColor: propertyColors.get(property.propertyId) }} />{property.name}</li>
+    )}</ul>
+    <div className="host-calendar-grid">
+      {weekdays.map((label, index) => <span key={label} className="host-calendar-weekday"><span>{label}</span><abbr title={label}>{index === 6 ? 'CN' : 'T' + (index + 2)}</abbr></span>)}
+      {Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => {
+        const date = new Date(Date.UTC(year, monthIndex, index - offset + 1));
+        const key = dateKey(date);
+        const items = byDay.get(key) || [];
+        const propertyIds = [...new Set(items.map(item => item.propertyId))];
+        return <button type="button" key={key} className={key.startsWith(month) ? '' : 'outside'}
+          aria-pressed={key === day} aria-current={key === today ? 'date' : undefined}
+          aria-label={`Ngày ${displayDate(key)}, ${items.length} yêu cầu`} onClick={() => onDay(key)}>
+          <span>{date.getUTCDate()}</span>
+          <span className="host-calendar-markers" aria-hidden="true">{propertyIds.slice(0, 3).map(id =>
+            <i key={id} className="host-calendar-dot" style={{ backgroundColor: propertyColors.get(id) }} />)}
+            {propertyIds.length > 3 && <small>+{propertyIds.length - 3}</small>}</span>
+        </button>;
+      })}
     </div>
-    {error && <p role="status" className="host-viewings-empty">Chưa tải được ảnh và địa chỉ. <button type="button" className="hp-button" onClick={reload}>Thử lại</button></p>}
-    <div className="hp-portfolio-result"><strong>{filtered.length} nhà trọ</strong></div>
-    {!filtered.length && <p className="hp-portfolio-empty" role="status">Không có nhà trọ phù hợp với bộ lọc.</p>}
-    <div className="hp-property-grid">{current.items.map(property => {
-      const { record, count } = property;
-      const target = new URLSearchParams(params);
-      target.set('propertyId', property.propertyId);
-      if (!count.pending && count.total) target.set('tab', 'processed'); else target.delete('tab');
-      const href = `/host/viewings?${target}`;
-      return <article className="hp-property-card" key={property.propertyId}>
-        <PropertyCardCover property={record ?? { name: property.name, photos: [] }} />
-        <div className="hp-card-body">
-          <div className="hp-card-meta"><span className="host-viewings-pending-count">{count.pending} chờ duyệt</span><small>NT-{property.propertyId}</small></div>
-          <h3><Link to={href}>{property.name}</Link></h3>
-          {record?.address && <p className="hp-card-address"><MapPin size={14} aria-hidden="true" /><span>{record.address}</span></p>}
-          <div className="hp-card-numbers">
-            {[['Tổng yêu cầu', count.total], ['Chờ duyệt', count.pending], ['Đã xử lý', count.total - count.pending]].map(([label, value]) =>
-                <div key={label}><strong>{value ?? '—'}</strong><span>{label}</span></div>)}
-          </div>
-        </div>
-        <footer className="hp-card-actions">
-          <Link className="hp-button subtle" to={href} aria-label={`Xem yêu cầu của ${property.name}`}><Eye size={16} />Xem yêu cầu</Link>
-        </footer>
-      </article>;
-    })}</div>
-    {current.pages > 1 && <nav className="hp-pagination" aria-label="Phân trang nhà trọ">
-      <span>Trang {current.page} / {current.pages}</span>
-      <div><button type="button" className="p-button" disabled={current.page === 1} onClick={() => changePage(current.page - 1)}><ChevronLeft size={16} />Trước</button>
-        <button type="button" className="p-button" disabled={current.page === current.pages} onClick={() => changePage(current.page + 1)}>Sau<ChevronRight size={16} /></button></div>
-    </nav>}
   </section>;
 }
 
-function ViewingList({ data, property, onRefresh, onDecision, canDecide }) {
-  const notify = useToast();
+function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDecision }) {
   const [params, setParams] = useSearchParams();
-  const [decisionBusy, setDecisionBusy] = useState(false);
-  const id = params.get('id');
-  const ownedRequests = data.viewings.filter(item => item.propertyId === property.propertyId);
-  const selected = ownedRequests.find(item => String(item.bookingId) === id);
-  function select(bookingId) {
-    const next = new URLSearchParams(params);
-    next.set('propertyId', property.propertyId);
-    if (!next.has('tab') && selected && selected.status !== 'PENDING') next.set('tab', 'processed');
-    if (bookingId) next.set('id', bookingId); else next.delete('id');
-    setParams(next, { replace: true });
-  }
+  const notify = useToast();
+  const today = viewingDateRange().min;
+  const requestedDay = selected?.scheduledDate.slice(0, 10) || params.get('date');
+  const day = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(requestedDay || '') ? requestedDay : today;
+  const month = day.slice(0, 7);
   const [search, setSearch] = useState('');
-  const [date, setDate] = useState('');
-  const [sort, setSort] = useState('NEWEST');
-  const tab = params.get('tab') === 'processed' || (!params.has('tab') && selected && selected.status !== 'PENDING') ? 'processed' : 'pending';
-  const pendingCount = ownedRequests.filter(item => item.status === 'PENDING').length;
+  const [status, setStatus] = useState(params.get('tab') === 'processed' ? 'processed' : '');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [checked, setChecked] = useState([]);
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [batchError, setBatchError] = useState('');
+  const propertyColors = new Map(data.properties.map((item, index) => [item.propertyId, colors[index % colors.length]]));
+  const requests = data.viewings.filter(item => !property || item.propertyId === property.propertyId);
+  const daily = requests.filter(item => item.scheduledDate.slice(0, 10) === day);
+  const validWindow = Boolean(from && to && from < to);
   const query = search.trim().toLocaleLowerCase('vi');
-  const filtered = ownedRequests.filter(item => (item.status === 'PENDING') === (tab === 'pending')
-    && (!date || item.scheduledDate?.slice(0, 10) === date)
-    && [item.renterName, item.renterPhone, item.propertyName, item.roomType, item.bookingId]
-      .some(value => String(value ?? '').toLocaleLowerCase('vi').includes(query)))
-    .sort((a, b) => sort === 'APPOINTMENT'
-      ? a.scheduledDate.localeCompare(b.scheduledDate)
-      : (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.bookingId - a.bookingId);
+  const filtered = daily.filter(item => {
+    const time = item.scheduledDate.slice(11, 16);
+    return (!from || time >= from) && (!to || time <= to)
+      && (!status || (status === 'processed' ? item.status !== 'PENDING' : item.status === status))
+      && [item.renterName, item.renterPhone, item.roomType].some(value => (value || '').toLocaleLowerCase('vi').includes(query));
+  }).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.bookingId - b.bookingId);
+  const eligible = filtered.filter(item => item.status === 'PENDING' && canReviewViewing(item.scheduledDate));
+  const chosen = eligible.filter(item => checked.includes(item.bookingId));
 
-  function changeTab(nextTab) {
+  function changeParams(updates) {
     const next = new URLSearchParams(params);
-    next.set('propertyId', property.propertyId);
-    if (nextTab === 'processed') next.set('tab', nextTab); else next.delete('tab');
-    next.delete('id');
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) next.set(key, value); else next.delete(key);
+    }
     setParams(next);
   }
 
-  function finish(item) {
-    onDecision(item);
-    setSearch('');
-    setDate('');
-    changeTab('processed');
-    notify?.(item.status === 'APPROVED' ? 'Đã xác nhận lịch xem phòng.' : 'Đã gửi phản hồi từ chối.');
+  function chooseDay(key) {
+    setChecked([]);
+    setBatchError('');
+    changeParams({ date: key, id: null });
   }
 
-  const back = new URLSearchParams(params);
-  for (const key of ['propertyId', 'id', 'tab']) back.delete(key);
-  return <section className="hp-portfolio host-viewings-portfolio">
-    <Link className="hp-back-link" to={`/host/viewings${back.size ? '?' + back : ''}`}>
-      <ArrowLeft size={16} />Danh sách nhà trọ
-    </Link>
-    <div className="hp-portfolio-heading"><div><h2>{property.name}</h2><p>Xem và phản hồi lịch hẹn của nhà trọ này.</p></div><MotionButton type="button" className="p-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton></div>
-    <div className="host-viewings-tabs" role="group" aria-label="Nhóm trạng thái lịch">
-      <button type="button" className={`p-button ${tab === 'pending' ? 'primary' : ''}`} aria-pressed={tab === 'pending'} onClick={() => changeTab('pending')}>Chờ duyệt ({pendingCount})</button>
-      <button type="button" className={`p-button ${tab === 'processed' ? 'primary' : ''}`} aria-pressed={tab === 'processed'} onClick={() => changeTab('processed')}>Đã xử lý ({ownedRequests.length - pendingCount})</button>
-    </div>
-    <div className="hp-portfolio-toolbar host-viewings-filters">
-      <label className="hp-portfolio-search"><Search size={16} /><input aria-label="Tìm yêu cầu" placeholder="Tên khách, số điện thoại, loại phòng…" value={search} onChange={event => setSearch(event.target.value)} /></label>
-      <input type="date" aria-label="Ngày xem phòng" value={date} onChange={event => setDate(event.target.value)} />
-      <select aria-label="Sắp xếp" value={sort} onChange={event => setSort(event.target.value)}><option value="NEWEST">Mới nhất trước</option><option value="APPOINTMENT">Giờ hẹn sớm trước</option></select>
-    </div>
-    {filtered.length === 0 ? <p className="host-viewings-empty" role="status">Không có yêu cầu phù hợp trong mục này.</p> :
-      <div className="host-viewings-group"><div className="host-viewings-table-scroll" tabIndex={0} role="region" aria-label={`Yêu cầu xem phòng của ${property.name}`}><table className="host-viewings-table">
-            <thead><tr><th scope="col">Người liên hệ</th><th scope="col">Loại phòng</th><th scope="col">Lịch hẹn</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
-            <tbody>{filtered.map(item => <tr key={item.bookingId}>
-              <td><strong>{item.renterName || 'Chưa có tên'}</strong>{item.renterPhone && <small>{item.renterPhone}</small>}</td>
-              <td>{item.roomType}</td><td>{formatViewingDate(item.scheduledDate)}</td>
-              <td><ViewingStatus status={item.status} /></td>
-              <td><MotionButton type="button" className="p-button" aria-label={`Chi tiết lịch #${item.bookingId}`} onClick={() => select(item.bookingId)}><Eye size={16} />Chi tiết</MotionButton></td>
-            </tr>)}</tbody>
-          </table></div></div>}
-    <AnimatePresence>{id && <Modal className="viewing-dialog" title={`Yêu cầu xem phòng #${id}`}
-      onClose={() => { if (!decisionBusy) select(null); }}>
-      {selected ? <HostViewingDetail key={id} item={selected} canDecide={canDecide}
-        onDecision={finish} onRefresh={onRefresh} onBusy={setDecisionBusy} /> : <StateView kind="error" message="Không tìm thấy yêu cầu xem phòng thuộc nhà trọ của bạn." />}
-    </Modal>}</AnimatePresence>
-  </section>;
+  function moveMonth(delta) {
+    const first = new Date(month + '-01T00:00:00Z');
+    first.setUTCMonth(first.getUTCMonth() + delta);
+    chooseDay(dateKey(first));
+  }
+
+  function changeFilter(setValue, value) {
+    setValue(value);
+    setChecked([]);
+    setBatchError('');
+  }
+
+  async function approve() {
+    if (busy || !validWindow || !chosen.length) return;
+    setBusy(true);
+    setBatchError('');
+    try {
+      const updated = await viewingApi.approveBatch({
+        from: day + 'T' + from, to: day + 'T' + to,
+        items: chosen.map(item => ({ bookingId: item.bookingId, expectedScheduledDate: item.scheduledDate })),
+      });
+      updated.forEach(onDecision);
+      setChecked([]);
+      setConfirm(false);
+      setStatus('APPROVED');
+      notify?.(`Đã xác nhận ${updated.length} yêu cầu xem phòng.`);
+    } catch (error) {
+      setBatchError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <div className="host-calendar-layout">
+    <ViewingCalendar {...{ day, today, month, requests, propertyColors }}
+      properties={property ? [property] : data.properties} onDay={chooseDay} onMonth={moveMonth} />
+    <section className="host-calendar-panel" aria-label="Yêu cầu theo ngày">
+      <div className="host-calendar-heading">
+        <h2><CalendarDays size={20} aria-hidden="true" />Yêu cầu xem phòng</h2>
+        <span className="host-calendar-date">Ngày {displayDate(day)} · {daily.length} yêu cầu</span>
+        <button type="button" className="p-button" onClick={onRefresh}><RefreshCw size={15} />Làm mới</button>
+      </div>
+      <div className="host-calendar-filters">
+        <label className="host-calendar-search">Tìm khách hoặc loại phòng
+          <span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Tên, số điện thoại, loại phòng…" value={search} onChange={e => changeFilter(setSearch, e.target.value)} /></span>
+        </label>
+        <label>Nhà trọ<select value={property?.propertyId ?? ''} onChange={e => {
+          setChecked([]);
+          changeParams({ propertyId: e.target.value, id: null, date: day });
+        }}><option value="">Tất cả nhà trọ</option>{data.properties.map(item => <option key={item.propertyId} value={item.propertyId}>{item.name}</option>)}</select></label>
+        <label>Trạng thái<select value={status} onChange={e => changeFilter(setStatus, e.target.value)}>
+          <option value="">Tất cả trạng thái</option><option value="processed">Đã xử lý</option>
+          {Object.entries(viewingStatuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </select></label>
+      </div>
+      <div className="host-calendar-batch">
+        <label>Từ giờ {canDecide && '(giờ rảnh)'}<input type="time" value={from} onChange={e => changeFilter(setFrom, e.target.value)} /></label>
+        <label>Đến giờ<input type="time" value={to} onChange={e => changeFilter(setTo, e.target.value)} /></label>
+        {canDecide && <>
+          <button type="button" className="p-button" disabled={!validWindow || !eligible.length}
+            onClick={() => setChecked(eligible.slice(0, 50).map(item => item.bookingId))}>Chọn lịch phù hợp</button>
+          <button type="button" className="p-button primary" disabled={!validWindow || !chosen.length}
+            onClick={() => { setBatchError(''); setConfirm(true); }}>Xác nhận đã chọn ({chosen.length})</button>
+        </>}
+      </div>
+      {from && to && !validWindow && <p role="alert">Giờ kết thúc phải sau giờ bắt đầu.</p>}
+      {canDecide && validWindow && eligible.length > 50 && <p>Mỗi lượt có thể xác nhận tối đa 50 yêu cầu.</p>}
+      {filtered.length ? <div className="host-viewings-table-scroll" tabIndex={0} role="region" aria-label="Bảng yêu cầu xem phòng">
+        <table className="host-viewings-table"><thead><tr>{canDecide && validWindow && <th scope="col">Chọn</th>}
+          <th scope="col">Thời gian</th><th scope="col">Người liên hệ</th><th scope="col">Nhà trọ</th>
+          <th scope="col">Loại phòng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th>
+        </tr></thead><tbody>{filtered.map(item => <tr key={item.bookingId}>
+          {canDecide && validWindow && <td>{eligible.includes(item) && <input type="checkbox"
+            aria-label={`Chọn lịch ${item.bookingId} của ${item.renterName || 'khách'}`}
+            checked={checked.includes(item.bookingId)} disabled={checked.length >= 50 && !checked.includes(item.bookingId)}
+            onChange={e => setChecked(e.target.checked ? [...checked, item.bookingId] : checked.filter(id => id !== item.bookingId))} />}</td>}
+          <td>{item.scheduledDate.slice(11, 16)}</td>
+          <td><strong>{item.renterName || 'Chưa có tên'}</strong><small>{item.renterPhone}</small></td>
+          <td><span className="host-calendar-dot" style={{ backgroundColor: propertyColors.get(item.propertyId) }} /> {item.propertyName}</td>
+          <td>{item.roomType}</td><td><ViewingStatus status={item.status} /></td>
+          <td><button type="button" className="p-button" onClick={() => changeParams({ id: item.bookingId, date: day })}><Eye size={15} />Chi tiết</button></td>
+        </tr>)}</tbody></table>
+      </div> : <p className="host-viewings-empty" role="status">Không có yêu cầu phù hợp trong ngày này.</p>}
+    </section>
+    {selected && <Modal className="viewing-dialog" title={`Yêu cầu xem phòng #${selected.bookingId}`}
+      onClose={() => { if (!busy) changeParams({ id: null, date: day }); }}>
+      <HostViewingDetail key={selected.bookingId} item={selected} canDecide={canDecide} onRefresh={onRefresh}
+        onBusy={setBusy} onDecision={item => { onDecision(item); setStatus(item.status); changeParams({ id: null, date: day }); }} />
+    </Modal>}
+    {confirm && <Modal className="viewing-dialog" title="Xác nhận các lịch đã chọn" onClose={() => { if (!busy) setConfirm(false); }}>
+      <div className="viewing-details">
+        <p>{chosen.length} yêu cầu ngày {displayDate(day)}, từ {from} đến {to}.</p>
+        <ul className="host-calendar-review-list">
+          {chosen.map(item => <li key={item.bookingId}>
+            {item.scheduledDate.slice(11, 16)} · {item.renterName || 'Chưa có tên'} · {item.propertyName}
+          </li>)}
+        </ul>
+        <p>Máy chủ sẽ kiểm tra lại thời hạn, giờ hẹn và phòng trống trước khi xác nhận cả nhóm.</p>
+        {batchError && <p role="alert" className="viewing-error">{batchError}</p>}
+        <div className="viewing-actions">
+          <button type="button" className="p-button" disabled={busy} onClick={() => setConfirm(false)}>Quay lại</button>
+          {batchError && <button type="button" className="p-button" disabled={busy} onClick={onRefresh}>Tải lại lịch</button>}
+          <button type="button" className="p-button primary" disabled={busy || !chosen.length} onClick={approve}>{busy ? 'Đang xác nhận…' : 'Xác nhận lịch'}</button>
+        </div>
+      </div>
+    </Modal>}
+  </div>;
 }
 
 export function ViewingsContent({ data, propertyId, bookingId, onRefresh, onDecision, canDecide }) {
   const requested = bookingId ? data.viewings.find(item => String(item.bookingId) === bookingId) : null;
-  const targetId = propertyId ?? requested?.propertyId;
+  const targetId = propertyId;
   const property = data.properties.find(item => String(item.propertyId) === String(targetId));
-  if ((targetId != null && !property) || (!targetId && bookingId)) return <StateView kind="error"
+  if ((targetId != null && !property) || (bookingId && (!requested || (property && requested.propertyId !== property.propertyId)))) return <StateView kind="error"
     message="Không tìm thấy nhà trọ hoặc yêu cầu xem phòng trong danh sách bạn quản lý.">
     <Link className="p-button" to="/host/viewings">Danh sách nhà trọ</Link>
   </StateView>;
@@ -271,9 +296,7 @@ export function ViewingsContent({ data, propertyId, bookingId, onRefresh, onDeci
     if (data.pendingRegistrationCount > 0) return <section className="host-viewings-state"><div className="host-viewings-state-icon"><CalendarDays size={30} /></div><h2>Hồ sơ nhà trọ đang chờ xét duyệt</h2><p>Bạn có {data.pendingRegistrationCount} hồ sơ đang chờ xử lý. Yêu cầu xem phòng sẽ khả dụng khi nhà trọ được tạo trong hệ thống.</p><Link className="host-viewings-register" to="/host/property">Xem nhà trọ của tôi</Link></section>;
     return <ViewingsNoProperty />;
   }
-  return property
-    ? <ViewingList key={property.propertyId} data={data} property={property} onRefresh={onRefresh} onDecision={onDecision} canDecide={canDecide} />
-    : <ViewingProperties data={data} onRefresh={onRefresh} />;
+  return <ViewingSchedule {...{ data, property, canDecide, onRefresh, onDecision }} selected={requested} />;
 }
 
 export default function HostViewingRequestsPage() {
@@ -282,20 +305,25 @@ export default function HostViewingRequestsPage() {
   const propertyId = params.get('propertyId');
   const [state, setState] = useState({ loading: true, data: null, error: '' });
   const [revision, setRevision] = useState(0);
+  const refresh = () => setRevision(value => value + 1);
+  useViewingUpdates(user?.userId, refresh);
   useEffect(() => {
     const controller = new AbortController();
-    setState({ loading: true, data: null, error: '' });
     hostApi.viewings(controller.signal).then(data => {
       if (!controller.signal.aborted) setState({ loading: false, data, error: '' });
     }).catch(error => {
-      if (!controller.signal.aborted) setState({ loading: false, data: null, error: error.message });
+      if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: error.message }));
     });
     return () => controller.abort();
   }, [user?.userId, revision]);
-  const refresh = () => setRevision(value => value + 1);
-  const applyDecision = item => setState(current => ({
+  const applyDecision = item => setState(current => current.data ? ({
     ...current,
     data: { ...current.data, viewings: current.data.viewings.map(value => value.bookingId === item.bookingId ? item : value) },
-  }));
-  return <div className="host-viewings-page">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><MotionButton className="p-button primary" onClick={refresh}>Thử lại</MotionButton></StateView> : <ViewingsContent data={state.data} propertyId={propertyId} bookingId={params.get('id')} onRefresh={refresh} onDecision={applyDecision} canDecide={user?.role === 'ROOM_HOST'} />}</div>;
+  }) : current);
+  return <div className="host-viewings-page">
+    {state.error && <StateView kind="error" message={state.error}><MotionButton className="p-button primary" onClick={refresh}>Thử lại</MotionButton></StateView>}
+    {state.loading && <StateView kind="loading" />}
+    {state.data && <ViewingsContent data={state.data} propertyId={propertyId} bookingId={params.get('id')}
+      onRefresh={refresh} onDecision={applyDecision} canDecide={user?.role === 'ROOM_HOST'} />}
+  </div>;
 }

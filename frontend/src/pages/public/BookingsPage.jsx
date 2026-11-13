@@ -137,7 +137,7 @@ export default function BookingsPage() {
                 <option value="">Tất cả trạng thái</option>
                 {Object.entries(viewingStatuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
-              <button type="button" className="bookings-button" onClick={reload}><RefreshCw size={16} aria-hidden="true" />Làm mới</button>
+              {/*<button type="button" className="bookings-button" onClick={reload}><RefreshCw size={16} aria-hidden="true" />Làm mới</button>*/}
             </div>
             <div className="bookings-toolbar-actions">
               <Link className="bookings-button" to="/notifications"><Bell size={16} aria-hidden="true" />Thông báo</Link>

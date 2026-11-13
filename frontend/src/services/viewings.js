@@ -29,7 +29,8 @@ export function formatViewingSlot(value) {
   const date = asInstant(value);
   return Number.isNaN(date.getTime()) ? 'Chưa cập nhật' : `${slotDate.format(date)} • ${slotTime.format(date)}`;
 }
-export const viewingIsFuture = value => asInstant(value).getTime() > Date.now();
+export const canScheduleViewing = value => asInstant(value).getTime() - Date.now() >= 30 * 60_000;
+export const canReviewViewing = value => asInstant(value).getTime() - Date.now() > 15 * 60_000;
 export const viewingLink = id => '/bookings?id=' + encodeURIComponent(id);
 export const hostViewingLink = id => '/host/viewings?id=' + encodeURIComponent(id);
 export const accommodationViewingLink = item => '/properties/detail?' + new URLSearchParams({
@@ -46,6 +47,7 @@ export const viewingApi = {
   }), { signal }),
   detail: (id, signal) => call('/' + encodeURIComponent(id), { signal }),
   cancel: (id, body) => call('/' + encodeURIComponent(id) + '/cancel', { method: 'POST', body }),
+  approveBatch: body => request('/viewings/batch-approval', { basePath: '/api/host', method: 'POST', body }),
   decide: (id, body) => request('/viewings/' + encodeURIComponent(id) + '/decision', {
     basePath: '/api/host', method: 'POST', body,
   }),

@@ -1,23 +1,29 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useViewingUpdates } from '../hooks/useViewingUpdates.js';
 import { StateView, StatusBadge } from './PortalUI.jsx';
 import { accommodationViewingLink, formatViewingDate, viewingStatuses } from '../services/viewings.js';
 import '../styles/viewing-flow.css';
 
 export function useViewingData(load, key) {
+  const { user } = useAuth();
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState(null);
+  const reload = () => setRevision(value => value + 1);
+  useViewingUpdates(user?.userId, reload);
   useEffect(() => {
     const controller = new AbortController();
     load(controller.signal).then(data => {
-      if (!controller.signal.aborted) setState({ key, revision, data });
+      if (!controller.signal.aborted) setState({ key, data });
     }).catch(error => {
-      if (!controller.signal.aborted) setState({ key, revision, error: error.message });
+      if (!controller.signal.aborted) setState(previous =>
+        previous?.key === key && previous.data !== undefined ? previous : { key, error: error.message });
     });
     return () => controller.abort();
   }, [key, load, revision]);
-  const current = state?.key === key && state.revision === revision ? state : null;
-  return { data: current?.data, error: current?.error, reload: () => setRevision(value => value + 1) };
+  const current = state?.key === key ? state : null;
+  return { data: current?.data, error: current?.error, reload };
 }
 
 export function ViewingLoadState({ error, retry }) {
