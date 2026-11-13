@@ -66,3 +66,16 @@ Artifacts kiểm tra UI nằm ở `frontend/migration/service-management-check/`
 ### Kiểm tra phiên bản backend khi chỉ thấy một ảnh
 
 Nếu API `/api/services` chỉ có `imageUrl`, không có `imageUrls`, tiến trình backend vẫn là phiên bản cũ; cần chạy lại cấu hình IntelliJ, không chỉ refresh frontend. Phiên kiểm tra 2026-11-08 đã xác minh API sau khi người dùng chạy lại có `imageUrls`, nhưng các dịch vụ cũ chỉ lưu 1 ảnh. Các ảnh chưa được backend cũ lưu không thể tự phục hồi; người đăng ký cần chọn lại bộ ảnh trong yêu cầu cập nhật và gửi Staff duyệt. Gallery hiển thị ảnh nhỏ, chỉ số hiện tại/tổng ảnh và nút trước/sau; tên tệp được rút gọn, tên gốc vẫn giữ khi tải xuống.
+
+## Lifecycle completion — 2026-11-14
+
+GET /api/service-registrations/services returns the authenticated owner’s approved non-deleted snapshots. Staff detail includes currentListing comparison for proposal review. Rejecting an update does not reactivate a revoked capability. Customer service requests are documented separately in [SERVICE_REQUESTS.md](SERVICE_REQUESTS.md); existing DELETE approval/public-snapshot semantics are retained.
+
+
+## Mở rộng khu vực dịch vụ (2026-11-14)
+
+Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.
+
+## Đơn vị tính (2026-11-14)
+
+Hồ sơ và dịch vụ có `priceUnit` tùy chọn: bỏ trống lưu NULL, có nội dung thì trim và kiểm tra 2–20 ký tự. Trường được gửi/đọc qua các endpoint hiện có; bản công khai chỉ đổi sau khi duyệt đề nghị cập nhật. Migration `sql/migrations/20261114_service_price_unit.sql` thêm `price_unit VARCHAR(20) NULL` vào `service_registrations` và `services`, có thể chạy lại. Dữ liệu cũ giữ NULL. Trang chi tiết hiển thị đơn vị riêng sau giá và không hiển thị khi giá thỏa thuận.

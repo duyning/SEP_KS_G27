@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -39,10 +40,10 @@ const DEFAULT_STAFFS = [
 ];
 
 const DEFAULT_ACTIVITY = [
-  { id: 'ACT-1', entityTitle: 'Phê duyệt xác minh cơ sở Minh Quân', actor: 'Nguyễn Văn An (Staff)', decision: 'APPROVED', time: '10 phút trước' },
-  { id: 'ACT-2', entityTitle: 'Tiếp nhận xử lý yêu cầu #SP-7701', actor: 'Lê Thị Thảo (Staff)', decision: 'IN_PROGRESS', time: '1 giờ trước' },
-  { id: 'ACT-3', entityTitle: 'Duyệt bài đăng nhượng phòng sinh viên FPT', actor: 'Nguyễn Văn An (Staff)', decision: 'APPROVED', time: '3 giờ trước' },
-  { id: 'ACT-4', entityTitle: 'Cập nhật phân công nhân viên hỗ trợ đối tác', actor: 'Ban Quản Trị (Admin)', decision: 'ASSIGNED', time: 'Hôm qua' }
+  { id: 'ACT-1', entityTitle: 'Phê duyệt xác minh cơ sở Minh Quân', actor: 'Nguyễn Văn An (nhân viên)', decision: 'APPROVED', time: '10 phút trước' },
+  { id: 'ACT-2', entityTitle: 'Tiếp nhận xử lý yêu cầu #SP-7701', actor: 'Lê Thị Thảo (nhân viên)', decision: 'IN_PROGRESS', time: '1 giờ trước' },
+  { id: 'ACT-3', entityTitle: 'Duyệt bài đăng nhượng phòng sinh viên FPT', actor: 'Nguyễn Văn An (nhân viên)', decision: 'APPROVED', time: '3 giờ trước' },
+  { id: 'ACT-4', entityTitle: 'Cập nhật phân công nhân viên hỗ trợ đối tác', actor: 'Ban Quản Trị (quản trị viên)', decision: 'ASSIGNED', time: 'Hôm qua' }
 ];
 
 export default function AdminDashboardPage() {
@@ -185,7 +186,7 @@ export default function AdminDashboardPage() {
       {
         id: `ACT-${Date.now()}`,
         entityTitle: `Phân công yêu cầu #${reqId} cho ${staff.name}`,
-        actor: 'Ban Quản Trị (Admin)',
+        actor: 'Ban Quản Trị (quản trị viên)',
         decision: 'ASSIGNED',
         time: 'Vừa xong'
       },
@@ -210,22 +211,22 @@ export default function AdminDashboardPage() {
       />
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 var(--space-1) 0' }}>
             {currentView === 'overview' && 'Bảng điều khiển quản trị'}
             {currentView === 'accounts' && 'Tài khoản hệ thống'}
             {currentView === 'assignment' && 'Phân công nhân viên'}
             {currentView === 'activity' && 'Nhật ký hoạt động'}
           </h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: 'var(--ui-muted)', fontSize: '14px' }}>
             {currentView === 'overview' && 'Theo dõi hoạt động, kiểm duyệt và điều phối hỗ trợ trên HL_RCS.'}
             {currentView === 'accounts' && 'Quản lý tài khoản người thuê, chủ trọ, nhân viên vận hành và quản trị viên.'}
             {currentView === 'assignment' && 'Điều phối phân công phiếu hỗ trợ cho đội ngũ Chuyên viên vận hành.'}
             {currentView === 'activity' && 'Toàn bộ lịch sử thao tác kiểm định, quyết định và phân công trên hệ thống.'}
           </p>
         </div>
-        <button
+        <UIButton
           type="button"
           className="p-button"
           onClick={() => {
@@ -234,26 +235,26 @@ export default function AdminDashboardPage() {
           }}
         >
           <RotateCcw size={15} /> Làm mới
-        </button>
+        </UIButton>
       </div>
 
       {/* Navigation View Tabs */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', borderBottom: '1px solid #e2e8f0', paddingBottom: 'var(--space-3)', marginBottom: '20px' }}>
         {[
           ['overview', 'Tổng quan', LayoutDashboard],
           ['accounts', 'Tài khoản hệ thống', Users],
           ['assignment', 'Phân công nhân viên', UserCheck],
           ['activity', 'Nhật ký hoạt động', History]
         ].map(([key, label, Icon]) => (
-          <button
+          <UIButton
             key={key}
             type="button"
             onClick={() => setView(key)}
             style={{
-              padding: '8px 16px',
+              padding: 'var(--space-2) var(--space-4)',
               borderRadius: '8px',
               border: 'none',
-              background: currentView === key ? '#0d9488' : '#f8fafc',
+              background: currentView === key ? '#0f766e' : '#f8fafc',
               color: currentView === key ? '#fff' : '#475569',
               fontWeight: '700',
               fontSize: '13px',
@@ -264,7 +265,7 @@ export default function AdminDashboardPage() {
             }}
           >
             <Icon size={16} /> {label}
-          </button>
+          </UIButton>
         ))}
       </div>
 
@@ -272,44 +273,44 @@ export default function AdminDashboardPage() {
       {currentView === 'overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* KPIs */}
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+          <section style={{ display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(210px, 1fr))', gap: 'var(--space-4)' }}>
             <article style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Tài khoản hệ thống</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Tài khoản hệ thống</span>
                 <Users size={18} style={{ color: '#2563eb' }} />
               </div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{accounts.length}</div>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>2 nhân viên vận hành</span>
+              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{accounts.length}</div>
+              <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>2 nhân viên vận hành</span>
             </article>
 
             <article style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Hồ sơ xác minh</span>
-                <Building2 size={18} style={{ color: '#0d9488' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Hồ sơ xác minh</span>
+                <Building2 size={18} style={{ color: '#0f766e' }} />
               </div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{MOCK_STAFF_VERIFICATIONS.length}</div>
-              <span style={{ fontSize: '12px', color: '#0d9488' }}>
+              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{MOCK_STAFF_VERIFICATIONS.length}</div>
+              <span style={{ fontSize: '12px', color: '#0f766e' }}>
                 {MOCK_STAFF_VERIFICATIONS.filter(v => v.status === 'PENDING').length} hồ sơ cần xử lý
               </span>
             </article>
 
             <article style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Bài viết cộng đồng</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Bài viết cộng đồng</span>
                 <MessagesSquare size={18} style={{ color: '#9333ea' }} />
               </div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{MOCK_COMMUNITY_POSTS.length}</div>
+              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{MOCK_COMMUNITY_POSTS.length}</div>
               <span style={{ fontSize: '12px', color: '#9333ea' }}>
                 {MOCK_COMMUNITY_POSTS.filter(p => p.status === 'PENDING').length} bài cần duyệt
               </span>
             </article>
 
             <article style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Yêu cầu hỗ trợ</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Yêu cầu hỗ trợ</span>
                 <Headset size={18} style={{ color: '#d97706' }} />
               </div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{supportRequests.length}</div>
+              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{supportRequests.length}</div>
               <span style={{ fontSize: '12px', color: '#d97706' }}>
                 {supportRequests.filter(s => s.status !== 'RESOLVED').length} yêu cầu đang mở
               </span>
@@ -317,20 +318,20 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Operational Split Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', '--grid-columns': '1.2fr 1fr', gap: '20px' }}>
             {/* Workload breakdown */}
             <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 14px 0' }}>
                 Khối lượng vận hành đang mở
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {[
-                  { label: 'Xác minh nhà trọ', count: MOCK_STAFF_VERIFICATIONS.filter(v => v.status === 'PENDING').length, color: '#0d9488', max: 5 },
+                  { label: 'Xác minh nhà trọ', count: MOCK_STAFF_VERIFICATIONS.filter(v => v.status === 'PENDING').length, color: '#0f766e', max: 5 },
                   { label: 'Kiểm duyệt cộng đồng', count: MOCK_COMMUNITY_POSTS.filter(p => p.status === 'PENDING').length, color: '#9333ea', max: 5 },
                   { label: 'Yêu cầu hỗ trợ đối tác', count: supportRequests.filter(s => s.status !== 'RESOLVED').length, color: '#d97706', max: 5 }
                 ].map(item => (
                   <div key={item.label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 'var(--space-1)' }}>
                       <span style={{ color: '#475569', fontWeight: '600' }}>{item.label}</span>
                       <strong style={{ color: '#0f172a' }}>{item.count}</strong>
                     </div>
@@ -342,19 +343,19 @@ export default function AdminDashboardPage() {
               </div>
             </section>
 
-            {/* Staff Workload */}
+            {/* nhân viên Workload */}
             <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
                   Phân bổ hỗ trợ nhân viên
                 </h3>
-                <button
+                <UIButton
                   type="button"
                   onClick={() => setView('assignment')}
-                  style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#0f766e', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                 >
                   Phân công →
-                </button>
+                </UIButton>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {DEFAULT_STAFFS.map(staff => {
@@ -364,9 +365,9 @@ export default function AdminDashboardPage() {
                     <div key={staff.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                       <div>
                         <strong style={{ fontSize: '14px', color: '#0f172a' }}>{staff.name}</strong>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{staff.code} • {openCount} đang xử lý / {assignedCount} được giao</div>
+                        <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{staff.code} • {openCount} đang xử lý / {assignedCount} được giao</div>
                       </div>
-                      <span style={{ fontSize: '14px', fontWeight: '800', color: '#0d9488' }}>{openCount}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '800', color: '#0f766e' }}>{openCount}</span>
                     </div>
                   );
                 })}
@@ -376,25 +377,25 @@ export default function AdminDashboardPage() {
 
           {/* Queue Section */}
           <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <div>
                 <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 2px 0' }}>
                   Công việc cần xử lý ({queueItems.length})
                 </h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Ưu tiên hồ sơ gửi trước (FIFO)</span>
+                <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Ưu tiên hồ sơ gửi trước (FIFO)</span>
               </div>
             </div>
 
             {/* Toolbar */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: 'var(--space-4)' }}>
               <div style={{ position: 'relative', width: '280px' }}>
-                <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ui-muted)' }} />
                 <input
                   type="text"
                   placeholder="Tìm nội dung, mã hoặc người gửi..."
                   value={queueSearch}
                   onChange={e => { setQueueSearch(e.target.value); setQueuePage(1); }}
-                  style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '7px 10px 7px var(--space-8)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
                 />
               </div>
 
@@ -416,29 +417,29 @@ export default function AdminDashboardPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                 <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                   <tr>
-                    <th style={{ padding: '10px 12px', color: '#475569', fontWeight: '700' }}>Nội dung / Người gửi</th>
-                    <th style={{ padding: '10px 12px', color: '#475569', fontWeight: '700' }}>Nghiệp vụ</th>
-                    <th style={{ padding: '10px 12px', color: '#475569', fontWeight: '700' }}>Trạng thái</th>
-                    <th style={{ padding: '10px 12px', color: '#475569', fontWeight: '700' }}>Ngày gửi</th>
-                    <th style={{ padding: '10px 12px', color: '#475569', fontWeight: '700', textAlign: 'right' }}>Thao tác</th>
+                    <th style={{ padding: '10px var(--space-3)', color: '#475569', fontWeight: '700' }}>Nội dung / Người gửi</th>
+                    <th style={{ padding: '10px var(--space-3)', color: '#475569', fontWeight: '700' }}>Nghiệp vụ</th>
+                    <th style={{ padding: '10px var(--space-3)', color: '#475569', fontWeight: '700' }}>Trạng thái</th>
+                    <th style={{ padding: '10px var(--space-3)', color: '#475569', fontWeight: '700' }}>Ngày gửi</th>
+                    <th style={{ padding: '10px var(--space-3)', color: '#475569', fontWeight: '700', textAlign: 'right' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedQueue.map(item => (
                     <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px' }}>
+                      <td style={{ padding: 'var(--space-3)' }}>
                         <strong style={{ color: '#0f172a', display: 'block' }}>{item.title}</strong>
-                        <small style={{ color: '#64748b' }}>{item.sender} • {item.id}</small>
+                        <small style={{ color: 'var(--ui-muted)' }}>{item.sender} • {item.id}</small>
                       </td>
-                      <td style={{ padding: '12px' }}>{item.typeLabel}</td>
-                      <td style={{ padding: '12px' }}>
+                      <td style={{ padding: 'var(--space-3)' }}>{item.typeLabel}</td>
+                      <td style={{ padding: 'var(--space-3)' }}>
                         <StatusBadge status={item.status}>{item.statusLabel}</StatusBadge>
                       </td>
-                      <td style={{ padding: '12px', color: '#64748b' }}>
+                      <td style={{ padding: 'var(--space-3)', color: 'var(--ui-muted)' }}>
                         {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <Link to={item.url} style={{ color: '#0d9488', fontWeight: '600', textDecoration: 'none' }}>
+                      <td style={{ padding: 'var(--space-3)', textAlign: 'right' }}>
+                        <Link to={item.url} style={{ color: '#0f766e', fontWeight: '600', textDecoration: 'none' }}>
                           Chi tiết →
                         </Link>
                       </td>
@@ -448,7 +449,7 @@ export default function AdminDashboardPage() {
               </table>
             </div>
 
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: 'var(--space-3)' }}>
               <Pagination
                 currentPage={queuePage}
                 totalPages={totalQueuePages}
@@ -463,21 +464,21 @@ export default function AdminDashboardPage() {
           <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Hoạt động gần đây</h3>
-              <button
+              <UIButton
                 type="button"
                 onClick={() => setView('activity')}
-                style={{ background: 'none', border: 'none', color: '#0d9488', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#0f766e', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
               >
                 Xem toàn bộ nhật ký →
-              </button>
+              </UIButton>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {activities.slice(0, 4).map(act => (
-                <div key={act.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <div key={act.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: 'var(--space-2) 0', borderBottom: '1px solid #f1f5f9' }}>
                   <CheckCircle2 size={16} style={{ color: '#10b981', marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <strong style={{ fontSize: '13px', color: '#0f172a' }}>{act.entityTitle}</strong>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>{act.actor} • <span style={{ color: '#94a3b8' }}>{act.time}</span></div>
+                    <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{act.actor} • <span style={{ color: 'var(--ui-muted)' }}>{act.time}</span></div>
                   </div>
                 </div>
               ))}
@@ -489,24 +490,24 @@ export default function AdminDashboardPage() {
       {/* VIEW 2: ACCOUNTS */}
       {currentView === 'accounts' && (
         <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
             <div style={{ position: 'relative', width: '300px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ui-muted)' }} />
               <input
                 type="text"
                 placeholder="Tìm tên, email hoặc số điện thoại..."
                 value={accountSearch}
                 onChange={e => setAccountSearch(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                style={{ width: '100%', padding: 'var(--space-2) 10px var(--space-2) var(--space-8)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
               <select
                 aria-label="Lọc vai trò"
                 value={accountRole}
                 onChange={e => setAccountRole(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+                style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
               >
                 <option value="ALL">Tất cả vai trò</option>
                 <option value="ADMIN">Quản trị viên (ADMIN)</option>
@@ -514,7 +515,7 @@ export default function AdminDashboardPage() {
                 <option value="ROOM_HOST">Chủ trọ (HOST)</option>
                 <option value="USER">Người thuê (USER)</option>
               </select>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>{filteredAccounts.length} tài khoản</span>
+              <span style={{ fontSize: '13px', color: 'var(--ui-muted)' }}>{filteredAccounts.length} tài khoản</span>
             </div>
           </div>
 
@@ -522,20 +523,20 @@ export default function AdminDashboardPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
               <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <tr>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700' }}>TÀI KHOẢN</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700' }}>EMAIL</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700' }}>SỐ ĐIỆN THOẠI</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700' }}>VAI TRÒ</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700' }}>TÀI KHOẢN</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700' }}>EMAIL</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700' }}>SỐ ĐIỆN THOẠI</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700' }}>VAI TRÒ</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAccounts.map(acc => (
                   <tr key={acc.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 14px', fontWeight: '700', color: '#0f172a' }}>{acc.name}</td>
-                    <td style={{ padding: '12px 14px', color: '#64748b' }}>{acc.email}</td>
-                    <td style={{ padding: '12px 14px', color: '#0d9488', fontWeight: '600' }}>{acc.phone}</td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: acc.role === 'ADMIN' ? '#fef2f2' : acc.role === 'STAFF' ? '#eff6ff' : acc.role === 'ROOM_HOST' ? '#f0fdfa' : '#f8fafc', color: acc.role === 'ADMIN' ? '#991b1b' : acc.role === 'STAFF' ? '#1e40af' : acc.role === 'ROOM_HOST' ? '#0d9488' : '#334155', fontWeight: '700' }}>
+                    <td style={{ padding: 'var(--space-3) 14px', fontWeight: '700', color: '#0f172a' }}>{acc.name}</td>
+                    <td style={{ padding: 'var(--space-3) 14px', color: 'var(--ui-muted)' }}>{acc.email}</td>
+                    <td style={{ padding: 'var(--space-3) 14px', color: '#0f766e', fontWeight: '600' }}>{acc.phone}</td>
+                    <td style={{ padding: 'var(--space-3) 14px' }}>
+                      <span style={{ fontSize: '12px', padding: '3px var(--space-2)', borderRadius: '4px', background: acc.role === 'ADMIN' ? '#fef2f2' : acc.role === 'STAFF' ? '#eff6ff' : acc.role === 'ROOM_HOST' ? '#f0fdfa' : '#f8fafc', color: acc.role === 'ADMIN' ? '#991b1b' : acc.role === 'STAFF' ? '#1e40af' : acc.role === 'ROOM_HOST' ? '#0f766e' : '#334155', fontWeight: '700' }}>
                         {acc.roleLabel}
                       </span>
                     </td>
@@ -550,16 +551,16 @@ export default function AdminDashboardPage() {
       {/* VIEW 3: ASSIGNMENT */}
       {currentView === 'assignment' && (
         <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 2px 0' }}>Điều phối & Phân công hỗ trợ</h2>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>Giao việc cho nhân viên vận hành hỗ trợ chủ trọ</span>
+              <span style={{ fontSize: '13px', color: 'var(--ui-muted)' }}>Giao việc cho nhân viên vận hành hỗ trợ chủ trọ</span>
             </div>
             <select
               aria-label="Lọc trạng thái"
               value={assignmentFilter}
               onChange={e => setAssignmentFilter(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="OPEN">Đang cần hỗ trợ (Chưa đóng)</option>
               <option value="ALL">Tất cả yêu cầu</option>
@@ -570,23 +571,23 @@ export default function AdminDashboardPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
               <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <tr>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700', width: '40%' }}>YÊU CẦU / CHỦ TRỌ</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700', width: '15%' }}>TRẠNG THÁI</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700', width: '25%' }}>NHÂN VIÊN PHỤ TRÁCH</th>
-                  <th style={{ padding: '12px 14px', color: '#475569', fontWeight: '700', width: '20%', textAlign: 'right' }}>THAO TÁC</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700', width: '40%' }}>YÊU CẦU / CHỦ TRỌ</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700', width: '15%' }}>TRẠNG THÁI</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700', width: '25%' }}>NHÂN VIÊN PHỤ TRÁCH</th>
+                  <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontWeight: '700', width: '20%', textAlign: 'right' }}>THAO TÁC</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAssignment.map(item => (
                   <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 14px' }}>
+                    <td style={{ padding: 'var(--space-3) 14px' }}>
                       <strong style={{ color: '#0f172a' }}>{item.code} • {item.title}</strong>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{item.hostName} ({item.propertyTitle})</div>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{item.hostName} ({item.propertyTitle})</div>
                     </td>
-                    <td style={{ padding: '12px 14px' }}>
+                    <td style={{ padding: 'var(--space-3) 14px' }}>
                       <StatusBadge status={item.status}>{item.statusLabel}</StatusBadge>
                     </td>
-                    <td style={{ padding: '12px 14px' }}>
+                    <td style={{ padding: 'var(--space-3) 14px' }}>
                       <select
                         aria-label={`Phân công cho ${item.code}`}
                         value={assignmentSelections[item.id] || item.assignedStaffId || ''}
@@ -599,15 +600,15 @@ export default function AdminDashboardPage() {
                         ))}
                       </select>
                     </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                      <button
+                    <td style={{ padding: 'var(--space-3) 14px', textAlign: 'right' }}>
+                      <UIButton
                         type="button"
                         className="p-button primary"
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                        style={{ padding: '6px var(--space-3)', fontSize: '12px' }}
                         onClick={() => handleSaveAssignment(item.id)}
                       >
                         Lưu phân công
-                      </button>
+                      </UIButton>
                     </td>
                   </tr>
                 ))}
@@ -620,15 +621,15 @@ export default function AdminDashboardPage() {
       {/* VIEW 4: ACTIVITY */}
       {currentView === 'activity' && (
         <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
             <div style={{ position: 'relative', width: '300px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ui-muted)' }} />
               <input
                 type="text"
                 placeholder="Tìm người xử lý hoặc nội dung..."
                 value={activitySearch}
                 onChange={e => setActivitySearch(e.target.value)}
-                style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                style={{ width: '100%', padding: 'var(--space-2) 10px var(--space-2) var(--space-8)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
               />
             </div>
 
@@ -636,7 +637,7 @@ export default function AdminDashboardPage() {
               aria-label="Thời gian nhật ký"
               value={activityRange}
               onChange={e => setActivityRange(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="ALL">Toàn bộ thời gian</option>
               <option value="7">7 ngày gần đây</option>
@@ -644,17 +645,17 @@ export default function AdminDashboardPage() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             {filteredActivities.map(act => (
-              <div key={act.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <CheckCircle2 size={18} style={{ color: '#0d9488', marginTop: '2px', flexShrink: 0 }} />
+              <div key={act.id} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start', padding: 'var(--space-3) 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <CheckCircle2 size={18} style={{ color: '#0f766e', marginTop: '2px', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
                     <strong style={{ fontSize: '14px', color: '#0f172a' }}>{act.entityTitle}</strong>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>{act.time}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{act.time}</span>
                   </div>
                   <div style={{ fontSize: '13px', color: '#475569' }}>
-                    Thực hiện bởi: <strong>{act.actor}</strong> • Quyết định: <span style={{ fontWeight: '700', color: '#0d9488' }}>{act.decision}</span>
+                    Thực hiện bởi: <strong>{act.actor}</strong> • Quyết định: <span style={{ fontWeight: '700', color: '#0f766e' }}>{act.decision}</span>
                   </div>
                 </div>
               </div>

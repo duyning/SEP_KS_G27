@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Save } from 'lucide-react';
@@ -22,9 +24,9 @@ export default function HostPropertyEditPage() {
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: '860px', margin: '0 auto', padding: 'var(--space-6) var(--space-4)' }}>
       <div style={{ marginBottom: '20px' }}>
-        <Link to="/host/property" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#0d9488', fontSize: '13px', fontWeight: 700, textDecoration: 'none', marginBottom: '8px' }}>
+        <Link to="/host/property" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#0f766e', fontSize: '13px', fontWeight: 700, textDecoration: 'none', marginBottom: 'var(--space-2)' }}>
           <ArrowLeft size={16} />
           <span>Quay lại chi tiết nhà trọ</span>
         </Link>
@@ -37,9 +39,9 @@ export default function HostPropertyEditPage() {
 
       <form onSubmit={handleSubmit} style={{ background: '#ffffff', borderRadius: '16px', padding: '28px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '18px' }}>
         <div>
-          <label htmlFor="title" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+          <UIField htmlFor="title" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
             Tên nhà trọ
-          </label>
+          </UIField>
           <input
             id="title"
             type="text"
@@ -50,9 +52,9 @@ export default function HostPropertyEditPage() {
         </div>
 
         <div>
-          <label htmlFor="addressDetail" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+          <UIField htmlFor="addressDetail" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
             Địa chỉ chi tiết
-          </label>
+          </UIField>
           <input
             id="addressDetail"
             type="text"
@@ -63,9 +65,9 @@ export default function HostPropertyEditPage() {
         </div>
 
         <div>
-          <label htmlFor="description" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+          <UIField htmlFor="description" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
             Mô tả giới thiệu
-          </label>
+          </UIField>
           <textarea
             id="description"
             rows={4}
@@ -75,11 +77,11 @@ export default function HostPropertyEditPage() {
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: 'var(--space-3)' }}>
           <Link to="/host/property" style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
             Hủy
           </Link>
-          <button
+          <UIButton
             type="submit"
             style={{
               display: 'inline-flex',
@@ -87,7 +89,7 @@ export default function HostPropertyEditPage() {
               gap: '6px',
               padding: '9px 20px',
               borderRadius: '8px',
-              backgroundColor: '#0d9488',
+              backgroundColor: '#0f766e',
               color: '#ffffff',
               border: 'none',
               fontWeight: 700,
@@ -97,7 +99,7 @@ export default function HostPropertyEditPage() {
           >
             <Save size={16} />
             <span>Lưu thay đổi</span>
-          </button>
+          </UIButton>
         </div>
       </form>
     </div>

@@ -1,3 +1,5 @@
+import UIField from '../components/common/Field.jsx';
+import UIButton from '../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -183,14 +185,14 @@ export default function ProfilePage() {
   const initials = (user?.fullName || user?.email || 'U').slice(0, 2).toUpperCase();
 
   return (
-    <div className="profile-container-wrap" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="profile-container-wrap" style={{ maxWidth: '1200px', margin: '0 auto', padding: 'var(--space-6) var(--space-4)' }}>
       {/* Profile Header Banner */}
       <section className="profile-header-banner" style={{
         background: '#ffffff',
         borderRadius: '16px',
-        padding: '24px',
+        padding: 'var(--space-6)',
         border: '1px solid #e2e8f0',
-        marginBottom: '24px',
+        marginBottom: 'var(--space-6)',
         boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
@@ -199,7 +201,7 @@ export default function ProfilePage() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
+              background: 'linear-gradient(135deg, #0f766e 0%, #0f766e 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
@@ -217,7 +219,7 @@ export default function ProfilePage() {
                 </h1>
                 <StatusBadge status="ACTIVE" label={roleLabels[user?.role] || user?.role} tone="emerald" />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px', fontSize: '13px', color: 'var(--ui-muted)' }}>
                 <span>{user?.email}</span>
                 <span>•</span>
                 <span>Thành viên HL_RCS</span>
@@ -225,47 +227,47 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             <div style={{
               backgroundColor: '#f8fafc',
               border: '1px solid #e2e8f0',
               borderRadius: '12px',
-              padding: '12px 18px',
+              padding: 'var(--space-3) 18px',
               textAlign: 'center',
             }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0d9488' }}>{savedListings.length}</div>
-              <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Nhà trọ đã lưu</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f766e' }}>{savedListings.length}</div>
+              <div style={{ fontSize: '12px', color: 'var(--ui-muted)', fontWeight: 600 }}>Nhà trọ đã lưu</div>
             </div>
             <div style={{
               backgroundColor: '#f8fafc',
               border: '1px solid #e2e8f0',
               borderRadius: '12px',
-              padding: '12px 18px',
+              padding: 'var(--space-3) 18px',
               textAlign: 'center',
             }}>
               <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>{sampleAppointments.length}</div>
-              <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Lịch xem phòng</div>
+              <div style={{ fontSize: '12px', color: 'var(--ui-muted)', fontWeight: 600 }}>Lịch xem phòng</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Grid: Nav Tabs + Content */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 260px) 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', '--grid-columns': 'minmax(220px, 260px) 1fr', gap: 'var(--space-6)' }}>
         {/* Sidebar Nav */}
         <aside style={{
           background: '#ffffff',
           borderRadius: '16px',
-          padding: '12px',
+          padding: 'var(--space-3)',
           border: '1px solid #e2e8f0',
           height: 'fit-content',
         }}>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
             {tabs.map(([key, label, Icon]) => {
               const active = selected === key;
               return (
                 <li key={key}>
-                  <button
+                  <UIButton
                     type="button"
                     onClick={() => {
                       setParams({ tab: key });
@@ -276,12 +278,12 @@ export default function ProfilePage() {
                       width: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
+                      gap: 'var(--space-3)',
                       padding: '10px 14px',
                       borderRadius: '10px',
                       border: 'none',
                       background: active ? '#f0fdfa' : 'transparent',
-                      color: active ? '#0d9488' : '#475569',
+                      color: active ? '#0f766e' : '#475569',
                       fontWeight: active ? 700 : 500,
                       fontSize: '14px',
                       cursor: 'pointer',
@@ -289,15 +291,15 @@ export default function ProfilePage() {
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <Icon size={18} style={{ color: active ? '#0d9488' : '#94a3b8' }} />
+                    <Icon size={18} style={{ color: active ? '#0f766e' : '#94a3b8' }} />
                     <span>{label}</span>
-                  </button>
+                  </UIButton>
                 </li>
               );
             })}
-            <li style={{ height: '1px', background: '#e2e8f0', margin: '8px 0' }} />
+            <li style={{ height: '1px', background: '#e2e8f0', margin: 'var(--space-2) 0' }} />
             <li>
-              <button
+              <UIButton
                 type="button"
                 id="btnSidebarLogout"
                 className="profile-nav-btn btn-logout"
@@ -307,7 +309,7 @@ export default function ProfilePage() {
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: 'var(--space-3)',
                   padding: '10px 14px',
                   borderRadius: '10px',
                   border: 'none',
@@ -322,7 +324,7 @@ export default function ProfilePage() {
               >
                 <LogOut size={18} style={{ color: '#e11d48' }} />
                 <span>{leaving ? 'Đang đăng xuất...' : 'Đăng xuất tài khoản'}</span>
-              </button>
+              </UIButton>
             </li>
           </ul>
         </aside>
@@ -331,7 +333,7 @@ export default function ProfilePage() {
         <main style={{
           background: '#ffffff',
           borderRadius: '16px',
-          padding: '24px',
+          padding: 'var(--space-6)',
           border: '1px solid #e2e8f0',
         }}>
           {alert && (
@@ -340,7 +342,7 @@ export default function ProfilePage() {
               backgroundColor: '#fef2f2',
               color: '#991b1b',
               borderRadius: '8px',
-              marginBottom: '16px',
+              marginBottom: 'var(--space-4)',
               fontSize: '13px',
               fontWeight: 500,
             }}>
@@ -351,14 +353,14 @@ export default function ProfilePage() {
           {/* TAB 1: INFO */}
           {selected === 'info' && (
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
                 Thông tin cá nhân
               </h2>
-              <form noValidate onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <form noValidate onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                 <div>
-                  <label htmlFor="fullName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="fullName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Họ và tên
-                  </label>
+                  </UIField>
                   <input
                     id="fullName"
                     name="fullName"
@@ -374,13 +376,13 @@ export default function ProfilePage() {
                       outline: 'none',
                     }}
                   />
-                  {errors.fullName && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.fullName}</p>}
+                  {errors.fullName && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: 'var(--space-1)' }}>{errors.fullName}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="email" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="email" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Email (Định danh đăng nhập)
-                  </label>
+                  </UIField>
                   <input
                     id="email"
                     type="email"
@@ -393,16 +395,16 @@ export default function ProfilePage() {
                       borderRadius: '10px',
                       border: '1px solid #e2e8f0',
                       backgroundColor: '#f8fafc',
-                      color: '#64748b',
+                      color: 'var(--ui-muted)',
                       fontSize: '14px',
                     }}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phoneNumber" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="phoneNumber" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Số điện thoại liên hệ
-                  </label>
+                  </UIField>
                   <input
                     id="phoneNumber"
                     name="phoneNumber"
@@ -419,20 +421,20 @@ export default function ProfilePage() {
                       outline: 'none',
                     }}
                   />
-                  {errors.phoneNumber && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.phoneNumber}</p>}
+                  {errors.phoneNumber && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: 'var(--space-1)' }}>{errors.phoneNumber}</p>}
                 </div>
 
-                <div style={{ marginTop: '8px' }}>
-                  <button
+                <div style={{ marginTop: 'var(--space-2)' }}>
+                  <UIButton
                     type="submit"
                     disabled={busy}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      gap: 'var(--space-2)',
                       padding: '10px 20px',
                       borderRadius: '10px',
-                      backgroundColor: '#0d9488',
+                      backgroundColor: '#0f766e',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 700,
@@ -442,7 +444,7 @@ export default function ProfilePage() {
                   >
                     {busy ? <LoaderCircle size={16} className="spin" /> : <Save size={16} />}
                     <span>Lưu thay đổi</span>
-                  </button>
+                  </UIButton>
                 </div>
               </form>
             </div>
@@ -451,16 +453,16 @@ export default function ProfilePage() {
           {/* TAB 2: FAVORITES */}
           {selected === 'favorites' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Nhà trọ đã lưu ({savedListings.length})
                 </h2>
-                <Link to="/search" style={{ fontSize: '13px', color: '#0d9488', fontWeight: 600, textDecoration: 'none' }}>
+                <Link to="/search" style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, textDecoration: 'none' }}>
                   Tìm thêm phòng trọ →
                 </Link>
               </div>
               <DemoNoticeBanner message="Dữ liệu danh sách đã lưu hiển thị từ fixture mẫu do backend chưa có API Wishlist." />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'grid', '--grid-columns': 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
                 {savedListings.map((item) => (
                   <div key={item.id} style={{
                     borderRadius: '12px',
@@ -472,14 +474,14 @@ export default function ProfilePage() {
                     <img src={item.image} alt={item.title} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
                     <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>{item.title}</div>
-                        <div style={{ fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: 'var(--space-1)' }}>{item.title}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--ui-muted)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                           <MapPin size={14} />
                           <span>{item.locationShort}</span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#0d9488' }}>{item.priceDisplay}/tháng</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-3)', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#0f766e' }}>{item.priceDisplay}/tháng</span>
                         <Link to={`/properties/detail?id=${item.id}`} style={{ fontSize: '13px', color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>
                           Chi tiết
                         </Link>
@@ -494,30 +496,30 @@ export default function ProfilePage() {
           {/* TAB 3: APPOINTMENTS */}
           {selected === 'appointments' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Lịch xem phòng của bạn ({sampleAppointments.length})
                 </h2>
-                <Link to="/bookings" style={{ fontSize: '13px', color: '#0d9488', fontWeight: 600, textDecoration: 'none' }}>
+                <Link to="/bookings" style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, textDecoration: 'none' }}>
                   Quản lý đầy đủ lịch hẹn →
                 </Link>
               </div>
               <DemoNoticeBanner message="Dữ liệu lịch hẹn hiển thị từ fixture mẫu do backend chưa có API Viewing Request." />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {sampleAppointments.map((app) => (
                   <div key={app.id} style={{
-                    padding: '16px',
+                    padding: 'var(--space-4)',
                     borderRadius: '12px',
                     border: '1px solid #e2e8f0',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    gap: '12px',
+                    gap: 'var(--space-3)',
                   }}>
                     <div>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{app.roomTitle} ({app.roomNumber})</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginTop: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                         <Clock size={14} />
                         <span>Hẹn lúc: <strong>{app.time}</strong> ngày <strong>{app.date}</strong></span>
                         <span>•</span>
@@ -534,25 +536,25 @@ export default function ProfilePage() {
           {/* TAB 4: REPORTS */}
           {selected === 'reports' && (
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
                 Báo cáo đã gửi ({sampleReports.length})
               </h2>
               <DemoNoticeBanner message="Dữ liệu báo cáo hiển thị từ fixture mẫu do backend chưa có API Report." />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {sampleReports.map((rep) => (
                   <div key={rep.id} style={{
-                    padding: '16px',
+                    padding: 'var(--space-4)',
                     borderRadius: '12px',
                     border: '1px solid #e2e8f0',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    gap: '12px',
+                    gap: 'var(--space-3)',
                   }}>
                     <div>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{rep.target}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                      <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginTop: 'var(--space-1)' }}>
                         Lý do: <em>{rep.reason}</em> — Ngày gửi: {rep.date}
                       </div>
                     </div>
@@ -566,14 +568,14 @@ export default function ProfilePage() {
           {/* TAB 5: SECURITY */}
           {selected === 'security' && (
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
                 Đổi mật khẩu tài khoản
               </h2>
-              <form noValidate onSubmit={validatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '440px' }}>
+              <form noValidate onSubmit={validatePassword} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: '440px' }}>
                 <div>
-                  <label htmlFor="oldPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="oldPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Mật khẩu hiện tại
-                  </label>
+                  </UIField>
                   <input
                     id="oldPassword"
                     name="oldPassword"
@@ -589,13 +591,13 @@ export default function ProfilePage() {
                       fontSize: '14px',
                     }}
                   />
-                  {errors.oldPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.oldPassword}</p>}
+                  {errors.oldPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: 'var(--space-1)' }}>{errors.oldPassword}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="newPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="newPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Mật khẩu mới
-                  </label>
+                  </UIField>
                   <input
                     id="newPassword"
                     name="newPassword"
@@ -611,13 +613,13 @@ export default function ProfilePage() {
                       fontSize: '14px',
                     }}
                   />
-                  {errors.newPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.newPassword}</p>}
+                  {errors.newPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: 'var(--space-1)' }}>{errors.newPassword}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <UIField htmlFor="confirmPassword" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                     Xác nhận mật khẩu mới
-                  </label>
+                  </UIField>
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -633,20 +635,20 @@ export default function ProfilePage() {
                       fontSize: '14px',
                     }}
                   />
-                  {errors.confirmPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: 'var(--space-1)' }}>{errors.confirmPassword}</p>}
                 </div>
 
-                <div style={{ marginTop: '8px' }}>
-                  <button
+                <div style={{ marginTop: 'var(--space-2)' }}>
+                  <UIButton
                     type="submit"
                     disabled={busy}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      gap: 'var(--space-2)',
                       padding: '10px 20px',
                       borderRadius: '10px',
-                      backgroundColor: '#0d9488',
+                      backgroundColor: '#0f766e',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 700,
@@ -656,7 +658,7 @@ export default function ProfilePage() {
                   >
                     <ShieldCheck size={16} />
                     <span>Đổi mật khẩu</span>
-                  </button>
+                  </UIButton>
                 </div>
               </form>
             </div>
@@ -670,13 +672,13 @@ export default function ProfilePage() {
             Bạn có chắc chắn muốn thay đổi mật khẩu đăng nhập? Sau khi đổi thành công, bạn sẽ sử dụng mật khẩu mới này cho các lần đăng nhập tiếp theo.
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button
+            <UIButton
               type="button"
               className="p-button"
               onClick={() => setConfirming(false)}
               disabled={busy}
               style={{
-                padding: '8px 16px',
+                padding: 'var(--space-2) var(--space-4)',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: '#ffffff',
@@ -684,8 +686,8 @@ export default function ProfilePage() {
               }}
             >
               Hủy
-            </button>
-            <button
+            </UIButton>
+            <UIButton
               type="button"
               className="p-button primary"
               onClick={changePassword}
@@ -694,9 +696,9 @@ export default function ProfilePage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '8px 16px',
+                padding: 'var(--space-2) var(--space-4)',
                 borderRadius: '8px',
-                backgroundColor: '#0d9488',
+                backgroundColor: '#0f766e',
                 color: '#ffffff',
                 border: 'none',
                 fontWeight: 700,
@@ -705,7 +707,7 @@ export default function ProfilePage() {
             >
               {busy && <LoaderCircle size={16} className="spin" />}
               <span>Xác nhận</span>
-            </button>
+            </UIButton>
           </div>
         </Modal>
       )}

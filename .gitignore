@@ -41,3 +41,11 @@ frontend/.env
 frontend/.env.local
 frontend/.env.*
 !frontend/.env.example
+
+# Local environment and generated verification artifacts
+.env
+.env.*
+!.env.example
+node_modules/
+frontend/migration/design-system-check/
+frontend/migration/service-request-check/

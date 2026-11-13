@@ -9,7 +9,7 @@
 .search-breadcrumb-bar {
   background: var(--slate-50);
   border-bottom: 1px solid var(--slate-200);
-  padding: 12px 0;
+  padding:var(--space-3) 0;
   font-size: 13.5px;
 }
 
@@ -18,13 +18,13 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
+  gap:10px;
 }
 
 .search-breadcrumb-list {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   list-style: none;
   color: var(--slate-500);
 }
@@ -54,13 +54,13 @@
    2. SEARCH HERO / HEADER
    ========================================= */
 .search-header-section {
-  padding: 36px 0 24px;
+  padding:36px 0 var(--space-6);
   background: #ffffff;
   border-bottom: 1px solid var(--slate-200);
 }
 
 .search-headline-group {
-  margin-bottom: 24px;
+  margin-bottom:var(--space-6);
 }
 
 .search-main-title {
@@ -69,7 +69,7 @@
   color: var(--slate-900);
   line-height: 1.25;
   letter-spacing: -0.02em;
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .search-subtitle {
@@ -83,17 +83,17 @@
   background: #ffffff;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding:var(--space-4) 20px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap:var(--space-4);
 }
 
 .search-main-inputs-row {
   display: grid;
   grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr auto;
-  gap: 12px;
+  gap:var(--space-3);
   align-items: center;
 }
 
@@ -114,7 +114,7 @@
 
 .search-text-input {
   width: 100%;
-  padding: 11px 14px 11px 40px;
+  padding:11px 14px 11px 40px;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   font-size: 14px;
@@ -133,7 +133,7 @@
 
 .search-select-dropdown {
   width: 100%;
-  padding: 11px 14px;
+  padding:11px 14px;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   font-size: 13.5px;
@@ -155,8 +155,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 11px 22px;
+  gap:var(--space-2);
+  padding:11px 22px;
   background: var(--primary);
   color: #ffffff;
   border: none;
@@ -180,8 +180,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 12px;
+  gap:var(--space-3);
+  padding-top:var(--space-3);
   border-top: 1px solid var(--slate-100);
 }
 
@@ -189,14 +189,14 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .filter-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap:6px;
+  padding:6px 14px;
   background: var(--slate-50);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-full);
@@ -223,8 +223,8 @@
 .btn-toggle-advanced {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap:6px;
+  padding:6px 14px;
   background: #ffffff;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
@@ -250,8 +250,8 @@
   background: var(--slate-50);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  margin-top: 16px;
+  padding:var(--space-6);
+  margin-top:var(--space-4);
   animation: filterSlide 0.22s ease;
 }
 
@@ -267,15 +267,15 @@
 .adv-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
-  margin-bottom: 20px;
+  gap:var(--space-6);
+  margin-bottom:20px;
 }
 
 .adv-filter-group-title {
   font-size: 13.5px;
   font-weight: 800;
   color: var(--slate-900);
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -283,13 +283,13 @@
 .amenities-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap:10px;
 }
 
 .checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   font-size: 13px;
   color: var(--slate-700);
   cursor: pointer;
@@ -308,13 +308,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding-top: 16px;
+  gap:var(--space-3);
+  padding-top:var(--space-4);
   border-top: 1px solid var(--slate-200);
 }
 
 .btn-reset-filters {
-  padding: 8px 16px;
+  padding:var(--space-2) var(--space-4);
   background: transparent;
   border: 1px solid var(--slate-300);
   border-radius: var(--radius-md);
@@ -331,7 +331,7 @@
 }
 
 .btn-apply-filters {
-  padding: 8px 20px;
+  padding:var(--space-2) 20px;
   background: var(--primary);
   color: #ffffff;
   border: none;
@@ -350,25 +350,25 @@
    4. ACTIVE CHIPS BAR
    ========================================= */
 .active-chips-wrapper {
-  margin-top: 16px;
+  margin-top:var(--space-4);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .chips-label {
   font-size: 13px;
   font-weight: 700;
   color: var(--slate-500);
-  margin-right: 4px;
+  margin-right:var(--space-1);
 }
 
 .chip-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 12px;
+  gap:6px;
+  padding:var(--space-1) 10px var(--space-1) var(--space-3);
   background: var(--primary-light);
   border: 1px solid var(--primary-border);
   color: var(--primary-active);
@@ -384,7 +384,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 0;
+  padding:0;
   font-size: 14px;
   font-weight: 800;
   line-height: 1;
@@ -402,7 +402,7 @@
   font-weight: 700;
   cursor: pointer;
   text-decoration: underline;
-  padding: 4px 8px;
+  padding:var(--space-1) var(--space-2);
 }
 
 .btn-clear-all-chips:hover {
@@ -413,7 +413,7 @@
    5. RESULTS SECTION
    ========================================= */
 .listing-results-section {
-  padding: 36px 0 72px;
+  padding:36px 0 72px;
 }
 
 .results-meta-header {
@@ -421,9 +421,9 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  gap:var(--space-4);
+  margin-bottom:var(--space-6);
+  padding-bottom:var(--space-4);
   border-bottom: 1px solid var(--slate-200);
 }
 
@@ -433,13 +433,13 @@
   color: var(--slate-900);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .results-count-title .count-badge {
   color: var(--primary);
   background: var(--primary-light);
-  padding: 2px 8px;
+  padding:2px var(--space-2);
   border-radius: var(--radius-full);
   font-size: 14px;
 }
@@ -447,7 +447,7 @@
 .sort-controls-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap:10px;
 }
 
 .sort-label {
@@ -457,7 +457,7 @@
 }
 
 .sort-select {
-  padding: 8px 14px;
+  padding:var(--space-2) 14px;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   font-size: 13.5px;
@@ -478,7 +478,7 @@
 .results-header-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap:14px;
   flex-wrap: wrap;
 }
 
@@ -488,15 +488,15 @@
   background: var(--slate-100);
   border: 1px solid var(--slate-200);
   border-radius: 10px;
-  padding: 3px;
-  gap: 3px;
+  padding:3px;
+  gap:3px;
 }
 
 .view-switch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap:6px;
+  padding:6px 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -521,7 +521,7 @@
 .listing-grid-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  gap:28px;
 }
 
 /* =========================================
@@ -530,12 +530,12 @@
 .search-empty-container {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 72px 20px;
+  padding:72px 20px;
   background: #ffffff;
   border: 1px dashed var(--slate-300);
   border-radius: var(--radius-lg);
   max-width: 600px;
-  margin: 20px auto;
+  margin:20px auto;
 }
 
 .search-empty-icon {
@@ -546,28 +546,28 @@
   color: var(--slate-400);
   display: grid;
   place-items: center;
-  margin: 0 auto 16px;
+  margin:0 auto var(--space-4);
 }
 
 .search-empty-title {
   font-size: 20px;
   font-weight: 800;
   color: var(--slate-900);
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .search-empty-desc {
   font-size: 14.5px;
   color: var(--slate-500);
   line-height: 1.6;
-  margin-bottom: 24px;
+  margin-bottom:var(--space-6);
 }
 
 .btn-empty-reset {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 22px;
+  gap:var(--space-2);
+  padding:10px 22px;
   background: var(--primary);
   color: #ffffff;
   border: none;
@@ -605,10 +605,10 @@
 }
 
 .skeleton-body {
-  padding: 20px;
+  padding:20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap:var(--space-3);
 }
 
 .skeleton-line {
@@ -625,11 +625,11 @@
    7. PAGINATION BAR
    ========================================= */
 .pagination-wrapper {
-  margin-top: 48px;
+  margin-top:var(--space-12);
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .page-btn {
@@ -638,7 +638,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
+  padding:0 var(--space-3);
   background: #ffffff;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
@@ -705,7 +705,7 @@
 }
 
 .drawer-header {
-  padding: 18px 20px;
+  padding:18px 20px;
   border-bottom: 1px solid var(--slate-100);
   display: flex;
   align-items: center;
@@ -731,25 +731,25 @@
 }
 
 .drawer-body {
-  padding: 20px;
+  padding:20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap:20px;
 }
 
 .drawer-footer {
-  padding: 16px 20px;
+  padding:var(--space-4) 20px;
   border-top: 1px solid var(--slate-100);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
   background: #ffffff;
 }
 
 .drawer-footer .btn-drawer-reset {
   flex: 1;
-  padding: 12px;
+  padding:var(--space-3);
   background: var(--slate-100);
   border: none;
   border-radius: var(--radius-md);
@@ -761,7 +761,7 @@
 
 .drawer-footer .btn-drawer-apply {
   flex: 2;
-  padding: 12px;
+  padding:var(--space-3);
   background: var(--primary);
   border: none;
   border-radius: var(--radius-md);
@@ -785,7 +785,7 @@
 
   .listing-grid-container {
     grid-template-columns: repeat(2, 1fr);
-    gap: 22px;
+    gap:22px;
   }
 }
 
@@ -809,7 +809,7 @@
 
   .quick-filter-pills {
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding-bottom:6px;
     flex-wrap: nowrap;
   }
 

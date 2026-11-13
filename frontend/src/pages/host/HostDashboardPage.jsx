@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -19,7 +20,7 @@ import '../../styles/host-dashboard.css';
 const onboardingSteps = [
   ['Thêm thông tin nhà trọ', 'Điền tên nhà trọ, địa chỉ thực tế và mức giá niêm yết minh bạch.'],
   ['Cấu hình loại phòng & số phòng', 'Khởi tạo các phòng cụ thể (P.101, P.102,...) và đánh dấu phòng còn trống.'],
-  ['Gửi kiểm duyệt & nhận khách', 'Ban quản trị thẩm định trong 24h và tin đăng sẽ hiển thị công khai ngay.'],
+  ['Gửi kiểm duyệt & nhận khách', 'Nhân viên thẩm định trong 24h và tin đăng sẽ hiển thị công khai ngay.'],
 ];
 const bookingLabels = { PENDING: 'Chờ xác nhận', APPROVED: 'Đã xác nhận', REJECTED: 'Đã từ chối', CANCELLED: 'Đã hủy' };
 const money = value => value == null ? 'Chưa có giá niêm yết' : `${new Intl.NumberFormat('vi-VN').format(value)} đ / tháng`;
@@ -81,7 +82,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
       <section className="dashboard-header-row">
         <div className="header-greeting-col">
           <h2 className="dashboard-headline">Bảng điều khiển</h2>
-          <p className="dashboard-greeting-lead" style={{ margin: '0 0 4px', fontWeight: 700, color: 'var(--host-text-main)', fontSize: '15px' }}>
+          <p className="dashboard-greeting-lead" style={{ margin: '0 0 var(--space-1)', fontWeight: 700, color: 'var(--host-text-main)', fontSize: '15px' }}>
             Xin chào, <span className="greeting-text" id="hostGreetingText" style={{ color: 'var(--host-primary)' }}>{user?.fullName || 'Chủ trọ mới (Test Onboarding)'}</span>
           </p>
           <p className="dashboard-subtext">
@@ -93,7 +94,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
             <Plus size={18} strokeWidth={2.5} id="headerCtaIcon" />
             <span id="headerCtaText">Đăng ký nhà trọ</span>
           </Link>}
-          <button
+          <UIButton
             type="button"
             className="btn-refresh-icon"
             id="btnRefreshDashboard"
@@ -103,7 +104,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
             disabled={loading}
           >
             <RefreshCw size={16} />
-          </button>
+          </UIButton>
         </div>
       </section>
 
@@ -264,7 +265,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                         <tr key={v.bookingId}>
                           <td>
                             <div style={{ fontWeight: 600 }}>{v.renterName}</div>
-                            <small style={{ color: '#64748b' }}>{v.propertyName} · {v.roomType}</small>
+                            <small style={{ color: 'var(--ui-muted)' }}>{v.propertyName} · {v.roomType}</small>
                           </td>
                           <td>{new Date(v.scheduledDate).toLocaleString('vi-VN')}</td>
                           <td><StatusBadge>{bookingLabels[v.status] || v.status}</StatusBadge></td>
@@ -289,11 +290,11 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
               </div>
               <div className="my-properties-list" id="myPropertiesList">
                 {properties.map(property => (
-                  <div className="my-prop-row" key={property.propertyId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div className="my-prop-row" key={property.propertyId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-4) 0', borderBottom: '1px solid #f1f5f9' }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
-                      <div style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginTop: 'var(--space-1)' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
+                      <div style={{ fontSize: '12px', color: '#0f766e', marginTop: 'var(--space-1)' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <StatusBadge>{property.status === 'ACTIVE' ? 'Đang hoạt động' : property.status || 'Chưa cập nhật trạng thái'}</StatusBadge>
@@ -358,7 +359,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                 </div>
               </div>
               <p className="staff-card-desc">
-                Bạn có thể gửi yêu cầu Staff hỗ trợ kiểm định phòng, cập nhật thông tin biểu phí điện nước hoặc tư vấn tối ưu tỷ lệ lấp đầy.
+                Bạn có thể gửi yêu cầu nhân viên hỗ trợ kiểm định phòng, cập nhật thông tin biểu phí điện nước hoặc tư vấn tối ưu tỷ lệ lấp đầy.
               </p>
               <Link to="/host/support" className="btn-staff-request" id="btnOpenStaffModal">
                 Yêu cầu hỗ trợ
@@ -401,9 +402,9 @@ export default function HostDashboardPage() {
     return (
       <div className="host-dashboard-page">
         <StateView kind="error" message={state.error}>
-          <button className="p-button primary" onClick={handleRefresh}>
+          <UIButton className="p-button primary" onClick={handleRefresh}>
             Thử lại
-          </button>
+          </UIButton>
         </StateView>
       </div>
     );

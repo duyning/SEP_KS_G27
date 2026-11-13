@@ -1,37 +1,37 @@
 .host-viewings-page { min-width: 0; }
-.host-viewings-state { box-sizing: border-box; max-width: 520px; margin: 40px auto; padding: 60px 24px; text-align: center; background: #fff; border: 1px solid #dce4ef; border-radius: 18px; box-shadow: 0 3px 5px #0f172a12; }
-.host-viewings-state-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; background: #fffbeb; color: #0d9488; font-size: 30px; }
-.host-viewings-page .host-viewings-state h2 { margin: 0 0 14px; color: #0f172a; font-size: 22px; line-height: 1.4; font-weight: 800; }
-.host-viewings-page .host-viewings-state p { margin: 0 0 26px; color: #64748b; font-size: 14px; line-height: 1.6; }
-.host-viewings-register { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding: 10px 24px; border-radius: 10px; color: white; background: #10b981; font-size: 14px; line-height: 1.5; font-weight: 700; text-decoration: none; }
+.host-viewings-state { box-sizing: border-box; max-width: 520px; margin:40px auto; padding:60px var(--space-6); text-align: center; background: #fff; border: 1px solid #dce4ef; border-radius: 18px; box-shadow: 0 3px 5px #0f172a12; }
+.host-viewings-state-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin:0 auto 20px; background: #fffbeb; color: #0f766e; font-size: 30px; }
+.host-viewings-page .host-viewings-state h2 { margin:0 0 14px; color: #0f172a; font-size: 22px; line-height: 1.4; font-weight: 800; }
+.host-viewings-page .host-viewings-state p { margin:0 0 26px; color:var(--ui-muted, #475569); font-size: 14px; line-height: 1.6; }
+.host-viewings-register { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding:10px var(--space-6); border-radius: 10px; color: white; background: #10b981; font-size: 14px; line-height: 1.5; font-weight: 700; text-decoration: none; }
 .host-viewings-register:hover { background: #059669; }
 .host-viewings-register:focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
-.host-viewings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.host-viewings-heading { display: flex; align-items: center; justify-content: space-between; gap:var(--space-4); margin-bottom:20px; }
 .host-viewings-heading h2 { font-size: 22px; }
-.host-viewings-counts { display: flex; flex-wrap: wrap; gap: 12px 28px; padding: 20px 0; border-block: 1px solid #e2e8f0; margin-bottom: 24px; color: #64748b; }
-.host-viewings-counts strong { color: #0f172a; margin-left: 8px; }
-.host-viewings-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
-.host-viewings-filters select, .host-viewings-filters input { border: 1px solid #dce4ef; background: #fff; border-radius: 6px; padding: 10px 12px; font: inherit; min-width: 0; max-width: 100%; color: #334155; }
-.host-viewings-search { display: flex; align-items: center; flex: 1 1 260px; min-width: 0; background: white; border: 1px solid #dce4ef; border-radius: 6px; padding-left: 12px; color: #64748b; }
+.host-viewings-counts { display: flex; flex-wrap: wrap; gap:var(--space-3) 28px; padding:20px 0; border-block: 1px solid #e2e8f0; margin-bottom:var(--space-6); color:var(--ui-muted, #475569); }
+.host-viewings-counts strong { color: #0f172a; margin-left:var(--space-2); }
+.host-viewings-filters { display: flex; flex-wrap: wrap; align-items: center; gap:var(--space-3); margin-bottom:20px; }
+.host-viewings-filters select, .host-viewings-filters input { border: 1px solid #dce4ef; background: #fff; border-radius: 6px; padding:10px var(--space-3); font: inherit; min-width: 0; max-width: 100%; color: #334155; }
+.host-viewings-search { display: flex; align-items: center; flex: 1 1 260px; min-width: 0; background: white; border: 1px solid #dce4ef; border-radius: 6px; padding-left:var(--space-3); color:var(--ui-muted, #475569); }
 .host-viewings-search input { width: 100%; border: 0; }
-.host-viewings-result { margin-top: 16px !important; color: #64748b; }
-.host-viewings-details { display: grid; gap: 12px; }
-.host-viewings-details div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; }
-.host-viewings-details dt { color: #64748b; }
-.host-viewings-details dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
-.host-viewings-route > .host-footer { margin-left: var(--p-sidebar-width); }
+.host-viewings-result { margin-top:var(--space-4) !important; color:var(--ui-muted, #475569); }
+.host-viewings-details { display: grid; gap:var(--space-3); }
+.host-viewings-details div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap:var(--space-3); }
+.host-viewings-details dt { color:var(--ui-muted, #475569); }
+.host-viewings-details dd { margin:0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.host-viewings-route > .host-footer { margin-left:var(--p-sidebar-width); }
 @media (min-width: 1600px) {
-  .host-viewings-state { max-width: 650px; margin-top: 64px; padding: 75px 30px; }
-  .host-viewings-state-icon { width: 80px; height: 80px; font-size: 38px; margin-bottom: 24px; }
-  .host-viewings-page .host-viewings-state h2 { font-size: 28px; margin-bottom: 14px; }
-  .host-viewings-page .host-viewings-state p { font-size: 18px; margin-bottom: 30px; }
-  .host-viewings-register { min-height: 52px; font-size: 18px; padding: 12px 24px; }
+  .host-viewings-state { max-width: 650px; margin-top:64px; padding:75px 30px; }
+  .host-viewings-state-icon { width: 80px; height: 80px; font-size: 38px; margin-bottom:var(--space-6); }
+  .host-viewings-page .host-viewings-state h2 { font-size: 28px; margin-bottom:14px; }
+  .host-viewings-page .host-viewings-state p { font-size: 18px; margin-bottom:30px; }
+  .host-viewings-register { min-height: 52px; font-size: 18px; padding:var(--space-3) var(--space-6); }
 }
-@media (max-width: 900px) { .host-viewings-route > .host-footer { margin-left: 0; padding: 18px 24px; } }
+@media (max-width: 900px) { .host-viewings-route > .host-footer { margin-left:0; padding:18px var(--space-6); } }
 @media (max-width: 600px) {
-  .host-viewings-state { margin: 24px auto; padding: 40px 20px; border-radius: 14px; }
+  .host-viewings-state { margin:var(--space-6) auto; padding:40px 20px; border-radius: 14px; }
   .host-viewings-page .host-viewings-state h2 { font-size: 22px; }
   .host-viewings-register { width: 100%; }
   .host-viewings-filters > select, .host-viewings-filters > input { flex: 1 1 140px; }
-  .host-viewings-route > .host-footer { padding: 18px 16px; font-size: 11px; }
+  .host-viewings-route > .host-footer { padding:18px var(--space-4); font-size: 11px; }
 }

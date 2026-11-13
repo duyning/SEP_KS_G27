@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -66,19 +68,19 @@ export default function DetailPage() {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'var(--space-6) var(--space-4)' }}>
       {/* Breadcrumb Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b' }}>
-          <Link to="/" style={{ color: '#0d9488', textDecoration: 'none' }}>Trang chủ</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--ui-muted)' }}>
+          <Link to="/" style={{ color: '#0f766e', textDecoration: 'none' }}>Trang chủ</Link>
           <span>/</span>
-          <Link to="/search" style={{ color: '#0d9488', textDecoration: 'none' }}>Danh sách phòng</Link>
+          <Link to="/search" style={{ color: '#0f766e', textDecoration: 'none' }}>Danh sách phòng</Link>
           <span>/</span>
           <span style={{ color: '#0f172a', fontWeight: 600 }}>{room.title}</span>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button
+          <UIButton
             type="button"
             onClick={() => {
               setIsSaved(!isSaved);
@@ -88,7 +90,7 @@ export default function DetailPage() {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: 'var(--space-2) 14px',
               borderRadius: '8px',
               border: '1px solid #e2e8f0',
               backgroundColor: isSaved ? '#fff1f2' : '#ffffff',
@@ -100,15 +102,15 @@ export default function DetailPage() {
           >
             <Heart size={16} fill={isSaved ? '#e11d48' : 'none'} />
             <span>{isSaved ? 'Đã lưu' : 'Lưu tin'}</span>
-          </button>
-          <button
+          </UIButton>
+          <UIButton
             type="button"
             onClick={() => setIsReportModalOpen(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: 'var(--space-2) 14px',
               borderRadius: '8px',
               border: '1px solid #fecaca',
               backgroundColor: '#fef2f2',
@@ -120,18 +122,18 @@ export default function DetailPage() {
           >
             <AlertTriangle size={15} />
             <span>Báo cáo</span>
-          </button>
+          </UIButton>
         </div>
       </div>
 
       <DemoNoticeBanner message="Dữ liệu chi tiết nhà trọ hiển thị từ prototype fixture do backend chưa cung cấp API GET /api/properties/{id}." />
 
       {/* Main Title & Price Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: '6px' }}>
             <span style={{
-              backgroundColor: '#0d9488',
+              backgroundColor: '#0f766e',
               color: '#ffffff',
               padding: '3px 10px',
               borderRadius: '9999px',
@@ -139,27 +141,27 @@ export default function DetailPage() {
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: 'var(--space-1)',
             }}>
               <ShieldCheck size={14} />
               <span>Chính chủ đã xác thực 100%</span>
             </span>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>• {room.campusDistance}</span>
+            <span style={{ fontSize: '13px', color: 'var(--ui-muted)' }}>• {room.campusDistance}</span>
           </div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
             {room.title}
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#64748b' }}>
-            <MapPin size={16} style={{ color: '#0d9488' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ui-muted)' }}>
+            <MapPin size={16} style={{ color: '#0f766e' }} />
             <span>{room.location}</span>
           </div>
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>Giá thuê niêm yết:</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0d9488' }}>
+          <div style={{ fontSize: '13px', color: 'var(--ui-muted)' }}>Giá thuê niêm yết:</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f766e' }}>
             {room.priceDisplay}
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#64748b' }}> /tháng</span>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ui-muted)' }}> /tháng</span>
           </div>
           <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, marginTop: '2px' }}>
             {room.availability}
@@ -168,8 +170,8 @@ export default function DetailPage() {
       </div>
 
       {/* Image Gallery */}
-      <section style={{ marginBottom: '32px' }}>
-        <div style={{ height: '420px', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
+      <section style={{ marginBottom: 'var(--space-8)' }}>
+        <div style={{ height: '420px', borderRadius: '16px', overflow: 'hidden', marginBottom: 'var(--space-3)', border: '1px solid #e2e8f0' }}>
           <img
             src={galleryImages[activeImageIdx]}
             alt={room.title}
@@ -190,7 +192,7 @@ export default function DetailPage() {
                   borderRadius: '8px',
                   objectFit: 'cover',
                   cursor: 'pointer',
-                  border: activeImageIdx === idx ? '3px solid #0d9488' : '1px solid #cbd5e1',
+                  border: activeImageIdx === idx ? '3px solid #0f766e' : '1px solid #cbd5e1',
                   opacity: activeImageIdx === idx ? 1 : 0.7,
                   transition: 'all 0.15s ease',
                 }}
@@ -201,7 +203,7 @@ export default function DetailPage() {
       </section>
 
       {/* Grid: Details Left (65%) + Host Sidebar Right (35%) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(320px, 360px)', gap: '32px' }}>
+      <div style={{ display: 'grid', '--grid-columns': '1fr minmax(320px, 360px)', gap: 'var(--space-8)' }}>
         {/* Left Column */}
         <div>
           {/* Specs Overview */}
@@ -210,26 +212,26 @@ export default function DetailPage() {
             borderRadius: '16px',
             padding: '20px',
             border: '1px solid #e2e8f0',
-            marginBottom: '24px',
+            marginBottom: 'var(--space-6)',
           }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
               Thông số phòng
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-4)' }}>
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>Diện tích</div>
+                <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Diện tích</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{room.area}</div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>Sức chứa</div>
+                <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Sức chứa</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{room.specs?.capacity || '1 - 2 người'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>Phòng ngủ</div>
+                <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Phòng ngủ</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{room.specs?.bedroom || '1 phòng'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>Vệ sinh</div>
+                <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Vệ sinh</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{room.specs?.bathroom || 'Khép kín'}</div>
               </div>
             </div>
@@ -241,12 +243,12 @@ export default function DetailPage() {
             borderRadius: '16px',
             padding: '20px',
             border: '1px solid #e2e8f0',
-            marginBottom: '24px',
+            marginBottom: 'var(--space-6)',
           }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
               Chi phí điện nước & dịch vụ niêm yết
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ fontSize: '14px', color: '#334155' }}>Tiền điện:</span>
                 <strong style={{ fontSize: '14px', color: '#0f172a' }}>{room.electric || '3.500 đ/số'}</strong>
@@ -272,9 +274,9 @@ export default function DetailPage() {
             borderRadius: '16px',
             padding: '20px',
             border: '1px solid #e2e8f0',
-            marginBottom: '24px',
+            marginBottom: 'var(--space-6)',
           }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-3)' }}>
               Mô tả chi tiết
             </h2>
             <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.7, margin: 0 }}>
@@ -288,12 +290,12 @@ export default function DetailPage() {
             borderRadius: '16px',
             padding: '20px',
             border: '1px solid #e2e8f0',
-            marginBottom: '24px',
+            marginBottom: 'var(--space-6)',
           }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-4)' }}>
               Tiện ích có sẵn
             </h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
               {(room.amenities || ['Vệ sinh khép kín', 'Điều hòa', 'Bình nóng lạnh', 'Wifi tốc độ cao', 'Camera an ninh']).map((am, i) => (
                 <span key={i} style={{
                   display: 'inline-flex',
@@ -307,7 +309,7 @@ export default function DetailPage() {
                   color: '#334155',
                   fontWeight: 600,
                 }}>
-                  <Check size={14} style={{ color: '#0d9488' }} />
+                  <Check size={14} style={{ color: '#0f766e' }} />
                   <span>{am}</span>
                 </span>
               ))}
@@ -320,7 +322,7 @@ export default function DetailPage() {
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
-            padding: '24px',
+            padding: 'var(--space-6)',
             border: '1px solid #e2e8f0',
             position: 'sticky',
             top: '20px',
@@ -331,7 +333,7 @@ export default function DetailPage() {
                 width: '52px',
                 height: '52px',
                 borderRadius: '50%',
-                backgroundColor: '#0d9488',
+                backgroundColor: '#0f766e',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -345,7 +347,7 @@ export default function DetailPage() {
                 <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
                   {room.hostInfo?.name || 'Bác Minh Quân (Chủ trọ)'}
                 </div>
-                <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                   <ShieldCheck size={13} />
                   <span>Chủ trọ đối tác xác thực</span>
                 </div>
@@ -359,10 +361,10 @@ export default function DetailPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
-                  padding: '12px',
+                  gap: 'var(--space-2)',
+                  padding: 'var(--space-3)',
                   borderRadius: '10px',
-                  backgroundColor: '#0d9488',
+                  backgroundColor: '#0f766e',
                   color: '#ffffff',
                   fontWeight: 700,
                   fontSize: '14px',
@@ -373,18 +375,18 @@ export default function DetailPage() {
                 <span>Gọi chủ trọ: {room.hostInfo?.phone || '0987 654 321'}</span>
               </a>
 
-              <button
+              <UIButton
                 type="button"
                 onClick={() => setIsBookingModalOpen(true)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
-                  padding: '12px',
+                  gap: 'var(--space-2)',
+                  padding: 'var(--space-3)',
                   borderRadius: '10px',
                   backgroundColor: '#f0fdfa',
-                  color: '#0d9488',
+                  color: '#0f766e',
                   border: '1px solid #99f6e4',
                   fontWeight: 700,
                   fontSize: '14px',
@@ -393,10 +395,10 @@ export default function DetailPage() {
               >
                 <Calendar size={16} />
                 <span>Đặt lịch hẹn xem phòng</span>
-              </button>
+              </UIButton>
             </div>
 
-            <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '12px', color: 'var(--ui-muted)', textAlign: 'center', lineHeight: 1.5 }}>
               🔒 Hệ thống HL_RCS bảo vệ người thuê: Không thu phí đặt cọc giữ chỗ trước khi xem phòng trực tiếp.
             </div>
           </div>
@@ -406,15 +408,15 @@ export default function DetailPage() {
       {/* Booking Appointment Modal */}
       {isBookingModalOpen && (
         <Modal title="Đặt lịch hẹn xem phòng trực tiếp" onClose={() => setIsBookingModalOpen(false)}>
-          <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             <div style={{ padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: '13px' }}>
               <strong>Phòng:</strong> {room.title}
             </div>
 
             <div>
-              <label htmlFor="bookingName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="bookingName" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Họ và tên của bạn *
-              </label>
+              </UIField>
               <input
                 id="bookingName"
                 type="text"
@@ -422,14 +424,14 @@ export default function DetailPage() {
                 value={bookingName}
                 onChange={(e) => setBookingName(e.target.value)}
                 placeholder="VD: Nguyễn Văn An"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
             </div>
 
             <div>
-              <label htmlFor="bookingPhone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="bookingPhone" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Số điện thoại liên hệ *
-              </label>
+              </UIField>
               <input
                 id="bookingPhone"
                 type="tel"
@@ -437,33 +439,33 @@ export default function DetailPage() {
                 value={bookingPhone}
                 onChange={(e) => setBookingPhone(e.target.value)}
                 placeholder="VD: 0987654321"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', '--grid-columns': '1fr 1fr', gap: 'var(--space-3)' }}>
               <div>
-                <label htmlFor="bookingDate" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="bookingDate" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Ngày hẹn xem *
-                </label>
+                </UIField>
                 <input
                   id="bookingDate"
                   type="date"
                   required
                   value={bookingDate}
                   onChange={(e) => setBookingDate(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
               </div>
               <div>
-                <label htmlFor="bookingTime" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="bookingTime" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Giờ hẹn xem *
-                </label>
+                </UIField>
                 <select
                   id="bookingTime"
                   value={bookingTime}
                   onChange={(e) => setBookingTime(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 >
                   <option value="08:30">08:30 Sáng</option>
                   <option value="09:30">09:30 Sáng</option>
@@ -476,33 +478,33 @@ export default function DetailPage() {
             </div>
 
             <div>
-              <label htmlFor="bookingNote" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="bookingNote" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Ghi chú thêm cho chủ trọ
-              </label>
+              </UIField>
               <textarea
                 id="bookingNote"
                 rows={3}
                 value={bookingNote}
                 onChange={(e) => setBookingNote(e.target.value)}
                 placeholder="VD: Em muốn xem thêm khu để xe và ban công..."
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
-              <button
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: 'var(--space-2)' }}>
+              <UIButton
                 type="button"
                 onClick={() => setIsBookingModalOpen(false)}
-                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
+                style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
               >
                 Hủy
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="submit"
-                style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: '#0d9488', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: 'var(--space-2) 18px', borderRadius: '8px', border: 'none', background: '#0f766e', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
               >
                 Gửi yêu cầu đặt lịch
-              </button>
+              </UIButton>
             </div>
           </form>
         </Modal>
@@ -511,16 +513,16 @@ export default function DetailPage() {
       {/* Report Modal */}
       {isReportModalOpen && (
         <Modal title="Báo cáo tin đăng phòng trọ" onClose={() => setIsReportModalOpen(false)}>
-          <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             <div>
-              <label htmlFor="reportReason" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="reportReason" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Lý do báo cáo
-              </label>
+              </UIField>
               <select
                 id="reportReason"
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               >
                 <option value="WRONG_PRICE">Sai lệch giá thuê so với thực tế</option>
                 <option value="FAKE_PHOTOS">Hình ảnh không đúng thực tế</option>
@@ -531,9 +533,9 @@ export default function DetailPage() {
             </div>
 
             <div>
-              <label htmlFor="reportDetail" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="reportDetail" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Chi tiết phản ánh
-              </label>
+              </UIField>
               <textarea
                 id="reportDetail"
                 rows={4}
@@ -541,24 +543,24 @@ export default function DetailPage() {
                 value={reportDetail}
                 onChange={(e) => setReportDetail(e.target.value)}
                 placeholder="Mô tả cụ thể vấn đề bạn gặp phải khi liên hệ hoặc đến xem phòng..."
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1' }}
               />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
+              <UIButton
                 type="button"
                 onClick={() => setIsReportModalOpen(false)}
-                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
+                style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
               >
                 Đóng
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="submit"
-                style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: '#e11d48', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: 'var(--space-2) 18px', borderRadius: '8px', border: 'none', background: '#e11d48', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
               >
                 Gửi báo cáo
-              </button>
+              </UIButton>
             </div>
           </form>
         </Modal>

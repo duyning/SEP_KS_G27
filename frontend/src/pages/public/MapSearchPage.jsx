@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -22,12 +23,12 @@ export default function MapSearchPage() {
     : MOCK_ROOMS.filter((r) => r.category?.includes(areaFilter) || r.locationShort?.toLowerCase().includes(areaFilter));
 
   return (
-    <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '16px' }}>
+    <div style={{ maxWidth: '1440px', margin: '0 auto', padding: 'var(--space-4)' }}>
       {/* Top Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>
-            <Link to="/search" style={{ color: '#0d9488', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: '13px', color: 'var(--ui-muted)', marginBottom: 'var(--space-1)' }}>
+            <Link to="/search" style={{ color: '#0f766e', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
               <ArrowLeft size={14} />
               <span>Dạng danh sách</span>
             </Link>
@@ -47,15 +48,15 @@ export default function MapSearchPage() {
             ['thach-hoa', 'Thạch Hòa'],
             ['binh-yen', 'Bình Yên'],
           ].map(([key, label]) => (
-            <button
+            <UIButton
               key={key}
               type="button"
               onClick={() => setAreaFilter(key)}
               style={{
                 padding: '6px 14px',
                 borderRadius: '9999px',
-                border: areaFilter === key ? '1px solid #0d9488' : '1px solid #cbd5e1',
-                backgroundColor: areaFilter === key ? '#0d9488' : '#ffffff',
+                border: areaFilter === key ? '1px solid #0f766e' : '1px solid #cbd5e1',
+                backgroundColor: areaFilter === key ? '#0f766e' : '#ffffff',
                 color: areaFilter === key ? '#ffffff' : '#334155',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -63,7 +64,7 @@ export default function MapSearchPage() {
               }}
             >
               {label}
-            </button>
+            </UIButton>
           ))}
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function MapSearchPage() {
       {/* Split Map View Layout */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(340px, 420px) 1fr',
+        '--grid-columns': 'minmax(340px, 420px) 1fr',
         gap: '20px',
         height: 'calc(100vh - 240px)',
         minHeight: '600px',
@@ -83,8 +84,8 @@ export default function MapSearchPage() {
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
-          paddingRight: '8px',
+          gap: 'var(--space-3)',
+          paddingRight: 'var(--space-2)',
         }}>
           {filtered.map((room) => {
             const isSelected = selectedRoom?.id === room.id;
@@ -97,11 +98,11 @@ export default function MapSearchPage() {
                 style={{
                   background: '#ffffff',
                   borderRadius: '12px',
-                  border: isSelected ? '2px solid #0d9488' : '1px solid #e2e8f0',
-                  padding: '12px',
+                  border: isSelected ? '2px solid #0f766e' : '1px solid #e2e8f0',
+                  padding: 'var(--space-3)',
                   cursor: 'pointer',
                   display: 'flex',
-                  gap: '12px',
+                  gap: 'var(--space-3)',
                   boxShadow: isSelected ? '0 4px 6px -1px rgba(13, 148, 136, 0.15)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
@@ -113,7 +114,7 @@ export default function MapSearchPage() {
                 />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#0d9488', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <div style={{ fontSize: '11px', color: '#0f766e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <ShieldCheck size={12} />
                       <span>{room.campusDistance}</span>
                     </div>
@@ -128,15 +129,15 @@ export default function MapSearchPage() {
                     }}>
                       {room.title}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--ui-muted)', marginTop: '2px' }}>
                       {room.locationShort}
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#0d9488' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f766e' }}>
                       {room.priceDisplay}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>{room.area}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--ui-muted)' }}>{room.area}</span>
                   </div>
                 </div>
               </div>
@@ -161,17 +162,17 @@ export default function MapSearchPage() {
             right: '16px',
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '8px 14px',
+            padding: 'var(--space-2) 14px',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: 'var(--space-2)',
             fontSize: '12px',
             fontWeight: 700,
             color: '#334155',
             zIndex: 10,
           }}>
-            <MapPin size={16} style={{ color: '#0d9488' }} />
+            <MapPin size={16} style={{ color: '#0f766e' }} />
             <span>Khu vực ĐH FPT & Tân Xã, Hòa Lạc</span>
           </div>
 
@@ -192,7 +193,7 @@ export default function MapSearchPage() {
               const active = selectedRoom?.id === room.id;
 
               return (
-                <button
+                <UIButton
                   key={room.id}
                   type="button"
                   onClick={() => setSelectedRoom(room)}
@@ -201,7 +202,7 @@ export default function MapSearchPage() {
                     top: pos.top,
                     left: pos.left,
                     transform: 'translate(-50%, -50%)',
-                    backgroundColor: active ? '#0f172a' : '#0d9488',
+                    backgroundColor: active ? '#0f172a' : '#0f766e',
                     color: '#ffffff',
                     padding: '5px 10px',
                     borderRadius: '20px',
@@ -213,13 +214,13 @@ export default function MapSearchPage() {
                     zIndex: active ? 20 : 5,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: 'var(--space-1)',
                     transition: 'all 0.15s ease',
                   }}
                 >
                   <MapPin size={12} />
                   <span>{room.priceChip || `${Math.round(room.price / 1000000 * 10) / 10}tr`}</span>
-                </button>
+                </UIButton>
               );
             })}
           </div>
@@ -234,31 +235,31 @@ export default function MapSearchPage() {
               width: 'calc(100% - 40px)',
               background: '#ffffff',
               borderRadius: '16px',
-              padding: '16px',
+              padding: 'var(--space-4)',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
               border: '1px solid #e2e8f0',
               zIndex: 30,
             }}>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: '10px' }}>
                 <img
                   src={selectedRoom.image}
                   alt={selectedRoom.title}
                   style={{ width: '80px', height: '80px', borderRadius: '10px', objectFit: 'cover' }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '11px', color: '#0d9488', fontWeight: 700 }}>
+                  <div style={{ fontSize: '11px', color: '#0f766e', fontWeight: 700 }}>
                     {selectedRoom.campusDistance}
                   </div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '2px 0 4px' }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '2px 0 var(--space-1)' }}>
                     {selectedRoom.title}
                   </h4>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#0d9488' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f766e' }}>
                     {selectedRoom.priceDisplay}/tháng
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                 <Link
                   to={`/properties/detail?id=${selectedRoom.id}`}
                   style={{
@@ -266,10 +267,10 @@ export default function MapSearchPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '4px',
-                    padding: '8px',
+                    gap: 'var(--space-1)',
+                    padding: 'var(--space-2)',
                     borderRadius: '8px',
-                    backgroundColor: '#0d9488',
+                    backgroundColor: '#0f766e',
                     color: '#ffffff',
                     fontWeight: 700,
                     fontSize: '13px',

@@ -1,4 +1,4 @@
-// Prototype Demo Fixtures for Staff Portal (HL_RCS)
+// Prototype Demo Fixtures for nhân viên Portal (HL_RCS)
 export const MOCK_STAFF_VERIFICATIONS = [
   {
     "id": "VR-101",
@@ -99,7 +99,7 @@ export const MOCK_STAFF_VERIFICATIONS = [
       },
       {
         "timestamp": "2026-10-21T02:00:00.000Z",
-        "actor": "Nguyễn Văn An (Staff)",
+        "actor": "Nguyễn Văn An (nhân viên)",
         "action": "REQUEST_MORE_INFO",
         "note": "Yêu cầu bổ sung tài liệu PCCC có dấu đỏ."
       }
@@ -135,7 +135,7 @@ export const MOCK_STAFF_ASSISTANCE = [
     "title": "Yêu cầu kiểm tra & cấp lại badge Xác minh nhà trọ sau khi hoàn thiện PCCC",
     "category": "VERIFICATION",
     "categoryLabel": "Xác minh / xét duyệt",
-    "description": "Chào ban quản trị, tôi đã hoàn thiện bổ sung đầy đủ hệ thống bình bọt và tiêu lệnh PCCC theo biên bản hướng dẫn. Nhờ Staff kiểm tra lại hồ sơ để khôi phục huy hiệu Xác minh xanh cho nhà trọ Minh Quân.",
+    "description": "Chào nhân viên, tôi đã hoàn thiện bổ sung đầy đủ hệ thống bình bọt và tiêu lệnh PCCC theo biên bản hướng dẫn. Nhờ nhân viên kiểm tra lại hồ sơ để khôi phục huy hiệu Xác minh xanh cho nhà trọ Minh Quân.",
     "hostId": "0987654321",
     "hostName": "Trần Gia Huy (Host A)",
     "hostPhone": "0987654321",
@@ -151,7 +151,7 @@ export const MOCK_STAFF_ASSISTANCE = [
         "id": "M1",
         "senderRole": "HOST",
         "senderName": "Trần Gia Huy",
-        "text": "Chào ban quản trị, tôi đã hoàn thiện hồ sơ PCCC bổ sung.",
+        "text": "Chào nhân viên, tôi đã hoàn thiện hồ sơ PCCC bổ sung.",
         "timestamp": "2026-10-21T03:15:00.000Z"
       }
     ],
@@ -192,7 +192,7 @@ export const MOCK_STAFF_ASSISTANCE = [
       {
         "id": "M3",
         "senderRole": "STAFF",
-        "senderName": "Lê Thanh Thảo (Staff)",
+        "senderName": "Lê Thanh Thảo (nhân viên)",
         "text": "Đã cập nhật biểu phí mới 3.500đ cho nhà trọ Sen Chiểu.",
         "timestamp": "2026-10-19T10:00:00.000Z"
       }

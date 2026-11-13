@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -38,7 +40,7 @@ export default function HomePage() {
       {/* 1. HERO SECTION */}
       <section className="hero-section" style={{
         position: 'relative',
-        padding: '80px 16px 100px',
+        padding: '80px var(--space-4) 100px',
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
         color: '#ffffff',
         textAlign: 'center',
@@ -48,15 +50,15 @@ export default function HomePage() {
           <div className="hero-badge" style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '6px 16px',
+            gap: 'var(--space-2)',
+            padding: '6px var(--space-4)',
             borderRadius: '9999px',
             backgroundColor: 'rgba(13, 148, 136, 0.2)',
-            border: '1px solid #0d9488',
+            border: '1px solid #0f766e',
             color: '#2dd4bf',
             fontSize: '13px',
             fontWeight: 700,
-            marginBottom: '24px',
+            marginBottom: 'var(--space-6)',
           }}>
             <span className="live-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2dd4bf' }} />
             <span>Nền tảng kết nối phòng trọ trực tiếp số 1 tại Hòa Lạc</span>
@@ -74,7 +76,7 @@ export default function HomePage() {
 
           <p className="hero-description" style={{
             fontSize: 'clamp(14px, 2vw, 17px)',
-            color: '#94a3b8',
+            color: 'var(--ui-muted)',
             maxWidth: '680px',
             margin: '0 auto 36px',
             lineHeight: 1.6,
@@ -86,23 +88,23 @@ export default function HomePage() {
           <div className="search-box-card" style={{
             background: '#ffffff',
             borderRadius: '16px',
-            padding: '16px',
+            padding: 'var(--space-4)',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
             textAlign: 'left',
           }}>
             <form id="searchForm" onSubmit={handleSearchSubmit} style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr)) auto',
-              gap: '12px',
+              '--grid-columns': 'repeat(auto-fit, minmax(200px, 1fr)) auto',
+              gap: 'var(--space-3)',
               alignItems: 'center',
             }}>
               {/* Location */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                <MapPin size={20} style={{ color: '#0d9488', flexShrink: 0 }} />
+                <MapPin size={20} style={{ color: '#0f766e', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <label htmlFor="filterLocation" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <UIField htmlFor="filterLocation" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--ui-muted)', textTransform: 'uppercase' }}>
                     Khu vực
-                  </label>
+                  </UIField>
                   <select
                     id="filterLocation"
                     value={filterLocation}
@@ -120,11 +122,11 @@ export default function HomePage() {
 
               {/* Price */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                <Zap size={20} style={{ color: '#0d9488', flexShrink: 0 }} />
+                <Zap size={20} style={{ color: '#0f766e', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <label htmlFor="filterPrice" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <UIField htmlFor="filterPrice" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--ui-muted)', textTransform: 'uppercase' }}>
                     Khoảng giá
-                  </label>
+                  </UIField>
                   <select
                     id="filterPrice"
                     value={filterPrice}
@@ -142,11 +144,11 @@ export default function HomePage() {
 
               {/* Type */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                <Home size={20} style={{ color: '#0d9488', flexShrink: 0 }} />
+                <Home size={20} style={{ color: '#0f766e', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <label htmlFor="filterType" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <UIField htmlFor="filterType" style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--ui-muted)', textTransform: 'uppercase' }}>
                     Loại phòng
-                  </label>
+                  </UIField>
                   <select
                     id="filterType"
                     value={filterType}
@@ -162,14 +164,14 @@ export default function HomePage() {
               </div>
 
               {/* Submit Button */}
-              <button
+              <UIButton
                 type="submit"
                 style={{
                   height: '100%',
                   minHeight: '48px',
-                  padding: '0 24px',
+                  padding: '0 var(--space-6)',
                   borderRadius: '10px',
-                  backgroundColor: '#0d9488',
+                  backgroundColor: '#0f766e',
                   color: '#ffffff',
                   border: 'none',
                   fontWeight: 700,
@@ -178,48 +180,48 @@ export default function HomePage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: 'var(--space-2)',
                   transition: 'background-color 0.15s ease',
                 }}
               >
                 <Search size={18} />
                 <span>Tìm phòng</span>
-              </button>
+              </UIButton>
             </form>
           </div>
         </div>
       </section>
 
       {/* 2. STATS BAR */}
-      <section style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '24px 16px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', textAlign: 'center' }}>
+      <section style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: 'var(--space-6) var(--space-4)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', textAlign: 'center' }}>
           <div>
-            <div style={{ fontSize: '28px', fontWeight: 800, color: '#0d9488' }}>100%</div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Xác minh chính chủ</div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f766e' }}>100%</div>
+            <div style={{ fontSize: '13px', color: 'var(--ui-muted)', fontWeight: 600 }}>Xác minh chính chủ</div>
           </div>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a' }}>1.200+</div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Phòng trọ quanh ĐH FPT</div>
+            <div style={{ fontSize: '13px', color: 'var(--ui-muted)', fontWeight: 600 }}>Phòng trọ quanh ĐH FPT</div>
           </div>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#2563eb' }}>0 đồng</div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Phí môi giới người thuê</div>
+            <div style={{ fontSize: '13px', color: 'var(--ui-muted)', fontWeight: 600 }}>Phí môi giới người thuê</div>
           </div>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#10b981' }}>24/7</div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Hỗ trợ sinh viên Hòa Lạc</div>
+            <div style={{ fontSize: '13px', color: 'var(--ui-muted)', fontWeight: 600 }}>Hỗ trợ sinh viên Hòa Lạc</div>
           </div>
         </div>
       </section>
 
       {/* 3. FEATURED ROOMS SECTION */}
-      <section style={{ padding: '60px 16px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+      <section style={{ padding: '60px var(--space-4)', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
           <div>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               PHÒNG TRỌ XÁC THỰC
             </span>
-            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: '4px 0 0' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: 'var(--space-1) 0 0' }}>
               Phòng nổi bật còn trống tại Hòa Lạc
             </h2>
           </div>
@@ -231,7 +233,7 @@ export default function HomePage() {
               gap: '6px',
               fontSize: '14px',
               fontWeight: 700,
-              color: '#0d9488',
+              color: '#0f766e',
               textDecoration: 'none',
             }}
           >
@@ -244,8 +246,8 @@ export default function HomePage() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '24px',
+          '--grid-columns': 'repeat(auto-fill, minmax(340px, 1fr))',
+          gap: 'var(--space-6)',
         }}>
           {featuredRooms.map((room) => (
             <article
@@ -271,15 +273,15 @@ export default function HomePage() {
                   position: 'absolute',
                   top: '12px',
                   left: '12px',
-                  backgroundColor: '#0d9488',
+                  backgroundColor: '#0f766e',
                   color: '#ffffff',
-                  padding: '4px 10px',
+                  padding: 'var(--space-1) 10px',
                   borderRadius: '9999px',
                   fontSize: '12px',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: 'var(--space-1)',
                 }}>
                   <ShieldCheck size={14} />
                   <span>Chính chủ xác thực</span>
@@ -290,7 +292,7 @@ export default function HomePage() {
                   left: '12px',
                   backgroundColor: 'rgba(15, 23, 42, 0.85)',
                   color: '#ffffff',
-                  padding: '4px 10px',
+                  padding: 'var(--space-1) 10px',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -301,18 +303,18 @@ export default function HomePage() {
 
               <div style={{ padding: '18px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--ui-muted)', marginBottom: '6px' }}>
                     <MapPin size={14} />
                     <span>{room.campusDistance}</span>
                     <span>•</span>
                     <span>{room.area}</span>
                   </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.4 }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 var(--space-2)', lineHeight: 1.4 }}>
                     <Link to={`/properties/detail?id=${room.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                       {room.title}
                     </Link>
                   </h3>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '13px', color: 'var(--ui-muted)', margin: '0 0 var(--space-3)', lineHeight: 1.5 }}>
                     {room.location}
                   </p>
                 </div>
@@ -321,23 +323,23 @@ export default function HomePage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  paddingTop: '12px',
+                  paddingTop: 'var(--space-3)',
                   borderTop: '1px solid #f1f5f9',
                 }}>
                   <div>
-                    <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block' }}>Giá thuê niêm yết</span>
-                    <strong style={{ fontSize: '18px', fontWeight: 800, color: '#0d9488' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--ui-muted)', display: 'block' }}>Giá thuê niêm yết</span>
+                    <strong style={{ fontSize: '18px', fontWeight: 800, color: '#0f766e' }}>
                       {room.priceDisplay}
                     </strong>
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>/tháng</span>
+                    <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>/tháng</span>
                   </div>
                   <Link
                     to={`/properties/detail?id=${room.id}`}
                     style={{
-                      padding: '8px 16px',
+                      padding: 'var(--space-2) var(--space-4)',
                       borderRadius: '8px',
                       backgroundColor: '#f0fdfa',
-                      color: '#0d9488',
+                      color: '#0f766e',
                       border: '1px solid #99f6e4',
                       fontWeight: 700,
                       fontSize: '13px',
@@ -354,21 +356,21 @@ export default function HomePage() {
       </section>
 
       {/* 4. SERVICES SHORTCUT */}
-      <section style={{ backgroundColor: '#f8fafc', padding: '60px 16px', borderTop: '1px solid #e2e8f0' }}>
+      <section style={{ backgroundColor: '#f8fafc', padding: '60px var(--space-4)', borderTop: '1px solid #e2e8f0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               TIỆN ÍCH QUANH TRỌ
             </span>
             <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: '6px 0 10px' }}>
               Dịch vụ hỗ trợ sinh viên tại Hòa Lạc
             </h2>
-            <p style={{ fontSize: '14px', color: '#64748b' }}>
+            <p style={{ fontSize: '14px', color: 'var(--ui-muted)' }}>
               Đầy đủ các dịch vụ vận chuyển, giặt là, sửa chữa và vệ sinh phòng trọ với giá ưu đãi sinh viên.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
             {[
               { title: 'Chuyển trọ sinh viên', desc: 'Xe tải, ba gác hỗ trợ chuyển trọ trọn gói giá rẻ', to: '/services?category=moving', icon: Wrench },
               { title: 'Giặt là công nghiệp', desc: 'Giặt sấy lấy ngay, giao nhận tận phòng trọ trong 3km', to: '/services?category=laundry', icon: Zap },
@@ -381,13 +383,13 @@ export default function HomePage() {
                 style={{
                   background: '#ffffff',
                   borderRadius: '14px',
-                  padding: '24px',
+                  padding: 'var(--space-6)',
                   border: '1px solid #e2e8f0',
                   textDecoration: 'none',
                   color: 'inherit',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '12px',
+                  gap: 'var(--space-3)',
                   boxShadow: '0 1px 3px 0 rgba(15, 23, 42, 0.05)',
                 }}
               >
@@ -396,7 +398,7 @@ export default function HomePage() {
                   height: '44px',
                   borderRadius: '10px',
                   backgroundColor: '#f0fdfa',
-                  color: '#0d9488',
+                  color: '#0f766e',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -404,8 +406,8 @@ export default function HomePage() {
                   <srv.icon size={22} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{srv.title}</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>{srv.desc}</p>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0d9488', display: 'flex', alignItems: 'center', gap: '4px', marginTop: 'auto' }}>
+                <p style={{ fontSize: '13px', color: 'var(--ui-muted)', margin: 0, lineHeight: 1.5 }}>{srv.desc}</p>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', marginTop: 'auto' }}>
                   <span>Tìm hiểu ngay</span>
                   <ArrowRight size={14} />
                 </span>

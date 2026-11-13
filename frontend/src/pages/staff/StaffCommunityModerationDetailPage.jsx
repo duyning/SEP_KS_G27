@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -55,7 +56,7 @@ export default function StaffCommunityModerationDetailPage() {
       status: newStatus,
       statusLabel,
       decisionNote: note,
-      reviewedBy: user?.fullName || 'Nguyễn Văn An (Staff)',
+      reviewedBy: user?.fullName || 'Nguyễn Văn An (nhân viên)',
       reviewedAt: new Date().toISOString()
     };
     setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
@@ -95,20 +96,20 @@ export default function StaffCommunityModerationDetailPage() {
       />
 
       {/* Back Link & Header */}
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
         <Link
           to="/staff/community"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0d9488', fontWeight: '600', textDecoration: 'none', marginBottom: '8px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0f766e', fontWeight: '600', textDecoration: 'none', marginBottom: 'var(--space-2)' }}
         >
           <ArrowLeft size={16} /> Quay lại danh sách kiểm duyệt
         </Link>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0d9488', marginRight: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px var(--space-2)', borderRadius: '4px', background: '#f0fdfa', color: '#0f766e', marginRight: 'var(--space-2)' }}>
               {currentPost.typeLabel}
             </span>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>Mã bài: {currentPost.id}</span>
-            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: '4px 0 0 0' }}>
+            <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Mã bài: {currentPost.id}</span>
+            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 'var(--space-1) 0 0 0' }}>
               {currentPost.title}
             </h1>
           </div>
@@ -117,7 +118,7 @@ export default function StaffCommunityModerationDetailPage() {
       </div>
 
       {/* Split Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', '--grid-columns': '2fr 1fr', gap: '20px', alignItems: 'flex-start' }}>
         
         {/* Left Column (68%) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -127,34 +128,34 @@ export default function StaffCommunityModerationDetailPage() {
               Nội dung bài viết
             </h2>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', background: '#f8fafc', padding: 'var(--space-3) var(--space-4)', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: 'var(--space-4)', fontSize: '13px' }}>
               {currentPost.priceDisplay && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <DollarSign size={15} style={{ color: '#0d9488' }} />
+                  <DollarSign size={15} style={{ color: '#0f766e' }} />
                   <span>Mức giá: <strong>{currentPost.priceDisplay}</strong></span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <MapPin size={15} style={{ color: '#0d9488' }} />
+                <MapPin size={15} style={{ color: '#0f766e' }} />
                 <span>Khu vực: <strong>{currentPost.location}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Clock size={15} style={{ color: '#64748b' }} />
+                <Clock size={15} style={{ color: 'var(--ui-muted)' }} />
                 <span>Ngày gửi: {new Date(currentPost.createdAt).toLocaleDateString('vi-VN')}</span>
               </div>
             </div>
 
-            <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', whiteSpace: 'pre-line', margin: '0 0 16px 0' }}>
+            <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', whiteSpace: 'pre-line', margin: '0 0 var(--space-4) 0' }}>
               {currentPost.content}
             </p>
 
             {/* Images */}
             {currentPost.images && currentPost.images.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '13px', fontWeight: '700', color: '#475569', marginBottom: '8px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: '700', color: '#475569', marginBottom: 'var(--space-2)' }}>
                   Hình ảnh đính kèm ({currentPost.images.length})
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                <div style={{ display: 'grid', '--grid-columns': 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
                   {currentPost.images.map((img, i) => (
                     <div key={i} style={{ height: '140px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
                       <img src={img} alt="Post Attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -170,73 +171,73 @@ export default function StaffCommunityModerationDetailPage() {
             <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 14px 0' }}>
               Thông tin người đăng bài
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', '--grid-columns': '1fr 1fr', gap: 'var(--space-3)', fontSize: '14px' }}>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Họ và tên:</span>
+                <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Họ và tên:</span>
                 <div style={{ fontWeight: '700', color: '#0f172a' }}>{currentPost.authorName}</div>
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Số điện thoại liên hệ:</span>
-                <div style={{ fontWeight: '700', color: '#0d9488' }}>{currentPost.authorPhone}</div>
+                <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Số điện thoại liên hệ:</span>
+                <div style={{ fontWeight: '700', color: '#0f766e' }}>{currentPost.authorPhone}</div>
               </div>
             </div>
           </section>
         </div>
 
         {/* Right Column (32%) - Decision Aside */}
-        <div style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: '0 0 14px 0' }}>
               Quyết định kiểm duyệt
             </h3>
 
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái hiện tại:</span>
-              <div style={{ marginTop: '4px' }}>
+            <div style={{ background: '#f8fafc', padding: 'var(--space-3)', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: 'var(--space-4)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Trạng thái hiện tại:</span>
+              <div style={{ marginTop: 'var(--space-1)' }}>
                 <StatusBadge status={currentPost.status}>{currentPost.statusLabel}</StatusBadge>
               </div>
             </div>
 
             {currentPost.decisionNote && (
-              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '10px 12px', marginBottom: '16px', fontSize: '13px', color: '#92400e' }}>
+              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '10px var(--space-3)', marginBottom: 'var(--space-4)', fontSize: '13px', color: '#92400e' }}>
                 <strong>Ghi chú xử lý:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>{currentPost.decisionNote}</p>
+                <p style={{ margin: 'var(--space-1) 0 0 0' }}>{currentPost.decisionNote}</p>
               </div>
             )}
 
             {!isTerminal ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <button
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <UIButton
                   type="button"
                   className="p-button primary"
                   style={{ background: '#10b981', borderColor: '#10b981', padding: '10px' }}
                   onClick={() => setIsApproveOpen(true)}
                 >
                   <CheckCircle2 size={16} /> Duyệt bài viết (Công khai)
-                </button>
-                <button
+                </UIButton>
+                <UIButton
                   type="button"
                   className="p-button"
                   style={{ color: '#ea580c', borderColor: '#fdba74', padding: '10px' }}
                   onClick={() => setIsChangesOpen(true)}
                 >
                   <AlertCircle size={16} /> Yêu cầu chỉnh sửa
-                </button>
-                <button
+                </UIButton>
+                <UIButton
                   type="button"
                   className="p-button"
                   style={{ color: '#ef4444', borderColor: '#fca5a5', padding: '10px' }}
                   onClick={() => setIsRejectOpen(true)}
                 >
                   <XCircle size={16} /> Từ chối bài viết
-                </button>
+                </UIButton>
               </div>
             ) : (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#166534' }}>
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>✓</div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '700' }}>Bài viết đã được kiểm duyệt</h4>
+                <div style={{ fontSize: '24px', marginBottom: 'var(--space-1)' }}>✓</div>
+                <h4 style={{ margin: '0 0 var(--space-1) 0', fontSize: '14px', fontWeight: '700' }}>Bài viết đã được kiểm duyệt</h4>
                 <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
-                  Xử lý bởi: <strong>{currentPost.reviewedBy || 'Staff'}</strong>
+                  Xử lý bởi: <strong>{currentPost.reviewedBy || 'nhân viên'}</strong>
                 </p>
               </div>
             )}
@@ -256,18 +257,18 @@ export default function StaffCommunityModerationDetailPage() {
             <p style={{ margin: 0, fontSize: '14px', color: '#334155' }}>
               Bạn có chắc chắn muốn phê duyệt bài viết <strong>"{currentPost.title}"</strong> để xuất hiện công khai trên trang Cộng đồng?
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
-              <button type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', marginTop: '10px' }}>
+              <UIButton type="button" className="p-button" onClick={() => setIsApproveOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#10b981', borderColor: '#10b981' }}
                 onClick={handleApprove}
               >
                 Đồng ý duyệt
-              </button>
+              </UIButton>
             </div>
           </div>
         </Modal>
@@ -289,20 +290,20 @@ export default function StaffCommunityModerationDetailPage() {
               placeholder="Nhập yêu cầu chỉnh sửa..."
               value={decisionNote}
               onChange={e => setDecisionNote(e.target.value)}
-              style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+              style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+              <UIButton type="button" className="p-button" onClick={() => setIsChangesOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#ea580c', borderColor: '#ea580c' }}
                 onClick={handleRequestChanges}
               >
                 Gửi yêu cầu chỉnh sửa
-              </button>
+              </UIButton>
             </div>
           </div>
         </Modal>
@@ -324,20 +325,20 @@ export default function StaffCommunityModerationDetailPage() {
               placeholder="Nhập lý do từ chối..."
               value={decisionNote}
               onChange={e => setDecisionNote(e.target.value)}
-              style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+              style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+              <UIButton type="button" className="p-button" onClick={() => setIsRejectOpen(false)}>
                 Hủy
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="button"
                 className="p-button primary"
                 style={{ background: '#ef4444', borderColor: '#ef4444' }}
                 onClick={handleReject}
               >
                 Xác nhận từ chối
-              </button>
+              </UIButton>
             </div>
           </div>
         </Modal>

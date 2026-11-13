@@ -34,6 +34,9 @@ public class ServiceRegistrationController {
     @GetMapping("/mine")
     public ApiResponse<List<ServiceRegistrationService.RegistrationInfo>> mine() { return ApiResponse.success(service.mine()); }
 
+    @GetMapping("/services")
+    public ApiResponse<List<ServiceRegistrationService.RegistrationInfo>> myServices() { return ApiResponse.success(service.myServices()); }
+
     @PostMapping(value = "/services/{id}/changes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ServiceRegistrationService.RegistrationInfo> change(@PathVariable Integer id,
             @Valid @RequestPart("details") org.hlrcs.dto.request.ServiceChangeRequest details,

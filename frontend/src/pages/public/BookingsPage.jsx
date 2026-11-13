@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -83,14 +84,14 @@ export default function BookingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: '1120px', margin: '0 auto', padding: 'var(--space-6) var(--space-4)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
             Lịch xem phòng của bạn ({bookings.length})
           </h1>
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: 'var(--ui-muted)', margin: 0 }}>
             Theo dõi tiến độ, thông tin cuộc hẹn và số liên hệ chủ trọ khi đến xem phòng thực tế.
           </p>
         </div>
@@ -100,7 +101,7 @@ export default function BookingsPage() {
           style={{
             padding: '10px 18px',
             borderRadius: '10px',
-            backgroundColor: '#0d9488',
+            backgroundColor: '#0f766e',
             color: '#ffffff',
             fontWeight: 700,
             fontSize: '14px',
@@ -114,7 +115,7 @@ export default function BookingsPage() {
       <DemoNoticeBanner message="Dữ liệu lịch hẹn hiển thị từ prototype fixture do backend chưa cung cấp API Viewing Request." />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', overflowX: 'auto', paddingBottom: 'var(--space-1)' }}>
         {[
           ['ALL', 'Tất cả'],
           ['PENDING', 'Chờ xác nhận'],
@@ -124,15 +125,15 @@ export default function BookingsPage() {
         ].map(([key, label]) => {
           const active = activeStatus === key;
           return (
-            <button
+            <UIButton
               key={key}
               type="button"
               onClick={() => setParams(key === 'ALL' ? {} : { status: key })}
               style={{
-                padding: '8px 18px',
+                padding: 'var(--space-2) 18px',
                 borderRadius: '9999px',
-                border: active ? '1px solid #0d9488' : '1px solid #e2e8f0',
-                backgroundColor: active ? '#0d9488' : '#ffffff',
+                border: active ? '1px solid #0f766e' : '1px solid #e2e8f0',
+                backgroundColor: active ? '#0f766e' : '#ffffff',
                 color: active ? '#ffffff' : '#475569',
                 fontWeight: active ? 700 : 600,
                 fontSize: '13px',
@@ -141,26 +142,26 @@ export default function BookingsPage() {
               }}
             >
               {label}
-            </button>
+            </UIButton>
           );
         })}
       </div>
 
       {/* Bookings List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
         {filteredBookings.length === 0 ? (
           <div style={{
             background: '#ffffff',
             borderRadius: '16px',
-            padding: '48px 20px',
+            padding: 'var(--space-12) 20px',
             textAlign: 'center',
             border: '1px solid #e2e8f0',
           }}>
-            <CalendarCheck size={40} style={{ color: '#cbd5e1', margin: '0 auto 12px' }} />
+            <CalendarCheck size={40} style={{ color: '#cbd5e1', margin: '0 auto var(--space-3)' }} />
             <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
               Không có lịch hẹn nào trong mục này
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+            <p style={{ fontSize: '13px', color: 'var(--ui-muted)', margin: 0 }}>
               Các lịch hẹn xem phòng với chủ trọ sẽ được hiển thị và cập nhật trạng thái tại đây.
             </p>
           </div>
@@ -187,26 +188,26 @@ export default function BookingsPage() {
               />
 
               <div style={{ flex: 1, minWidth: '240px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#0d9488', backgroundColor: '#f0fdfa', padding: '2px 8px', borderRadius: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', backgroundColor: '#f0fdfa', padding: '2px var(--space-2)', borderRadius: '4px' }}>
                     {b.id}
                   </span>
                   <StatusBadge status={b.status} label={b.statusLabel} />
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 var(--space-1)' }}>
                   {b.roomTitle} ({b.roomNumber})
                 </h3>
-                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                   <MapPin size={14} />
                   <span>{b.address}</span>
                 </div>
                 <div style={{ fontSize: '13px', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={15} style={{ color: '#0d9488' }} />
+                  <Clock size={15} style={{ color: '#0f766e' }} />
                   <span>Thời gian hẹn: <strong>{b.time}</strong> ngày <strong>{b.date}</strong></span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '150px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', minWidth: '150px' }}>
                 <a
                   href={`tel:${b.hostPhone}`}
                   style={{
@@ -214,10 +215,10 @@ export default function BookingsPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    padding: '8px 14px',
+                    padding: 'var(--space-2) 14px',
                     borderRadius: '8px',
                     backgroundColor: '#f0fdfa',
-                    color: '#0d9488',
+                    color: '#0f766e',
                     border: '1px solid #99f6e4',
                     fontWeight: 700,
                     fontSize: '13px',
@@ -229,11 +230,11 @@ export default function BookingsPage() {
                 </a>
 
                 {b.status === 'PENDING' && (
-                  <button
+                  <UIButton
                     type="button"
                     onClick={() => setCancellingBooking(b)}
                     style={{
-                      padding: '8px 14px',
+                      padding: 'var(--space-2) 14px',
                       borderRadius: '8px',
                       backgroundColor: '#ffffff',
                       color: '#ef4444',
@@ -244,7 +245,7 @@ export default function BookingsPage() {
                     }}
                   >
                     Hủy lịch hẹn
-                  </button>
+                  </UIButton>
                 )}
               </div>
             </article>
@@ -259,20 +260,20 @@ export default function BookingsPage() {
             Bạn có chắc chắn muốn hủy lịch hẹn xem <strong>{cancellingBooking.roomTitle}</strong> vào lúc {cancellingBooking.time} ngày {cancellingBooking.date}?
           </p>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button
+            <UIButton
               type="button"
               onClick={() => setCancellingBooking(null)}
-              style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
+              style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
             >
               Giữ lịch hẹn
-            </button>
-            <button
+            </UIButton>
+            <UIButton
               type="button"
               onClick={confirmCancel}
-              style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: '#e11d48', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+              style={{ padding: 'var(--space-2) 18px', borderRadius: '8px', border: 'none', background: '#e11d48', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
             >
               Xác nhận hủy
-            </button>
+            </UIButton>
           </div>
         </Modal>
       )}

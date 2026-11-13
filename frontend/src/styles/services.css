@@ -25,7 +25,7 @@ a, a:visited {
 .svc-breadcrumb-bar {
   background: #ffffff;
   border-bottom: 1px solid var(--slate-200);
-  padding: 11px 0;
+  padding:11px 0;
   font-size: 13px;
 }
 
@@ -34,16 +34,16 @@ a, a:visited {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .svc-breadcrumb-list {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   list-style: none;
-  margin: 0;
-  padding: 0;
+  margin:0;
+  padding:0;
 }
 
 .svc-breadcrumb-list a {
@@ -65,11 +65,11 @@ a, a:visited {
 .svc-bc-hint {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap:5px;
   font-size: 12.5px;
   color: var(--slate-500);
   background: var(--slate-100);
-  padding: 3px 10px;
+  padding:3px 10px;
   border-radius: 20px;
 }
 
@@ -79,7 +79,7 @@ a, a:visited {
 .svc-page-header {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #134e48 100%);
   color: #ffffff;
-  padding: 36px 0 32px;
+  padding:36px 0 var(--space-8);
   position: relative;
   overflow: hidden;
 }
@@ -101,7 +101,7 @@ a, a:visited {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap:var(--space-6);
   flex-wrap: wrap;
 }
 
@@ -110,15 +110,15 @@ a, a:visited {
 .svc-header-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap:6px;
+  padding:var(--space-1) var(--space-3);
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 600;
   color: #a7f3d0;
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
 }
 
 .svc-header-badge-dot {
@@ -135,22 +135,22 @@ a, a:visited {
   letter-spacing: -0.02em;
   color: #ffffff;
   line-height: 1.25;
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .svc-page-subtitle {
   font-size: 14.5px;
-  color: #94a3b8;
+  color:var(--ui-muted, #475569);
   max-width: 540px;
   line-height: 1.55;
 }
 
 .svc-header-stats {
   display: flex;
-  gap: 20px;
+  gap:20px;
   flex-shrink: 0;
   align-self: flex-end;
-  padding-bottom: 2px;
+  padding-bottom:2px;
 }
 
 .svc-stat-item {
@@ -168,8 +168,8 @@ a, a:visited {
 
 .svc-stat-label {
   font-size: 11.5px;
-  color: #94a3b8;
-  margin-top: 4px;
+  color:var(--ui-muted, #475569);
+  margin-top:var(--space-1);
   display: block;
   white-space: nowrap;
 }
@@ -180,13 +180,13 @@ a, a:visited {
 .svc-categories-section {
   background: #ffffff;
   border-bottom: 1px solid var(--slate-200);
-  padding: 22px 0;
+  padding:22px 0;
 }
 
 .svc-categories-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -202,15 +202,15 @@ a, a:visited {
 
 .svc-cat-tabs {
   display: flex;
-  gap: 8px;
+  gap:var(--space-2);
   flex-wrap: wrap;
 }
 
 .svc-cat-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
+  gap:7px;
+  padding:var(--space-2) var(--space-4);
   border: 1.5px solid var(--slate-200);
   background: #ffffff;
   border-radius: var(--radius-full);
@@ -246,7 +246,7 @@ a, a:visited {
   font-size: 11.5px;
   font-weight: 700;
   background: rgba(0,0,0,0.08);
-  padding: 1px 6px;
+  padding:1px 6px;
   border-radius: 20px;
   line-height: 1.5;
 }
@@ -261,7 +261,7 @@ a, a:visited {
 .svc-toolbar {
   background: #ffffff;
   border-bottom: 1px solid var(--slate-200);
-  padding: 14px 0;
+  padding:14px 0;
   position: sticky;
   top: 60px;
   z-index: 90;
@@ -271,7 +271,7 @@ a, a:visited {
 .svc-toolbar-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -296,7 +296,7 @@ a, a:visited {
 .svc-search-input {
   width: 100%;
   height: 40px;
-  padding: 0 36px 0 40px;
+  padding:0 36px 0 40px;
   border: 1.5px solid var(--slate-200);
   border-radius: var(--radius-full);
   background: var(--slate-50);
@@ -342,7 +342,7 @@ a, a:visited {
 .svc-filter-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
 }
 
 .svc-filter-label {
@@ -354,7 +354,7 @@ a, a:visited {
 
 .svc-filter-select {
   height: 40px;
-  padding: 0 32px 0 12px;
+  padding:0 var(--space-8) 0 var(--space-3);
   border: 1.5px solid var(--slate-200);
   background: var(--slate-50);
   border-radius: var(--radius-md);
@@ -377,7 +377,7 @@ a, a:visited {
 }
 
 .svc-toolbar-results {
-  margin-left: auto;
+  margin-left:auto;
   font-size: 13px;
   color: var(--slate-500);
   white-space: nowrap;
@@ -393,7 +393,7 @@ a, a:visited {
    6. MAIN LAYOUT (CONTENT AREA)
    ========================================= */
 .svc-main {
-  padding: 32px 0 80px;
+  padding:var(--space-8) 0 80px;
 }
 
 /* =========================================
@@ -402,7 +402,7 @@ a, a:visited {
 .svc-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  gap:22px;
 }
 
 @media (max-width: 1024px) {
@@ -463,7 +463,7 @@ a, a:visited {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap:var(--space-2);
   background: linear-gradient(135deg, var(--slate-100) 0%, #e8f4f3 100%);
   color: var(--slate-400);
 }
@@ -487,8 +487,8 @@ a, a:visited {
   left: 10px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap:5px;
+  padding:var(--space-1) 10px;
   border-radius: var(--radius-full);
   font-size: 11px;
   font-weight: 700;
@@ -520,11 +520,11 @@ a, a:visited {
 
 /* Card Body */
 .svc-card-body {
-  padding: 16px 18px 18px;
+  padding:var(--space-4) 18px 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 0;
+  gap:0;
 }
 
 .svc-card-name {
@@ -532,7 +532,7 @@ a, a:visited {
   font-weight: 700;
   color: var(--slate-900);
   line-height: 1.35;
-  margin-bottom: 6px;
+  margin-bottom:6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -549,10 +549,10 @@ a, a:visited {
 .svc-card-provider {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 12.5px;
   color: var(--slate-500);
-  margin-bottom: 10px;
+  margin-bottom:10px;
 }
 
 .svc-card-provider-name {
@@ -568,17 +568,17 @@ a, a:visited {
 .svc-card-area {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap:5px;
   font-size: 12.5px;
   color: var(--slate-500);
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .svc-card-desc {
   font-size: 13px;
   color: var(--slate-500);
   line-height: 1.5;
-  margin-bottom: 14px;
+  margin-bottom:14px;
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -590,14 +590,14 @@ a, a:visited {
 .svc-card-types {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 14px;
+  gap:5px;
+  margin-bottom:14px;
 }
 
 .svc-type-chip {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  padding:3px var(--space-2);
   background: var(--slate-100);
   border-radius: var(--radius-full);
   font-size: 11.5px;
@@ -610,7 +610,7 @@ a, a:visited {
 .svc-card-price {
   font-size: 12.5px;
   color: var(--slate-500);
-  margin-bottom: 14px;
+  margin-bottom:14px;
 }
 
 .svc-card-price strong {
@@ -623,7 +623,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap:6px;
   width: 100%;
   height: 40px;
   background: var(--primary-light);
@@ -653,7 +653,7 @@ a, a:visited {
 .svc-skeleton-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  gap:22px;
 }
 
 @media (max-width: 1024px) { .svc-skeleton-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -674,10 +674,10 @@ a, a:visited {
 }
 
 .svc-skeleton-body {
-  padding: 16px 18px 18px;
+  padding:var(--space-4) 18px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap:10px;
 }
 
 .svc-skeleton-line {
@@ -690,7 +690,7 @@ a, a:visited {
 .svc-skeleton-line.w-full { height: 18px; width: 100%; }
 .svc-skeleton-line.w-3-4 { height: 14px; width: 75%; }
 .svc-skeleton-line.w-1-2 { height: 13px; width: 50%; }
-.svc-skeleton-line.w-btn { height: 40px; width: 100%; border-radius: var(--radius-md); margin-top: 4px; }
+.svc-skeleton-line.w-btn { height: 40px; width: 100%; border-radius: var(--radius-md); margin-top:var(--space-1); }
 
 @keyframes skeletonShimmer {
   0% { background-position: 200% 0; }
@@ -700,7 +700,7 @@ a, a:visited {
 /* Empty state */
 .svc-empty-state {
   text-align: center;
-  padding: 64px 20px;
+  padding:64px 20px;
   grid-column: 1 / -1;
 }
 
@@ -712,7 +712,7 @@ a, a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin:0 auto var(--space-4);
   color: var(--slate-400);
 }
 
@@ -720,28 +720,28 @@ a, a:visited {
   font-size: 18px;
   font-weight: 700;
   color: var(--slate-900);
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .svc-empty-desc {
   font-size: 14px;
   color: var(--slate-500);
   max-width: 360px;
-  margin: 0 auto 20px;
+  margin:0 auto 20px;
   line-height: 1.55;
 }
 
 .svc-empty-hint {
   font-size: 13px;
   color: var(--slate-400);
-  margin-bottom: 16px;
+  margin-bottom:var(--space-4);
 }
 
 .svc-btn-clear {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 20px;
+  gap:6px;
+  padding:9px 20px;
   background: var(--slate-900);
   color: #ffffff;
   border-radius: var(--radius-md);
@@ -761,7 +761,7 @@ a, a:visited {
 /* Error state */
 .svc-error-state {
   text-align: center;
-  padding: 64px 20px;
+  padding:64px 20px;
   grid-column: 1 / -1;
 }
 
@@ -773,7 +773,7 @@ a, a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin:0 auto var(--space-4);
   color: var(--danger);
 }
 
@@ -781,14 +781,14 @@ a, a:visited {
   font-size: 17px;
   font-weight: 700;
   color: var(--slate-900);
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .svc-btn-retry {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 20px;
+  gap:6px;
+  padding:9px 20px;
   background: var(--primary);
   color: #ffffff;
   border-radius: var(--radius-md);
@@ -798,7 +798,7 @@ a, a:visited {
   border: none;
   cursor: pointer;
   transition: all 0.18s ease;
-  margin-top: 12px;
+  margin-top:var(--space-3);
 }
 
 .svc-btn-retry:hover {
@@ -810,15 +810,15 @@ a, a:visited {
    ========================================= */
 .svc-provider-cta-section {
   background: #0f172a;
-  padding: 52px 0;
-  margin-top: 0;
+  padding:52px 0;
+  margin-top:0;
 }
 
 .svc-provider-cta-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
+  gap:var(--space-8);
   flex-wrap: wrap;
 }
 
@@ -827,15 +827,15 @@ a, a:visited {
 .svc-provider-cta-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap:6px;
+  padding:var(--space-1) var(--space-3);
   background: rgba(13,148,136,0.2);
   border: 1px solid rgba(13,148,136,0.35);
   border-radius: var(--radius-full);
   font-size: 11.5px;
   font-weight: 700;
   color: #5eead4;
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
 }
 
 .svc-provider-cta-title {
@@ -843,20 +843,20 @@ a, a:visited {
   font-weight: 800;
   color: #ffffff;
   line-height: 1.3;
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
   letter-spacing: -0.01em;
 }
 
 .svc-provider-cta-desc {
   font-size: 14.5px;
-  color: #94a3b8;
+  color:var(--ui-muted, #475569);
   line-height: 1.55;
   max-width: 460px;
 }
 
 .svc-provider-cta-actions {
   display: flex;
-  gap: 12px;
+  gap:var(--space-3);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -864,8 +864,8 @@ a, a:visited {
 .svc-btn-cta-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap:var(--space-2);
+  padding:var(--space-3) var(--space-6);
   background: var(--primary);
   color: #ffffff;
   border-radius: var(--radius-md);
@@ -888,8 +888,8 @@ a, a:visited {
 .svc-btn-cta-secondary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap:var(--space-2);
+  padding:var(--space-3) 20px;
   background: rgba(255,255,255,0.06);
   color: #e2e8f0;
   border: 1.5px solid rgba(255,255,255,0.18);
@@ -913,21 +913,21 @@ a, a:visited {
    ========================================= */
 .svc-cat-cards-section {
   background: #ffffff;
-  padding: 18px 0 14px;
+  padding:18px 0 14px;
   border-bottom: 1px solid var(--slate-100);
 }
 
 .svc-cat-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap:var(--space-4);
 }
 
 .svc-cat-quick-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
+  gap:14px;
+  padding:14px 18px;
   background: var(--slate-50);
   border: 1.5px solid var(--slate-200);
   border-radius: var(--radius-lg);
@@ -988,7 +988,7 @@ a, a:visited {
 .svc-cat-quick-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap:3px;
   min-width: 0;
 }
 
@@ -996,7 +996,7 @@ a, a:visited {
   font-size: 15px;
   font-weight: 700;
   color: var(--slate-900);
-  margin: 0;
+  margin:0;
   line-height: 1.25;
 }
 
@@ -1006,12 +1006,12 @@ a, a:visited {
   color: var(--primary);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap:var(--space-1);
   transition: gap 0.15s;
 }
 
 .svc-cat-quick-card:hover .svc-cat-quick-cta {
-  gap: 7px;
+  gap:7px;
 }
 
 /* =========================================
@@ -1019,7 +1019,7 @@ a, a:visited {
    ========================================= */
 .svc-btn-geo {
   height: 40px;
-  padding: 0 14px;
+  padding:0 14px;
   border: 1.5px solid var(--slate-200);
   background: var(--slate-50);
   border-radius: var(--radius-md);
@@ -1029,7 +1029,7 @@ a, a:visited {
   color: var(--slate-700);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.18s ease;
@@ -1047,14 +1047,14 @@ a, a:visited {
 }
 
 .svc-geo-alert {
-  margin-top: 10px;
-  padding: 10px 14px;
+  margin-top:10px;
+  padding:10px 14px;
   border-radius: var(--radius-md);
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap:10px;
 }
 
 .svc-geo-alert.warning {
@@ -1079,7 +1079,7 @@ a, a:visited {
   color: inherit;
   font-size: 14px;
   cursor: pointer;
-  padding: 2px 6px;
+  padding:2px 6px;
   opacity: 0.7;
 }
 
@@ -1091,7 +1091,7 @@ a, a:visited {
 .svc-card-provider-btn {
   background: none;
   border: none;
-  padding: 0;
+  padding:0;
   font-family: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -1099,7 +1099,7 @@ a, a:visited {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap:var(--space-1);
   text-decoration: underline;
   text-decoration-color: transparent;
   transition: color 0.15s, text-decoration-color 0.15s;
@@ -1122,7 +1122,7 @@ a, a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding:20px;
   animation: modalFadeIn 0.2s ease;
 }
 
@@ -1172,14 +1172,14 @@ a, a:visited {
 }
 
 .svc-modal-content {
-  padding: 24px;
+  padding:var(--space-6);
 }
 
 .svc-modal-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 20px;
+  gap:var(--space-4);
+  padding-bottom:20px;
   border-bottom: 1px solid var(--slate-100);
 }
 
@@ -1208,7 +1208,7 @@ a, a:visited {
   color: var(--slate-500);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 2px;
+  margin-bottom:2px;
 }
 
 .svc-modal-provider-name {
@@ -1217,24 +1217,24 @@ a, a:visited {
   color: var(--slate-900);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
 }
 
 .svc-modal-desc {
   font-size: 13.5px;
   color: var(--slate-600);
   line-height: 1.6;
-  margin: 16px 0;
+  margin:var(--space-4) 0;
 }
 
 .svc-modal-meta-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap:var(--space-3);
   background: var(--slate-50);
-  padding: 14px;
+  padding:14px;
   border-radius: var(--radius-md);
-  margin-bottom: 20px;
+  margin-bottom:20px;
 }
 
 .svc-modal-meta-item {
@@ -1248,13 +1248,13 @@ a, a:visited {
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 2px;
+  margin-bottom:2px;
 }
 
 .svc-modal-contact-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap:10px;
+  margin-bottom:20px;
 }
 
 .svc-modal-btn-call {
@@ -1263,7 +1263,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap:var(--space-2);
   background: var(--primary);
   color: #ffffff;
   border-radius: var(--radius-md);
@@ -1283,7 +1283,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap:var(--space-2);
   background: #0068ff;
   color: #ffffff;
   border-radius: var(--radius-md);
@@ -1301,21 +1301,21 @@ a, a:visited {
   font-size: 14px;
   font-weight: 700;
   color: var(--slate-900);
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
 }
 
 .svc-modal-services-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .svc-modal-service-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
+  gap:var(--space-3);
+  padding:10px var(--space-3);
   background: var(--slate-50);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
@@ -1341,7 +1341,7 @@ a, a:visited {
   color: var(--primary);
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap:3px;
   white-space: nowrap;
 }
 
@@ -1354,23 +1354,23 @@ a, a:visited {
   }
 
   .svc-page-header {
-    padding: 28px 0 24px;
+    padding:28px 0 var(--space-6);
   }
 
   .svc-cat-cards-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap:10px;
   }
 
   .svc-toolbar {
     top: 56px;
-    padding: 12px 0;
+    padding:var(--space-3) 0;
   }
 
   .svc-toolbar-inner {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap:10px;
   }
 
   .svc-search-wrap {
@@ -1396,7 +1396,7 @@ a, a:visited {
   }
 
   .svc-toolbar-results {
-    margin-left: 0;
+    margin-left:0;
     font-size: 12px;
     text-align: right;
   }
@@ -1404,7 +1404,7 @@ a, a:visited {
   .svc-cat-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom:var(--space-1);
     scrollbar-width: none;
   }
 
@@ -1416,7 +1416,7 @@ a, a:visited {
   }
 
   .svc-main {
-    padding: 20px 0 60px;
+    padding:20px 0 60px;
   }
 
   .svc-provider-cta-card {
@@ -1440,7 +1440,7 @@ a, a:visited {
   }
 
   .svc-cat-btn {
-    padding: 7px 13px;
+    padding:7px 13px;
     font-size: 13px;
   }
 

@@ -1,6 +1,6 @@
 export default function KpiCard({ title, value, subtext, icon: Icon, tone = 'teal', onClick, active = false }) {
   const tones = {
-    teal: { bar: '#0d9488', iconBg: '#f0fdfa', iconColor: '#0d9488' },
+    teal: { bar: '#0f766e', iconBg: '#f0fdfa', iconColor: '#0f766e' },
     amber: { bar: '#d97706', iconBg: '#fffbeb', iconColor: '#d97706' },
     blue: { bar: '#2563eb', iconBg: '#eff6ff', iconColor: '#2563eb' },
     purple: { bar: '#7c3aed', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
@@ -32,7 +32,7 @@ export default function KpiCard({ title, value, subtext, icon: Icon, tone = 'tea
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>{title}</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ui-muted)' }}>{title}</span>
           <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
             {value}
           </div>
@@ -56,7 +56,7 @@ export default function KpiCard({ title, value, subtext, icon: Icon, tone = 'tea
         )}
       </div>
       {subtext && (
-        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--ui-muted)', marginTop: '10px' }}>
           {subtext}
         </div>
       )}

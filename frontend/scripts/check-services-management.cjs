@@ -25,6 +25,7 @@ async function main() {
       else if (url === '/api/services') data = services;
       else if (/^\/api\/services\/\d+$/.test(url)) data = services.find(s => s.serviceId === Number(url.split('/').pop()));
       else if (url === '/api/service-registrations/mine') data = mine;
+      else if (url === '/api/service-registrations/services') data = mine.filter(row => row.status === 'APPROVED' && row.serviceId);
       else if (url === '/api/service-registrations/current') data = { canRegister: true, reason: 'ELIGIBLE', registration: approved };
       else if (url.endsWith('/changes')) {
         writes++; assert.match(req.postDataBuffer().toString(), /UPDATE|DELETE/);

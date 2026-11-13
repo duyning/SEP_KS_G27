@@ -1,3 +1,5 @@
+import UIButton from './common/Button.jsx';
+import StatusBadge from './common/StatusBadge.jsx';
 import { useEffect, useState } from 'react';
 import { ImageOff, LoaderCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -7,7 +9,7 @@ import '../styles/staff-workspace.css';
 
 export const staffDate = value => value && !Number.isNaN(new Date(value).getTime()) ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : 'Chưa cập nhật';
 export const verificationLabels = { PENDING: 'Chờ xác minh', NEEDS_SUPPLEMENT: 'Cần bổ sung', APPROVED: 'Đã phê duyệt', REJECTED: 'Đã từ chối' };
-export function StaffStatus({ status }) { return <span className={`sw-status ${status.toLowerCase()}`}>{verificationLabels[status] || status}</span>; }
+export function StaffStatus({ status }) { return <StatusBadge status={status} label={verificationLabels[status] || status} />; }
 export function useStaffLoad(type, id) {
   const { user } = useAuth();
   const [revision, setRevision] = useState(0);
@@ -21,7 +23,7 @@ export function useStaffLoad(type, id) {
   }, [type, id, revision, user?.userId]);
   return { ...state, reload: () => setRevision(value => value + 1), replace: data => setState({ loading: false, error: '', data }) };
 }
-export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={state.error}><button className="p-button" onClick={state.reload}>Thử lại</button></StateView>; }
+export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={state.error}><UIButton className="p-button" onClick={state.reload}>Thử lại</UIButton></StateView>; }
 export function StaffThumbnail({ registrationId, fileId, name }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(Boolean(fileId));

@@ -1,3 +1,4 @@
+import UIButton from './common/Button.jsx';
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -69,9 +70,9 @@ export default function OpenStreetPropertyMap({ commune, latitude, longitude, ad
   }, [latitude, longitude, commune]);
   const quickPin = area => { const [lat, lng] = AREA_CENTERS[area]; onSelect(lat, lng, area); };
   return <div className={`registration-map-shell ${error ? 'invalid' : ''}`}>
-    <header><strong><MapPin size={16} />Bản đồ tương tác Hòa Lạc</strong><div className="registration-quick-pins"><span>Ghim nhanh:</span>{Object.keys(AREA_CENTERS).map(area => <button type="button" key={area} title={`Ghim tại trung tâm tham khảo ${area}; cần chỉnh lại vị trí thực tế`} onClick={() => quickPin(area)}>{area.startsWith('Khu ') ? 'Khu CNC' : area}</button>)}</div></header>
+    <header><strong><MapPin size={16} />Bản đồ tương tác Hòa Lạc</strong><div className="registration-quick-pins"><span>Ghim nhanh:</span>{Object.keys(AREA_CENTERS).map(area => <UIButton type="button" key={area} title={`Ghim tại trung tâm tham khảo ${area}; cần chỉnh lại vị trí thực tế`} onClick={() => quickPin(area)}>{area.startsWith('Khu ') ? 'Khu CNC' : area}</UIButton>)}</div></header>
     <div ref={container} id="property-location-map" className="registration-location-map" role="region" aria-label="Bản đồ chọn vị trí nhà trọ" aria-invalid={Boolean(error)} aria-describedby={error ? 'location-error' : 'location-hint'} tabIndex={0} />
-    {tileState === 'error' && <div className="registration-map-error" role="status"><span>Không tải được nền bản đồ. Bạn có thể nhập tọa độ bên dưới.</span><button type="button" onClick={() => { setTileState('loading'); tiles.current?.redraw(); }}><RefreshCw size={14} />Thử lại</button></div>}
+    {tileState === 'error' && <div className="registration-map-error" role="status"><span>Không tải được nền bản đồ. Bạn có thể nhập tọa độ bên dưới.</span><UIButton type="button" onClick={() => { setTileState('loading'); tiles.current?.redraw(); }}><RefreshCw size={14} />Thử lại</UIButton></div>}
     <footer><span><MapPin size={14} />{address || 'Chưa nhập địa chỉ nhà trọ'}</span><span className={coordinates ? 'pinned' : ''}>{coordinates ? <><Check size={14} />Đã ghim tọa độ</> : 'Chưa chọn vị trí'}</span></footer>
     <p id="location-hint" className="registration-map-hint">{coordinates ? `Tọa độ: ${coordinates[0].toFixed(6)}, ${coordinates[1].toFixed(6)}.` : 'Bấm trên bản đồ hoặc nhập tọa độ để đặt ghim.'} Ghim nhanh dùng vị trí trung tâm tham khảo; hãy chỉnh lại đúng nhà trọ.</p>
   </div>;

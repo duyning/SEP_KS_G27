@@ -1,3 +1,4 @@
+import UIButton from './Button.jsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Pagination({
@@ -22,7 +23,7 @@ export default function Pagination({
         padding: '12px 16px',
         borderTop: '1px solid #f1f5f9',
         fontSize: '13px',
-        color: '#64748b',
+        color: 'var(--ui-muted)',
         flexWrap: 'wrap',
         gap: '8px',
       }}
@@ -31,7 +32,7 @@ export default function Pagination({
         Hiển thị <strong>{start}</strong> - <strong>{end}</strong> trên <strong>{totalItems}</strong> kết quả
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button
+        <UIButton
           type="button"
           onClick={() => onPageChange?.(currentPage - 1)}
           disabled={currentPage <= 1}
@@ -51,10 +52,10 @@ export default function Pagination({
           }}
         >
           <ChevronLeft size={16} />
-        </button>
+        </UIButton>
 
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-          <button
+          <UIButton
             key={p}
             type="button"
             onClick={() => onPageChange?.(p)}
@@ -65,18 +66,18 @@ export default function Pagination({
               width: '32px',
               height: '32px',
               borderRadius: '6px',
-              border: p === currentPage ? '1px solid #0d9488' : '1px solid #e2e8f0',
-              backgroundColor: p === currentPage ? '#0d9488' : '#ffffff',
+              border: p === currentPage ? '1px solid #0f766e' : '1px solid #e2e8f0',
+              backgroundColor: p === currentPage ? '#0f766e' : '#ffffff',
               color: p === currentPage ? '#ffffff' : '#334155',
               fontWeight: p === currentPage ? 700 : 500,
               cursor: 'pointer',
             }}
           >
             {p}
-          </button>
+          </UIButton>
         ))}
 
-        <button
+        <UIButton
           type="button"
           onClick={() => onPageChange?.(currentPage + 1)}
           disabled={currentPage >= totalPages}
@@ -96,7 +97,7 @@ export default function Pagination({
           }}
         >
           <ChevronRight size={16} />
-        </button>
+        </UIButton>
       </div>
     </div>
   );

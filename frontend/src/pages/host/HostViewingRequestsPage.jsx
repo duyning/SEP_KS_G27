@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarDays, Eye, RefreshCw, Search } from 'lucide-react';
@@ -32,17 +34,17 @@ function ViewingList({ data, propertyId, onRefresh }) {
   ).sort((a, b) => sort === 'APPOINTMENT' ? new Date(a.scheduledDate) - new Date(b.scheduledDate) : new Date(b.createdAt) - new Date(a.createdAt)), [ownedRequests, search, status, date, sort]);
 
   return <section className="host-viewings-list">
-    <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><button className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></button></div>
+    <div className="host-viewings-heading"><h2>Yêu cầu xem phòng</h2><UIButton className="p-icon" title="Làm mới dữ liệu" aria-label="Làm mới dữ liệu" onClick={onRefresh}><RefreshCw size={18} /></UIButton></div>
     <div className="host-viewings-counts"><span>Tổng yêu cầu <strong>{ownedRequests.length}</strong></span>{Object.entries(statuses).map(([key, label]) => <span key={key}>{label} <strong>{ownedRequests.filter(item => item.status === key).length}</strong></span>)}</div>
     {ownedRequests.length === 0 ? <StateView kind="empty" message="Chưa có yêu cầu xem phòng từ khách thuê. Yêu cầu mới sẽ hiển thị tại đây." /> : <>
       <div className="host-viewings-filters">
-        <label className="host-viewings-search"><Search size={18} /><input aria-label="Tìm yêu cầu" placeholder="Tìm tên khách, số điện thoại, loại phòng..." value={search} onChange={event => setSearch(event.target.value)} /></label>
+        <UIField className="host-viewings-search"><Search size={18} /><input aria-label="Tìm yêu cầu" placeholder="Tìm tên khách, số điện thoại, loại phòng..." value={search} onChange={event => setSearch(event.target.value)} /></UIField>
         <select aria-label="Trạng thái" value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">Tất cả trạng thái</option>{Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
         <input type="date" aria-label="Ngày xem phòng" value={date} onChange={event => setDate(event.target.value)} />
         <select aria-label="Sắp xếp" value={sort} onChange={event => setSort(event.target.value)}><option value="NEWEST">Mới nhất trước</option><option value="APPOINTMENT">Lịch hẹn gần nhất</option></select>
-        <button className="p-icon" title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc" onClick={() => { setSearch(''); setStatus('ALL'); setDate(''); setSort('NEWEST'); }}><RefreshCw size={17} /></button>
+        <UIButton className="p-icon" title="Đặt lại bộ lọc" aria-label="Đặt lại bộ lọc" onClick={() => { setSearch(''); setStatus('ALL'); setDate(''); setSort('NEWEST'); }}><RefreshCw size={17} /></UIButton>
       </div>
-      <div className="portal-table-wrap"><table className="portal-table"><thead><tr><th>Khách thuê</th><th>Nhà trọ / Loại phòng</th><th>Lịch hẹn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{filtered.map(item => <tr key={item.bookingId}><td><strong>{item.renterName}</strong><br />{item.renterPhone || 'Chưa có số điện thoại'}</td><td>{item.propertyName}<br />{item.roomType}</td><td>{formatDate(item.scheduledDate)}</td><td><StatusBadge tone={item.status === 'APPROVED' ? 'success' : item.status === 'PENDING' ? 'warning' : 'neutral'}>{statuses[item.status] || item.status}</StatusBadge></td><td><button className="p-button" onClick={() => setSelected(item)}><Eye size={16} />Chi tiết</button></td></tr>)}</tbody></table></div>
+      <div className="portal-table-wrap"><table className="portal-table"><thead><tr><th>Khách thuê</th><th>Nhà trọ / Loại phòng</th><th>Lịch hẹn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{filtered.map(item => <tr key={item.bookingId}><td><strong>{item.renterName}</strong><br />{item.renterPhone || 'Chưa có số điện thoại'}</td><td>{item.propertyName}<br />{item.roomType}</td><td>{formatDate(item.scheduledDate)}</td><td><StatusBadge tone={item.status === 'APPROVED' ? 'success' : item.status === 'PENDING' ? 'warning' : 'neutral'}>{statuses[item.status] || item.status}</StatusBadge></td><td><UIButton className="p-button" onClick={() => setSelected(item)}><Eye size={16} />Chi tiết</UIButton></td></tr>)}</tbody></table></div>
       {filtered.length === 0 && <StateView kind="empty" message="Không có yêu cầu phù hợp với bộ lọc." />}
       <p className="host-viewings-result" role="status">Hiển thị {filtered.length} / {ownedRequests.length} yêu cầu</p>
     </>}
@@ -76,5 +78,5 @@ export default function HostViewingRequestsPage() {
     return () => controller.abort();
   }, [user?.userId, revision]);
   const refresh = () => setRevision(value => value + 1);
-  return <div className="host-viewings-page">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><button className="p-button primary" onClick={refresh}>Thử lại</button></StateView> : <ViewingsContent data={state.data} propertyId={propertyId} onRefresh={refresh} />}</div>;
+  return <div className="host-viewings-page">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><UIButton className="p-button primary" onClick={refresh}>Thử lại</UIButton></StateView> : <ViewingsContent data={state.data} propertyId={propertyId} onRefresh={refresh} />}</div>;
 }

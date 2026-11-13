@@ -41,7 +41,7 @@ public class ServiceRegistrationService {
             String capabilityDecision, String listingDecision, LocalDateTime reviewedAt, String reviewerName,
             Integer providerId, Integer serviceId, boolean capabilityActive, String serviceState, boolean publicEligible,
             int revision, String requestedChanges, LocalDateTime supplementRequestedAt,
-            LocalDateTime resubmittedAt, String resubmissionNote, String operation, Integer targetServiceId, Integer serviceRevision, boolean hasImage, int imageCount) {}
+            LocalDateTime resubmittedAt, String resubmissionNote, String operation, Integer targetServiceId, Integer serviceRevision, boolean hasImage, int imageCount, String customServiceAreas, String priceUnit) {}
     public record State(boolean canRegister, String reason, RegistrationInfo registration) {}
 
     @Transactional(readOnly = true)
@@ -55,6 +55,13 @@ public class ServiceRegistrationService {
     @Transactional(readOnly = true)
     public List<RegistrationInfo> mine() {
         return registrations.findByUser_UserIdOrderByRegistrationIdDesc(auth.getCurrentUser().getUserId()).stream().map(this::info).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RegistrationInfo> myServices() {
+        return listings.findByProvider_UserIdOrderByServiceIdDesc(auth.getCurrentUser().getUserId()).stream()
+                .filter(listing -> !"DELETED".equals(listing.getStatus()) && listing.getRegistration() != null)
+                .map(listing -> info(listing.getRegistration())).toList();
     }
 
     public boolean canManage(Integer userId) { return publication.hasCapability(userId); }
@@ -75,18 +82,19 @@ public class ServiceRegistrationService {
                 .operation(request.operation()).serviceRevision(listing.getRevision()).status(RegistrationStatus.PENDING)
                 .applicantName(previous.getApplicantName()).serviceName(listing.getServiceName()).description(listing.getDescription())
                 .contactInfo(listing.getContactInfo()).contactEmail(listing.getContactEmail()).pricingType(listing.getPricingType())
-                .price(listing.getPrice()).serviceArea(listing.getServiceArea()).resubmissionNote(request.note().trim())
+                .priceUnit(listing.getPriceUnit()).price(listing.getPrice()).serviceArea(listing.getServiceArea()).customServiceAreas(listing.getCustomServiceAreas()).resubmissionNote(request.note().trim())
                 .imageContent(previous.getImageContent()).imageContentType(previous.getImageContentType()).build();
         if ("UPDATE".equals(request.operation())) {
             if (request.details() == null) throw new BadRequestException("Thiếu thông tin cập nhật.");
             var value = request.details(); validate(value);
+            var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
             if (listings.findByProvider_UserIdOrderByServiceIdDesc(owner.getUserId()).stream().anyMatch(s -> !s.getServiceId().equals(serviceId)
                     && !"DELETED".equals(s.getStatus()) && s.getServiceName().equalsIgnoreCase(value.serviceName().trim())))
                 throw new AppException("Bạn đã có dịch vụ khác trùng tên.", HttpStatus.CONFLICT);
             row.setCategory(categories.findById(value.categoryId()).orElseThrow(() -> new BadRequestException("Danh mục không hợp lệ.")));
             row.setApplicantName(value.applicantName().trim()); row.setServiceName(value.serviceName().trim()); row.setDescription(value.description().trim());
             row.setContactInfo(value.contactPhone().replaceAll("[\\s.-]", "")); row.setContactEmail(value.contactEmail());
-            row.setPricingType(value.pricingType()); row.setPrice(value.price()); row.setServiceArea(value.serviceArea().trim());
+            row.setPricingType(value.pricingType()); row.setPrice(value.price()); row.setPriceUnit(normalizePriceUnit(value.priceUnit())); row.setServiceArea(areas.standard()); row.setCustomServiceAreas(areas.custom());
         }
         row.getAdditionalImages().addAll(previous.getAdditionalImages().stream().map(i -> new org.hlrcs.entity.ServiceImage(i.getContent(), i.getContentType())).toList());
         if ("UPDATE".equals(request.operation())) saveImages(row, images);
@@ -138,9 +146,18 @@ public class ServiceRegistrationService {
         return "ELIGIBLE";
     }
 
+    private String normalizePriceUnit(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        String unit = java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFC).trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.forLanguageTag("vi-VN"));
+        if (unit.length() < 2 || unit.length() > 20) throw new BadRequestException("Đơn vị tính phải có từ 2 đến 20 ký tự.");
+        return Set.of("lần", "giờ", "kg", "chuyến", "m²").contains(unit) ? unit : unit.substring(0, 1).toUpperCase(java.util.Locale.forLanguageTag("vi-VN")) + unit.substring(1);
+    }
+
     private void validate(ServiceRegistrationRequest value) {
+        normalizePriceUnit(value.priceUnit());
+        ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
         if (value.applicantName().trim().length() < 2 || value.serviceName().trim().length() < 3
-                || value.description().trim().length() < 20 || value.serviceArea().trim().length() < 2)
+                || value.description().trim().length() < 20)
             throw new BadRequestException("Vui lòng nhập đầy đủ tên người đăng ký, tên dịch vụ, mô tả (ít nhất 20 ký tự) và khu vực phục vụ.");
         String phone = value.contactPhone().replaceAll("[\\s.-]", "");
         if (!phone.matches("(?:0|\\+84)[35789]\\d{8}")) throw new BadRequestException("Số điện thoại Việt Nam không hợp lệ.");
@@ -151,6 +168,7 @@ public class ServiceRegistrationService {
     @Transactional(rollbackFor = Exception.class, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public RegistrationInfo submit(ServiceRegistrationRequest value, List<MultipartFile> files, List<MultipartFile> images) throws IOException {
         validate(value);
+        var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
         if (files == null || files.isEmpty() || files.size() > 5) throw new BadRequestException("Cần đính kèm từ 1 đến 5 tài liệu xác minh.");
         var category = categories.findById(value.categoryId()).orElseThrow(() -> new BadRequestException("Danh mục dịch vụ không hợp lệ."));
         // Serialize submissions for this applicant, including concurrent requests.
@@ -162,8 +180,8 @@ public class ServiceRegistrationService {
             throw new AppException("Bạn đã có yêu cầu đang xử lý cho tên dịch vụ này.", HttpStatus.CONFLICT);
         var row = registrations.save(ServiceRegistration.builder().user(user).category(category)
                 .applicantName(value.applicantName().trim()).serviceName(value.serviceName().trim())
-                .description(value.description().trim()).pricingType(value.pricingType()).price(value.price())
-                .serviceArea(value.serviceArea().trim()).contactInfo(value.contactPhone().replaceAll("[\\s.-]", ""))
+                .description(value.description().trim()).pricingType(value.pricingType()).priceUnit(normalizePriceUnit(value.priceUnit())).price(value.price())
+                .serviceArea(areas.standard()).customServiceAreas(areas.custom()).contactInfo(value.contactPhone().replaceAll("[\\s.-]", ""))
                 .contactEmail(value.contactEmail() == null ? null : value.contactEmail().trim())
                 .status(RegistrationStatus.PENDING).build());
         for (var file : files) saveFile(row, file);
@@ -191,10 +209,11 @@ public class ServiceRegistrationService {
         var files = uploads == null ? List.<MultipartFile>of() : uploads;
         if (keep.size() + files.size() < 1 || keep.size() + files.size() > 5) throw new BadRequestException("Hồ sơ cần tổng cộng từ 1 đến 5 tài liệu.");
         var value = request.details();
+        var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
         row.setCategory(categories.findById(value.categoryId()).orElseThrow(() -> new BadRequestException("Danh mục không hợp lệ.")));
         row.setApplicantName(value.applicantName().trim()); row.setServiceName(value.serviceName().trim());
-        row.setDescription(value.description().trim()); row.setPricingType(value.pricingType()); row.setPrice(value.price());
-        row.setServiceArea(value.serviceArea().trim()); row.setContactInfo(value.contactPhone().replaceAll("[\\s.-]", ""));
+        row.setDescription(value.description().trim()); row.setPricingType(value.pricingType()); row.setPrice(value.price()); row.setPriceUnit(normalizePriceUnit(value.priceUnit()));
+        row.setServiceArea(areas.standard()); row.setCustomServiceAreas(areas.custom()); row.setContactInfo(value.contactPhone().replaceAll("[\\s.-]", ""));
         row.setContactEmail(value.contactEmail() == null ? null : value.contactEmail().trim());
         for (var file : files) saveFile(row, file);
         for (var file : oldFiles) {
@@ -243,7 +262,7 @@ public class ServiceRegistrationService {
                 listing == null ? null : listing.getServiceId(), publication.hasCapability(row.getUser().getUserId()),
                 listing == null ? null : listing.getStatus(), listing != null && publication.isPublic(listing),
                 row.getRevision(), row.getRequestedChanges(), row.getSupplementRequestedAt(), row.getResubmittedAt(), row.getResubmissionNote(), row.getOperation() == null ? "CREATE" : row.getOperation(),
-                row.getTargetService() == null ? null : row.getTargetService().getServiceId(), listing == null ? null : listing.getRevision(), row.getImageContent() != null, row.imageCount());
+                row.getTargetService() == null ? null : row.getTargetService().getServiceId(), listing == null ? null : listing.getRevision(), row.getImageContent() != null, row.imageCount(), row.getCustomServiceAreas(), row.getPriceUnit());
     }
 
     @Transactional(readOnly = true)

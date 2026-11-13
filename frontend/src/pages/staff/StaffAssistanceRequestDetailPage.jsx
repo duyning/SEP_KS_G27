@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -49,7 +51,7 @@ export default function StaffAssistanceRequestDetailPage() {
     const newMsg = {
       id: `M-${Date.now()}`,
       senderRole: 'STAFF',
-      senderName: `${user?.fullName || 'Nguyễn Văn An'} (Staff)`,
+      senderName: `${user?.fullName || 'Nguyễn Văn An'} (nhân viên)`,
       text: replyText,
       timestamp: new Date().toISOString()
     };
@@ -76,7 +78,7 @@ export default function StaffAssistanceRequestDetailPage() {
 
     const newHistory = {
       timestamp: new Date().toISOString(),
-      actor: `${user?.fullName || 'Nguyễn Văn An'} (Staff)`,
+      actor: `${user?.fullName || 'Nguyễn Văn An'} (nhân viên)`,
       action: target.action,
       note: actionNote || `Chuyển trạng thái sang ${target.label}`
     };
@@ -102,20 +104,20 @@ export default function StaffAssistanceRequestDetailPage() {
       />
 
       {/* Back Link & Header */}
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
         <Link
           to="/staff/assistance"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0d9488', fontWeight: '600', textDecoration: 'none', marginBottom: '8px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0f766e', fontWeight: '600', textDecoration: 'none', marginBottom: 'var(--space-2)' }}
         >
           <ArrowLeft size={16} /> Quay lại danh sách yêu cầu
         </Link>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0d9488', marginRight: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px var(--space-2)', borderRadius: '4px', background: '#f0fdfa', color: '#0f766e', marginRight: 'var(--space-2)' }}>
               {currentReq.categoryLabel}
             </span>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>Mã: {currentReq.code}</span>
-            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: '4px 0 0 0' }}>
+            <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Mã: {currentReq.code}</span>
+            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 'var(--space-1) 0 0 0' }}>
               {currentReq.title}
             </h1>
           </div>
@@ -124,7 +126,7 @@ export default function StaffAssistanceRequestDetailPage() {
       </div>
 
       {/* Split Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', '--grid-columns': '2fr 1fr', gap: '20px', alignItems: 'flex-start' }}>
         
         {/* Left Column (68%) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -144,14 +146,14 @@ export default function StaffAssistanceRequestDetailPage() {
             <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', margin: '0 0 14px 0' }}>
               2. Thông tin đối tác & Cơ sở liên quan
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', '--grid-columns': '1fr 1fr', gap: 'var(--space-3)', fontSize: '14px' }}>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Chủ trọ gửi yêu cầu:</span>
+                <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Chủ trọ gửi yêu cầu:</span>
                 <div style={{ fontWeight: '700', color: '#0f172a' }}>{currentReq.hostName}</div>
-                <div style={{ fontSize: '12px', color: '#0d9488' }}>{currentReq.hostPhone}</div>
+                <div style={{ fontSize: '12px', color: '#0f766e' }}>{currentReq.hostPhone}</div>
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Nhà trọ liên quan:</span>
+                <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Nhà trọ liên quan:</span>
                 <div style={{ fontWeight: '700', color: '#0f172a' }}>{currentReq.propertyTitle}</div>
               </div>
             </div>
@@ -163,12 +165,12 @@ export default function StaffAssistanceRequestDetailPage() {
               3. Trao đổi & Phản hồi nghiệp vụ
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--space-4)', maxHeight: '300px', overflowY: 'auto' }}>
               {(currentReq.messages || []).map(msg => (
                 <div
                   key={msg.id}
                   style={{
-                    padding: '12px 16px',
+                    padding: 'var(--space-3) var(--space-4)',
                     borderRadius: '8px',
                     background: msg.senderRole === 'STAFF' ? '#f0fdfa' : '#f8fafc',
                     border: msg.senderRole === 'STAFF' ? '1px solid #ccfbf1' : '1px solid #e2e8f0',
@@ -176,7 +178,7 @@ export default function StaffAssistanceRequestDetailPage() {
                     maxWidth: '85%'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', fontSize: '11px', color: 'var(--ui-muted)', marginBottom: 'var(--space-1)' }}>
                     <strong>{msg.senderName}</strong>
                     <span>{new Date(msg.timestamp).toLocaleString('vi-VN')}</span>
                   </div>
@@ -187,27 +189,27 @@ export default function StaffAssistanceRequestDetailPage() {
 
             {currentReq.status !== 'RESOLVED' && (
               <div>
-                <label htmlFor="staff-response-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                <UIField htmlFor="staff-response-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: 'var(--space-1)' }}>
                   Gửi phản hồi cho Chủ trọ:
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                </UIField>
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <textarea
                     id="staff-response-input"
                     rows={3}
                     placeholder="Nhập hướng dẫn xử lý, yêu cầu thông tin hoặc kết quả kiểm tra..."
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
-                    style={{ flex: 1, padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                    style={{ flex: 1, padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
                   />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                  <button
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
+                  <UIButton
                     type="button"
                     className="p-button primary"
                     onClick={handleSendReply}
                   >
                     <Send size={15} /> Gửi phản hồi
-                  </button>
+                  </UIButton>
                 </div>
               </div>
             )}
@@ -221,12 +223,12 @@ export default function StaffAssistanceRequestDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {(currentReq.history || []).map((h, i) => (
                 <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d9488', marginTop: '6px', flexShrink: 0 }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0f766e', marginTop: '6px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '13px', color: '#334155' }}>
                       <strong>{h.actor}</strong>: {h.action} — {h.note}
                     </div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--ui-muted)' }}>
                       {new Date(h.timestamp).toLocaleString('vi-VN')}
                     </span>
                   </div>
@@ -237,67 +239,67 @@ export default function StaffAssistanceRequestDetailPage() {
         </div>
 
         {/* Right Column (32%) - Decision Aside */}
-        <div style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: '0 0 14px 0' }}>
               Điều phối & Trạng thái
             </h3>
 
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái hiện tại:</span>
-              <div style={{ marginTop: '4px' }}>
+            <div style={{ background: '#f8fafc', padding: 'var(--space-3)', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: 'var(--space-4)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Trạng thái hiện tại:</span>
+              <div style={{ marginTop: 'var(--space-1)' }}>
                 <StatusBadge status={currentReq.status}>{currentReq.statusLabel}</StatusBadge>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#334155', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', fontSize: '13px', color: '#334155', marginBottom: 'var(--space-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Nhân viên phụ trách:</span>
+                <span style={{ color: 'var(--ui-muted)' }}>Nhân viên phụ trách:</span>
                 <strong>{currentReq.assignedStaff || 'Chưa phân công'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Ngày tạo:</span>
+                <span style={{ color: 'var(--ui-muted)' }}>Ngày tạo:</span>
                 <span>{new Date(currentReq.createdAt).toLocaleDateString('vi-VN')}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Cập nhật lần cuối:</span>
+                <span style={{ color: 'var(--ui-muted)' }}>Cập nhật lần cuối:</span>
                 <span>{new Date(currentReq.updatedAt).toLocaleDateString('vi-VN')}</span>
               </div>
             </div>
 
             {currentReq.status !== 'RESOLVED' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 {currentReq.status === 'PENDING' && (
-                  <button
+                  <UIButton
                     type="button"
                     className="p-button primary"
                     style={{ background: '#2563eb', borderColor: '#2563eb', padding: '10px' }}
                     onClick={() => { setActionModal('IN_PROGRESS'); setActionNote(''); }}
                   >
                     Tiếp nhận xử lý yêu cầu
-                  </button>
+                  </UIButton>
                 )}
-                <button
+                <UIButton
                   type="button"
                   className="p-button"
                   style={{ color: '#d97706', borderColor: '#fde68a', padding: '10px' }}
                   onClick={() => { setActionModal('WAITING_FOR_HOST'); setActionNote(''); }}
                 >
                   Yêu cầu Host bổ sung thông tin
-                </button>
-                <button
+                </UIButton>
+                <UIButton
                   type="button"
                   className="p-button primary"
                   style={{ background: '#10b981', borderColor: '#10b981', padding: '10px' }}
                   onClick={() => { setActionModal('RESOLVED'); setActionNote(''); }}
                 >
                   Hoàn tất / Giải quyết yêu cầu
-                </button>
+                </UIButton>
               </div>
             ) : (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#166534' }}>
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>✅</div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '700' }}>Yêu cầu đã được giải quyết</h4>
+                <div style={{ fontSize: '24px', marginBottom: 'var(--space-1)' }}>✅</div>
+                <h4 style={{ margin: '0 0 var(--space-1) 0', fontSize: '14px', fontWeight: '700' }}>Yêu cầu đã được giải quyết</h4>
                 <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
                   Phiếu hỗ trợ đã đóng theo đúng quy trình nghiệp vụ.
                 </p>
@@ -326,29 +328,29 @@ export default function StaffAssistanceRequestDetailPage() {
               {actionModal === 'RESOLVED' && 'Xác nhận đã xử lý xong và hoàn tất giải quyết phiếu hỗ trợ.'}
             </p>
             <div>
-              <label htmlFor="action-note-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+              <UIField htmlFor="action-note-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: 'var(--space-1)' }}>
                 Ghi chú nghiệp vụ (tùy chọn):
-              </label>
+              </UIField>
               <textarea
                 id="action-note-input"
                 rows={3}
                 placeholder="Nhập ghi chú vào nhật ký..."
                 value={actionNote}
                 onChange={e => setActionNote(e.target.value)}
-                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                style={{ width: '100%', padding: '9px var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="p-button" onClick={() => setActionModal(null)}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+              <UIButton type="button" className="p-button" onClick={() => setActionModal(null)}>
                 Hủy
-              </button>
-              <button
+              </UIButton>
+              <UIButton
                 type="button"
                 className="p-button primary"
                 onClick={handleExecuteAction}
               >
                 Xác nhận
-              </button>
+              </UIButton>
             </div>
           </div>
         </Modal>

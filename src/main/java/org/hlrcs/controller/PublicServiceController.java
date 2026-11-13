@@ -21,7 +21,7 @@ public class PublicServiceController {
     public record Listing(Integer serviceId, String serviceName, Integer categoryId, String categoryName,
             String description, String pricingType, BigDecimal price, String serviceArea,
             String contactPhone, String contactEmail, String providerName, Integer providerId,
-            String pricingLabel, String activeState, boolean publicEligible, String imageUrl, List<String> imageUrls) {}
+            String pricingLabel, String activeState, boolean publicEligible, String imageUrl, List<String> imageUrls, String customServiceAreas, String priceUnit) {}
     public record Category(Integer categoryId, String name) {}
     private Integer positiveId(String value) {
         if (!value.matches("[1-9]\\d{0,9}") || Long.parseLong(value) > Integer.MAX_VALUE)
@@ -40,7 +40,7 @@ public class PublicServiceController {
                 row.getDescription(), row.getPricingType(), row.getPrice(), row.getServiceArea(), row.getContactInfo(), row.getContactEmail(), row.getProvider().getFullName(),
                 row.getProvider().getUserId(), pricingLabel(row), row.getStatus(), true,
                 row.getRegistration().getImageContent() == null ? null : "/api/services/" + row.getServiceId() + "/image?v=" + row.getRevision(),
-                java.util.stream.IntStream.range(0, row.getRegistration().imageCount()).mapToObj(i -> "/api/services/" + row.getServiceId() + "/image?index=" + i + "&v=" + row.getRevision()).toList());
+                java.util.stream.IntStream.range(0, row.getRegistration().imageCount()).mapToObj(i -> "/api/services/" + row.getServiceId() + "/image?index=" + i + "&v=" + row.getRevision()).toList(), row.getCustomServiceAreas(), row.getPriceUnit());
     }
     @GetMapping("/{id}/image") @Transactional(readOnly = true)
     public org.springframework.http.ResponseEntity<byte[]> image(@PathVariable String id, @RequestParam(defaultValue = "0") int index) {

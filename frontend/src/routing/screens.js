@@ -1,5 +1,5 @@
 // Roles mirror SecurityConfig, including ADMIN access to host/staff areas.
-export const roleLabels = { USER: 'Người thuê', ROOM_HOST: 'Chủ trọ', STAFF: 'Nhân viên vận hành', ADMIN: 'Quản trị viên' };
+export const roleLabels = { USER: 'Người thuê', ROOM_HOST: 'Chủ trọ', STAFF: 'Nhân viên', ADMIN: 'Quản trị viên' };
 export const portalRoles = { public: null, member: ['USER', 'ROOM_HOST', 'STAFF', 'ADMIN'], host: ['ROOM_HOST', 'ADMIN'], staff: ['STAFF', 'ADMIN'], admin: ['ADMIN'] };
 export function canAccess(portal, user) {
   if (!Object.hasOwn(portalRoles, portal)) return false;
@@ -19,7 +19,7 @@ export const screens = [
   screen('favorites.html', '/favorites', 'member', 'Danh sách nhà trọ đã lưu', 'list', { columns: ['Nhà trọ', 'Khu vực', 'Giá thuê', 'Tình trạng'] }),
   screen('bookings.html', '/bookings', 'member', 'Lịch xem phòng', 'list', { columns: ['Nhà trọ', 'Chủ trọ', 'Lịch hẹn', 'Trạng thái'], filters: ['Tất cả lịch hẹn', 'Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'] }),
   screen('community.html', '/community', 'public', 'Cộng đồng Cư dân & Sinh viên Hòa Lạc', 'community'),
-  screen('services.html', '/services', 'public', 'Dịch vụ quanh trọ', 'services'),
+  screen('services.html', '/services', 'public', 'Dịch vụ', 'services'),
   screen('service-detail.html', '/services/detail', 'public', 'Chi tiết dịch vụ', 'detail', { sections: ['Thông tin dịch vụ', 'Loại dịch vụ', 'Khu vực phục vụ', 'Nhà cung cấp'], actions: ['Liên hệ nhà cung cấp'] }),
   screen('notifications.html', '/notifications', 'member', 'Thông báo của bạn', 'notifications'),
   screen('profile.html', '/profile', 'member', 'Hồ sơ cá nhân', 'profile', { integration: 'partial' }),

@@ -1,3 +1,6 @@
+import UIButton from '../components/common/Button.jsx';
+import Container from '../components/common/Container.jsx';
+import Breadcrumb, { PageTitleContext, breadcrumbItems } from '../components/common/Breadcrumb.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronDown, ChevronRight, ClipboardCheck, ExternalLink, Flag, Globe, Heart, History, House, Layers, LayoutDashboard, LogOut, Menu, MessagesSquare, PanelTop, PlusCircle, Shield, Star, UserRound, Users, Wrench, X } from 'lucide-react';
@@ -23,7 +26,7 @@ const menus = {
       ['Yêu cầu xem phòng', '/host/viewings', CalendarDays]
     ]],
     ['HỖ TRỢ / LIÊN KẾT', [
-      ['Yêu cầu Staff hỗ trợ', '/host/support', MessagesSquare],
+      ['Yêu cầu nhân viên hỗ trợ', '/host/support', MessagesSquare],
       ['Thông báo', '/host/notifications', Bell],
       ['Xem trang khách thuê', '/', Globe]
     ]]
@@ -41,10 +44,10 @@ export function Brand({ portal = 'public', onClick }) {
         <div className="brand-portal-title">HL_RCS</div>
         <div className="brand-portal-role">
           {portal === 'public'
-            ? 'Rental Connection System'
+            ? 'Kết nối nhà trọ và dịch vụ'
             : portal === 'host'
-            ? 'ROOM HOST PORTAL'
-            : `${portal.toUpperCase()} PORTAL`}
+            ? 'KHU VỰC CHỦ TRỌ'
+            : portal === 'staff' ? 'NHÂN VIÊN' : 'QUẢN TRỊ HỆ THỐNG'}
         </div>
       </div>
     </Link>
@@ -55,6 +58,7 @@ export default function PortalLayout({ screen, children }) {
   const notify = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const [pageTitle, setPageTitle] = useState('');
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -141,7 +145,7 @@ export default function PortalLayout({ screen, children }) {
 
   const account = user ? (
     <div className="host-user-menu-wrapper" ref={popoverRef}>
-      <button
+      <UIButton
         type="button"
         className="host-user-btn"
         id="btnHostUserDropdown"
@@ -155,7 +159,7 @@ export default function PortalLayout({ screen, children }) {
           <span className="host-user-role">{userRoleText}</span>
         </div>
         <ChevronDown size={14} className="chevron-icon" />
-      </button>
+      </UIButton>
 
       {userMenuOpen && (
         <div className="host-user-popover" id="hostUserPopover">
@@ -185,7 +189,7 @@ export default function PortalLayout({ screen, children }) {
             )}
             <li className="popover-divider" />
             <li>
-              <button
+              <UIButton
                 type="button"
                 id="btnPopoverLogout"
                 className="btn-popover-logout"
@@ -196,7 +200,7 @@ export default function PortalLayout({ screen, children }) {
                 disabled={leaving}
               >
                 <LogOut size={15} /> {leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}
-              </button>
+              </UIButton>
             </li>
           </ul>
         </div>
@@ -210,7 +214,7 @@ export default function PortalLayout({ screen, children }) {
   );
 
   const sidebarLogoutButton = (
-    <button
+    <UIButton
       type="button"
       id="btnSidebarLogout"
       className="portal-nav-link btn-logout-sidebar"
@@ -219,11 +223,11 @@ export default function PortalLayout({ screen, children }) {
     >
       <LogOut size={18} />
       <span>{leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-    </button>
+    </UIButton>
   );
 
   const topbarLogoutButton = user && (
-    <button
+    <UIButton
       type="button"
       id="btnHostLogout"
       className="btn-topbar-logout"
@@ -234,7 +238,7 @@ export default function PortalLayout({ screen, children }) {
     >
       <LogOut size={16} />
       <span className="btn-logout-label">{leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-    </button>
+    </UIButton>
   );
 
   return (
@@ -244,23 +248,23 @@ export default function PortalLayout({ screen, children }) {
       {portal === 'public' ? (
         <header className="public-header">
           <div className="public-announcement">Hòa Lạc Campus <span>Kết nối cộng đồng thuê trọ tại Hòa Lạc</span></div>
-          <div className="public-navbar">
+          <Container className="public-navbar">
             <Brand />
             <nav className="public-desktop-nav" aria-label="Điều hướng chính">
               {publicLinks.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
             <div className="public-account">{account}</div>
-            <button ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
+            <UIButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={23} />
-            </button>
-          </div>
+            </UIButton>
+          </Container>
         </header>
       ) : (
-        <header className="portal-topbar">
+        <header className="portal-topbar"><Container className="portal-topbar-inner">
           <div className="portal-topbar-left">
-            <button ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
+            <UIButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={22} />
-            </button>
+            </UIButton>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1>{screen.path === '/host/property/new' ? <><span className="registration-topbar-parent"><Link to="/host">Bảng điều khiển</Link> / <Link to="/host/property">Nhà trọ của tôi</Link> / </span>Đăng ký nhà trọ</> : topbarTitle}</h1>
               {portal === 'staff' && staffCounts && <div className="topbar-status-chip hide-mobile"><span className="live-dot-green" /><span>{screen.path.startsWith('/staff/verifications') ? 'Thẩm định hồ sơ' : 'Hệ thống trực tuyến'}</span></div>}
@@ -281,18 +285,18 @@ export default function PortalLayout({ screen, children }) {
             </Link>
             {portal !== 'host' && portal !== 'staff' && topbarLogoutButton}
             {account}
-          </div>
+          </div></Container>
         </header>
       )}
 
-      {open && <button type="button" className="portal-backdrop" aria-label="Đóng menu" onClick={closeMenu} tabIndex={-1} />}
+      {open && <UIButton type="button" className="portal-backdrop" aria-label="Đóng menu" onClick={closeMenu} tabIndex={-1} />}
 
-      <aside ref={sidebar} id="portal-navigation" className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label="Điều hướng portal" aria-modal={open ? true : undefined} role={open ? 'dialog' : undefined}>
+      <aside ref={sidebar} id="portal-navigation" className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label="Điều hướng ứng dụng" aria-modal={open ? true : undefined} role={open ? 'dialog' : undefined}>
         <div className="portal-sidebar-brand">
           <Brand portal={portal} />
-          <button type="button" className="p-icon portal-close-menu" title="Đóng menu" aria-label="Đóng menu" onClick={closeMenu}>
+          <UIButton type="button" className="p-icon portal-close-menu" title="Đóng menu" aria-label="Đóng menu" onClick={closeMenu}>
             <X size={20} />
-          </button>
+          </UIButton>
         </div>
         <nav>
           {(portal === 'public' ? [['KHÁM PHÁ', publicLinks]] : menus[portal]).map(([group, links]) => (
@@ -331,14 +335,14 @@ export default function PortalLayout({ screen, children }) {
           )}
         </nav>
         {portal !== 'host' && user && (
-          <footer className="portal-sidebar-footer" style={{ padding: '14px 16px', borderTop: '1px solid #e2e8f0' }}>
+          <footer className="portal-sidebar-footer" style={{ padding: '14px var(--space-4)', borderTop: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="host-user-avatar" style={{ width: '34px', height: '34px', fontSize: '12px' }}>{portal === 'host' ? avatarChar : initials}</div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                   {user.fullName || user.email}
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748b' }}>{userRoleText}</div>
+                <div style={{ fontSize: '11px', color: 'var(--ui-muted)' }}>{userRoleText}</div>
               </div>
             </div>
           </footer>
@@ -346,41 +350,33 @@ export default function PortalLayout({ screen, children }) {
       </aside>
 
       <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''}`}>
-        {portal !== 'host' && (
-          <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
-            <Link to="/">HL_RCS</Link>
-            <ChevronRight size={13} />
-            <Link to={portal === 'public' ? '/' : `/${portal}`}>
-              {portal === 'public' ? 'Trang chủ' : `${portal[0].toUpperCase()}${portal.slice(1)} Portal`}
-            </Link>
-            <ChevronRight size={13} />
-            <span aria-current="page">{screen.title}</span>
-          </nav>
-        )}
-        {children}
+        <Container className="page-container">
+          <Breadcrumb items={breadcrumbItems(screen, portal, pageTitle, location.search)} mobileBackTo={screen.path === '/services/detail' ? '/services' : undefined} />
+          <PageTitleContext.Provider value={setPageTitle}>{children}</PageTitleContext.Provider>
+        </Container>
       </main>
 
       {portal === 'host' && (
         <footer className="host-footer">
-          <div className="footer-inner">
-            <span>{hostFooterTitles[screen.path] ? `© 2026 HL_RCS · ${hostFooterTitles[screen.path]} (Room Host Portal).` : '© 2026 HL_RCS • Bảng điều khiển dành riêng cho Chủ trọ Hòa Lạc (Room Host Portal).'}</span>
+          <Container className="footer-inner">
+            <span>{hostFooterTitles[screen.path] ? `© 2026 HL_RCS · ${hostFooterTitles[screen.path]}.` : '© 2026 HL_RCS • Bảng điều khiển dành riêng cho Chủ trọ Hòa Lạc.'}</span>
             <span className="footer-links">
               <Link to="/">Trang chủ</Link> • 
               {hostFooterTitles[screen.path] ? <><Link to="/host">Bảng điều khiển</Link> · <Link to="/profile">Hồ sơ cá nhân</Link></> : <><Link to="/profile">Hồ sơ</Link> • <a href="tel:0912345678">Hotline: 0912 345 678</a></>}
             </span>
-          </div>
+          </Container>
         </footer>
       )}
 
       {portal === 'public' && (
-        <footer className="public-footer">
+        <footer className="public-footer"><Container className="public-footer-inner">
           <Brand />
           <p>Kết nối trực tiếp, minh bạch và an toàn.</p>
           <nav>
             <Link to="/search">Tìm phòng</Link>
             <Link to="/community">Cộng đồng</Link>
             <Link to="/services">Dịch vụ</Link>
-          </nav>
+          </nav></Container>
         </footer>
       )}
     </div>

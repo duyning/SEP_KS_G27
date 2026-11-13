@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -65,12 +66,12 @@ export default function StaffAssistanceRequestsPage() {
       {/* Header */}
       <section className="dashboard-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>Yêu cầu hỗ trợ từ đối tác</h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 var(--space-1) 0' }}>Yêu cầu hỗ trợ từ đối tác</h1>
+          <p style={{ margin: 0, color: 'var(--ui-muted)', fontSize: '14px' }}>
             Xem, tiếp nhận và giải quyết các yêu cầu hỗ trợ được phân công cho bạn từ các Chủ trọ đối tác.
           </p>
         </div>
-        <button
+        <UIButton
           type="button"
           className="p-button"
           onClick={() => {
@@ -79,26 +80,26 @@ export default function StaffAssistanceRequestsPage() {
           }}
         >
           <RotateCcw size={15} /> Làm mới
-        </button>
+        </UIButton>
       </section>
 
       {/* KPI Cards */}
-      <section className="staff-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+      <section className="staff-kpi-grid" style={{ display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)', marginBottom: '20px' }}>
         <article
           className="kpi-card"
           tabIndex={0}
           role="button"
-          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0d9488' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
+          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0f766e' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
           onClick={() => { setStatusFilter('ALL'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Được giao cho tôi</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Được giao cho tôi</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0f766e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <User size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{totalAssigned}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Tổng phụ trách</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{totalAssigned}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Tổng phụ trách</span>
         </article>
 
         <article
@@ -109,13 +110,13 @@ export default function StaffAssistanceRequestsPage() {
           onClick={() => { setStatusFilter('PENDING'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Chờ xử lý</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Chờ xử lý</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Clock size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', marginBottom: '4px' }}>{pendingCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Chưa tiếp nhận</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', marginBottom: 'var(--space-1)' }}>{pendingCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Chưa tiếp nhận</span>
         </article>
 
         <article
@@ -126,13 +127,13 @@ export default function StaffAssistanceRequestsPage() {
           onClick={() => { setStatusFilter('IN_PROGRESS'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Đang xử lý</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Đang xử lý</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessageSquare size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#2563eb', marginBottom: '4px' }}>{inProgressCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Đang trao đổi</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#2563eb', marginBottom: 'var(--space-1)' }}>{inProgressCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Đang trao đổi</span>
         </article>
 
         <article
@@ -143,37 +144,37 @@ export default function StaffAssistanceRequestsPage() {
           onClick={() => { setStatusFilter('RESOLVED'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Đã giải quyết</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Đã giải quyết</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>{resolvedCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Đã hoàn tất</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981', marginBottom: 'var(--space-1)' }}>{resolvedCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Đã hoàn tất</span>
         </article>
       </section>
 
       {/* Table Section */}
       <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
         {/* Filters */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
           <div style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ui-muted)' }} />
             <input
               type="text"
               placeholder="Tìm theo mã (#SP...), tiêu đề, chủ trọ..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
-              style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+              style={{ width: '100%', padding: '9px var(--space-3) 9px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               aria-label="Lọc trạng thái"
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">Chờ xử lý (Pending)</option>
@@ -186,7 +187,7 @@ export default function StaffAssistanceRequestsPage() {
               aria-label="Lọc loại vấn đề"
               value={categoryFilter}
               onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="ALL">Tất cả loại vấn đề</option>
               <option value="PROPERTY_LISTING">Nhà trọ & thông tin đăng</option>
@@ -200,14 +201,14 @@ export default function StaffAssistanceRequestsPage() {
               aria-label="Sắp xếp"
               value={sortOrder}
               onChange={e => setSortOrder(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="NEWEST">Mới nhất trước</option>
               <option value="OLDEST">Cũ nhất trước</option>
               <option value="UPDATED">Cập nhật gần nhất</option>
             </select>
 
-            <button
+            <UIButton
               type="button"
               className="p-button"
               onClick={() => {
@@ -219,11 +220,11 @@ export default function StaffAssistanceRequestsPage() {
               }}
             >
               <RotateCcw size={14} /> Đặt lại
-            </button>
+            </UIButton>
           </div>
         </div>
 
-        <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginBottom: 'var(--space-3)' }}>
           Hiển thị: <strong>{filteredRequests.length}</strong> yêu cầu
         </div>
 
@@ -232,18 +233,18 @@ export default function StaffAssistanceRequestsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <tr>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '38%' }}>MÃ YÊU CẦU & NỘI DUNG</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '20%' }}>CHỦ TRỌ / NHÀ TRỌ</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>VẤN ĐỀ</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '12%' }}>NGÀY GỬI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '10%' }}>TRẠNG THÁI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '6%', textAlign: 'right' }}>THAO TÁC</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '38%' }}>MÃ YÊU CẦU & NỘI DUNG</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '20%' }}>CHỦ TRỌ / NHÀ TRỌ</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>VẤN ĐỀ</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '12%' }}>NGÀY GỬI</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '10%' }}>TRẠNG THÁI</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '6%', textAlign: 'right' }}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
               {paginatedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--ui-muted)' }}>
                     Không tìm thấy yêu cầu hỗ trợ nào.
                   </td>
                 </tr>
@@ -254,19 +255,19 @@ export default function StaffAssistanceRequestsPage() {
                       <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '380px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '380px' }}>
                         {item.description}
                       </div>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#0d9488', marginTop: '4px', display: 'inline-block' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#0f766e', marginTop: 'var(--space-1)', display: 'inline-block' }}>
                         {item.code}
                       </span>
                     </td>
                     <td style={{ padding: '14px' }}>
                       <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.hostName}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{item.propertyTitle}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{item.propertyTitle}</div>
                     </td>
                     <td style={{ padding: '14px' }}>
-                      <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: '#f1f5f9', color: '#334155' }}>
+                      <span style={{ fontSize: '12px', padding: '3px var(--space-2)', borderRadius: '4px', background: '#f1f5f9', color: '#334155' }}>
                         {item.categoryLabel}
                       </span>
                     </td>
@@ -280,7 +281,7 @@ export default function StaffAssistanceRequestsPage() {
                       <Link
                         to={`/staff/assistance/detail?id=${item.id}`}
                         className="p-button primary"
-                        style={{ padding: '6px 10px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '6px 10px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
                       >
                         <Eye size={14} /> Xử lý
                       </Link>
@@ -293,7 +294,7 @@ export default function StaffAssistanceRequestsPage() {
         </div>
 
         {/* Pagination */}
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: 'var(--space-4)' }}>
           <Pagination
             currentPage={page}
             totalPages={totalPages}

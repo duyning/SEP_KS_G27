@@ -1,3 +1,5 @@
+import UIField from '../components/common/Field.jsx';
+import UIButton from '../components/common/Button.jsx';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -23,8 +25,8 @@ const DEMO_ACCOUNTS = [
   ['Người thuê (Sinh viên)', 'user@hlrcs.com', '123456'],
   ['Chủ trọ đối tác', 'host@hlrcs.com', '123456'],
   ['Chủ trọ chưa đăng ký nhà trọ', 'host-new@hlrcs.com', '123456'],
-  ['Nhân viên (Staff)', 'staff@hlrcs.com', '123456'],
-  ['Quản trị viên (Admin)', 'admin@hlrcs.com', 'admin123'],
+  ['Nhân viên (nhân viên)', 'staff@hlrcs.com', '123456'],
+  ['Quản trị viên (quản trị viên)', 'admin@hlrcs.com', 'admin123'],
 ];
 
 export default function AuthPage({ registerMode = false }) {
@@ -303,9 +305,9 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="loginForm" onSubmit={handleLoginSubmit} noValidate aria-busy={loginBusy}>
                   {/* Email hoặc SĐT */}
                   <div className="form-group">
-                    <label htmlFor="loginIdentifier" className="field-label">
+                    <UIField htmlFor="loginIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Mail size={18} />
@@ -331,9 +333,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="loginPassword" className="field-label">
+                    <UIField htmlFor="loginPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Lock size={18} />
@@ -352,7 +354,7 @@ export default function AuthPage({ registerMode = false }) {
                           setLoginAlert('');
                         }}
                       />
-                      <button
+                      <UIButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowLoginPassword(!showLoginPassword)}
@@ -360,14 +362,14 @@ export default function AuthPage({ registerMode = false }) {
                         title={showLoginPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </UIButton>
                     </div>
                     {loginErrors.password && <p className="error-message">{loginErrors.password}</p>}
                   </div>
 
                   {/* Ghi nhớ & Quên mật khẩu */}
                   <div className="form-options">
-                    <label className="custom-checkbox">
+                    <UIField className="custom-checkbox">
                       <input
                         id="remember"
                         name="remember"
@@ -376,18 +378,18 @@ export default function AuthPage({ registerMode = false }) {
                         onChange={(e) => setLoginRemember(e.target.checked)}
                       />
                       <span>Ghi nhớ đăng nhập</span>
-                    </label>
-                    <button
+                    </UIField>
+                    <UIButton
                       type="button"
                       className="forgot-link"
-                      onClick={() => notify('Vui lòng liên hệ ban quản trị HL_RCS hoặc kiểm tra email để đặt lại mật khẩu.', 'info')}
+                      onClick={() => notify('Vui lòng liên hệ nhân viên HL_RCS hoặc kiểm tra email để đặt lại mật khẩu.', 'info')}
                     >
                       Quên mật khẩu?
-                    </button>
+                    </UIButton>
                   </div>
 
                   {/* Nút Đăng nhập */}
-                  <button id="submitBtn" className="primary-button" type="submit" disabled={loginBusy}>
+                  <UIButton id="submitBtn" className="primary-button" type="submit" disabled={loginBusy}>
                     {loginBusy ? (
                       <>
                         <LoaderCircle className="spin" size={18} />
@@ -399,29 +401,29 @@ export default function AuthPage({ registerMode = false }) {
                         <ArrowRight size={18} />
                       </>
                     )}
-                  </button>
+                  </UIButton>
                 </form>
 
                 {/* Chuyển sang Đăng ký với hiệu ứng lật trang */}
                 <div className="signup-prompt">
                   <span>Bạn chưa có tài khoản?</span>
-                  <button
+                  <UIButton
                     type="button"
                     className="flip-trigger-btn"
                     id="btnGoToRegisterUser"
                     onClick={() => goToRegister('USER')}
                   >
                     Đăng ký người thuê
-                  </button>
+                  </UIButton>
                   <span>•</span>
-                  <button
+                  <UIButton
                     type="button"
                     className="flip-trigger-btn"
                     id="btnGoToRegisterHost"
                     onClick={() => goToRegister('ROOM_HOST')}
                   >
                     Hợp tác chủ trọ
-                  </button>
+                  </UIButton>
                 </div>
 
                 {/* Badge bảo mật SSL */}
@@ -435,7 +437,7 @@ export default function AuthPage({ registerMode = false }) {
                   <summary>Tài khoản kiểm thử nhanh (Demo)</summary>
                   <div className="demo-grid">
                     {DEMO_ACCOUNTS.map(([label, email, password]) => (
-                      <button
+                      <UIButton
                         key={email}
                         type="button"
                         disabled={loginBusy}
@@ -448,7 +450,7 @@ export default function AuthPage({ registerMode = false }) {
                       >
                         <strong>{label}</strong>
                         <span>{email}</span>
-                      </button>
+                      </UIButton>
                     ))}
                   </div>
                 </details>
@@ -491,9 +493,9 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="registerForm" onSubmit={handleRegisterSubmit} noValidate aria-busy={regBusy}>
                   {/* Họ và tên */}
                   <div className="form-group">
-                    <label htmlFor="regFullName" className="field-label">
+                    <UIField htmlFor="regFullName" className="field-label">
                       Họ và tên
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <UserRound size={18} />
@@ -519,9 +521,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Email hoặc Số điện thoại */}
                   <div className="form-group">
-                    <label htmlFor="regIdentifier" className="field-label">
+                    <UIField htmlFor="regIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Mail size={18} />
@@ -547,9 +549,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regPassword" className="field-label">
+                    <UIField htmlFor="regPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Lock size={18} />
@@ -568,7 +570,7 @@ export default function AuthPage({ registerMode = false }) {
                           setRegAlert('');
                         }}
                       />
-                      <button
+                      <UIButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowRegPassword(!showRegPassword)}
@@ -576,16 +578,16 @@ export default function AuthPage({ registerMode = false }) {
                         title={showRegPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </UIButton>
                     </div>
                     {regErrors.password && <p className="error-message">{regErrors.password}</p>}
                   </div>
 
                   {/* Xác nhận mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regConfirmPassword" className="field-label">
+                    <UIField htmlFor="regConfirmPassword" className="field-label">
                       Xác nhận mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <ShieldCheck size={18} />
@@ -604,7 +606,7 @@ export default function AuthPage({ registerMode = false }) {
                           setRegAlert('');
                         }}
                       />
-                      <button
+                      <UIButton
                         type="button"
                         className="password-toggle-btn"
                         onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
@@ -612,7 +614,7 @@ export default function AuthPage({ registerMode = false }) {
                         title={showRegConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {showRegConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
+                      </UIButton>
                     </div>
                     {regErrors.confirmPassword && <p className="error-message">{regErrors.confirmPassword}</p>}
                   </div>
@@ -633,22 +635,22 @@ export default function AuthPage({ registerMode = false }) {
                           setRegErrors((prev) => ({ ...prev, agree: undefined }));
                         }}
                       />
-                      <label htmlFor="regAgree" className="terms-text">
+                      <UIField htmlFor="regAgree" className="terms-text">
                         Tôi đồng ý với{' '}
-                        <button type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
+                        <UIButton type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
                           Điều khoản dịch vụ
-                        </button>{' '}
+                        </UIButton>{' '}
                         và{' '}
-                        <button type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
+                        <UIButton type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
                           Chính sách bảo mật
-                        </button>{' '}
+                        </UIButton>{' '}
                         của HL_RCS.
-                      </label>
+                      </UIField>
                   </div>
-                  {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: '12px' }} role="alert">{regErrors.agree}</p>}
+                  {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: 'var(--space-3)' }} role="alert">{regErrors.agree}</p>}
 
                   {/* Nút Đăng ký */}
-                  <button id="submitRegisterBtn" className="primary-button" type="submit" disabled={regBusy}>
+                  <UIButton id="submitRegisterBtn" className="primary-button" type="submit" disabled={regBusy}>
                     {regBusy ? (
                       <>
                         <LoaderCircle className="spin" size={18} />
@@ -660,13 +662,13 @@ export default function AuthPage({ registerMode = false }) {
                         <ArrowRight size={18} />
                       </>
                     )}
-                  </button>
+                  </UIButton>
                 </form>
 
                 {/* Chuyển sang Đăng nhập với hiệu ứng lật trang */}
                 <div className="signup-prompt">
                   <span>Đã có tài khoản?</span>
-                  <button
+                  <UIButton
                     type="button"
                     className="flip-trigger-btn"
                     id="toLoginBtn"
@@ -674,7 +676,7 @@ export default function AuthPage({ registerMode = false }) {
                   >
                     <ChevronLeft size={14} />
                     <span>Đăng nhập ngay</span>
-                  </button>
+                  </UIButton>
                 </div>
 
                 {/* Badge bảo mật SSL */}

@@ -299,3 +299,12 @@ Không tự import SQL hay chạy cleanup database để "đồng bộ" tài li�
 policy hoặc trạng thái tích hợp, cập nhật đồng thời tài liệu context/ERD/catalog.
 Không dùng số lượng test, trạng thái demo hoặc giả định schema ở đây thay cho
 việc kiểm chứng nguồn hiện tại khi có thay đổi mới.
+
+## Service requests extension — 2026-11-14
+
+Customer service requests now have authenticated submit/read and owner response APIs, separate from registration proposals and room viewing bookings. See [SERVICE_REQUESTS.md](SERVICE_REQUESTS.md) for lifecycle, API, timezone, verification and migration handoff. Listing review now exposes current-snapshot comparison; rejecting an update cannot reactivate revoked capability.
+
+
+## Mở rộng khu vực dịch vụ (2026-11-14)
+
+Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.

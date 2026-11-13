@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -69,13 +71,13 @@ export default function SearchPage() {
   };
 
   return (
-    <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: '1240px', margin: '0 auto', padding: 'var(--space-6) var(--space-4)' }}>
       {/* Header & Breadcrumb */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: 'var(--space-6)' }}>
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
           Khám phá nhà trọ & Căn hộ tại Hòa Lạc
         </h1>
-        <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <p style={{ fontSize: '14px', color: 'var(--ui-muted)', margin: 0 }}>
           Tìm kiếm trong tổng số <strong>{MOCK_ROOMS.length}</strong> phòng trọ đã xác thực quanh ĐH FPT và Khu CNC Hòa Lạc
         </p>
       </div>
@@ -83,7 +85,7 @@ export default function SearchPage() {
       <DemoNoticeBanner message="Dữ liệu tìm kiếm và lọc hiển thị từ prototype fixture do backend chưa cung cấp API GET /api/properties/search." />
 
       {/* Main Layout: Filter Sidebar + Results */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 280px) 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', '--grid-columns': 'minmax(240px, 280px) 1fr', gap: 'var(--space-6)' }}>
         {/* Left Filter Sidebar */}
         <aside style={{
           background: '#ffffff',
@@ -93,11 +95,11 @@ export default function SearchPage() {
           height: 'fit-content',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
-              <Filter size={18} style={{ color: '#0d9488' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+              <Filter size={18} style={{ color: '#0f766e' }} />
               <span>Bộ lọc tìm kiếm</span>
             </div>
-            <button
+            <UIButton
               type="button"
               onClick={resetFilters}
               title="Đặt lại bộ lọc"
@@ -106,31 +108,31 @@ export default function SearchPage() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: '#64748b',
+                color: 'var(--ui-muted)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: 'var(--space-1)',
                 fontSize: '12px',
                 fontWeight: 600,
               }}
             >
               <RotateCcw size={14} />
               <span>Đặt lại</span>
-            </button>
+            </UIButton>
           </div>
 
           {/* Area */}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="searchArea" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+            <UIField htmlFor="searchArea" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 'var(--space-2)' }}>
               Khu vực
-            </label>
+            </UIField>
             <select
               id="searchArea"
               value={selectedArea}
               onChange={(e) => { setSelectedArea(e.target.value); setPage(1); }}
               style={{
                 width: '100%',
-                padding: '9px 12px',
+                padding: '9px var(--space-3)',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 fontSize: '13px',
@@ -148,16 +150,16 @@ export default function SearchPage() {
 
           {/* Price Range */}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="searchPrice" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+            <UIField htmlFor="searchPrice" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 'var(--space-2)' }}>
               Khoảng giá
-            </label>
+            </UIField>
             <select
               id="searchPrice"
               value={selectedPrice}
               onChange={(e) => { setSelectedPrice(e.target.value); setPage(1); }}
               style={{
                 width: '100%',
-                padding: '9px 12px',
+                padding: '9px var(--space-3)',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 fontSize: '13px',
@@ -174,19 +176,19 @@ export default function SearchPage() {
           </div>
 
           {/* Map Link CTA */}
-          <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ marginTop: 'var(--space-6)', paddingTop: '18px', borderTop: '1px solid #f1f5f9' }}>
             <Link
               to="/map"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: 'var(--space-2)',
                 width: '100%',
                 padding: '10px',
                 borderRadius: '8px',
                 backgroundColor: '#f0fdfa',
-                color: '#0d9488',
+                color: '#0f766e',
                 border: '1px solid #99f6e4',
                 fontWeight: 700,
                 fontSize: '13px',
@@ -211,11 +213,11 @@ export default function SearchPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '12px',
+            gap: 'var(--space-3)',
             marginBottom: '20px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '220px' }}>
-              <Search size={18} style={{ color: '#94a3b8' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flex: 1, minWidth: '220px' }}>
+              <Search size={18} style={{ color: 'var(--ui-muted)' }} />
               <input
                 type="search"
                 value={searchQuery}
@@ -232,16 +234,16 @@ export default function SearchPage() {
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label htmlFor="searchSort" style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <UIField htmlFor="searchSort" style={{ fontSize: '13px', color: 'var(--ui-muted)', fontWeight: 600 }}>
                 Sắp xếp:
-              </label>
+              </UIField>
               <select
                 id="searchSort"
                 value={selectedSort}
                 onChange={(e) => setSelectedSort(e.target.value)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '6px var(--space-3)',
                   borderRadius: '8px',
                   border: '1px solid #cbd5e1',
                   fontSize: '13px',
@@ -263,24 +265,24 @@ export default function SearchPage() {
             <div style={{
               background: '#ffffff',
               borderRadius: '16px',
-              padding: '48px 24px',
+              padding: 'var(--space-12) var(--space-6)',
               textAlign: 'center',
               border: '1px solid #e2e8f0',
             }}>
-              <Home size={40} style={{ color: '#94a3b8', margin: '0 auto 12px' }} />
+              <Home size={40} style={{ color: 'var(--ui-muted)', margin: '0 auto var(--space-3)' }} />
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
                 Không tìm thấy phòng trọ phù hợp
               </h3>
-              <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+              <p style={{ fontSize: '14px', color: 'var(--ui-muted)', marginBottom: '20px' }}>
                 Hãy thử nới lỏng bộ lọc khu vực hoặc mức giá để xem thêm kết quả khác.
               </p>
-              <button
+              <UIButton
                 type="button"
                 onClick={resetFilters}
                 style={{
-                  padding: '8px 18px',
+                  padding: 'var(--space-2) 18px',
                   borderRadius: '8px',
-                  backgroundColor: '#0d9488',
+                  backgroundColor: '#0f766e',
                   color: '#ffffff',
                   border: 'none',
                   fontWeight: 700,
@@ -288,10 +290,10 @@ export default function SearchPage() {
                 }}
               >
                 Đặt lại bộ lọc
-              </button>
+              </UIButton>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', '--grid-columns': 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
               {paginatedRooms.map((room) => (
                 <article
                   key={room.id}
@@ -311,15 +313,15 @@ export default function SearchPage() {
                       position: 'absolute',
                       top: '10px',
                       left: '10px',
-                      backgroundColor: '#0d9488',
+                      backgroundColor: '#0f766e',
                       color: '#ffffff',
-                      padding: '3px 8px',
+                      padding: '3px var(--space-2)',
                       borderRadius: '9999px',
                       fontSize: '11px',
                       fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      gap: 'var(--space-1)',
                     }}>
                       <ShieldCheck size={12} />
                       <span>Xác thực</span>
@@ -330,7 +332,7 @@ export default function SearchPage() {
                       left: '10px',
                       backgroundColor: 'rgba(15, 23, 42, 0.8)',
                       color: '#ffffff',
-                      padding: '3px 8px',
+                      padding: '3px var(--space-2)',
                       borderRadius: '6px',
                       fontSize: '11px',
                       fontWeight: 600,
@@ -339,9 +341,9 @@ export default function SearchPage() {
                     </span>
                   </div>
 
-                  <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ padding: 'var(--space-4)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', marginBottom: 'var(--space-1)' }}>
                         <MapPin size={13} />
                         <span>{room.campusDistance}</span>
                         <span>•</span>
@@ -352,17 +354,17 @@ export default function SearchPage() {
                           {room.title}
                         </Link>
                       </h3>
-                      <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--ui-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
                         {room.location}
                       </p>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
                       <div>
-                        <strong style={{ fontSize: '17px', fontWeight: 800, color: '#0d9488' }}>
+                        <strong style={{ fontSize: '17px', fontWeight: 800, color: '#0f766e' }}>
                           {room.priceDisplay}
                         </strong>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>/tháng</span>
+                        <span style={{ fontSize: '11px', color: 'var(--ui-muted)' }}>/tháng</span>
                       </div>
                       <Link
                         to={`/properties/detail?id=${room.id}`}
@@ -370,7 +372,7 @@ export default function SearchPage() {
                           padding: '6px 14px',
                           borderRadius: '8px',
                           backgroundColor: '#f0fdfa',
-                          color: '#0d9488',
+                          color: '#0f766e',
                           border: '1px solid #99f6e4',
                           fontWeight: 700,
                           fontSize: '12px',

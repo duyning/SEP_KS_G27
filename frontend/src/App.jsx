@@ -1,3 +1,4 @@
+import UIButton from './components/common/Button.jsx';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { LoaderCircle, ShieldAlert } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';
@@ -30,6 +31,6 @@ function LegacyRedirect({ screen }) {
 export default function App() {
   const { loading, sessionError, retry, logout } = useAuth();
   if (loading) return <div className="session-screen" role="status"><LoaderCircle className="spin" /> Đang kiểm tra phiên đăng nhập...</div>;
-  if (sessionError) return <div className="session-screen"><p role="alert">{sessionError}</p><button className="submit-button" onClick={retry}>Thử lại</button><button className="text-button" onClick={() => logout().catch(() => {})}>Về đăng nhập</button></div>;
+  if (sessionError) return <div className="session-screen"><p role="alert">{sessionError}</p><UIButton className="submit-button" onClick={retry}>Thử lại</UIButton><UIButton className="text-button" onClick={() => logout().catch(() => {})}>Về đăng nhập</UIButton></div>;
   return <ToastProvider><Routes>{screens.map(screen => <Route key={screen.path} path={screen.path} element={<ScreenRoute screen={screen} />} />)}{screens.filter(screen => screen.source).map(screen => <Route key={screen.source} path={`/${screen.source}`} element={<LegacyRedirect screen={screen} />} />)}<Route path="/account" element={<Navigate to="/profile" replace />} /><Route path="*" element={<div className="session-screen"><h1>Không tìm thấy trang</h1><Link className="p-button primary" to="/">Về trang chủ</Link></div>} /></Routes></ToastProvider>;
 }

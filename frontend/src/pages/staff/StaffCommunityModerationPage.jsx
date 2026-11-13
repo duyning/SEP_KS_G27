@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -68,12 +69,12 @@ export default function StaffCommunityModerationPage() {
       {/* Header */}
       <section className="dashboard-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0' }}>Kiểm duyệt cộng đồng</h1>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 var(--space-1) 0' }}>Kiểm duyệt cộng đồng</h1>
+          <p style={{ margin: 0, color: 'var(--ui-muted)', fontSize: '14px' }}>
             Kiểm duyệt 3 loại bài: Nhượng phòng, Tìm người ở ghép, Đồ cũ sinh viên trước khi xuất hiện công khai.
           </p>
         </div>
-        <button
+        <UIButton
           type="button"
           className="p-button"
           onClick={() => {
@@ -82,26 +83,26 @@ export default function StaffCommunityModerationPage() {
           }}
         >
           <RotateCcw size={15} /> Làm mới
-        </button>
+        </UIButton>
       </section>
 
       {/* KPI Cards */}
-      <section className="staff-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+      <section className="staff-kpi-grid" style={{ display: 'grid', '--grid-columns': 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)', marginBottom: '20px' }}>
         <article
           className="kpi-card"
           tabIndex={0}
           role="button"
-          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0d9488' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
+          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0f766e' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
           onClick={() => { setStatusFilter('ALL'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Tổng bài viết</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Tổng bài viết</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{totalCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Toàn bộ bài viết</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginBottom: 'var(--space-1)' }}>{totalCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Toàn bộ bài viết</span>
         </article>
 
         <article
@@ -112,13 +113,13 @@ export default function StaffCommunityModerationPage() {
           onClick={() => { setStatusFilter('PENDING'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Chờ kiểm duyệt</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Chờ kiểm duyệt</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Clock size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', marginBottom: '4px' }}>{pendingCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Cần xem xét ngay</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', marginBottom: 'var(--space-1)' }}>{pendingCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Cần xem xét ngay</span>
         </article>
 
         <article
@@ -129,13 +130,13 @@ export default function StaffCommunityModerationPage() {
           onClick={() => { setStatusFilter('NEED_CHANGES'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Cần chỉnh sửa</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Cần chỉnh sửa</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertCircle size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ea580c', marginBottom: '4px' }}>{needChangesCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Chờ tác giả sửa</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ea580c', marginBottom: 'var(--space-1)' }}>{needChangesCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Chờ tác giả sửa</span>
         </article>
 
         <article
@@ -146,29 +147,29 @@ export default function StaffCommunityModerationPage() {
           onClick={() => { setStatusFilter('APPROVED'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Đã xử lý</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ui-muted)' }}>Đã xử lý</span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>{processedCount}</div>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Duyệt & từ chối</span>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981', marginBottom: 'var(--space-1)' }}>{processedCount}</div>
+          <span style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>Duyệt & từ chối</span>
         </article>
       </section>
 
       {/* Category Breakdown Summary Bar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 18px', marginBottom: '20px', alignItems: 'center', fontSize: '13px' }}>
-        <span style={{ color: '#64748b', fontWeight: '600' }}>Chờ duyệt theo loại:</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: 'var(--space-3) 18px', marginBottom: '20px', alignItems: 'center', fontSize: '13px' }}>
+        <span style={{ color: 'var(--ui-muted)', fontWeight: '600' }}>Chờ duyệt theo loại:</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0d9488', fontWeight: '600' }}>Nhượng phòng</span>
+          <span style={{ padding: '2px var(--space-2)', borderRadius: '4px', background: '#f0fdfa', color: '#0f766e', fontWeight: '600' }}>Nhượng phòng</span>
           <strong>{catPendingTransfer}</strong>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#faf5ff', color: '#9333ea', fontWeight: '600' }}>Tìm người ở ghép</span>
+          <span style={{ padding: '2px var(--space-2)', borderRadius: '4px', background: '#faf5ff', color: '#9333ea', fontWeight: '600' }}>Tìm người ở ghép</span>
           <strong>{catPendingRoommate}</strong>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 8px', borderRadius: '4px', background: '#fff7ed', color: '#ea580c', fontWeight: '600' }}>Đồ cũ sinh viên</span>
+          <span style={{ padding: '2px var(--space-2)', borderRadius: '4px', background: '#fff7ed', color: '#ea580c', fontWeight: '600' }}>Đồ cũ sinh viên</span>
           <strong>{catPendingSecondhand}</strong>
         </div>
       </div>
@@ -176,24 +177,24 @@ export default function StaffCommunityModerationPage() {
       {/* Table Section */}
       <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
         {/* Filter Toolbar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
           <div style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ui-muted)' }} />
             <input
               type="text"
               placeholder="Tìm theo tiêu đề, tác giả, vị trí..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
-              style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+              style={{ width: '100%', padding: '9px var(--space-3) 9px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               aria-label="Lọc loại bài"
               value={categoryFilter}
               onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="ALL">Tất cả loại bài</option>
               <option value="ROOM_TRANSFER">Nhượng phòng</option>
@@ -205,7 +206,7 @@ export default function StaffCommunityModerationPage() {
               aria-label="Lọc trạng thái"
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="PENDING">Chờ kiểm duyệt</option>
@@ -218,13 +219,13 @@ export default function StaffCommunityModerationPage() {
               aria-label="Sắp xếp"
               value={sortOrder}
               onChange={e => setSortOrder(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+              style={{ padding: 'var(--space-2) var(--space-3)', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
             >
               <option value="newest">Mới nhất trước</option>
               <option value="oldest">Cũ nhất trước</option>
             </select>
 
-            <button
+            <UIButton
               type="button"
               className="p-button"
               onClick={() => {
@@ -236,11 +237,11 @@ export default function StaffCommunityModerationPage() {
               }}
             >
               <RotateCcw size={14} /> Đặt lại
-            </button>
+            </UIButton>
           </div>
         </div>
 
-        <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--ui-muted)', marginBottom: 'var(--space-3)' }}>
           Hiển thị: <strong>{filteredPosts.length}</strong> bài viết
         </div>
 
@@ -249,18 +250,18 @@ export default function StaffCommunityModerationPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <tr>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '36%' }}>BÀI VIẾT</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>LOẠI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '18%' }}>TÁC GIẢ</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>NGÀY GỬI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '10%' }}>TRẠNG THÁI</th>
-                <th style={{ padding: '12px 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '8%', textAlign: 'right' }}>THAO TÁC</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '36%' }}>BÀI VIẾT</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>LOẠI</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '18%' }}>TÁC GIẢ</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '14%' }}>NGÀY GỬI</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '10%' }}>TRẠNG THÁI</th>
+                <th style={{ padding: 'var(--space-3) 14px', color: '#475569', fontSize: '12px', fontWeight: '700', width: '8%', textAlign: 'right' }}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
               {paginatedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--ui-muted)' }}>
                     Không có bài viết cộng đồng nào phù hợp.
                   </td>
                 </tr>
@@ -271,19 +272,19 @@ export default function StaffCommunityModerationPage() {
                       <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '3px' }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', gap: '8px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)', display: 'flex', gap: 'var(--space-2)' }}>
                         <span>📍 {item.location}</span>
                         {item.priceDisplay && <span>• 💰 {item.priceDisplay}</span>}
                       </div>
                     </td>
                     <td style={{ padding: '14px' }}>
-                      <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: item.type === 'ROOM_TRANSFER' ? '#f0fdfa' : item.type === 'ROOMMATE' ? '#faf5ff' : '#fff7ed', color: item.type === 'ROOM_TRANSFER' ? '#0d9488' : item.type === 'ROOMMATE' ? '#9333ea' : '#ea580c', fontWeight: '600' }}>
+                      <span style={{ fontSize: '12px', padding: '3px var(--space-2)', borderRadius: '4px', background: item.type === 'ROOM_TRANSFER' ? '#f0fdfa' : item.type === 'ROOMMATE' ? '#faf5ff' : '#fff7ed', color: item.type === 'ROOM_TRANSFER' ? '#0f766e' : item.type === 'ROOMMATE' ? '#9333ea' : '#ea580c', fontWeight: '600' }}>
                         {item.typeLabel}
                       </span>
                     </td>
                     <td style={{ padding: '14px' }}>
                       <div style={{ fontWeight: '600', color: '#0f172a' }}>{item.authorName}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{item.authorPhone}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>{item.authorPhone}</div>
                     </td>
                     <td style={{ padding: '14px', fontSize: '13px', color: '#475569' }}>
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
@@ -295,7 +296,7 @@ export default function StaffCommunityModerationPage() {
                       <Link
                         to={`/staff/community/detail?id=${item.id}`}
                         className="p-button primary"
-                        style={{ padding: '6px 10px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '6px 10px', fontSize: '12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
                       >
                         <Eye size={14} /> Thẩm định
                       </Link>
@@ -308,7 +309,7 @@ export default function StaffCommunityModerationPage() {
         </div>
 
         {/* Pagination */}
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: 'var(--space-4)' }}>
           <Pagination
             currentPage={page}
             totalPages={totalPages}

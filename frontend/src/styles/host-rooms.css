@@ -2,7 +2,7 @@
    HL_RCS | ROOM HOST PORTAL - INDIVIDUAL ROOMS MANAGEMENT CSS (host-rooms.css)
    Module: Quản lý từng phòng thực tế (Individual Rooms Management)
    Hierarchy: 1 Host -> Max 1 Property -> Many Room Types -> Many Individual Rooms
-   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488), Emerald (#10b981)
+   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e), Emerald (#10b981)
    ============================================================================= */
 
 :root {
@@ -10,7 +10,7 @@
   --rm-slate-dark: #1e293b;
   --rm-slate-muted: #64748b;
   --rm-slate-subtle: #94a3b8;
-  --rm-teal: #0d9488;
+  --rm-teal: #0f766e;
   --rm-teal-hover: #0f766e;
   --rm-teal-light: #f0fdfa;
   --rm-teal-border: #99f6e4;
@@ -48,8 +48,8 @@
 html, body.host-portal-body {
   overflow-x: hidden;
   max-width: 100vw;
-  margin: 0;
-  padding: 0;
+  margin:0;
+  padding:0;
   box-sizing: border-box;
 }
 
@@ -58,10 +58,10 @@ body.modal-open {
 }
 
 .room-main-area {
-  padding: 24px 32px 64px;
+  padding:var(--space-6) var(--space-8) 64px;
   width: 100%;
   max-width: 1440px;
-  margin: 0 auto;
+  margin:0 auto;
   box-sizing: border-box;
 }
 
@@ -69,17 +69,17 @@ body.modal-open {
    2. BREADCRUMBS BAR
    ============================================================================= */
 .rooms-breadcrumb-bar {
-  margin-bottom: 16px;
+  margin-bottom:var(--space-4);
 }
 
 .breadcrumb-list {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap:var(--space-2);
   list-style: none;
-  padding: 0;
-  margin: 0;
+  padding:0;
+  margin:0;
   font-size: 13px;
   font-weight: 500;
   color: var(--rm-slate-muted);
@@ -112,13 +112,13 @@ body.modal-open {
   background: var(--rm-card-bg);
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius-lg);
-  padding: 24px 28px;
+  padding:var(--space-6) 28px;
   box-shadow: var(--rm-shadow-sm);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap:var(--space-6);
+  margin-bottom:var(--space-6);
   position: relative;
   overflow: hidden;
 }
@@ -142,8 +142,8 @@ body.modal-open {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap:var(--space-2);
+  margin-bottom:var(--space-2);
 }
 
 .badge-hierarchy {
@@ -152,7 +152,7 @@ body.modal-open {
   letter-spacing: 0.05em;
   color: var(--rm-teal);
   background: var(--rm-teal-light);
-  padding: 4px 10px;
+  padding:var(--space-1) 10px;
   border-radius: 999px;
   border: 1px solid var(--rm-teal-border);
   text-transform: uppercase;
@@ -161,7 +161,7 @@ body.modal-open {
 .badge-status-pill {
   font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding:var(--space-1) 10px;
   border-radius: 999px;
   background: var(--rm-emerald-light);
   color: var(--rm-emerald-text);
@@ -177,12 +177,12 @@ body.modal-open {
 .badge-single-prop-notice {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap:var(--space-1);
   font-size: 12px;
   font-weight: 600;
   color: var(--rm-slate-muted);
   background: var(--rm-border-light);
-  padding: 3px 8px;
+  padding:3px var(--space-2);
   border-radius: 6px;
 }
 
@@ -190,14 +190,14 @@ body.modal-open {
   font-size: 24px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 6px 0;
+  margin:0 0 6px 0;
   line-height: 1.25;
 }
 
 .context-address-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 14px;
   color: var(--rm-slate-muted);
 }
@@ -210,7 +210,7 @@ body.modal-open {
 .context-link-action {
   color: var(--rm-teal);
   font-weight: 600;
-  margin-left: 10px;
+  margin-left:10px;
   text-decoration: none;
   font-size: 13px;
   transition: color 0.15s ease;
@@ -224,7 +224,7 @@ body.modal-open {
 .context-content-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
   flex-shrink: 0;
 }
 
@@ -232,13 +232,13 @@ body.modal-open {
 .btn-action-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   background: var(--rm-teal);
   color: #ffffff !important;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 18px;
+  padding:10px 18px;
   border-radius: var(--rm-radius);
   border: none;
   cursor: pointer;
@@ -258,13 +258,13 @@ body.modal-open {
 .btn-action-secondary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   background: #ffffff;
   color: var(--rm-slate-dark) !important;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  padding: 10px 16px;
+  padding:10px var(--space-4);
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   cursor: pointer;
@@ -285,18 +285,18 @@ body.modal-open {
 .rooms-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap:var(--space-4);
+  margin-bottom:var(--space-6);
 }
 
 .kpi-metric-card {
   background: var(--rm-card-bg);
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius-lg);
-  padding: 20px;
+  padding:20px;
   box-shadow: var(--rm-shadow-sm);
   display: flex;
-  gap: 16px;
+  gap:var(--space-4);
   align-items: flex-start;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -342,13 +342,13 @@ body.modal-open {
   font-size: 13px;
   font-weight: 600;
   color: var(--rm-slate-muted);
-  margin-bottom: 6px;
+  margin-bottom:6px;
 }
 
 .kpi-val-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .kpi-val {
@@ -364,7 +364,7 @@ body.modal-open {
 .kpi-pill-rate {
   font-size: 12px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding:2px var(--space-2);
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -390,7 +390,7 @@ body.modal-open {
 .kpi-foot {
   font-size: 12px;
   color: var(--rm-slate-muted);
-  margin-top: 6px;
+  margin-top:6px;
 }
 
 .kpi-foot.text-emerald {
@@ -405,17 +405,17 @@ body.modal-open {
   background: var(--rm-card-bg);
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius-lg);
-  padding: 18px 20px;
+  padding:18px 20px;
   box-shadow: var(--rm-shadow-sm);
-  margin-bottom: 20px;
+  margin-bottom:20px;
 }
 
 .toolbar-filter-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom:14px;
 }
 
 .search-input-box {
@@ -435,7 +435,7 @@ body.modal-open {
 
 .form-input-search {
   width: 100%;
-  padding: 9px 36px 9px 36px;
+  padding:9px 36px 9px 36px;
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   font-size: 14px;
@@ -463,7 +463,7 @@ body.modal-open {
   height: 20px;
   border-radius: 50%;
   font-size: 11px;
-  color: #64748b;
+  color:var(--ui-muted, #475569);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -482,7 +482,7 @@ body.modal-open {
 
 .form-select-filter {
   width: 100%;
-  padding: 9px 32px 9px 12px;
+  padding:9px var(--space-8) 9px var(--space-3);
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   font-size: 13.5px;
@@ -506,7 +506,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   background: var(--rm-border-light);
-  padding: 3px;
+  padding:3px;
   border-radius: 8px;
   border: 1px solid var(--rm-border);
 }
@@ -514,8 +514,8 @@ body.modal-open {
 .btn-view-mode {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
+  gap:5px;
+  padding:6px var(--space-3);
   border-radius: 6px;
   border: none;
   background: transparent;
@@ -537,23 +537,23 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap:var(--space-4);
   border-top: 1px solid var(--rm-border-light);
-  padding-top: 14px;
+  padding-top:14px;
 }
 
 .status-tab-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   flex-wrap: wrap;
 }
 
 .status-tab-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  gap:6px;
+  padding:7px 14px;
   border-radius: 999px;
   border: 1px solid var(--rm-border);
   background: #ffffff;
@@ -596,7 +596,7 @@ body.modal-open {
 .tab-counter {
   font-size: 11px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding:1px 6px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.08);
   color: inherit;
@@ -621,7 +621,7 @@ body.modal-open {
 .toolbar-note-text {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 12px;
   color: var(--rm-slate-muted);
   max-width: 480px;
@@ -657,7 +657,7 @@ body.modal-open {
 
 .rooms-data-table th {
   background: #f8fafc;
-  padding: 14px 18px;
+  padding:14px 18px;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -667,7 +667,7 @@ body.modal-open {
 }
 
 .rooms-data-table td {
-  padding: 16px 18px;
+  padding:var(--space-4) 18px;
   border-bottom: 1px solid var(--rm-border-light);
   color: var(--rm-navy);
   vertical-align: middle;
@@ -685,11 +685,11 @@ body.modal-open {
 .room-code-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-weight: 800;
   font-size: 15px;
   color: var(--rm-navy);
-  padding: 4px 10px;
+  padding:var(--space-1) 10px;
   background: #f1f5f9;
   border-radius: 6px;
   cursor: pointer;
@@ -706,7 +706,7 @@ body.modal-open {
   font-weight: 600;
   color: var(--rm-slate-dark);
   background: #f1f5f9;
-  padding: 3px 8px;
+  padding:3px var(--space-2);
   border-radius: 6px;
   display: inline-block;
 }
@@ -714,7 +714,7 @@ body.modal-open {
 .type-cell-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap:2px;
 }
 
 .type-name-link {
@@ -744,8 +744,8 @@ body.modal-open {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap:6px;
+  padding:var(--space-1) 10px;
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 700;
@@ -768,14 +768,14 @@ body.modal-open {
 .freshness-cell-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   font-size: 12.5px;
 }
 
 .freshness-tag-fresh {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap:var(--space-1);
   color: var(--rm-emerald-text);
   font-weight: 600;
 }
@@ -783,10 +783,10 @@ body.modal-open {
 .freshness-tag-stale {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap:var(--space-1);
   color: var(--rm-amber-text);
   background: var(--rm-amber-light);
-  padding: 2px 8px;
+  padding:2px var(--space-2);
   border-radius: 6px;
   font-weight: 700;
   border: 1px solid var(--rm-amber-border);
@@ -798,7 +798,7 @@ body.modal-open {
   color: var(--rm-amber-text);
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding:2px var(--space-2);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -813,7 +813,7 @@ body.modal-open {
 .table-actions-cell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   white-space: nowrap;
 }
 
@@ -846,8 +846,8 @@ body.modal-open {
 .btn-quick-reconfirm {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap:var(--space-1);
+  padding:var(--space-1) 10px;
   font-size: 12px;
   font-weight: 600;
   color: #b45309;
@@ -856,7 +856,7 @@ body.modal-open {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-right: 6px;
+  margin-right:6px;
   white-space: nowrap;
 }
 
@@ -876,7 +876,7 @@ body.modal-open {
   border: 1px solid var(--rm-border);
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
-  padding: 5px;
+  padding:5px;
   animation: dropdownFadeIn 0.15s ease;
 }
 
@@ -888,9 +888,9 @@ body.modal-open {
 .action-menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
   width: 100%;
-  padding: 7px 10px;
+  padding:7px 10px;
   font-size: 13px;
   font-weight: 500;
   color: var(--rm-slate-dark);
@@ -920,7 +920,7 @@ body.modal-open {
 .action-menu-divider {
   height: 1px;
   background: var(--rm-border);
-  margin: 4px 0;
+  margin:var(--space-1) 0;
 }
 
 .btn-tbl-icon {
@@ -961,7 +961,7 @@ body.modal-open {
 .room-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 18px;
+  gap:18px;
 }
 
 .room-card-item {
@@ -990,7 +990,7 @@ body.modal-open {
 }
 
 .card-header-bar {
-  padding: 16px 18px 12px;
+  padding:var(--space-4) 18px var(--space-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1006,15 +1006,15 @@ body.modal-open {
 .card-badges-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
 }
 
 .card-body-content {
-  padding: 16px 18px;
+  padding:var(--space-4) 18px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap:var(--space-3);
 }
 
 .card-type-title {
@@ -1032,7 +1032,7 @@ body.modal-open {
 .card-amenities-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap:5px;
 }
 
 .card-amenity-chip {
@@ -1040,7 +1040,7 @@ body.modal-open {
   font-weight: 600;
   color: var(--rm-slate-muted);
   background: #f1f5f9;
-  padding: 2px 7px;
+  padding:2px 7px;
   border-radius: 4px;
 }
 
@@ -1049,28 +1049,28 @@ body.modal-open {
   color: var(--rm-slate-muted);
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: auto;
-  padding-top: 8px;
+  gap:5px;
+  margin-top:auto;
+  padding-top:var(--space-2);
 }
 
 .card-footer-actions {
-  padding: 12px 18px;
+  padding:var(--space-3) 18px;
   background: #f8fafc;
   border-top: 1px solid var(--rm-border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .btn-card-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap:5px;
   font-size: 12.5px;
   font-weight: 700;
-  padding: 6px 12px;
+  padding:6px var(--space-3);
   border-radius: 6px;
   border: 1px solid var(--rm-border);
   background: #ffffff;
@@ -1088,7 +1088,7 @@ body.modal-open {
 .card-actions-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
 }
 
 /* =============================================================================
@@ -1098,10 +1098,10 @@ body.modal-open {
   background: var(--rm-card-bg);
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius-lg);
-  padding: 48px 32px;
+  padding:var(--space-12) var(--space-8);
   text-align: center;
   max-width: 620px;
-  margin: 40px auto;
+  margin:40px auto;
   box-shadow: var(--rm-shadow-md);
 }
 
@@ -1112,7 +1112,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
+  margin:0 auto 20px;
 }
 
 .state-icon-circle.info { background: var(--rm-teal-light); color: var(--rm-teal); }
@@ -1123,21 +1123,21 @@ body.modal-open {
   font-size: 22px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 10px;
+  margin:0 0 10px;
 }
 
 .state-desc {
   font-size: 14.5px;
   color: var(--rm-slate-muted);
   line-height: 1.6;
-  margin: 0 0 24px;
+  margin:0 0 var(--space-6);
 }
 
 .state-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap:var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -1145,28 +1145,28 @@ body.modal-open {
   background: var(--rm-card-bg);
   border: 1px dashed var(--rm-border);
   border-radius: var(--rm-radius-lg);
-  padding: 48px 24px;
+  padding:var(--space-12) var(--space-6);
   text-align: center;
-  margin: 24px 0;
+  margin:var(--space-6) 0;
 }
 
 .empty-state-icon {
   color: var(--rm-slate-subtle);
-  margin-bottom: 14px;
+  margin-bottom:14px;
 }
 
 .empty-title {
   font-size: 18px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 8px;
+  margin:0 0 var(--space-2);
 }
 
 .empty-desc {
   font-size: 14px;
   color: var(--rm-slate-muted);
   max-width: 520px;
-  margin: 0 auto 20px;
+  margin:0 auto 20px;
   line-height: 1.5;
 }
 
@@ -1174,7 +1174,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap:var(--space-3);
 }
 
 /* Skeleton loader animations */
@@ -1186,14 +1186,14 @@ body.modal-open {
   height: 120px;
   background: #e2e8f0;
   border-radius: var(--rm-radius-lg);
-  margin-bottom: 24px;
+  margin-bottom:var(--space-6);
 }
 
 .sk-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap:var(--space-4);
+  margin-bottom:var(--space-6);
 }
 
 .sk-kpi-card {
@@ -1206,7 +1206,7 @@ body.modal-open {
   height: 72px;
   background: #e2e8f0;
   border-radius: var(--rm-radius-lg);
-  margin-bottom: 20px;
+  margin-bottom:20px;
 }
 
 .sk-table-box {
@@ -1232,7 +1232,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding:20px;
   overflow-y: auto;
   box-sizing: border-box;
 }
@@ -1259,12 +1259,12 @@ body.modal-open {
 }
 
 .host-modal-header {
-  padding: 20px 24px;
+  padding:20px var(--space-6);
   border-bottom: 1px solid var(--rm-border);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap:var(--space-4);
   background: #ffffff;
 }
 
@@ -1281,13 +1281,13 @@ body.modal-open {
   font-size: 19px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 4px;
+  margin:0 0 var(--space-1);
 }
 
 .host-modal-subtitle {
   font-size: 13px;
   color: var(--rm-slate-muted);
-  margin: 0;
+  margin:0;
 }
 
 .btn-close-modal {
@@ -1296,7 +1296,7 @@ body.modal-open {
   font-size: 18px;
   color: var(--rm-slate-muted);
   cursor: pointer;
-  padding: 4px;
+  padding:var(--space-1);
   border-radius: 6px;
   transition: all 0.15s ease;
 }
@@ -1307,30 +1307,30 @@ body.modal-open {
 }
 
 .host-modal-body {
-  padding: 24px;
+  padding:var(--space-6);
   overflow-y: auto;
   flex: 1;
 }
 
 .host-modal-footer {
-  padding: 16px 24px;
+  padding:var(--space-4) var(--space-6);
   background: #f8fafc;
   border-top: 1px solid var(--rm-border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap:10px;
 }
 
 /* Modal Form Fields */
 .form-group-field {
-  margin-bottom: 18px;
+  margin-bottom:18px;
 }
 
 .form-row-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap:14px;
 }
 
 .field-label {
@@ -1338,7 +1338,7 @@ body.modal-open {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--rm-navy);
-  margin-bottom: 6px;
+  margin-bottom:6px;
 }
 
 .field-label.required::after {
@@ -1350,12 +1350,12 @@ body.modal-open {
   font-weight: 400;
   font-size: 12px;
   color: var(--rm-slate-muted);
-  margin-left: 4px;
+  margin-left:var(--space-1);
 }
 
 .field-input-control {
   width: 100%;
-  padding: 10px 14px;
+  padding:10px 14px;
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   font-size: 14px;
@@ -1376,7 +1376,7 @@ body.modal-open {
   display: block;
   font-size: 12px;
   color: var(--rm-slate-muted);
-  margin-top: 4px;
+  margin-top:var(--space-1);
 }
 
 /* Inherited Config Box (Live Preview inside Create/Edit Modal) */
@@ -1384,26 +1384,26 @@ body.modal-open {
   background: #f0fdfa;
   border: 1px solid var(--rm-teal-border);
   border-radius: var(--rm-radius);
-  padding: 14px 16px;
-  margin-bottom: 18px;
+  padding:14px var(--space-4);
+  margin-bottom:18px;
 }
 
 .box-title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--rm-teal-hover);
-  margin-bottom: 10px;
+  margin-bottom:10px;
 }
 
 .inherited-grid-chips {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap:var(--space-2);
   font-size: 13px;
-  margin-bottom: 8px;
+  margin-bottom:var(--space-2);
 }
 
 .inh-chip {
@@ -1412,13 +1412,13 @@ body.modal-open {
 
 .inh-k {
   color: var(--rm-slate-muted);
-  margin-right: 4px;
+  margin-right:var(--space-1);
 }
 
 .inh-amenities-row {
   font-size: 12.5px;
   border-top: 1px dashed #ccfbf1;
-  padding-top: 6px;
+  padding-top:6px;
   color: var(--rm-slate-dark);
 }
 
@@ -1426,17 +1426,17 @@ body.modal-open {
 .status-choice-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap:var(--space-3);
 }
 
 .status-choice-card {
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius);
-  padding: 12px 14px;
+  padding:var(--space-3) 14px;
   cursor: pointer;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap:10px;
   transition: all 0.15s ease;
 }
 
@@ -1446,7 +1446,7 @@ body.modal-open {
 }
 
 .status-choice-card input[type="radio"] {
-  margin-top: 3px;
+  margin-top:3px;
   accent-color: var(--rm-teal);
 }
 
@@ -1467,9 +1467,9 @@ body.modal-open {
 .choice-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 13.5px;
-  margin-bottom: 2px;
+  margin-bottom:2px;
 }
 
 .choice-desc {
@@ -1482,13 +1482,13 @@ body.modal-open {
   background: #f8fafc;
   border: 1px dashed var(--rm-border);
   border-radius: var(--rm-radius);
-  padding: 12px 14px;
+  padding:var(--space-3) 14px;
 }
 
 .custom-price-checkbox-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .form-checkbox {
@@ -1508,8 +1508,8 @@ body.modal-open {
 .custom-price-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  gap:var(--space-2);
+  margin-top:10px;
 }
 
 .price-unit-suffix {
@@ -1520,7 +1520,7 @@ body.modal-open {
 
 /* Modal Buttons */
 .btn-modal-cancel {
-  padding: 9px 18px;
+  padding:9px 18px;
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   background: #ffffff;
@@ -1536,7 +1536,7 @@ body.modal-open {
 }
 
 .btn-modal-submit, .btn-modal-primary {
-  padding: 9px 20px;
+  padding:9px 20px;
   border-radius: var(--rm-radius);
   border: none;
   background: var(--rm-teal);
@@ -1552,7 +1552,7 @@ body.modal-open {
 }
 
 .btn-modal-secondary {
-  padding: 9px 18px;
+  padding:9px 18px;
   border-radius: var(--rm-radius);
   border: 1px solid var(--rm-border);
   background: #ffffff;
@@ -1568,7 +1568,7 @@ body.modal-open {
 }
 
 .btn-modal-danger {
-  padding: 9px 20px;
+  padding:9px 20px;
   border-radius: var(--rm-radius);
   border: none;
   background: var(--rm-rose);
@@ -1587,18 +1587,18 @@ body.modal-open {
   background: var(--rm-rose-light);
   border: 1px solid var(--rm-rose-border);
   color: var(--rm-rose-text);
-  padding: 10px 14px;
+  padding:10px 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom:var(--space-4);
 }
 
 /* Detail Modal Specs Table */
 .detail-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap:10px;
 }
 
 .detail-room-code {
@@ -1610,7 +1610,7 @@ body.modal-open {
 .detail-status-pill {
   font-size: 13px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding:var(--space-1) 10px;
   border-radius: 999px;
   background: var(--rm-emerald-light);
   color: var(--rm-emerald-text);
@@ -1628,22 +1628,22 @@ body.modal-open {
   font-weight: 600;
   color: var(--rm-slate-muted);
   background: #f1f5f9;
-  padding: 4px 8px;
+  padding:var(--space-1) var(--space-2);
   border-radius: 6px;
 }
 
 .detail-info-block {
-  margin-bottom: 20px;
+  margin-bottom:20px;
 }
 
 .detail-block-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap:6px;
   font-size: 13.5px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 10px;
+  margin:0 0 10px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1656,13 +1656,13 @@ body.modal-open {
   background: #f8fafc;
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius);
-  padding: 12px 16px;
+  padding:var(--space-3) var(--space-4);
 }
 
 .detail-spec-row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding:6px 0;
   font-size: 13.5px;
   border-bottom: 1px solid var(--rm-border-light);
 }
@@ -1682,7 +1682,7 @@ body.modal-open {
 .detail-amenities-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap:6px;
 }
 
 .detail-amenity-pill {
@@ -1690,7 +1690,7 @@ body.modal-open {
   font-weight: 600;
   color: var(--rm-slate-dark);
   background: #f1f5f9;
-  padding: 4px 10px;
+  padding:var(--space-1) 10px;
   border-radius: 6px;
   border: 1px solid var(--rm-border);
 }
@@ -1698,14 +1698,14 @@ body.modal-open {
 .detail-fees-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap:var(--space-2);
 }
 
 .fee-item-card {
   background: #f8fafc;
   border: 1px solid var(--rm-border);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding:var(--space-2) var(--space-3);
   font-size: 13px;
   display: flex;
   justify-content: space-between;
@@ -1715,14 +1715,14 @@ body.modal-open {
   background: #fffbeb;
   border: 1px solid var(--rm-amber-border);
   border-radius: var(--rm-radius);
-  padding: 12px 16px;
-  margin-bottom: 0;
+  padding:var(--space-3) var(--space-4);
+  margin-bottom:0;
 }
 
 .freshness-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:var(--space-3);
 }
 
 .freshness-icon {
@@ -1751,7 +1751,7 @@ body.modal-open {
   border: none;
   font-size: 12px;
   font-weight: 700;
-  padding: 6px 12px;
+  padding:6px var(--space-3);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1764,26 +1764,26 @@ body.modal-open {
 /* Modal Status Toggle Confirmation */
 .toggle-status-box {
   text-align: center;
-  padding: 10px 0;
+  padding:10px 0;
 }
 
 .toggle-room-badge {
   font-size: 20px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin-bottom: 14px;
+  margin-bottom:14px;
 }
 
 .toggle-transition-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap:var(--space-3);
+  margin-bottom:18px;
 }
 
 .status-from-chip, .status-to-chip {
-  padding: 6px 14px;
+  padding:6px 14px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
@@ -1809,18 +1809,18 @@ body.modal-open {
   background: #f8fafc;
   border: 1px solid var(--rm-border);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding:var(--space-3) 14px;
   font-size: 13px;
   color: var(--rm-slate-dark);
   text-align: left;
   line-height: 1.5;
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
 }
 
 .toggle-rule-hint {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap:6px;
   font-size: 12px;
   color: var(--rm-slate-muted);
   text-align: left;
@@ -1830,32 +1830,32 @@ body.modal-open {
 .toggle-rule-hint svg {
   color: var(--rm-teal);
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top:2px;
 }
 
 /* Delete Confirm Box */
 .delete-confirm-box {
   text-align: center;
-  padding: 8px 0;
+  padding:var(--space-2) 0;
 }
 
 .delete-icon-alert {
   font-size: 40px;
-  margin-bottom: 12px;
+  margin-bottom:var(--space-3);
 }
 
 .delete-prompt-title {
   font-size: 17px;
   font-weight: 800;
   color: var(--rm-navy);
-  margin: 0 0 10px;
+  margin:0 0 10px;
 }
 
 .delete-prompt-desc {
   font-size: 13.5px;
   color: var(--rm-slate-muted);
   line-height: 1.5;
-  margin: 0;
+  margin:0;
 }
 
 /* =============================================================================
@@ -1868,7 +1868,7 @@ body.modal-open {
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap:var(--space-2);
   pointer-events: none;
 }
 
@@ -1877,11 +1877,11 @@ body.modal-open {
   background: #ffffff;
   border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius);
-  padding: 12px 16px;
+  padding:var(--space-3) var(--space-4);
   box-shadow: var(--rm-shadow-lg);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap:10px;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--rm-navy);
@@ -1922,8 +1922,8 @@ body.modal-open {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
-  margin: -1px;
+  padding:0;
+  margin:-1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
@@ -1934,7 +1934,7 @@ body.modal-open {
    ============================================================================= */
 @media (max-width: 1024px) {
   .room-main-area {
-    padding: 20px 20px 48px;
+    padding:20px 20px var(--space-12);
   }
 
   .rooms-kpi-grid {
@@ -1954,7 +1954,7 @@ body.modal-open {
 
 @media (max-width: 768px) {
   .room-main-area {
-    padding: 16px 14px 40px;
+    padding:var(--space-4) 14px 40px;
   }
 
   .rooms-kpi-grid {

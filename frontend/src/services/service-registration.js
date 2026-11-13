@@ -1,3 +1,5 @@
+import { normalizePriceUnit } from './service-price.js';
+import { serviceAreaErrors } from './service-areas.js';
 import { ApiError, request } from './auth.js';
 import { isVietnamesePhone, validateRegistrationFile } from './property-registration.js';
 
@@ -6,6 +8,11 @@ const validRegistration = data => data && Number.isInteger(data.registrationId) 
   && ['PENDING', 'NEEDS_SUPPLEMENT', 'APPROVED', 'REJECTED'].includes(data.status)
   && typeof data.serviceName === 'string' && Array.isArray(data.documents);
 export const serviceRegistrationApi = {
+  services: async signal => {
+    const rows = await request('/services', { basePath, signal });
+    if (!Array.isArray(rows) || !rows.every(validRegistration)) throw new ApiError('Danh sách dịch vụ không hợp lệ.', 502);
+    return rows;
+  },
   mine: async signal => {
     const rows = await request('/mine', { basePath, signal });
     if (!Array.isArray(rows) || !rows.every(validRegistration)) throw new ApiError('Danh sách dịch vụ không hợp lệ.', 502);
@@ -65,7 +72,9 @@ export function validateServiceRegistrationFields(form, files, options = {}) {
   length('description', 20, 5000, 'Mô tả dịch vụ');
   if (!['FIXED', 'FROM', 'NEGOTIABLE'].includes(form.pricingType)) errors.pricingType = 'Vui lòng chọn loại giá hợp lệ.';
   if (form.pricingType !== 'NEGOTIABLE' && (!/^\d+(\.\d{1,2})?$/.test(String(form.price)) || Number(form.price) <= 0 || Number(form.price) > 9999999999.99)) errors.price = String(form.price ?? '').trim() ? 'Số tiền không hợp lệ.' : 'Vui lòng nhập số tiền.';
-  length('serviceArea', 2, 500, 'Khu vực phục vụ');
+  if (options.customUnit && !form.priceUnit?.trim()) errors.priceUnit = 'Vui lòng nhập đơn vị tính.';
+  if (form.priceUnit?.trim() && (normalizePriceUnit(form.priceUnit).length < 2 || normalizePriceUnit(form.priceUnit).length > 20)) errors.priceUnit = 'Đơn vị tính phải có từ 2 đến 20 ký tự.';
+  Object.assign(errors, serviceAreaErrors(form));
   if (!isVietnamesePhone(String(form.contactPhone ?? ''))) errors.contactPhone = 'Nhập số di động Việt Nam hợp lệ: 10 số hoặc bắt đầu bằng +84.';
   if (form.contactEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail) || form.contactEmail.length > 255)) errors.contactEmail = 'Email chưa đúng định dạng, ví dụ: ten@example.com (tối đa 255 ký tự).';
   if (options.noteRequired && (String(options.note ?? '').trim().length < 10 || options.note.length > 2000)) errors.note = 'Mô tả nội dung thay đổi từ 10 đến 2000 ký tự.';
@@ -80,7 +89,7 @@ export function serviceRegistrationFieldErrors(error) {
   const result = {};
   for (const [key, value] of Object.entries(error.fields || {})) {
     const name = key.split('.').pop();
-    if (['image', 'applicantName', 'serviceName', 'categoryId', 'description', 'pricingType', 'price', 'serviceArea', 'contactPhone', 'contactEmail', 'note', 'documents'].includes(name)) result[name] = String(value);
+    if (['image', 'applicantName', 'serviceName', 'categoryId', 'description', 'pricingType', 'price', 'priceUnit', 'serviceArea', 'customServiceAreas', 'otherAreasEnabled', 'contactPhone', 'contactEmail', 'note', 'documents'].includes(name)) result[name] = String(value);
   }
   if (!Object.keys(result).length) {
     const message = error.message || '';
@@ -88,6 +97,7 @@ export function serviceRegistrationFieldErrors(error) {
     else if (/ảnh/i.test(message) && error.status === 400) result.image = message;
     else if (/tài liệu|định dạng tệp/i.test(message) && error.status === 400) result.documents = message;
     else if (/điện thoại/i.test(message) && error.status === 400) result.contactPhone = message;
+    else if (/đơn vị tính/i.test(message) && error.status === 400) result.priceUnit = message;
     else if (/giá cố định|giá dịch vụ|số tiền/i.test(message) && error.status === 400) result.price = message;
   }
   return result;

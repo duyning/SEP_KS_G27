@@ -25,7 +25,9 @@ public class ServiceReviewService {
     private final ServiceRegistrationService submissions;
 
     public record Audit(Integer id, String actor, String action, String reason, LocalDateTime time) {}
-    public record Detail(ServiceRegistrationService.RegistrationInfo application, List<Audit> history) {}
+    public record Snapshot(String serviceName, String description, String pricingType, java.math.BigDecimal price,
+                           String serviceArea, int revision, String customServiceAreas, String priceUnit) {}
+    public record Detail(ServiceRegistrationService.RegistrationInfo application, List<Audit> history, Snapshot currentListing) {}
 
     @Transactional(readOnly = true)
     public List<ServiceRegistrationService.RegistrationInfo> list() {
@@ -44,8 +46,11 @@ public class ServiceReviewService {
     }
     @Transactional(readOnly = true)
     public Detail detail(Integer id) {
-        return new Detail(submissions.info(accessible(id)), logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("SERVICE_REGISTRATION", id)
-                .stream().map(l -> new Audit(l.getLogId(), l.getStaff().getFullName(), l.getAction(), l.getNote(), l.getCreatedAt())).toList());
+        var application = accessible(id);
+        var target = application.getTargetService();
+        return new Detail(submissions.info(application), logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("SERVICE_REGISTRATION", id)
+                .stream().map(l -> new Audit(l.getLogId(), l.getStaff().getFullName(), l.getAction(), l.getNote(), l.getCreatedAt())).toList(),
+                target == null ? null : new Snapshot(target.getServiceName(), target.getDescription(), target.getPricingType(), target.getPrice(), target.getServiceArea(), target.getRevision(), target.getCustomServiceAreas(), target.getPriceUnit()));
     }
     @Transactional(readOnly = true)
     public StaffService.FileContent file(Integer id, Integer fileId) {
@@ -86,7 +91,7 @@ public class ServiceReviewService {
             throw new AppException("Dịch vụ gốc đã thay đổi hoặc quyền quản lý đã ngừng. Không thể áp dụng yêu cầu cũ.", HttpStatus.CONFLICT);
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id);
         boolean approveCapability = capabilityDecision.equals("APPROVE");
-        if (approveCapability) {
+        if (approveCapability && target == null) {
             if (!"DELETE".equals(row.getOperation()) && (files.isEmpty() || files.stream().anyMatch(f -> f.getFileContent() == null || f.getFileContent().length == 0)))
                 throw new BadRequestException("Hồ sơ thiếu tài liệu xác minh, chưa thể cấp capability.");
             var type = capabilityTypes.findByCode("MANAGE_SERVICE").orElseThrow(() -> new BadRequestException("Chưa cấu hình capability MANAGE_SERVICE."));
@@ -100,7 +105,7 @@ public class ServiceReviewService {
                             && s.getServiceName().equalsIgnoreCase(row.getServiceName().trim())))
                 throw new AppException("Tên dịch vụ trùng với dịch vụ khác của nhà cung cấp.", HttpStatus.CONFLICT);
             if (row.getServiceName() == null || row.getServiceName().isBlank() || row.getDescription() == null || row.getDescription().isBlank()
-                    || row.getServiceArea() == null || row.getServiceArea().isBlank() || row.getContactInfo() == null || row.getContactInfo().isBlank()
+                    || (row.getServiceArea() == null || row.getServiceArea().isBlank()) && (row.getCustomServiceAreas() == null || row.getCustomServiceAreas().isBlank()) || row.getContactInfo() == null || row.getContactInfo().isBlank()
                     || !Set.of("FIXED", "FROM", "NEGOTIABLE").contains(Objects.toString(row.getPricingType(), ""))
                     || (!"NEGOTIABLE".equals(row.getPricingType()) && (row.getPrice() == null || row.getPrice().signum() <= 0)))
                 throw new BadRequestException("Thông tin dịch vụ chưa đầy đủ để công khai.");
@@ -111,7 +116,7 @@ public class ServiceReviewService {
             else {
                 listing.setCategory(row.getCategory()); listing.setServiceName(row.getServiceName()); listing.setDescription(row.getDescription());
                 listing.setContactInfo(row.getContactInfo()); listing.setContactEmail(row.getContactEmail()); listing.setPricingType(row.getPricingType());
-                listing.setPrice(row.getPrice()); listing.setServiceArea(row.getServiceArea()); listing.setStatus("ACTIVE");
+                listing.setPrice(row.getPrice()); listing.setPriceUnit(row.getPriceUnit()); listing.setServiceArea(row.getServiceArea()); listing.setCustomServiceAreas(row.getCustomServiceAreas()); listing.setStatus("ACTIVE");
             }
             listing.setRegistration(row); listing.setRevision(listing.getRevision() + 1);
             listings.saveAndFlush(listing); row.setTargetService(listing);

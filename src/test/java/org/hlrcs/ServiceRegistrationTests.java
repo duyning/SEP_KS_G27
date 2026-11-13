@@ -160,7 +160,7 @@ class ServiceRegistrationTests {
         var cap=capabilities.findByUser_UserId(owner.getUserId()).get(0);cap.setStatus("INACTIVE");capabilities.save(cap);
         assertEquals(409,review(staff,deletionId,"APPROVE","APPROVE","Không được tự cấp lại quyền đã ngừng.").statusCode());
         assertEquals("ACTIVE",listings.findById(id).orElseThrow().getStatus());
-        assertEquals(200,review(staff,deletionId,"REJECT","REJECT","Từ chối yêu cầu do quyền cung cấp đã ngừng.").statusCode());
+        assertEquals(200,review(staff,deletionId,"APPROVE","REJECT","Từ chối yêu cầu do quyền cung cấp đã ngừng.").statusCode());
         assertEquals("INACTIVE",capabilities.findByUser_UserId(owner.getUserId()).get(0).getStatus());
         assertEquals(404,api(null,"GET","/api/services/"+id+"/image",null).statusCode());
     }
@@ -494,5 +494,78 @@ class ServiceRegistrationTests {
         var codes = new ArrayList<>(List.of(first.get(), second.get())); codes.sort(Integer::compareTo);
         assertEquals(List.of(201, 409), codes);
         assertEquals(1, registrations.findByUser_UserIdOrderByRegistrationIdDesc(applicant.getUserId()).size());
+    }
+
+    private Map<String,Object> customerRequest(int serviceId) {
+        return Map.of("serviceId", serviceId, "contactName", "Khách thử nghiệm", "contactPhone", "0987654321",
+                "description", "Cần vệ sinh phòng và nhà tắm", "address", "Hòa Lạc",
+                "scheduledAt", java.time.OffsetDateTime.now(java.time.ZoneOffset.ofHours(7)).plusDays(2).toString());
+    }
+    @Test void customerRequestsFollowApprovedListingAndOwnerResponse() throws Exception {
+        var owner = account(); var customer = account();
+        String own = token(owner), guest = token(customer), outsider = token(account()), staff = token(account(UserRole.STAFF));
+        int app = application(owner);
+        assertEquals(200, review(staff, app, "APPROVE", "APPROVE", "").statusCode());
+        int serviceId = listings.findByRegistration_RegistrationId(app).orElseThrow().getServiceId();
+        var revised = details(); revised.put("price", 180000);
+        var proposal = serviceMultipart(own, "/api/service-registrations/services/"+serviceId+"/changes",
+                Map.of("operation","UPDATE","serviceRevision",1,"details",revised,"note","Cập nhật giá phục vụ mới"),false,null);
+        assertEquals(200,proposal.statusCode(),proposal.body());
+        int proposalId=json.readTree(proposal.body()).path("data").path("registrationId").asInt();
+        var comparison=json.readTree(api(staff,"GET","/api/staff/service-applications/"+proposalId,null).body()).path("data");
+        assertEquals(150000,comparison.path("currentListing").path("price").asInt());
+        assertEquals(180000,comparison.path("application").path("price").asInt());
+        assertEquals(200,review(staff,proposalId,"APPROVE","APPROVE","").statusCode());
+        assertEquals(180000,json.readTree(api(null,"GET","/api/services/"+serviceId,null).body()).path("data").path("price").asInt());
+        assertEquals(1,json.readTree(get(own,"/services").body()).path("data").size());
+        assertEquals(0,json.readTree(get(outsider,"/services").body()).path("data").size());
+        assertEquals(401, api(null,"POST","/api/service-requests",customerRequest(serviceId)).statusCode());
+        assertEquals(400, api(own,"POST","/api/service-requests",customerRequest(serviceId)).statusCode());
+        var created = api(guest,"POST","/api/service-requests",customerRequest(serviceId));
+        assertEquals(201, created.statusCode(), created.body());
+        var data = json.readTree(created.body()).path("data"); int id = data.path("requestId").asInt();
+        assertEquals("PENDING",data.path("status").asString());
+        assertEquals(404,api(outsider,"GET","/api/service-requests/"+id,null).statusCode());
+        assertEquals(404,api(outsider,"POST","/api/service-requests/"+id+"/response",Map.of("decision","ACCEPTED","revision",0)).statusCode());
+        assertEquals(1,json.readTree(api(own,"GET","/api/service-requests/incoming",null).body()).path("data").size());
+        assertEquals(0,json.readTree(api(outsider,"GET","/api/service-requests/mine",null).body()).path("data").size());
+        var accepted=api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","ACCEPTED","revision",0));
+        assertEquals(200,accepted.statusCode(),accepted.body());
+        var result=json.readTree(api(guest,"GET","/api/service-requests/"+id,null).body()).path("data");
+        assertEquals("ACCEPTED",result.path("status").asString());
+        assertEquals(owner.getUserId(),result.path("handledBy").asInt());
+        assertFalse(result.path("handledAt").isNull());
+        assertEquals(409,api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","REJECTED","reason","Đã kín lịch phục vụ","revision",0)).statusCode());
+    }
+    @Test void requestsValidateFutureTimeAndCannotAcceptDisabledListing() throws Exception {
+        var owner=account(); String own=token(owner), customer=token(account()), staff=token(account(UserRole.STAFF));
+        int app=application(owner); review(staff,app,"APPROVE","APPROVE","");
+        var listing=listings.findByRegistration_RegistrationId(app).orElseThrow(); int serviceId=listing.getServiceId();
+        var past=new HashMap<>(customerRequest(serviceId)); past.put("scheduledAt","2020-01-01T09:00:00+07:00");
+        assertEquals(400,api(customer,"POST","/api/service-requests",past).statusCode());
+        past.put("scheduledAt","2099-01-01T09:00:00");
+        assertEquals(400,api(customer,"POST","/api/service-requests",past).statusCode());
+        int id=json.readTree(api(customer,"POST","/api/service-requests",customerRequest(serviceId)).body()).path("data").path("requestId").asInt();
+        assertEquals(400,api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","REJECTED","reason","","revision",0)).statusCode());
+        listing.setStatus("INACTIVE"); listings.saveAndFlush(listing);
+        assertEquals(409,api(customer,"POST","/api/service-requests",customerRequest(serviceId)).statusCode());
+        assertEquals(409,api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","ACCEPTED","revision",0)).statusCode());
+        assertEquals(200,api(customer,"GET","/api/service-requests/"+id,null).statusCode());
+        assertEquals(200,api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","REJECTED","reason","Dịch vụ tạm ngừng hoạt động","revision",0)).statusCode());
+    }
+
+    @Test void requestResponsesSerializeAndRevokedCapabilityCannotAccept() throws Exception {
+        var owner=account(); String own=token(owner), customer=token(account()), staff=token(account(UserRole.STAFF));
+        int app=application(owner); review(staff,app,"APPROVE","APPROVE","");
+        int serviceId=listings.findByRegistration_RegistrationId(app).orElseThrow().getServiceId();
+        int id=json.readTree(api(customer,"POST","/api/service-requests",customerRequest(serviceId)).body()).path("data").path("requestId").asInt();
+        var cap=capabilities.findByUser_UserId(owner.getUserId()).get(0);cap.setStatus("INACTIVE");capabilities.saveAndFlush(cap);
+        assertEquals(409,api(customer,"POST","/api/service-requests",customerRequest(serviceId)).statusCode());
+        assertEquals(409,api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","ACCEPTED","revision",0)).statusCode());
+        assertEquals(404,api(null,"GET","/api/services/"+serviceId,null).statusCode());
+        cap.setStatus("ACTIVE");capabilities.saveAndFlush(cap);
+        java.util.function.Supplier<Integer> action=()->{try{return api(own,"POST","/api/service-requests/"+id+"/response",Map.of("decision","ACCEPTED","revision",0)).statusCode();}catch(Exception e){throw new RuntimeException(e);}};
+        var first=java.util.concurrent.CompletableFuture.supplyAsync(action);var second=java.util.concurrent.CompletableFuture.supplyAsync(action);
+        var codes=new ArrayList<>(List.of(first.get(),second.get()));codes.sort(Integer::compareTo);assertEquals(List.of(200,409),codes);
     }
 }

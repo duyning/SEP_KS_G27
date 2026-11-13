@@ -1,3 +1,4 @@
+import UIButton from './common/Button.jsx';
 import {useEffect,useRef,useState} from 'react';
 import {Check,MapPin,RefreshCw} from 'lucide-react';
 import {GOOGLE_MAPS_KEY,GOOGLE_MAPS_MAP_ID,loadGoogleMaps} from '../services/google-maps.js';
@@ -33,7 +34,7 @@ function GooglePropertyMap({commune,latitude,longitude,address,error,onSelect}) 
     const center=point||AREA_CENTERS[commune];if(center)instance.current.panTo({lat:center[0],lng:center[1]});
   },[latitude,longitude,commune,state.loading]);
   const pinned=parsePropertyCoordinates(latitude,longitude);
-  return <div className={`registration-map-shell ${error?'invalid':''}`}><header><strong><MapPin size={16}/>Google Maps</strong></header><div ref={container} id="property-location-map" className="registration-location-map" role="region" aria-label="Google Maps chọn vị trí nhà trọ"/>{state.loading&&<p className="registration-map-hint" role="status">Đang tải Google Maps...</p>}{state.error&&<div className="registration-map-error" role="alert">{state.error}<button type="button" onClick={()=>setRevision(value=>value+1)}><RefreshCw size={14}/>Thử lại bản đồ</button></div>}<footer><span><MapPin size={14}/>{address||'Chưa nhập địa chỉ'}</span><span className={pinned?'pinned':''}>{pinned?<><Check size={14}/>Đã ghim tọa độ</>:'Chưa chọn vị trí'}</span></footer>{pinned&&<p className="registration-map-hint">{pinned[0].toFixed(6)}, {pinned[1].toFixed(6)}</p>}</div>;
+  return <div className={`registration-map-shell ${error?'invalid':''}`}><header><strong><MapPin size={16}/>Google Maps</strong></header><div ref={container} id="property-location-map" className="registration-location-map" role="region" aria-label="Google Maps chọn vị trí nhà trọ"/>{state.loading&&<p className="registration-map-hint" role="status">Đang tải Google Maps...</p>}{state.error&&<div className="registration-map-error" role="alert">{state.error}<UIButton type="button" onClick={()=>setRevision(value=>value+1)}><RefreshCw size={14}/>Thử lại bản đồ</UIButton></div>}<footer><span><MapPin size={14}/>{address||'Chưa nhập địa chỉ'}</span><span className={pinned?'pinned':''}>{pinned?<><Check size={14}/>Đã ghim tọa độ</>:'Chưa chọn vị trí'}</span></footer>{pinned&&<p className="registration-map-hint">{pinned[0].toFixed(6)}, {pinned[1].toFixed(6)}</p>}</div>;
 }
 export default function PropertyLocationMap(props) {
   if(!GOOGLE_MAPS_KEY)return <><p className="registration-notice" role="status">Google Maps chưa được cấu hình. Bản đồ OpenStreetMap vẫn khả dụng.</p><OpenStreetPropertyMap {...props}/></>;

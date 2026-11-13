@@ -1,3 +1,5 @@
+import StatusBadge from '../../components/common/StatusBadge.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, CalendarDays, Check, Clock3, DoorOpen, ExternalLink, FileCheck2, House, ImageOff, Layers, MapPin, Pencil, Plus, ShieldCheck } from 'lucide-react';
@@ -10,7 +12,7 @@ import '../../styles/host-property-page.css';
 const steps = [
   ['Đăng ký thông tin nhà trọ', 'Điền tên cơ sở, địa chỉ chi tiết tại Hòa Lạc, vị trí bản đồ, tiện ích và nội quy chung.'],
   ['Cấu hình loại phòng & phòng thực tế', 'Tạo các loại phòng (Studio, Gác lửng...), đặt giá niêm yết và đánh dấu phòng còn trống.'],
-  ['Gửi hồ sơ để xét duyệt', 'Ban quản trị HL_RCS thẩm định hồ sơ trước khi tin đăng được hiển thị công khai.'],
+  ['Gửi hồ sơ để xét duyệt', 'Nhân viên HL_RCS thẩm định hồ sơ trước khi tin đăng được hiển thị công khai.'],
 ];
 
 export function HostPropertyEmpty() {
@@ -45,16 +47,16 @@ function PropertyDetail({ property }) {
   const cover = property.photos[0];
   const visible = property.displayStatus === 'VISIBLE';
   const pending = property.displayStatus === 'PENDING';
-  const badge = <span className={`hp-status ${property.displayStatus.toLowerCase()}`}>{pending ? <Clock3 size={13} /> : visible ? <Check size={13} /> : null}{stateLabels[property.displayStatus]}</span>;
+  const badge = <StatusBadge status={pending ? 'PENDING' : visible ? 'ACTIVE' : property.displayStatus} label={stateLabels[property.displayStatus]} />;
   const filter = property.propertyId == null ? '' : `?${new URLSearchParams({ propertyId: property.propertyId })}`;
   const canManage = property.propertyId != null && !pending && property.displayStatus !== 'REJECTED';
-  const edit = (short = false) => <button type="button" className={short ? 'hp-button small' : 'hp-button primary'} disabled title="Chưa có API cập nhật thông tin nhà trọ"><Pencil size={15} />{short ? 'Chỉnh sửa' : 'Chỉnh sửa thông tin'}</button>;
-  const manageLink = (to, label) => canManage ? <Link className="hp-button subtle" to={`${to}${filter}`}>{label}<ArrowRight size={15} /></Link> : <button className="hp-button subtle" disabled title="Chức năng quản lý phòng khả dụng sau khi nhà trọ được tạo và hồ sơ được duyệt">{label}<ArrowRight size={15} /></button>;
+  const edit = (short = false) => <UIButton type="button" className={short ? 'hp-button small' : 'hp-button primary'} disabled title="Chưa có API cập nhật thông tin nhà trọ"><Pencil size={15} />{short ? 'Chỉnh sửa' : 'Chỉnh sửa thông tin'}</UIButton>;
+  const manageLink = (to, label) => canManage ? <Link className="hp-button subtle" to={`${to}${filter}`}>{label}<ArrowRight size={15} /></Link> : <UIButton className="hp-button subtle" disabled title="Chức năng quản lý phòng khả dụng sau khi nhà trọ được tạo và hồ sơ được duyệt">{label}<ArrowRight size={15} /></UIButton>;
   const renderImage = (photo, className) => images[photo.documentId] ? <img className={className} src={images[photo.documentId]} alt={`Ảnh nhà trọ ${property.name}`} onError={() => setImages(previous => ({ ...previous, [photo.documentId]: null }))} /> : <span className="hp-image-placeholder"><ImageOff size={28} /><span>{images[photo.documentId] === null ? 'Không tải được ảnh' : 'Đang tải ảnh'}</span></span>;
   return <article className="hp-detail" data-status={property.displayStatus}>
-    <header className="hp-page-heading"><div><h2>{property.name}</h2><p>Quản lý thông tin nhà trọ, các loại phòng, phòng thực tế và cập nhật tính sẵn sàng.</p></div><div className="hp-actions"><button className="hp-button" disabled title={visible ? 'Chưa có trang công khai liên kết với nhà trọ này' : 'Nhà trọ chưa được hiển thị công khai'}><ExternalLink size={15} />Xem trang công khai</button>{edit()}</div></header>
+    <header className="hp-page-heading"><div><h2>{property.name}</h2><p>Quản lý thông tin nhà trọ, các loại phòng, phòng thực tế và cập nhật tính sẵn sàng.</p></div><div className="hp-actions"><UIButton className="hp-button" disabled title={visible ? 'Chưa có trang công khai liên kết với nhà trọ này' : 'Nhà trọ chưa được hiển thị công khai'}><ExternalLink size={15} />Xem trang công khai</UIButton>{edit()}</div></header>
     <div className="hp-sheet">
-      <section className="hp-summary"><div className="hp-cover">{cover ? <button type="button" disabled={!images[cover.documentId]} title="Xem ảnh nhà trọ" aria-label="Xem ảnh đại diện nhà trọ" onClick={() => setPreview(cover)}>{renderImage(cover)}</button> : <div className="hp-image-placeholder"><House size={40} /><span>Chưa có ảnh nhà trọ</span></div>}{property.verified && <span className="hp-verified"><ShieldCheck size={12} />Đã xác minh</span>}</div>
+      <section className="hp-summary"><div className="hp-cover">{cover ? <UIButton type="button" disabled={!images[cover.documentId]} title="Xem ảnh nhà trọ" aria-label="Xem ảnh đại diện nhà trọ" onClick={() => setPreview(cover)}>{renderImage(cover)}</UIButton> : <div className="hp-image-placeholder"><House size={40} /><span>Chưa có ảnh nhà trọ</span></div>}{property.verified && <span className="hp-verified"><ShieldCheck size={12} />Đã xác minh</span>}</div>
         <div className="hp-summary-copy"><div className="hp-name-row"><h3>{property.name}</h3>{badge}</div><p className="hp-address"><MapPin size={14} />{property.address || 'Chưa cập nhật địa chỉ'}</p><div className="hp-summary-counts"><span><Layers size={14} />{property.roomTypeCount} loại phòng</span><span><DoorOpen size={14} />{property.totalRooms == null ? 'Chưa có số liệu phòng thực tế' : `${property.totalRooms} phòng thực tế`}</span>{property.vacantRooms != null && <span>{property.vacantRooms} phòng trống</span>}</div><p className="hp-contact">Quản lý: <strong>{property.managerName || 'Chưa cập nhật'}</strong>{property.contactPhone && <> · Hotline: <strong>{property.contactPhone}</strong></>}{property.zaloPhone && <> · Zalo: <strong>{property.zaloPhone}</strong></>}</p>{!property.managerName && property.contactInfo && <p className="hp-contact">{property.contactInfo}</p>}</div>
       </section>
       <div className="hp-metrics">{[[Layers, 'Loại phòng', property.roomTypeCount, 'Cấu hình giá & diện tích'], [DoorOpen, 'Tổng phòng thực tế', property.totalRooms, 'Số phòng đã được khởi tạo'], [House, 'Phòng còn trống', property.vacantRooms, 'Tình trạng phòng thực tế'], [CalendarDays, 'Yêu cầu xem phòng', property.pendingViewingCount, 'Lịch hẹn chờ phản hồi']].map(([Icon, label, value, hint]) => <div key={label}><div><span>{label}</span><Icon size={17} /></div><strong>{value == null ? '—' : value}</strong><p>{value == null ? 'Chưa có dữ liệu' : hint}</p></div>)}</div>
@@ -64,7 +66,7 @@ function PropertyDetail({ property }) {
         <div className="hp-tag-section"><h4>Tiện ích chung:</h4><div className="hp-tags">{property.amenities.map(key => <span key={key}><Check size={12} />{AMENITIES.find(([id]) => id === key)?.[1] || key}</span>)}{!property.amenities.length && <p>Chưa cập nhật tiện ích.</p>}</div></div>
         <div className="hp-tag-section"><h4>Quy định nhà trọ:</h4><div className="hp-tags">{property.selectedRules.map(key => <span key={key}><Check size={12} />{RULES.find(([id]) => id === key)?.[1] || key}</span>)}{!property.selectedRules.length && <p>Chưa cập nhật quy định.</p>}</div>{property.rules && <p className="hp-rules">{property.rules}</p>}</div>
         <div className="hp-description"><h4>Mô tả chi tiết:</h4><p>{property.description || 'Chưa cập nhật mô tả.'}</p></div>
-        <div className="hp-gallery"><h4>Hình ảnh nhà trọ ({property.photos.length} ảnh):</h4><div>{property.photos.map(photo => <button type="button" key={photo.documentId} title="Xem ảnh nhà trọ" aria-label={`Xem ảnh ${photo.fileName || photo.documentId}`} onClick={() => setPreview(photo)} disabled={!images[photo.documentId]}>{renderImage(photo)}</button>)}{!property.photos.length && <p>Chưa có ảnh nhà trọ.</p>}</div></div>
+        <div className="hp-gallery"><h4>Hình ảnh nhà trọ ({property.photos.length} ảnh):</h4><div>{property.photos.map(photo => <UIButton type="button" key={photo.documentId} title="Xem ảnh nhà trọ" aria-label={`Xem ảnh ${photo.fileName || photo.documentId}`} onClick={() => setPreview(photo)} disabled={!images[photo.documentId]}>{renderImage(photo)}</UIButton>)}{!property.photos.length && <p>Chưa có ảnh nhà trọ.</p>}</div></div>
       </section>
       <section className="hp-review"><header className="hp-section-heading"><div><h3>Hồ sơ & Xét duyệt</h3><p>Thông tin kiểm định pháp lý và hồ sơ tài liệu lưu trữ bảo mật nội bộ.</p></div>{badge}</header>
         <dl className="hp-review-state"><div><dt>Trạng thái tin đăng:</dt><dd>{visible ? 'Đang hiển thị công khai trên hệ thống tìm kiếm' : stateLabels[property.displayStatus]}</dd></div><div><dt>Ngày khởi tạo:</dt><dd>{date(property.createdAt)}</dd></div><div><dt>Cập nhật gần nhất:</dt><dd>{date(property.updatedAt)}</dd></div></dl>
@@ -99,6 +101,6 @@ export default function HostPropertyPage() {
     return () => controller.abort();
   }, [user?.userId, revision, selectedId]);
   return <div className="host-property-page">
-    <div className="host-property-page-content">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><button className="p-button primary" onClick={() => setRevision(value => value + 1)}>Thử lại</button></StateView> : <HostPropertyContent data={state.data} selectedId={selectedId} />}</div>
+    <div className="host-property-page-content">{state.loading ? <StateView kind="loading" /> : state.error ? <StateView kind="error" message={state.error}><UIButton className="p-button primary" onClick={() => setRevision(value => value + 1)}>Thử lại</UIButton></StateView> : <HostPropertyContent data={state.data} selectedId={selectedId} />}</div>
   </div>;
 }

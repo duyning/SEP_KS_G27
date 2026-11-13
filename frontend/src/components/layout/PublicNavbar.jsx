@@ -1,3 +1,4 @@
+import UIButton from '../common/Button.jsx';
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Heart, Home, LogOut, Menu, Phone, User, X } from 'lucide-react';
@@ -93,21 +94,21 @@ export default function PublicNavbar({ savedCount = 0 }) {
             </Link>
 
             {user ? (
-              <div className="user-dropdown-nav" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="user-dropdown-nav" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                 <Link to="/profile" className="btn-ghost user-profile-link" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <User size={16} />
                   <span>{user.fullName || user.email}</span>
                 </Link>
-                <button
+                <UIButton
                   type="button"
                   onClick={handleLogout}
                   className="btn-ghost logout-link"
                   title="Đăng xuất"
                   aria-label="Đăng xuất"
-                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', padding: '6px 10px' }}
                 >
                   <LogOut size={16} />
-                </button>
+                </UIButton>
               </div>
             ) : (
               <>
@@ -118,14 +119,14 @@ export default function PublicNavbar({ savedCount = 0 }) {
           </div>
 
           {/* Mobile Hamburger Toggle */}
-          <button
+          <UIButton
             className="mobile-toggle"
             id="mobileMenuBtn"
             aria-label="Mở thực đơn"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          </UIButton>
         </div>
       </nav>
     </header>
