@@ -55,6 +55,7 @@ class CommunityReportTests {
     @Test
     void acceptsOneReportPerMemberAndKeepsEvidenceAndDecisionsPrivate() throws Exception {
         int post = post(true);
+        submit(post, author, "FRAUD", "", 403);
         var evidence = new MockMultipartFile("evidence", "proof.png", "image/png", PNG);
         int id = submit(post, reporter, "FRAUD", "Yêu cầu chuyển cọc.", 201, evidence).path("id").asInt();
         submit(post, reporter, "SPAM", "", 409);
@@ -114,6 +115,15 @@ class CommunityReportTests {
         int post = post(true);
         int first = submit(post, reporter, "FRAUD", "", 201).path("id").asInt();
         int second = submit(post, other, "SPAM", "", 201).path("id").asInt();
+        var openQueue = api("GET", ADMIN + "?status=OPEN", admin, null, 200);
+        var matchingGroups = openQueue.path("content").valueStream()
+                .filter(row -> row.path("postId").asInt() == post).toList();
+        assertEquals(1, matchingGroups.size());
+        assertEquals(2, matchingGroups.get(0).path("reportCount").asInt());
+        assertEquals(2, matchingGroups.get(0).path("openCount").asInt());
+        assertEquals(second, matchingGroups.get(0).path("selectedReportId").asInt());
+        assertEquals(List.of(second, first), api("GET", ADMIN + "/" + first, admin, null, 200)
+                .path("relatedReports").valueStream().map(row -> row.path("id").asInt()).toList());
         String secondAdmin = register();
         int secondAdminId = api("GET", "/api/auth/me", secondAdmin, null, 200).path("userId").asInt();
         jdbc.update("update users set role = 'ADMIN' where user_id = ?", secondAdminId);
@@ -146,8 +156,34 @@ class CommunityReportTests {
         assertEquals("HIDDEN", api("GET", PUBLIC + "/mine/feed/" + post, author, null, 200).path("status").asString());
         assertFalse(containsPost(api("GET", PUBLIC, null, null, 200), post));
         assertFalse(containsPost(api("GET", PUBLIC + "/feed", null, null, 200).path("items"), post));
-        assertTrue(api("GET", ADMIN + "?status=RESOLVED", admin, null, 200).path("totalElements").asInt() >= 2);
+        var resolvedQueue = api("GET", ADMIN + "?status=RESOLVED", admin, null, 200);
+        assertEquals(1, resolvedQueue.path("content").valueStream()
+                .filter(row -> row.path("postId").asInt() == post && row.path("openCount").asInt() == 0).count());
         api("GET", ADMIN + "?status=OPEN&page=1", admin, null, 200);
+    }
+
+    @Test
+    void keepingPostClosesAllOpenReportsAndPreservesPreviousDecisions() throws Exception {
+        int post = post(true);
+        int previous = submit(post, reporter, "FRAUD", "", 201).path("id").asInt();
+        api("POST", ADMIN + "/" + previous + "/decision", admin, DISMISS, 200);
+
+        int first = submit(post, other, "SPAM", "", 201).path("id").asInt();
+        int second = submit(post, register(), "FRAUD", "", 201).path("id").asInt();
+        var keep = Map.of("action", "DISMISS", "reason", "Đã xem các báo cáo mới và quyết định giữ bài.");
+        var result = api("POST", ADMIN + "/" + first + "/decision", admin, keep, 200);
+        assertEquals("APPROVED", result.path("post").path("status").asString());
+        assertTrue(result.path("relatedReports").valueStream()
+                .allMatch(row -> row.path("status").asString().equals("DISMISSED")));
+        var secondDetail = api("GET", ADMIN + "/" + second, admin, null, 200);
+        var firstDetail = api("GET", ADMIN + "/" + first, admin, null, 200);
+        assertEquals(keep.get("reason"), secondDetail.path("resolutionNote").asString());
+        assertEquals(firstDetail.path("resolvedAt"), secondDetail.path("resolvedAt"));
+        assertEquals(firstDetail.path("handler"), secondDetail.path("handler"));
+        assertEquals(DISMISS.get("reason"), api("GET", ADMIN + "/" + previous, admin, null, 200)
+                .path("resolutionNote").asString());
+        api("POST", ADMIN + "/" + second + "/decision", admin, HIDE, 409);
+        api("GET", PUBLIC + "/feed/" + post, null, null, 200);
     }
 
     @Test

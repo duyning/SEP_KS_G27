@@ -1,4 +1,5 @@
 import { request } from './auth.js';
+import { normalizeCommunityPost } from './community.js';
 
 export const reportReasons = {
   FRAUD: 'Có dấu hiệu lừa đảo',
@@ -13,6 +14,7 @@ export const reportPage = value => /^\d{1,9}$/.test(value ?? '') ? Number(value)
 export const reportDate = value => value ? new Date(value).toLocaleString('vi-VN') : '—';
 
 const adminPath = '/api/admin/community/reports';
+const normalizeDetail = data => ({ ...data, post: data.post ? normalizeCommunityPost(data.post) : null });
 
 export const communityReportsApi = {
   submit(postId, reason, details, evidence) {
@@ -23,7 +25,7 @@ export const communityReportsApi = {
   },
   mine: (page, signal) => request(`/mine?page=${page}`, { basePath: '/api/community/reports', signal }),
   queue: (status, page, signal) => request(`?status=${status}&page=${page}`, { basePath: adminPath, signal }),
-  detail: (id, signal) => request(`/${id}`, { basePath: adminPath, signal }),
+  detail: (id, signal) => request(`/${id}`, { basePath: adminPath, signal }).then(normalizeDetail),
   evidence: (id, signal) => request(`/${id}/evidence`, { basePath: adminPath, signal, responseType: 'blob' }),
-  resolve: (id, action, reason) => request(`/${id}/decision`, { basePath: adminPath, method: 'POST', body: { action, reason } }),
+  resolve: (id, action, reason) => request(`/${id}/decision`, { basePath: adminPath, method: 'POST', body: { action, reason } }).then(normalizeDetail),
 };

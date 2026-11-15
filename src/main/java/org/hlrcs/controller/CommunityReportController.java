@@ -31,7 +31,7 @@ public class CommunityReportController {
     }
 
     @GetMapping("/api/admin/community/reports")
-    public ApiResponse<Page<Summary>> queue(@RequestParam(defaultValue = "OPEN") String status,
+    public ApiResponse<Page<PostGroup>> queue(@RequestParam(defaultValue = "OPEN") String status,
                                            @RequestParam(defaultValue = "0") int page) {
         return ApiResponse.success(reports.queue(status, page));
     }

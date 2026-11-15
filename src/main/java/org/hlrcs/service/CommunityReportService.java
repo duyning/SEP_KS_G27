@@ -19,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,8 +40,10 @@ public class CommunityReportService {
     public record Receipt(Integer id, String postTitle, LocalDateTime createdAt) {}
     public record Summary(Integer id, Integer postId, String postTitle, String reasonCode, ReportStatus status,
                           String reporter, LocalDateTime createdAt) {}
+    public record PostGroup(Integer postId, Integer selectedReportId, String postTitle, long reportCount,
+                            long openCount, LocalDateTime latestAt) {}
     public record Detail(Summary report, String details, CommunityPostResponse post, boolean hasEvidence,
-                         String handler, String resolutionNote, LocalDateTime resolvedAt) {}
+                         String handler, String resolutionNote, LocalDateTime resolvedAt, List<Summary> relatedReports) {}
     public record Page<T>(List<T> content, int number, int totalPages, long totalElements) {}
 
     @Transactional
@@ -47,6 +51,9 @@ public class CommunityReportService {
         var reporter = activeUser();
         var post = posts.findForReview(postId).filter(item -> item.getStatus() == PostStatus.APPROVED)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không còn khả dụng để báo cáo."));
+        if (post.getAuthor().getUserId().equals(reporter.getUserId())) {
+            throw new AppException("Bạn không thể báo cáo bài viết của chính mình.", HttpStatus.FORBIDDEN);
+        }
         // Use a current read under the post lock so simultaneous submissions cannot pass the same check.
         if (!reports.lockByReporter(TARGET, postId, reporter.getUserId()).isEmpty()) {
             throw new AppException("Bạn đã báo cáo bài viết này.", HttpStatus.CONFLICT);
@@ -74,7 +81,7 @@ public class CommunityReportService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Summary> queue(String status, int page) {
+    public Page<PostGroup> queue(String status, int page) {
         admin();
         Set<ReportStatus> statuses = switch (status) {
             case "ALL" -> EnumSet.allOf(ReportStatus.class);
@@ -83,15 +90,25 @@ public class CommunityReportService {
             case "DISMISSED" -> Set.of(ReportStatus.DISMISSED);
             default -> throw new BadRequestException("Trạng thái báo cáo không hợp lệ.");
         };
-        var rows = reports.findByTargetTypeAndStatusIn(TARGET, statuses, pageRequest(page));
-        return new Page<>(rows.map(this::summary).getContent(), rows.getNumber(), rows.getTotalPages(), rows.getTotalElements());
+        if (page < 0) throw new BadRequestException("Số trang không hợp lệ.");
+        var rows = reports.groupByPost(TARGET, statuses, OPEN, PageRequest.of(page, 15));
+        var reportIds = rows.stream().map(ReportRepository.PostReportGroup::getSelectedReportId).toList();
+        var selectedReports = reports.findAllById(reportIds).stream()
+                .collect(Collectors.toMap(Report::getReportId, report -> report));
+        var groups = rows.stream().map(row -> {
+            var selected = selectedReports.get(row.getSelectedReportId());
+            return new PostGroup(row.getPostId(), row.getSelectedReportId(), selected.getPostTitle(),
+                    row.getReportCount(), row.getOpenCount(), row.getLatestAt());
+        }).toList();
+        return new Page<>(groups, rows.getNumber(), rows.getTotalPages(), rows.getTotalElements());
     }
 
     @Transactional(readOnly = true)
     public Detail detail(Integer id) {
         admin();
         var report = reports.findByReportIdAndTargetType(id, TARGET).orElseThrow(this::missing);
-        return detail(report, posts.findById(report.getTargetId()).orElse(null));
+        var related = reports.findByTargetTypeAndTargetId(TARGET, report.getTargetId());
+        return detail(report, posts.findById(report.getTargetId()).orElse(null), related);
     }
 
     @Transactional(readOnly = true)
@@ -110,24 +127,24 @@ public class CommunityReportService {
         var related = reports.lockForTarget(TARGET, postId);
         var report = related.stream().filter(row -> row.getReportId().equals(id)).findFirst().orElseThrow(this::missing);
         if (!OPEN.contains(report.getStatus())) {
-            throw new AppException("Báo cáo đã đóng. Vui lòng tải lại.", HttpStatus.CONFLICT);
+            throw new AppException("Danh sách báo cáo chờ xử lý đã thay đổi. Vui lòng tải lại.", HttpStatus.CONFLICT);
         }
         String note = decision.reason().strip();
         var resolvedAt = LocalDateTime.now();
-        if (decision.action() == CommunityReportDecision.Action.DISMISS) {
-            close(report, ReportStatus.DISMISSED, handler, note, resolvedAt);
-        } else {
+        boolean hide = decision.action() == CommunityReportDecision.Action.HIDE_POST;
+        if (hide) {
             if (post == null || post.getStatus() != PostStatus.APPROVED) {
                 throw new AppException("Bài viết không còn công khai để ẩn.", HttpStatus.CONFLICT);
             }
             post.setStatus(PostStatus.HIDDEN);
             logs.save(ModerationLog.builder().staff(handler).targetType("COMMUNITY_POST")
                     .targetId(postId).action("HIDDEN").note(note).build());
-            for (Report row : related) {
-                if (OPEN.contains(row.getStatus())) close(row, ReportStatus.RESOLVED, handler, note, resolvedAt);
-            }
         }
-        return detail(report, post);
+        var outcome = hide ? ReportStatus.RESOLVED : ReportStatus.DISMISSED;
+        for (Report row : related) {
+            if (OPEN.contains(row.getStatus())) close(row, outcome, handler, note, resolvedAt);
+        }
+        return detail(report, post, related);
     }
 
     private void close(Report report, ReportStatus status, User handler, String note, LocalDateTime time) {
@@ -139,11 +156,14 @@ public class CommunityReportService {
                 .targetId(report.getReportId()).action(status.name()).note(note).build());
     }
 
-    private Detail detail(Report report, Post post) {
+    private Detail detail(Report report, Post post, List<Report> related) {
+        var relatedReports = related.stream()
+                .sorted(Comparator.comparing(Report::getReportId).reversed())
+                .map(this::summary).toList();
         return new Detail(summary(report), report.getReason(), post == null ? null : community.response(post, false),
                 evidence.existsById(report.getReportId()),
                 report.getHandler() == null ? null : report.getHandler().getFullName(),
-                report.getResolutionNote(), report.getResolvedAt());
+                report.getResolutionNote(), report.getResolvedAt(), relatedReports);
     }
 
     private Receipt receipt(Report report) {

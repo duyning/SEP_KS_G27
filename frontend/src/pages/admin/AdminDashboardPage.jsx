@@ -1,13 +1,13 @@
 import {useEffect, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
-import {Activity, ArrowRight, ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock3, FolderOpen, LayoutDashboard, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, Users, UserRound, UserRoundCheck, AlertCircle} from 'lucide-react';
+import {Activity, ArrowRight, ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock3, FolderOpen, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, Users, UserRound, UserRoundCheck, AlertCircle} from 'lucide-react';
 import {MotionButton} from '../../components/motion/MotionUI.jsx';
 import {useAuth} from '../../context/AuthContext.jsx';
+import {adminDashboardViews, getAdminDashboardView} from '../../routing/admin-navigation.js';
 import {roleLabels} from '../../routing/screens.js';
 import {adminApi} from '../../services/admin.js';
 import '../../styles/admin-dashboard.css';
 
-const views={overview:['Tổng quan',LayoutDashboard],accounts:['Tài khoản',Users],assignment:['Phân công xác minh',ClipboardList],activity:['Nhật ký kiểm duyệt',Activity]};
 const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Ngừng hoạt động'};
 const actions={APPROVED:'Phê duyệt',REJECTED:'Từ chối',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',REQUEST_SUPPLEMENT:'Yêu cầu bổ sung',RESOLVED:'Đã xử lý',COMPLETED:'Hoàn tất',DISMISSED:'Bỏ qua báo cáo',HIDDEN:'Ẩn bài viết'};
 const types={PROPERTY_REGISTRATION:'Hồ sơ nhà trọ',SERVICE_REGISTRATION:'Hồ sơ dịch vụ',HOST_APPLICATION:'Đăng ký chủ trọ',COMMUNITY_POST:'Bài đăng cộng đồng',COMMUNITY_POST_REPORT:'Báo cáo cộng đồng'};
@@ -26,7 +26,7 @@ function ActivityList({rows}){return <ol className="ad-activity">{rows.map(row=>
 
 export default function AdminDashboardPage(){
  const {user}=useAuth();const [params,setParams]=useSearchParams();
- const view=Object.hasOwn(views,params.get('view'))?params.get('view'):'overview';
+ const view=getAdminDashboardView(params);
  const q=params.get('q')||'',role=params.get('role')||'ALL',unassigned=params.get('unassigned')==='true',page=Math.max(0,parseInt(params.get('page'),10)||0);
  const [revision,setRevision]=useState(0),[query,setQuery]=useState(q);
  const [overview,setOverview]=useState({loading:true,data:null,error:''}),[list,setList]=useState({loading:true,data:null,error:''});
@@ -38,7 +38,6 @@ export default function AdminDashboardPage(){
  const pageData=list.data,waiting=list.loading||q!==query;
  return <div className="ad-page">
   <section className="ad-hero"><div><span className="ad-eyebrow">HL_RCS · ADMIN CONSOLE</span><h1>Quản trị hệ thống</h1><p>Xin chào, <strong>{user.fullName||user.email}</strong>. Theo dõi dữ liệu và giám sát hoạt động của nền tảng.</p><span className="ad-hero-caption"><LockKeyhole size={13}/>Khu vực dành cho Quản trị viên</span></div><div className="ad-hero-side"><ShieldCheck size={37} strokeWidth={1.5}/><span>TỔNG QUAN VẬN HÀNH</span><small>{data?`Cập nhật: ${date(data.fetchedAt)}`:'Đang kết nối dữ liệu hệ thống'}</small><MotionButton className="ad-button ad-hero-refresh" disabled={overview.loading} onClick={refresh}><RefreshCw size={14} className={overview.loading?'spin':''}/>Làm mới dữ liệu</MotionButton></div></section>
-  <nav className="ad-view-nav" aria-label="Mục quản trị">{Object.entries(views).map(([key,[label,Icon]])=><Link key={key} className={view===key?'active':''} aria-current={view===key?'page':undefined} to={key==='overview'?'/admin':`/admin?view=${key}`}><Icon size={17}/>{label}</Link>)}</nav>
   {view==='overview'?<>
    {overview.error&&<LoadState state={overview} retry={refresh}/>}
    <div className="ad-metrics">{[
@@ -54,7 +53,7 @@ export default function AdminDashboardPage(){
     <section className="ad-panel"><PanelTitle icon={UserRoundCheck} title="Đội ngũ Staff" subtitle="Phân công hồ sơ nhà trọ hiện tại" to="/admin?view=accounts&role=STAFF" link="Danh sách"/><div className="ad-staff-list">{data.staff.slice(0,5).map(item=><div key={item.userId}><span className="ad-avatar">{(item.name||'S').charAt(0)}</span><div><strong>{item.name||`Staff #${item.userId}`}</strong><small>{item.status==='ACTIVE'?'Đang hoạt động':'Ngừng hoạt động'} · {count(item.assigned)} hồ sơ được giao</small></div><span className="ad-staff-pending">{count(item.pending)}<small>chờ duyệt</small></span></div>)}{!data.staff.length&&<p className="ad-muted">Chưa có tài khoản Staff trong hệ thống.</p>}</div></section>
     <div className="ad-oversight-note"><ShieldCheck size={22}/><div><strong>Giám sát độc lập</strong><p>Admin theo dõi hồ sơ và tài liệu. Các quyết định xác minh nhà trọ thuộc Staff được phân công, không có xung đột lợi ích.</p><Link to="/staff/verifications">Mở khu vực giám sát<ArrowRight size={14}/></Link></div></div></aside></div>
    </>}
-  </>:<section className="ad-panel ad-list-panel"><PanelTitle icon={views[view][1]} title={view==='accounts'?'Tài khoản hệ thống':view==='assignment'?'Giám sát phân công xác minh':'Nhật ký kiểm duyệt'} subtitle={view==='accounts'?'Tra cứu tài khoản, vai trò và trạng thái hoạt động.':view==='assignment'?'Theo dõi hồ sơ và người phụ trách hiện tại; không thay Staff ra quyết định.':'Đối chiếu người xử lý, thời điểm, đối tượng và kết quả kiểm duyệt.'}/>
+  </>:<section className="ad-panel ad-list-panel"><PanelTitle icon={adminDashboardViews[view][2]} title={view==='accounts'?'Tài khoản hệ thống':view==='assignment'?'Giám sát phân công xác minh':'Nhật ký kiểm duyệt'} subtitle={view==='accounts'?'Tra cứu tài khoản, vai trò và trạng thái hoạt động.':view==='assignment'?'Theo dõi hồ sơ và người phụ trách hiện tại; không thay Staff ra quyết định.':'Đối chiếu người xử lý, thời điểm, đối tượng và kết quả kiểm duyệt.'}/>
    <div className="ad-filterbar">{view!=='activity'&&<label className="ad-search"><Search size={17}/><input aria-label="Tìm dữ liệu quản trị" placeholder={view==='accounts'?'Tìm họ tên, email, số điện thoại...':'Tìm tên nhà trọ hoặc người nộp hồ sơ...'} value={q} onChange={e=>change('q',e.target.value)}/></label>}{view==='accounts'&&<select aria-label="Lọc vai trò" value={role} onChange={e=>change('role',e.target.value)}><option value="ALL">Tất cả vai trò</option>{Object.entries(roleLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>}{view==='assignment'&&<label className="ad-check"><input type="checkbox" checked={unassigned} onChange={e=>change('unassigned',e.target.checked)}/>Chờ duyệt, chưa phân công</label>}<span className="ad-result-count" aria-live="polite">{waiting?'Đang cập nhật...':pageData?`${count(pageData.totalElements)} kết quả`:'Chưa tải dữ liệu'}</span></div>
    <LoadState state={{...list,loading:waiting}} retry={refresh} empty={q||role!=='ALL'||unassigned?'Không có kết quả phù hợp':'Chưa có dữ liệu'}>
     {view==='assignment'?<AssignmentTable rows={pageData?.content||[]}/>:view==='activity'?<ActivityList rows={pageData?.content||[]}/>:<div className="ad-table-wrap"><table className="ad-table ad-accounts"><thead><tr><th>Tài khoản</th><th>Liên hệ</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tham gia</th></tr></thead><tbody>{pageData?.content.map(item=><tr key={item.userId}><td data-label="Tài khoản"><div className="ad-account-person"><span className="ad-avatar">{(item.fullName||item.email).charAt(0).toUpperCase()}</span><div><strong>{item.fullName||'Chưa có tên'}</strong><small>TK-{item.userId}</small></div></div></td><td data-label="Liên hệ"><span>{item.email}</span><small>{item.phoneNumber||'Chưa có số điện thoại'}</small></td><td data-label="Vai trò"><span className={`ad-role-label ${item.role.toLowerCase()}`}>{roleLabels[item.role]||item.role}</span></td><td data-label="Trạng thái"><Status value={item.status}/></td><td data-label="Tham gia"><time>{date(item.createdAt)}</time></td></tr>)}</tbody></table></div>}

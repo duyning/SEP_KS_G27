@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, isOwnCommunityPost, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
+import { canReportCommunityPost, communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, isOwnCommunityPost, parsePostPrice, postPayload, validatePost } from '../src/services/community.js';
 
 const original = { fetch: globalThis.fetch, sessionStorage: globalThis.sessionStorage, localStorage: globalThis.localStorage };
 globalThis.sessionStorage = { getItem: () => 'user-token' };
@@ -16,12 +16,27 @@ test('post ownership uses account identity independently of filters or contact i
   }
   assert.equal(isOwnCommunityPost({}, {}), false);
 });
+test('only public posts by another account offer reporting', () => {
+  const post = { authorId: 12, status: 'APPROVED' };
+  assert.equal(canReportCommunityPost(post, { userId: 12 }), false);
+  assert.equal(canReportCommunityPost(post, { userId: 13 }), true);
+  assert.equal(canReportCommunityPost(post, null), true);
+  assert.equal(canReportCommunityPost({ ...post, status: 'HIDDEN' }, { userId: 13 }), false);
+});
 test('social contacts are optional, validated and included in edits and payloads', () => {
   assert.deepEqual(validatePost({ ...valid, facebookUrl: '', zaloUrl: '' }), {});
   const links = { facebookUrl: ' https://www.facebook.com/nguyenvanan ', zaloUrl: 'https://zalo.me/0912345678' };
   assert.deepEqual(validatePost({ ...valid, ...links }), {});
   assert.equal(postPayload({ ...valid, ...links }).facebookUrl, links.facebookUrl.trim());
   assert.equal(postPayload({ ...valid, ...links }).zaloUrl, links.zaloUrl);
+  for (const zaloUrl of ['0912345678', '0912 345 678', '+84912345678']) {
+    assert.deepEqual(validatePost({ ...valid, zaloUrl }), {});
+    assert.equal(postPayload({ ...valid, zaloUrl }).zaloUrl, links.zaloUrl);
+  }
+  assert.equal(hasPostDraftChanges({ ...valid, ...links, zaloUrl: '+84912345678' }, { ...valid, ...links }, true), false);
+  assert.equal(postPayload({ ...valid, zaloUrl: '' }).zaloUrl, undefined);
+  assert.equal(postPayload({ ...valid, zaloUrl: 'https://zalo.me/qr/p/example' }).zaloUrl, 'https://zalo.me/qr/p/example');
+  assert.ok(validatePost({ ...valid, zaloUrl: '09123' }).zaloUrl);
   assert.ok(hasPostDraftChanges({ ...valid, ...links }, valid, true));
   assert.ok(hasPostDraftChanges({ ...valid, facebookUrl: '', zaloUrl: '' }, { ...valid, ...links }, true));
   for (const url of ['javascript:alert(1)', 'http://facebook.com/name', 'https://facebook.com.evil.test/name', 'https://facebook.com@evil.test/name', 'https://evil.test/name', 'https://facebook.com/', 'https://facebook.com/a b', `https://facebook.com/${'x'.repeat(500)}`]) {

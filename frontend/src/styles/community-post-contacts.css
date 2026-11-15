@@ -4,6 +4,9 @@
 .community-post-contact-links a:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
 .community-social-contact-fact a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: #0f766e; overflow-wrap: anywhere; }
 .community-social-contact-fact a:hover { text-decoration: underline; }
+.community-post-contact-links a, .community-social-contact-fact a { max-width: 100%; }
+.community-post-contact-links a > span, .community-social-contact-fact a > span { min-width: 0; overflow-wrap: anywhere; }
+.community-post-contact-links a > svg, .community-social-contact-fact a > svg { flex-shrink: 0; }
 
 .community-feed-facts .community-phone-trigger {
   display: inline-flex;

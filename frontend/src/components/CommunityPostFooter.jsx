@@ -3,9 +3,9 @@ import { Copy, Flag, Link as LinkIcon, MessageCircle, MoreHorizontal, Trash2 } f
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from './PortalUI.jsx';
 import Comments from './CommunityPostComments.jsx';
-import { isOwnCommunityPost } from '../services/community.js';
+import { canReportCommunityPost, isOwnCommunityPost } from '../services/community.js';
 
-export default function CommunityPostFooter({ post, deleting, onDelete, onReport }) {
+export default function CommunityPostFooter({ post, deleting, onDelete, onReport, preview = false }) {
   const { user } = useAuth();
   const notify = useToast();
   const [expanded, setExpanded] = useState(false);
@@ -37,11 +37,12 @@ export default function CommunityPostFooter({ post, deleting, onDelete, onReport
   };
   return <>
     <footer className="community-feed-card-footer">
+      {preview ? <span className="community-comment-toggle"><MessageCircle size={20} aria-hidden="true" />{count} bình luận</span> :
       <button type="button" className="community-comment-toggle" aria-expanded={expanded} aria-controls={panelId}
         disabled={!approved} title={!approved ? 'Bình luận khả dụng sau khi bài được duyệt' : undefined}
         onClick={() => setExpanded(value => !value)}>
         <MessageCircle size={20} aria-hidden="true" /><span>{count} bình luận</span>
-      </button>
+      </button>}
       <div className="community-post-footer-actions">
         <div className="community-post-options" ref={menuRef}>
           <button type="button" ref={trigger} className="community-post-options-trigger" aria-label={`Tùy chọn bài viết ${post.title}`}
@@ -53,12 +54,12 @@ export default function CommunityPostFooter({ post, deleting, onDelete, onReport
             <button type="button" disabled={!approved} onClick={() => copy(`${window.location.origin}/community#post-${post.id}`, 'Đã sao chép liên kết bài viết')}>
               <LinkIcon size={17} aria-hidden="true" /> Sao chép liên kết bài viết
             </button>
-            {approved && <button type="button" onClick={() => {
+            {onReport && canReportCommunityPost(post, user) && <button type="button" onClick={() => {
               setMenuOpen(false);
               trigger.current?.focus();
               onReport(post);
             }}><Flag size={17} aria-hidden="true" /> Báo cáo bài viết</button>}
-            {owner && <button type="button" className="community-post-delete-option" disabled={deleting} onClick={() => {
+            {owner && onDelete && <button type="button" className="community-post-delete-option" disabled={deleting} onClick={() => {
               setMenuOpen(false);
               trigger.current?.focus();
               onDelete();
