@@ -74,7 +74,7 @@ public class AccommodationService {
         if (availableOnly) filter = filter.and((root, query, cb) -> {
             var vacant = query.subquery(Integer.class);
             var room = vacant.from(org.hlrcs.entity.Room.class);
-            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"));
+            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"), cb.isTrue(room.get("publicVisible")));
             return cb.exists(vacant);
         });
         if ("rating-desc".equals(sort)) filter = filter.and((root, query, cb) -> {

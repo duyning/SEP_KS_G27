@@ -1,3 +1,6 @@
+import PropertyTypeField from '../../components/PropertyTypeField.jsx';
+import PropertyPhotoGuide from '../../components/PropertyPhotoGuide.jsx';
+import PropertyDescriptionAssist from '../../components/PropertyDescriptionAssist.jsx';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,6 +11,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import PropertyLocationMap from '../../components/PropertyLocationMap.jsx';
 import { applyLocationSuggestion } from '../../services/property-location.js';
 import PropertyAddressLookup from '../../components/PropertyAddressLookup.jsx';
+import HostIdentityImage from '../../components/HostIdentityImage.jsx';
 import { StateView, useToast } from '../../components/PortalUI.jsx';
 import { hostApi } from '../../services/host.js';
 import { AMENITIES, AREAS, DEFAULT_QUIET_HOURS_TIME, DOCUMENTS, PROPERTY_TYPES, REQUIRED_DOCUMENTS, RULES, STEPS, createPropertyForm, formatRuleLabel, getQuietHoursTime, hasQuietHoursRule, propertyDraft, propertyDraftStep, restorePropertyDraft, setQuietHoursRule, validatePropertyStep, validateRegistrationFile } from '../../services/property-registration.js';
@@ -33,7 +37,7 @@ function ReviewFields({ rows }) {
   return <dl className="registration-review">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Chưa cung cấp'}</dd></div>)}</dl>;
 }
 
-function RegistrationForm({ user, accessBlocked = false }) {
+export function RegistrationForm({ user, accessBlocked = false, identityApplicationId, hasIdentityBackImage, onboarding, identityPreview, submitRegistration, onSubmitted, onBack, lookup }) {
   const notify = useToast();
   const [pending, setPending] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -54,13 +58,18 @@ function RegistrationForm({ user, accessBlocked = false }) {
   const formRef = useRef();
   const draftKey = user?.userId == null ? null : `hlrcs:property-draft:${user.userId}`;
   useEffect(() => {
+    if (!identityApplicationId && !onboarding) return;
+    setData(previous => previous.documents.idCard ? previous : { ...previous, documents: { ...previous.documents, idCard: { name: onboarding?'CCCD hai mặt từ bước thông tin tài khoản':'CCCD đã nộp khi đăng ký chủ trọ', savedIdentity: true } } });
+    setErrors(previous => ({ ...previous, idCard: undefined }));
+  }, [identityApplicationId,onboarding]);
+  useEffect(() => {
     if (!draftKey) return;
     try {
       const raw = localStorage.getItem(draftKey) || sessionStorage.getItem(draftKey);
       if (raw) {
         const restored = restorePropertyDraft(raw, user);
         const resume = propertyDraftStep(raw, restored);
-        setData(restored);
+        setData(previous => ({ ...restored, documents: previous.documents }));
         setQuietTimeDraft(getQuietHoursTime(restored.selectedRules));
         setStep(resume); setFurthestStep(resume); setDraftSaved(true);
         setDraftStatus('Đã khôi phục bản nháp trên thiết bị này.');
@@ -157,8 +166,8 @@ function RegistrationForm({ user, accessBlocked = false }) {
       notify?.('Đã gửi đăng ký nhà trọ. Hồ sơ đang chờ xét duyệt.', 'success');
     };
     try {
-      const record = await hostApi.submitRegistration(data, controller.signal);
-      if (!controller.signal.aborted) received(record);
+      const record = await (submitRegistration || hostApi.submitRegistration)(data, controller.signal);
+      if (!controller.signal.aborted) { if(onSubmitted){try{if(draftKey){localStorage.removeItem(draftKey);sessionStorage.removeItem(draftKey);}}catch{}onSubmitted(record);} else received(record); }
     } catch (error) {
       if (controller.signal.aborted) return;
       setSubmitError(error.message);
@@ -171,14 +180,15 @@ function RegistrationForm({ user, accessBlocked = false }) {
   const activeQuietTime = quietChecked ? getQuietHoursTime(data.selectedRules) : quietTimeDraft;
   if (pending) return <section className="registration-pending" role="status"><div className="registration-pending-icon"><Clock3 size={34} /></div><span className="registration-pending-badge">{pending.status === 'NEEDS_SUPPLEMENT' ? 'Cần bổ sung' : 'Chờ xét duyệt'}</span><h2>{pending.status === 'NEEDS_SUPPLEMENT' ? 'Hồ sơ đăng ký nhà trọ cần bổ sung' : 'Hồ sơ đăng ký nhà trọ đang chờ xét duyệt'}</h2><p>Đã tiếp nhận hồ sơ <strong>{pending.name}</strong>.{pending.status === 'NEEDS_SUPPLEMENT' ? ' Vui lòng xem nội dung yêu cầu của staff bên dưới.' : ' Vui lòng chờ Ban Quản Trị HL_RCS kiểm tra và xét duyệt.'}</p>{pending.reasonNote && <p className="hp-review-note">{pending.reasonNote}</p>}<dl><div><dt>Mã hồ sơ</dt><dd>#{pending.registrationId}</dd></div><div><dt>Trạng thái</dt><dd>{pending.status === 'NEEDS_SUPPLEMENT' ? 'Cần bổ sung' : 'Chờ xét duyệt'}</dd></div></dl><p>Nhà trọ chưa được hiển thị công khai khi chưa được phê duyệt.</p><div className="portal-actions"><Link className="p-button primary" to="/host/property">Nhà trọ của tôi</Link><MotionButton type="button" className="p-button" onClick={() => { setPending(null); setData(createPropertyForm(user)); setQuietTimeDraft(DEFAULT_QUIET_HOURS_TIME); setStep(0); setFurthestStep(0); setReturnToReview(false); setErrors({}); setSubmitError(''); setDraftSaved(false); setDraftStatus(''); setNotice(''); }}>Đăng ký nhà trọ khác</MotionButton></div></section>;
   return <div className="property-registration">
+    {onBack&&<MotionButton type="button" className="p-button" onClick={onBack} disabled={submitting}><ArrowLeft size={16}/>Thông tin tài khoản & CCCD</MotionButton>}
     <nav className="registration-steps" aria-label="Các bước đăng ký">{STEPS.map((label, index) => <MotionButton type="button" key={label} disabled={submitting || index > furthestStep} aria-current={index === step ? 'step' : undefined} className={index === step ? 'current' : index < step ? 'done' : ''} onClick={() => navigateStep(index)}><span className="registration-step-number">{index < step ? <Check size={16} /> : index + 1}</span><span>{label}</span></MotionButton>)}</nav>
     <div className="registration-grid"><form ref={formRef} onSubmit={submit} noValidate aria-busy={submitting}><fieldset className="registration-form-lock" disabled={submitting || accessBlocked}>
       <section className="registration-panel">
         <header className="registration-panel-header"><h3>{['Thông tin cơ bản', 'Vị trí nhà trọ', 'Thông tin & Tiện ích chung', 'Hình ảnh nhà trọ', 'Hồ sơ xác minh', 'Kiểm tra thông tin'][step]}</h3><p>{['Nhập các thông tin chính để nhận diện nhà trọ trên hệ thống HL_RCS.', 'Nhập địa chỉ nhà trọ tại Hòa Lạc. Vị trí trên bản đồ có thể bổ sung sau.', 'Chọn các tiện ích thuộc cấp độ toàn nhà trọ và quy định sinh hoạt chung.', 'Thêm hình ảnh giúp người thuê hiểu rõ hơn về không gian và cảnh quan nhà trọ.', 'Cung cấp các tài liệu được yêu cầu để HL_RCS có thể kiểm tra và thẩm định thông tin nhà trọ.', 'Kiểm tra lại toàn bộ thông tin trước khi gửi nhà trọ để Ban Quản Trị HL_RCS xem xét.'][step]}</p></header>
         {step === 0 && <>
           <Field name="name" label="Tên nhà trọ" required count={data.name.length} max={100} hint={'Tên riêng đại diện cho nhà trọ. Không cần thêm tiền tố "Nhà trọ" nếu không muốn.'} error={errors.name}><input {...input('name')} maxLength={100} required placeholder="Ví dụ: Nhà trọ An Khang" autoComplete="organization" /></Field>
-          <Field name="propertyType" label="Loại hình nhà trọ" required hint="Phân loại giúp người thuê lọc tìm kiếm chính xác nhu cầu lưu trú." error={errors.propertyType}><select {...input('propertyType')} required>{PROPERTY_TYPES.map(type => <option key={type}>{type}</option>)}</select></Field>
-          <Field name="description" label="Mô tả nhà trọ" required count={data.description.length} max={2000} hint="Mô tả từ 30 đến 2000 ký tự về không gian, an ninh và những điểm nổi bật của nhà trọ." error={errors.description}><textarea {...input('description')} rows={6} maxLength={2000} required placeholder="Mô tả ngắn về nhà trọ, không gian, môi trường sống, an ninh và những điểm nổi bật xung quanh..." /></Field>
+          <PropertyTypeField value={data.propertyType} onChange={value=>update('propertyType',value)} disabled={submitting} error={errors.propertyType}/>
+          <Field name="description" label="Mô tả nhà trọ" required count={data.description.length} max={2000} hint="Mô tả từ 30 đến 2000 ký tự về không gian, an ninh và những điểm nổi bật của nhà trọ." error={errors.description}><textarea {...input('description')} rows={6} maxLength={2000} required placeholder="Mô tả ngắn về nhà trọ, không gian, môi trường sống, an ninh và những điểm nổi bật xung quanh..." /></Field><PropertyDescriptionAssist form={data} onApply={value=>update('description',value)} disabled={submitting}/>
           <fieldset className="registration-contact"><legend>Thông tin liên hệ quản lý tiếp khách</legend><div className="registration-contact-grid">
             <Field name="managerName" label="Người đón khách" required hint="Người đón khách xem phòng" error={errors.managerName}><input {...input('managerName')} maxLength={100} autoComplete="name" placeholder="Họ tên người quản lý" required /></Field>
             <Field name="contactPhone" label="Hotline trực tiếp" required hint="Số di động liên hệ" error={errors.contactPhone}><input {...input('contactPhone')} type="tel" maxLength={20} autoComplete="tel" placeholder="Nhập số điện thoại" required /></Field>
@@ -186,7 +196,7 @@ function RegistrationForm({ user, accessBlocked = false }) {
           </div></fieldset>
         </>}
         {step === 1 && <>
-          <PropertyAddressLookup resolveDetails coordinates={data} disabled={submitting} locationKey={[data.latitude, data.longitude, data.addressDetail, data.commune, data.nearby].join('|')} onApply={location => { setData(previous => applyLocationSuggestion(previous, location, ['latitude', 'longitude', 'addressDetail', 'commune', 'nearby'])); setErrors(previous => ({ ...previous, latitude: undefined, longitude: undefined, location: undefined })); setNotice(''); }} />
+          <PropertyAddressLookup lookup={lookup} resolveDetails coordinates={data} disabled={submitting} locationKey={[data.latitude, data.longitude, data.addressDetail, data.commune, data.nearby].join('|')} onApply={location => { setData(previous => applyLocationSuggestion(previous, location, ['latitude', 'longitude', 'addressDetail', 'commune', 'nearby'])); setErrors(previous => ({ ...previous, latitude: undefined, longitude: undefined, location: undefined, ...(location.commune ? { commune: undefined } : {}), ...(location.addressDetail ? { addressDetail: undefined } : {}), ...(location.nearby ? { nearby: undefined } : {}) })); setNotice(''); }} />
           <div className="registration-two-columns registration-location-address">
             <Field name="addressDetail" label="Địa chỉ chi tiết" required hint="Số nhà, ngõ, xóm, thôn; từ 10 đến 255 ký tự." error={errors.addressDetail}><input {...input('addressDetail')} maxLength={255} autoComplete="street-address" required placeholder="Ví dụ: Số 18, ngõ 12, Thôn 2" /></Field>
             <Field name="commune" label="Xã / Khu vực tại Hòa Lạc" required hint="Chọn khu vực nhà trọ tại Hòa Lạc." error={errors.commune}><select {...input('commune')} required><option value="">Chọn khu vực</option>{AREAS.map(area => <option key={area} value={area}>{area === 'Tân Xã' ? 'Tân Xã (Gần ĐH FPT, hồ Tân Xã)' : area}</option>)}</select></Field>
@@ -234,18 +244,21 @@ function RegistrationForm({ user, accessBlocked = false }) {
           <div className={`registration-upload ${dragging ? 'dragging' : ''}`} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); }} onDrop={event => { event.preventDefault(); setDragging(false); addPhotos(event.dataTransfer.files); }}>
             <span className="registration-upload-icon"><ImagePlus size={24} /></span><strong>Kéo thả hình ảnh vào đây hoặc bấm để chọn</strong><p id="photos-hint">Hỗ trợ JPG, PNG, WEBP. Tối đa 5MB mỗi ảnh, tối đa 10 ảnh. Tối thiểu 1 ảnh.</p>
             <label className="registration-file-button" htmlFor="photos"><Upload size={16} />Chọn ảnh từ thiết bị</label><input className="registration-file-input" id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event => { addPhotos(event.target.files); event.target.value = ''; }} aria-label="Chọn ảnh nhà trọ" aria-invalid={Boolean(errors.photos)} aria-describedby={errors.photos ? 'photos-hint photos-error' : 'photos-hint'} />
+            <PropertyPhotoGuide embedded/>
           </div>
           {errors.photos && <p id="photos-error" className="registration-error" role="alert">{errors.photos}</p>}
           <div className="registration-photos" aria-label="Ảnh nhà trọ đã chọn">{data.photos.map((file, index) => <PhotoPreview key={`${file.name}-${file.lastModified}-${file.size}`} file={file} cover={index === 0} onRemove={() => update('photos', data.photos.filter((_, position) => position !== index))} onCover={() => update('photos', [file, ...data.photos.filter((_, position) => position !== index)])} />)}</div>
         </>}
         {step === 4 && <>
           <div className="registration-info registration-privacy"><LockKeyhole size={22} /><p><strong>Cam kết bảo mật tài liệu:</strong> Các hồ sơ xác minh dưới đây là dữ liệu nhạy cảm, không được hiển thị công khai trên trang tìm kiếm của người thuê. Tài liệu chỉ phục vụ xét duyệt hồ sơ và được giới hạn truy cập theo vai trò trong hệ thống.</p></div>
-          {DOCUMENTS.map(([key, label], index) => <section className="registration-document-section" key={key}>
-            <h4><label htmlFor={key}>{index + 1}. {label}</label><span className={REQUIRED_DOCUMENTS.includes(key) ? 'required' : ''}>{REQUIRED_DOCUMENTS.includes(key) ? 'BẮT BUỘC' : 'KHUYẾN KHÍCH'}</span></h4>
-            <p id={`${key}-hint`}>{['Bản chụp hoặc bản scan rõ nét Giấy phép kinh doanh hộ kinh doanh / cơ sở lưu trú hợp lệ. Nếu quản lý thay chủ cơ sở, đính kèm văn bản ủy quyền trong cùng một tệp.', 'Bản chụp rõ hai mặt thẻ căn cước / CCCD của chủ cơ sở hoặc người đại diện quản lý, gộp trong một tệp.', 'Bản chụp hoặc bản scan rõ nét Chứng nhận an toàn phòng cháy chữa cháy (PCCC) của cơ sở lưu trú.'][index]} PDF, JPG, PNG, WEBP; tối đa 10MB.</p>
-            <div className="registration-document"><FileText size={19} /><span>{data.documents[key]?.name || 'Chưa tải lên tài liệu'}</span>{data.documents[key] && <MotionButton type="button" className="p-icon" aria-label={`Xóa ${label}`} title={`Xóa ${label}`} onClick={() => { update('documents', { ...data.documents, [key]: undefined }); setErrors(previous => ({ ...previous, [key]: undefined })); }}><Trash2 size={16} /></MotionButton>}<label className="registration-file-button" htmlFor={key}>{data.documents[key] ? 'Thay đổi tệp' : 'Tải lên file (PDF/JPG)'}</label><input className="registration-file-input" id={key} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => addDocument(key, event)} aria-required={REQUIRED_DOCUMENTS.includes(key)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-hint ${key}-error` : `${key}-hint`} /></div>
+          {DOCUMENTS.filter(([key])=>!onboarding||key!=='idCard').map(([key, label], displayIndex) => {const index=DOCUMENTS.findIndex(([item])=>item===key);return <section className="registration-document-section" key={key}>
+            <h4><label htmlFor={key}>{displayIndex + 1}. {label}</label><span className={REQUIRED_DOCUMENTS.includes(key) ? 'required' : ''}>{REQUIRED_DOCUMENTS.includes(key) ? 'BẮT BUỘC' : 'KHUYẾN KHÍCH'}</span></h4>
+            <p id={`${key}-hint`}>{['Bản chụp hoặc bản scan rõ nét Giấy phép kinh doanh hộ kinh doanh / cơ sở lưu trú hợp lệ. Nếu quản lý thay chủ cơ sở, đính kèm văn bản ủy quyền trong cùng một tệp.', 'Tự sử dụng ảnh CCCD đã nộp trong đơn đăng ký chủ trọ được duyệt. Bạn có thể thay tệp nếu cần cập nhật hoặc bổ sung.', 'Bản chụp hoặc bản scan rõ nét Chứng nhận an toàn phòng cháy chữa cháy (PCCC) của cơ sở lưu trú.'][index]} PDF, JPG, PNG, WEBP; tối đa 10MB.</p>
+            <div className="registration-document"><FileText size={19} /><span>{data.documents[key]?.name || 'Chưa tải lên tài liệu'}</span>{data.documents[key] && !data.documents[key].savedIdentity && <MotionButton type="button" className="p-icon" aria-label={`Xóa ${label}`} title={`Xóa ${label}`} onClick={() => { update('documents', { ...data.documents, [key]: key === 'idCard' && identityApplicationId ? { name: 'CCCD đã nộp khi đăng ký chủ trọ', savedIdentity: true } : undefined }); setErrors(previous => ({ ...previous, [key]: undefined })); }}><Trash2 size={16} /></MotionButton>}<label className="registration-file-button" htmlFor={key}>{data.documents[key] ? 'Thay đổi tệp' : 'Tải lên file (PDF/JPG)'}</label><input className="registration-file-input" id={key} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => addDocument(key, event)} aria-required={REQUIRED_DOCUMENTS.includes(key) && !data.documents[key]?.savedIdentity} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-hint ${key}-error` : `${key}-hint`} /></div>
+            {key === 'idCard' && data.documents.idCard?.savedIdentity && <><p className="registration-notice"><Check size={16} />Đã lấy CCCD từ đơn đăng ký chủ trọ. Không cần tải lên lại.</p><details className="registration-saved-identity"><summary>Xem CCCD đã nộp</summary><HostIdentityImage id={identityApplicationId} present backPresent={hasIdentityBackImage}/></details></>}
             {errors[key] && <p id={`${key}-error`} className="registration-error" role="alert">{errors[key]}</p>}
-          </section>)}
+          </section>;})}
+          {onboarding && <section className="registration-document-section"><h4>CCCD chủ trọ</h4><p>Đã đính kèm mặt trước và mặt sau từ bước thông tin tài khoản.</p>{identityPreview}</section>}
         </>}
         {step === 5 && <>
           <div className="registration-review-summary"><span className="registration-review-summary-icon"><ClipboardList size={24} /></span><div><strong>Hồ sơ sẵn sàng để bạn kiểm tra</strong><p>Đối chiếu thông tin, hình ảnh và giấy tờ trước khi gửi xét duyệt.</p></div><span className="registration-review-count">{data.photos.length} ảnh · {REQUIRED_DOCUMENTS.filter(key => data.documents[key]).length}/{REQUIRED_DOCUMENTS.length} giấy tờ</span></div>
@@ -260,13 +273,13 @@ function RegistrationForm({ user, accessBlocked = false }) {
           <div className="registration-info"><Info size={20} /><p>Sau khi gửi, hồ sơ sẽ ở trạng thái <strong>Chờ xét duyệt</strong>. Nhà trọ chỉ được hiển thị công khai sau khi được phê duyệt.</p></div>
         </>}
       </section>
-      <div className="registration-draft-status" role="status"><Save size={15} /><span>{draftStatus || (draftSaved ? 'Đã lưu bản nháp.' : 'Thông tin được tự động lưu khi hoàn thành mỗi bước.')}<small>Bản nháp lưu trên thiết bị này; ảnh và giấy tờ cần chọn lại sau khi tải lại trang.</small></span></div>
+      <div className="registration-draft-status" role="status"><Save size={15} /><span>{draftStatus || (draftSaved ? 'Đã lưu bản nháp.' : 'Thông tin được tự động lưu khi hoàn thành mỗi bước.')}<small>Bản nháp lưu trên thiết bị này; ảnh và giấy tờ tải lên cần chọn lại sau khi tải lại trang. CCCD đã nộp được lấy lại từ hồ sơ chủ trọ.</small></span></div>
       {notice && <p className="registration-notice" role="status">{notice}</p>}
       {submitError && <p className="registration-submit-error" role="alert">{submitError}</p>}
-      <div className="registration-actions"><MotionButton type="button" onClick={() => { setReturnToReview(false); move(step - 1); }} disabled={step === 0}><ArrowLeft size={16} />Quay lại</MotionButton><MotionButton type="button" onClick={saveDraft}><Save size={16} />Lưu bản nháp</MotionButton><MotionButton className="registration-next" type="submit">{submitting ? <><LoaderCircle size={16} className="spin" />Đang gửi hồ sơ...</> : step === 5 ? <><Check size={16} />Gửi xét duyệt</> : <>{returnToReview ? 'Lưu & Kiểm tra lại' : 'Tiếp tục'}<ArrowRight size={16} /></>}</MotionButton></div>
+      <div className="registration-actions"><MotionButton type="button" onClick={() => { setReturnToReview(false); move(step - 1); }} disabled={step === 0}><ArrowLeft size={16} />Quay lại</MotionButton><MotionButton type="button" onClick={saveDraft}><Save size={16} />Lưu bản nháp</MotionButton><MotionButton className="registration-next" type="submit" disabled={step===5&&!data.termsAccepted}>{submitting ? <><LoaderCircle size={16} className="spin" />Đang gửi hồ sơ...</> : step === 5 ? <><Check size={16} />Gửi xét duyệt</> : <>{returnToReview ? 'Lưu & Kiểm tra lại' : 'Tiếp tục'}<ArrowRight size={16} /></>}</MotionButton></div>
     </fieldset></form>
     <aside className="registration-aside"><section><h3>Hướng dẫn hồ sơ</h3>
-      <details><summary>Quy trình xét duyệt</summary><ol className="registration-process">{[['Gửi hồ sơ', 'Điền thông tin và đính kèm giấy tờ xác minh.'], ['Kiểm tra & bổ sung', 'Staff kiểm tra, phản hồi khi cần bổ sung.'], ['Được phê duyệt', 'Nhà trọ được hiển thị và có thể cấu hình loại phòng.']].map(([title, description], index) => <li key={title}><span>{index + 1}</span><div><strong>{title}</strong><p>{description}</p></div></li>)}</ol></details>
+      <details><summary>Quy trình xét duyệt</summary><ol className="registration-process">{[['Gửi hồ sơ', 'Điền thông tin và đính kèm giấy tờ xác minh.'], ['Kiểm tra & bổ sung', 'Nhân viên thẩm định, phản hồi khi cần bổ sung.'], ['Được phê duyệt', 'Nhà trọ được hiển thị và có thể cấu hình loại phòng.']].map(([title, description], index) => <li key={title}><span>{index + 1}</span><div><strong>{title}</strong><p>{description}</p></div></li>)}</ol></details>
       <details><summary>Lưu ý khi chuẩn bị hồ sơ</summary><ul><li>Cung cấp thông tin liên hệ chính xác.</li><li>Dùng ảnh thực tế, rõ nét về nhà trọ và lối thoát hiểm.</li><li>Chuẩn bị giấy phép kinh doanh, CCCD và chứng nhận an toàn PCCC.</li></ul></details>
     </section>
     </aside></div>
@@ -294,5 +307,5 @@ export default function HostPropertyCreatePage() {
   if (access.userId !== user?.userId || (access.loading && !access.data)) return <StateView kind="loading" />;
   if (access.error && !access.data) return <StateView kind="error" message={access.error}><MotionButton className="p-button" onClick={() => setRevision(value => value + 1)}>Thử lại</MotionButton></StateView>;
   if (!access.data.canRegister) return <StateView kind="error" message="Máy chủ chưa cho phép đăng ký thêm nhà trọ. Vui lòng khởi động lại backend để áp dụng quy định mới." />;
-  return <>{access.error && <p className="registration-submit-error" role="alert">Không thể kiểm tra lại quyền đăng ký: {access.error} Thông tin đang nhập được giữ nguyên. <MotionButton type="button" className="p-button" onClick={() => setRevision(value => value + 1)}>Thử lại</MotionButton></p>}<RegistrationForm key={user?.userId} user={user} accessBlocked={Boolean(access.error)} /></>;
+  return <>{access.error && <p className="registration-submit-error" role="alert">Không thể kiểm tra lại quyền đăng ký: {access.error} Thông tin đang nhập được giữ nguyên. <MotionButton type="button" className="p-button" onClick={() => setRevision(value => value + 1)}>Thử lại</MotionButton></p>}<RegistrationForm key={user?.userId} user={user} accessBlocked={Boolean(access.error)} identityApplicationId={access.data.identityApplicationId} hasIdentityBackImage={access.data.hasIdentityBackImage}/></>;
 }

@@ -3,10 +3,9 @@ import { motion } from 'motion/react';
 import { useMotionTokens, useShouldReduceMotion } from '@animate-ui/react/utils/motion';
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { Link } from 'react-router-dom';
+import HostIdentityImage from '../../components/HostIdentityImage.jsx';
+import '../../styles/host-account-application.css';
 import {
-  applicantCapacities,
-  rentalExperiences,
-  applicationFieldLabel,
   hostApplicationFieldLabels
 } from '../../services/host-applications.js';
 import {
@@ -17,11 +16,9 @@ import {
   History,
   Info,
   Mail,
-  MapPin,
   Phone,
   ShieldCheck,
   UserRound,
-  Users,
   X
 } from 'lucide-react';
 
@@ -31,7 +28,7 @@ export default function StaffHostDetailTemplate(props) {
   const [guidance, setGuidance] = useState(false);
   const reduce = useShouldReduceMotion();
   const { transition } = useMotionTokens();
-  const requestedFields = Array.isArray(a.requestedFields) ? a.requestedFields : [];
+  const requestedFields = Array.isArray(a.requestedFields) ? a.requestedFields.filter(key=>!['applicantCapacity','rentalExperience','targetCommune','expectedScale'].includes(key)) : [];
 
   return (
     <div className="sha-page sha-detail" onClick={props.onClick}>
@@ -101,38 +98,15 @@ export default function StaffHostDetailTemplate(props) {
               </h3>
             </header>
 
-            <dl className="sha-scope">
-              <div>
-                <dt>Tư cách cho thuê</dt>
-                <dd>{applicationFieldLabel(applicantCapacities, a.applicantCapacity)}</dd>
-              </div>
-              <div>
-                <dt>Kinh nghiệm quản lý</dt>
-                <dd>{applicationFieldLabel(rentalExperiences, a.rentalExperience)}</dd>
-              </div>
-              <div>
-                <dt>
-                  <MapPin size={13} />
-                  Khu vực dự kiến
-                </dt>
-                <dd id="detailTargetCommune">{a.targetCommune || 'Chưa cung cấp'}</dd>
-              </div>
-              <div>
-                <dt>
-                  <Users size={13} />
-                  Quy mô dự kiến
-                </dt>
-                <dd id="detailExpectedScale">{a.expectedScale || 'Chưa cung cấp'}</dd>
-              </div>
-            </dl>
+
 
             <div className="sha-intro-block">
-              <h4 className="sha-field-title">Giới thiệu &amp; Kế hoạch vận hành</h4>
+              <h4 className="sha-field-title">Ghi chú cho nhân viên xét duyệt</h4>
               <p
                 className={`sha-introduction ${!expanded && a.introduction?.length > 300 ? 'is-collapsed' : ''}`}
                 id="detailIntroduction"
               >
-                {a.introduction || 'Chưa có nội dung giới thiệu.'}
+                {a.introduction || 'Không có ghi chú.'}
               </p>
               {a.introduction?.length > 300 && (
                 <MotionButton
@@ -168,6 +142,8 @@ export default function StaffHostDetailTemplate(props) {
               </p>
             </div>
           </section>
+
+          <section className="sha-panel sha-detail-panel"><header><h3><ShieldCheck size={18}/>Giấy tờ định danh</h3></header><HostIdentityImage id={a.id} present={a.hasIdentityImage===true} backPresent={a.hasIdentityBackImage===true}/>{!a.hasIdentityBackImage&&<p className="sha-note">Hồ sơ cũ chưa có ảnh mặt sau CCCD.</p>}</section>
 
           <section className="sha-panel sha-detail-panel">
             <header>

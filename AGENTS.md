@@ -26,3 +26,20 @@ Key context to preserve:
 - Host ownership comes from the authenticated account, not client-supplied owner IDs.
 - sql/schema.sql and the original migration report lag behind current entities/APIs.
   An entity or routed page alone does not establish that a workflow is implemented.
+
+## UI/UX for NestHub Web and Mobile
+
+- Read and apply the `ui-ux-pro-max` skill before designing, reviewing,
+  or changing any web or mobile UI. This includes requests like
+  "sửa giao diện", "layout quá dài", and "làm Dashboard dễ dùng hơn".
+- For web, use the skill's React guidance. Reuse existing components
+  and check responsive layouts, keyboard navigation, and focus states.
+- For mobile, use the skill's React Native guidance and follow
+  `mobile/AGENTS.md` for Expo, routing, and verification. Design for
+  native iOS and Android interactions instead of shrinking the web UI.
+- Keep NestHub's teal/ivory identity and existing design tokens.
+  Adapt the layout to each platform. For example, the web landlord
+  dashboard can show tables and filters side by side, while the mobile
+  dashboard should surface tasks that need attention first.
+- For UI-only work, preserve API integrations, real data, permissions,
+  and business logic. Skip the skill for backend-only or DevOps work.

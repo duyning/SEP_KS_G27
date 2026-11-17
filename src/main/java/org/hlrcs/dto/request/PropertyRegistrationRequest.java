@@ -5,7 +5,7 @@ import java.util.List;
 
 public record PropertyRegistrationRequest(
         @NotBlank @Size(min = 3, max = 100) String name,
-        @NotBlank String propertyType,
+        @NotBlank @Size(min=2,max=100) String propertyType,
         @NotBlank @Size(min = 30, max = 2000) String description,
         @NotBlank @Size(min = 2, max = 100) String managerName,
         @NotBlank @Size(max = 20) String contactPhone,

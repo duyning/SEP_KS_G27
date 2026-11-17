@@ -1,0 +1,4 @@
+# Copy to config/vietmap-local.properties. Use the VIETMAP Services key, not Tilemap.
+VIETMAP_ENABLED=true
+VIETMAP_API_KEY=PASTE_YOUR_SERVICES_KEY_HERE
+VIETMAP_REQUESTS_PER_MINUTE=120

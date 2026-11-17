@@ -7,7 +7,21 @@ import {
   filterAndSortVerifications,
   getVerificationDetailActions,
   getVerificationRowActions,
+  getVerificationWait,
 } from '../src/services/staff-verifications.js';
+
+test('combined approval requires both identity sides and fire safety before granting host access',()=>{
+  const detail={summary:{status:'PENDING',hostOnboarding:true},canReview:true,
+    submission:{termsAccepted:true},photos:[{type:'PHOTO_0'}],documents:[{type:'OWNERSHIP'},{type:'ID_CARD'}]};
+  assert.equal(getVerificationDetailActions(detail).mandatoryReady,false);
+  detail.documents.push({type:'ID_CARD_BACK'});
+  assert.equal(getVerificationDetailActions(detail).mandatoryReady,false);
+  detail.documents.push({type:'FIRE_SAFETY'});
+  const actions=getVerificationDetailActions(detail);
+  assert.equal(actions.mandatoryReady,true);
+  assert.equal(actions.decisions.find(item=>item.decision==='APPROVE').label,'Duyệt chủ trọ & Nhà trọ');
+  assert.equal(actions.decisions.find(item=>item.decision==='APPROVE').disabled,false);
+});
 
 const sampleVerifications = [
   {
@@ -151,46 +165,32 @@ test('filtering supports status tags, classification chips, Vietnamese folding, 
   );
 });
 
-test('row actions are strictly partitioned by actionable status and canReview permission', () => {
-  // 1. PENDING + ready + canReview => Thẩm định ngay + Duyệt nhanh + Yêu cầu bổ sung + Từ chối
-  const readyPending = getVerificationRowActions(sampleVerifications[0]);
-  assert.equal(readyPending.primary.label, 'Thẩm định ngay');
-  assert.deepEqual(
-    readyPending.secondary.map(action => action.id),
-    ['quick-approve', 'supplement', 'quick-reject']
-  );
+test('queue offers only a detail link for every status and permission', () => {
+  for (const row of sampleVerifications) {
+    for (const canReview of [true, false]) {
+      const actions = getVerificationRowActions({...row, canReview});
+      assert.equal(actions.primary.label, 'Thẩm định ngay');
+      assert.equal(actions.primary.to, '/staff/verifications/detail?id=' + row.registrationId);
+      assert.equal(actions.primary.kind, 'link');
+      assert.deepEqual(actions.secondary, []);
+    }
+  }
+});
 
-  // 2. PENDING + incomplete docs + canReview => no Duyệt nhanh, keeps Yêu cầu bổ sung & Từ chối
-  const incompletePending = getVerificationRowActions(sampleVerifications[1]);
-  assert.equal(incompletePending.primary.label, 'Thẩm định ngay');
-  assert.deepEqual(
-    incompletePending.secondary.map(action => action.id),
-    ['supplement', 'quick-reject']
-  );
-
-  // 3. PENDING + canReview=false (Admin supervision) => Xem giám sát only, zero mutations
-  const supervisedPending = getVerificationRowActions({ ...sampleVerifications[0], canReview: false });
-  assert.equal(supervisedPending.primary.label, 'Xem giám sát');
-  assert.deepEqual(supervisedPending.secondary, []);
-
-  // 4. NEEDS_SUPPLEMENT + canReview => Theo dõi bổ sung + Từ chối hồ sơ (no Yêu cầu bổ sung / Thẩm định ngay)
-  const supplementActions = getVerificationRowActions(sampleVerifications[2]);
-  assert.equal(supplementActions.primary.label, 'Theo dõi bổ sung');
-  assert.deepEqual(
-    supplementActions.secondary.map(action => action.id),
-    ['reject-supplement']
-  );
-
-  // 5. APPROVED => Xem hồ sơ đã duyệt + Xem tin đăng public link, zero mutations
-  const approvedActions = getVerificationRowActions(sampleVerifications[3]);
-  assert.equal(approvedActions.primary.label, 'Xem hồ sơ đã duyệt');
-  assert.equal(approvedActions.secondary.length, 1);
-  assert.equal(approvedActions.secondary[0].to, '/properties/detail?propertyId=88');
-
-  // 6. REJECTED => Xem lý do từ chối only, zero mutations
-  const rejectedActions = getVerificationRowActions(sampleVerifications[4]);
-  assert.equal(rejectedActions.primary.label, 'Xem lý do từ chối');
-  assert.deepEqual(rejectedActions.secondary, []);
+test('waiting reminder uses latest submission, only after 48 hours and only pending review', () => {
+  const now=Date.parse('2026-11-16T12:00:00');
+  const old={status:'PENDING',createdAt:'2026-11-10T12:00:00'};
+  assert.equal(getVerificationWait(old,now).overdue,true);
+  assert.equal(getVerificationWait(old,now).label,'6 ngày');
+  assert.equal(getVerificationWait({...old,submittedAt:'2026-11-14T12:00:00'},now).overdue,false);
+  assert.equal(getVerificationWait({...old,submittedAt:'2026-11-14T11:59:59'},now).overdue,true);
+  assert.equal(getVerificationWait({...old,submittedAt:'2026-11-16T10:00:00'},now).overdue,false);
+  for(const status of ['NEEDS_SUPPLEMENT','APPROVED','REJECTED']) {
+    assert.equal(getVerificationWait({...old,status},now).overdue,false);
+  }
+  for(const createdAt of [null,'invalid','2026-11-20T12:00:00']) {
+    assert.equal(getVerificationWait({status:'PENDING',createdAt},now).overdue,false);
+  }
 });
 
 test('detail decision panel actions adapt per workflow state without dead disabled buttons on finalized records', () => {
@@ -276,5 +276,15 @@ test('detail decision panel actions adapt per workflow state without dead disabl
   });
   assert.equal(supervision.mode, 'READ_ONLY_SUPERVISION');
   assert.deepEqual(supervision.decisions, []);
-  assert.equal(classifyVerificationRecord(sampleVerifications[2]).submissionLabel, 'Cập nhật NT-55');
+  assert.equal(classifyVerificationRecord(sampleVerifications[2]).submissionLabel, 'Cập nhật');
+});
+
+test('verification queue defaults to latest submission first, including resubmissions and undated records last',()=>{const rows=[{registrationId:1,createdAt:'2026-11-01T10:00:00'},{registrationId:3,createdAt:'2026-11-03T10:00:00'},{registrationId:2,createdAt:'2026-11-02T10:00:00',submittedAt:'2026-11-04T10:00:00'},{registrationId:4,createdAt:null}];assert.deepEqual(filterAndSortVerifications(rows).map(row=>row.registrationId),[2,3,1,4]);assert.deepEqual(rows.map(row=>row.registrationId),[1,3,2,4]);});
+
+
+test('submission badges distinguish initial submission, updates, and later supplements', () => {
+  const original={status:'PENDING',createdAt:'2026-11-16T10:00:00',submittedAt:'2026-11-16T10:00:00'};
+  assert.equal(classifyVerificationRecord(original).submissionLabel,'Đăng ký mới');
+  assert.equal(classifyVerificationRecord({...original,targetPropertyId:4}).submissionLabel,'Cập nhật');
+  assert.equal(classifyVerificationRecord({...original,submittedAt:'2026-11-17T10:00:00'}).submissionLabel,'Đã bổ sung');
 });

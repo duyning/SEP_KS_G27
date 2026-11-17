@@ -1,3 +1,4 @@
+import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
 import {useFavorites} from '../../context/FavoritesContext.jsx';
 import {useEffect,useState} from 'react';
 import {Link,NavLink} from 'react-router-dom';
@@ -9,24 +10,9 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
  const favorites=useFavorites(),savedCount=favorites?.total??providedSavedCount;
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
- const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
+ const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={user?.role==='ROOM_HOST'?'/host/property':landingFor(user)} className="btn-primary-sm">{user?.role==='ROOM_HOST'?'Nhà trọ của tôi':'Bảng điều khiển'}</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
  return <div className={`prototype-home ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
-    <div className="top-announcement">
-      <div className="container top-announcement-inner">
-        <div className="announcement-left">
-          <span className="badge-tag">Hòa Lạc Campus</span>
-          <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
-        </div>
-        <div className="announcement-right">
-          <a href="tel:0912345678" className="contact-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            <span>Hotline hỗ trợ: 0912 345 678</span>
-          </a>
-          <span className="sep">•</span>
-          <span className="status-live"><span className="live-dot"></span>Cập nhật phòng trống hôm nay</span>
-        </div>
-      </div>
-    </div>
+    <HostRegistrationBanner/>
 
     <nav className="main-navbar">
       <div className="container navbar-container">

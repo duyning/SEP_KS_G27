@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, useIsPresent } from 'motion/react';
 import { Highlight, HighlightItem } from '@animate-ui/react/primitives/effects/highlight';
@@ -7,36 +7,27 @@ import { useMotionTokens, useShouldReduceMotion, useTempoTransition } from '@ani
 import {
   ArrowUpDown,
   Building2,
-  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
   Clock3,
-  ExternalLink,
-  Eye,
-  FileCheck2,
   FilePenLine,
   FileText,
-  FileX2,
   FolderKanban,
-  LoaderCircle,
   MapPin,
   Phone,
   RefreshCw,
   RotateCcw,
   Search,
-  ShieldCheck,
   Sparkles,
   UserCheck,
   X,
   XCircle,
 } from 'lucide-react';
 import { AnimatePresence, MotionButton } from '../../components/motion/MotionUI.jsx';
-import { Modal, useToast } from '../../components/PortalUI.jsx';
 import { StaffLoadState, StaffStatus, StaffThumbnail, staffDate, useStaffLoad } from '../../components/StaffUI.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { staffApi } from '../../services/staff.js';
 import {
   SUBMISSION_KIND_FILTERS,
   VERIFICATION_SORT_OPTIONS,
@@ -45,6 +36,7 @@ import {
   computeVerificationMetrics,
   filterAndSortVerifications,
   getVerificationRowActions,
+  getVerificationWait,
 } from '../../services/staff-verifications.js';
 import '../../styles/staff-verifications-refinement.css';
 
@@ -59,19 +51,11 @@ const STATUS_TAB_ICONS = {
   REJECTED: XCircle,
 };
 
-function ActionPrimaryIcon({ id }) {
-  if (id === 'inspect-review') return <ClipboardCheck size={15} />;
-  if (id === 'track-supplement') return <Clock3 size={15} />;
-  if (id === 'view-approved') return <FileCheck2 size={15} />;
-  if (id === 'view-rejected') return <FileX2 size={15} />;
-  if (id === 'supervise-pending' || id === 'supervise-supplement') return <ShieldCheck size={15} />;
-  return <Eye size={15} />;
-}
-
-function VerificationQueueRow({ item, onQuickDecision, reflowSpring, fadeTransition, reduce }) {
+function VerificationQueueRow({ item, now, reflowSpring, fadeTransition, reduce }) {
   const present = useIsPresent();
   const meta = classifyVerificationRecord(item);
   const actions = getVerificationRowActions(item);
+  const wait = getVerificationWait(item, now);
   const contactName = item.managerName || item.ownerName || 'Chưa cập nhật';
   const contactPhone = item.contactPhone || item.ownerPhone || 'Chưa có SĐT';
 
@@ -92,13 +76,11 @@ function VerificationQueueRow({ item, onQuickDecision, reflowSpring, fadeTransit
         </div>
         <div className="sv-property-body">
           <div className="sv-record-badges">
-            <span className="sv-code-chip">HS-{item.registrationId}</span>
             <span className={`sv-kind-chip tone-${meta.submissionTone}`}>
               {meta.isResubmitted && <Sparkles size={11} />}
               {meta.submissionLabel}
             </span>
-            {item.reverificationRequired && <span className="sv-kind-chip tone-orange">Tái xác minh</span>}
-            {item.propertyType && <span className="sv-type-chip">{item.propertyType}</span>}
+
           </div>
           <Link className="sv-property-title" to={`/staff/verifications/detail?id=${item.registrationId}`}>
             {item.name || 'Nhà trọ chưa đặt tên'}
@@ -154,6 +136,11 @@ function VerificationQueueRow({ item, onQuickDecision, reflowSpring, fadeTransit
                 ? `Cập nhật: ${staffDate(item.reviewedAt)}`
                 : `Nộp: ${staffDate(item.createdAt)}`}
           </span>
+          {wait.overdue && (
+            <span className="sv-wait-warning" title="Hồ sơ đang chờ duyệt quá 48 giờ kể từ lần gửi gần nhất">
+              <Clock3 size={13} aria-hidden="true" /> Chờ duyệt quá 48 giờ · {wait.label}
+            </span>
+          )}
           {item.reviewerName && item.status !== 'PENDING' && (
             <small className="sv-reviewer-by">Xử lý bởi {item.reviewerName}</small>
           )}
@@ -167,46 +154,10 @@ function VerificationQueueRow({ item, onQuickDecision, reflowSpring, fadeTransit
 
       <div className="sv-col sv-col-actions" data-label="Hành động">
         <div className="sv-action-group">
-          {actions.primary && (
-            <Link className={`sv-row-btn ${actions.primary.tone}`} to={actions.primary.to}>
-              <ActionPrimaryIcon id={actions.primary.id} />
-              <span>{actions.primary.label}</span>
-            </Link>
-          )}
-          {actions.secondary.length > 0 && (
-            <div className="sv-secondary-actions" role="group" aria-label={`Tác vụ nhanh cho HS-${item.registrationId}`}>
-              {actions.secondary.map(action =>
-                action.kind === 'link' ? (
-                  <Link
-                    key={action.id}
-                    className={`sv-quick-btn ${action.tone}`}
-                    to={action.to}
-                    target={action.external ? '_blank' : undefined}
-                    rel={action.external ? 'noopener noreferrer' : undefined}
-                    title={action.title}
-                  >
-                    {action.id === 'supplement' && <FilePenLine size={13} />}
-                    {action.external && <ExternalLink size={13} />}
-                    <span>{action.label}</span>
-                  </Link>
-                ) : (
-                  <MotionButton
-                    key={action.id}
-                    type="button"
-                    className={`sv-quick-btn ${action.tone}`}
-                    title={action.title}
-                    onClick={() => onQuickDecision(item, action.decision)}
-                  >
-                    {action.decision === 'APPROVE' ? <Check size={13} /> : <X size={13} />}
-                    <span>{action.label}</span>
-                  </MotionButton>
-                )
-              )}
-            </div>
-          )}
-          {!actions.secondary.length && actions.statusHint && (
-            <span className="sv-action-hint">{actions.statusHint}</span>
-          )}
+          <Link className="sv-row-btn primary" to={actions.primary.to}>
+            <ClipboardCheck size={15} />
+            <span>Thẩm định ngay</span>
+          </Link>
         </div>
       </div>
     </motion.article>
@@ -215,22 +166,21 @@ function VerificationQueueRow({ item, onQuickDecision, reflowSpring, fadeTransit
 
 export default function StaffPropertyVerificationsPage() {
   const { user } = useAuth();
-  const notify = useToast();
   const state = useStaffLoad('verifications');
   const [searchParams, setSearchParams] = useSearchParams();
   const initialStatusParam = searchParams.get('status');
-  const status = VALID_STATUS_VALUES.has(initialStatusParam) ? initialStatusParam : 'ALL';
+  const status = VALID_STATUS_VALUES.has(initialStatusParam) ? initialStatusParam : 'PENDING';
 
   const [kind, setKind] = useState('ALL');
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('PRIORITY');
+  const [sort, setSort] = useState('NEWEST');
   const [page, setPage] = useState(1);
 
-  const [quickTarget, setQuickTarget] = useState(null);
-  const [quickNote, setQuickNote] = useState('');
-  const [quickError, setQuickError] = useState('');
-  const [quickBusy, setQuickBusy] = useState(false);
-  const quickRequestRef = useRef(null);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const reduce = useShouldReduceMotion();
   const tokens = useMotionTokens();
@@ -240,12 +190,11 @@ export default function StaffPropertyVerificationsPage() {
   const fadeTransition = useTempoTransition(tokens.transition.fade);
   const swapTransition = useTempoTransition(tokens.transition.swap);
 
-  useEffect(() => () => quickRequestRef.current?.abort(), []);
 
   const selectStatus = nextValue => {
     if (!nextValue || !VALID_STATUS_VALUES.has(nextValue)) return;
     const nextParams = new URLSearchParams(searchParams);
-    if (nextValue === 'ALL') nextParams.delete('status');
+    if (nextValue === 'PENDING') nextParams.delete('status');
     else nextParams.set('status', nextValue);
     setSearchParams(nextParams, { replace: true });
     setPage(1);
@@ -280,75 +229,6 @@ export default function StaffPropertyVerificationsPage() {
     [state.data, status, kind, search, sort]
   );
 
-  const openQuickDecision = (item, decision) => {
-    if (quickBusy) return;
-    setQuickTarget({ item, decision });
-    setQuickNote('');
-    setQuickError('');
-  };
-
-  const closeQuickDecision = () => {
-    if (quickBusy) return;
-    setQuickTarget(null);
-    setQuickNote('');
-    setQuickError('');
-  };
-
-  const submitQuickDecision = async event => {
-    event.preventDefault();
-    if (!quickTarget || quickRequestRef.current) return;
-    const { item, decision } = quickTarget;
-    const trimmed = quickNote.trim();
-    if (decision === 'REJECT' && (trimmed.length < 10 || trimmed.length > 2000)) {
-      setQuickError('Lý do từ chối cần từ 10 đến 2000 ký tự để chủ trọ nắm rõ nguyên nhân.');
-      return;
-    }
-    if (decision === 'APPROVE' && trimmed.length > 2000) {
-      setQuickError('Ghi chú phê duyệt không vượt quá 2000 ký tự.');
-      return;
-    }
-    const controller = new AbortController();
-    quickRequestRef.current = controller;
-    setQuickBusy(true);
-    setQuickError('');
-    try {
-      const updatedDetail = await staffApi.review(
-        item.registrationId,
-        decision,
-        trimmed,
-        controller.signal,
-        undefined,
-        item.assignmentVersion
-      );
-      if (controller.signal.aborted) return;
-      const nextList = (state.data || []).map(row =>
-        row.registrationId === item.registrationId ? updatedDetail.summary : row
-      );
-      state.replace(nextList);
-      setQuickTarget(null);
-      setQuickNote('');
-      notify?.(
-        decision === 'APPROVE'
-          ? `Đã phê duyệt hồ sơ HS-${item.registrationId}. Nhà trọ đã được kích hoạt hiển thị.`
-          : `Đã từ chối hồ sơ HS-${item.registrationId} và gửi lý do cho chủ trọ.`,
-        'success'
-      );
-      window.dispatchEvent(new Event('hlrcs:staff-updated'));
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setQuickError(error.message);
-        if ([403, 404, 409].includes(error.status)) {
-          setQuickTarget(null);
-          state.reload();
-          notify?.(error.message, 'error');
-        }
-      }
-    } finally {
-      if (quickRequestRef.current === controller) quickRequestRef.current = null;
-      if (!controller.signal.aborted) setQuickBusy(false);
-    }
-  };
-
   if (state.loading || state.error) {
     return (
       <div className="sw-page">
@@ -361,7 +241,7 @@ export default function StaffPropertyVerificationsPage() {
   const current = Math.min(page, totalPages);
   const pagedRows = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
   const activeTab = VERIFICATION_STATUS_TABS.find(tab => tab.value === status) || VERIFICATION_STATUS_TABS[0];
-  const hasActiveFilters = status !== 'ALL' || kind !== 'ALL' || Boolean(search.trim()) || sort !== 'PRIORITY';
+  const hasActiveFilters = status !== 'PENDING' || kind !== 'ALL' || Boolean(search.trim()) || sort !== 'NEWEST';
 
   const kpiCards = [
     {
@@ -568,7 +448,7 @@ export default function StaffPropertyVerificationsPage() {
                     setSearch(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="Tìm theo tên nhà trọ, mã HS-..., chủ trọ, SĐT, email hoặc nhân viên phụ trách..."
+                  placeholder="Tìm theo tên nhà trọ, chủ trọ, SĐT, email hoặc nhân viên phụ trách..."
                 />
                 {search && (
                   <button
@@ -609,10 +489,10 @@ export default function StaffPropertyVerificationsPage() {
                 type="button"
                 className="p-button sv-reset"
                 onClick={() => {
-                  selectStatus('ALL');
+                  selectStatus('PENDING');
                   setKind('ALL');
                   setSearch('');
-                  setSort('PRIORITY');
+                  setSort('NEWEST');
                   setPage(1);
                 }}
               >
@@ -631,7 +511,7 @@ export default function StaffPropertyVerificationsPage() {
             </span>
           </div>
           <span className="sv-action-legend">
-            Hành động trên từng dòng tự động phân quyền theo trạng thái hồ sơ
+            Mở chi tiết để phê duyệt, yêu cầu bổ sung hoặc từ chối
           </span>
         </div>
 
@@ -648,7 +528,7 @@ export default function StaffPropertyVerificationsPage() {
                 <span>Chứng từ &amp; Phân công</span>
                 <span>Chủ trọ / Đại diện</span>
                 <span>Trạng thái &amp; Tiến độ</span>
-                <span>Hành động khả dụng</span>
+                <span>Hành động</span>
               </div>
               <div className="sv-queue-body">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -656,7 +536,7 @@ export default function StaffPropertyVerificationsPage() {
                     <VerificationQueueRow
                       key={item.registrationId}
                       item={item}
-                      onQuickDecision={openQuickDecision}
+                      now={now}
                       reflowSpring={reflowSpring}
                       fadeTransition={fadeTransition}
                       reduce={reduce}
@@ -684,7 +564,7 @@ export default function StaffPropertyVerificationsPage() {
                     selectStatus('ALL');
                     setKind('ALL');
                     setSearch('');
-                    setSort('PRIORITY');
+                    setSort('NEWEST');
                     setPage(1);
                   }}
                 >
@@ -730,105 +610,6 @@ export default function StaffPropertyVerificationsPage() {
         </footer>
       </section>
 
-      <AnimatePresence>
-        {quickTarget && (
-          <Modal
-            className="sw-review-modal"
-            title={
-              quickTarget.decision === 'APPROVE'
-                ? `Xác nhận phê duyệt nhanh · HS-${quickTarget.item.registrationId}`
-                : `Từ chối hồ sơ nhà trọ · HS-${quickTarget.item.registrationId}`
-            }
-            onClose={closeQuickDecision}
-          >
-            <form onSubmit={submitQuickDecision} noValidate aria-busy={quickBusy}>
-              <div className="sw-review-body">
-                <div className="sv-modal-record-summary">
-                  <div>
-                    <span className="sv-code-chip">HS-{quickTarget.item.registrationId}</span>
-                    <strong>{quickTarget.item.name}</strong>
-                    <p>{quickTarget.item.address || 'Chưa cập nhật địa chỉ'}</p>
-                  </div>
-                  <Link
-                    className="sv-modal-inspect-link"
-                    to={`/staff/verifications/detail?id=${quickTarget.item.registrationId}`}
-                  >
-                    <Eye size={14} />
-                    <span>Mở xem chi tiết chứng từ</span>
-                  </Link>
-                </div>
-
-                <p>
-                  {quickTarget.decision === 'APPROVE'
-                    ? 'Hồ sơ đã ghi nhận đủ giấy tờ bắt buộc (GPKD, CCCD/CMND, ảnh đại diện và cam kết). Sau khi xác nhận, nhà trọ sẽ được xuất bản sang trạng thái Đang hiển thị.'
-                    : 'Quyết định từ chối sẽ đóng hồ sơ này và gửi trực tiếp nguyên nhân từ chối đến chủ trọ.'}
-                </p>
-
-                <label className="sw-review-label" htmlFor="sv-quick-review-note">
-                  {quickTarget.decision === 'REJECT' ? 'Lý do từ chối hồ sơ' : 'Ghi chú phê duyệt (tùy chọn)'}
-                  {quickTarget.decision === 'REJECT' && <span className="sw-required"> *</span>}
-                </label>
-                <textarea
-                  id="sv-quick-review-note"
-                  autoFocus
-                  rows={4}
-                  maxLength={2000}
-                  required={quickTarget.decision === 'REJECT'}
-                  aria-invalid={Boolean(quickError)}
-                  placeholder={
-                    quickTarget.decision === 'REJECT'
-                      ? 'Nêu rõ lý do hồ sơ không đạt yêu cầu xác minh (tối thiểu 10 ký tự)...'
-                      : 'Nhập ghi chú thẩm định lưu vào nhật ký (không bắt buộc)...'
-                  }
-                  value={quickNote}
-                  disabled={quickBusy}
-                  onChange={event => {
-                    setQuickNote(event.target.value);
-                    setQuickError('');
-                  }}
-                />
-                <small>
-                  {quickNote.trim().length}/2000 ký tự
-                  {quickTarget.decision === 'REJECT' ? ' · Tối thiểu 10 ký tự' : ''}
-                </small>
-                {quickError && (
-                  <p className="sw-error" role="alert">
-                    {quickError}
-                  </p>
-                )}
-              </div>
-
-              <footer className="sw-review-footer">
-                <MotionButton type="button" className="p-button" disabled={quickBusy} onClick={closeQuickDecision}>
-                  Hủy bỏ
-                </MotionButton>
-                <MotionButton
-                  type="submit"
-                  className={quickTarget.decision === 'APPROVE' ? 'sw-primary' : 'sw-danger'}
-                  disabled={quickBusy}
-                >
-                  {quickBusy ? (
-                    <>
-                      <LoaderCircle size={16} className="spin" />
-                      <span>Đang xử lý...</span>
-                    </>
-                  ) : quickTarget.decision === 'APPROVE' ? (
-                    <>
-                      <Check size={16} />
-                      <span>Xác nhận phê duyệt</span>
-                    </>
-                  ) : (
-                    <>
-                      <X size={16} />
-                      <span>Xác nhận từ chối</span>
-                    </>
-                  )}
-                </MotionButton>
-              </footer>
-            </form>
-          </Modal>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

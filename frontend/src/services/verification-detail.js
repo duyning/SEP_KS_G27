@@ -12,3 +12,5 @@ export function attachmentSize(bytes){
  return `${new Intl.NumberFormat('vi-VN',{maximumFractionDigits:2}).format(bytes/(1024*1024))} MB`;
 }
 export const reviewActionLabels={REVERIFICATION_SUBMITTED:'Chủ trọ gửi tái xác minh · Nhà trọ tạm ẩn',APPROVED:'Phê duyệt hồ sơ',REJECTED:'Từ chối hồ sơ',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung thông tin / hồ sơ',RESUBMITTED:'Chủ trọ bổ sung & Gửi lại xét duyệt',CHANGE_REQUESTED:'Chủ trọ đề nghị thay đổi thông tin'};
+
+export function newestVerificationAttachments(files=[]){const time=value=>{const result=Date.parse(value||'');return Number.isFinite(result)?result:0;};return [...files].sort((a,b)=>time(b.uploadedAt)-time(a.uploadedAt)||(b.documentId||0)-(a.documentId||0));}

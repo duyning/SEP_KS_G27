@@ -64,7 +64,7 @@ public class HostPropertyService {
         else if (registration != null && registration.getStatus() == RegistrationStatus.PENDING) status = "PENDING";
         else if (registration != null && registration.getStatus() == RegistrationStatus.NEEDS_SUPPLEMENT) status = "NEEDS_SUPPLEMENT";
         else if (registration != null && registration.getStatus() == RegistrationStatus.REJECTED) status = "REJECTED";
-        else if (property != null && !property.isReverificationRequired() && "ACTIVE".equalsIgnoreCase(property.getStatus())) status = "VISIBLE";
+        else if (property != null && !property.isReverificationRequired() && "ACTIVE".equalsIgnoreCase(property.getStatus()) && rooms.existsByProperty_PropertyIdAndPublicVisibleTrue(property.getPropertyId())) status = "VISIBLE";
         else if (registration != null && registration.getStatus() == RegistrationStatus.APPROVED) status = "APPROVED";
         var photos = new ArrayList<Attachment>();
         var files = new ArrayList<Attachment>();

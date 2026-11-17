@@ -27,7 +27,7 @@ test('basic information rejects empty, short and oversized fields', () => {
   assert.deepEqual(validatePropertyStep(data, 0), {});
   assert.ok(validatePropertyStep({ ...data, description: ' '.repeat(35) }, 0).description);
   assert.ok(validatePropertyStep({ ...data, name: 'x'.repeat(101), propertyType: 'tampered', zaloPhone: '123' }, 0).name);
-  assert.ok(validatePropertyStep({ ...data, propertyType: 'tampered' }, 0).propertyType);
+  assert.ok(validatePropertyStep({ ...data, propertyType: 'a'.repeat(101) }, 0).propertyType);
   assert.ok(validatePropertyStep({ ...data, zaloPhone: '123' }, 0).zaloPhone);
 });
 test('phone validation supports Vietnam domestic and international forms', () => {

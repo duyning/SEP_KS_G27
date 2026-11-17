@@ -3,7 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
-import BecomeHostPage from './pages/BecomeHostPage.jsx';
+import BecomeHostPage from './pages/HostOnboardingPage.jsx';
 import PortalScreens from './pages/PortalScreens.jsx';
 import PortalLayout from './layouts/PortalLayout.jsx';
 import { ToastProvider } from './components/PortalUI.jsx';

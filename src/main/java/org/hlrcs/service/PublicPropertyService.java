@@ -44,7 +44,7 @@ public class PublicPropertyService {
     private boolean published(Property property) {
         if(property.isReverificationRequired()||!"ACTIVE".equals(property.getStatus())||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
         var form=submission(property);
-        return form!=null&&Boolean.TRUE.equals(form.termsAccepted());
+        return form!=null&&Boolean.TRUE.equals(form.termsAccepted())&&rooms.existsByProperty_PropertyIdAndPublicVisibleTrue(property.getPropertyId());
     }
     private List<String> amenities(RoomType type) {
         if(type.getAmenitiesJson()==null)return List.of();
@@ -59,7 +59,8 @@ public class PublicPropertyService {
                 .forEach(file->photos.add("/api/public/properties/photos/"+file.getDocumentId()));
             var values=new ArrayList<Type>();var prices=new ArrayList<BigDecimal>();
             for(var type:types.findByProperty_PropertyId(property.getPropertyId())) {
-                var actual=rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(type.getRoomTypeId());
+                var actual=rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(type.getRoomTypeId()).stream().filter(Room::isPublicVisible).toList();
+                if(actual.isEmpty())continue;
                 int vacant=(int)actual.stream().filter(room->"VACANT".equals(room.getStatus())).count();
                 var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
                 values.add(new Type(type.getRoomTypeId(),type.getRoomType(),type.getPrice(),type.getAreaSqm(),type.getCapacity(),type.getElectricityPrice(),type.getWaterPrice(),amenities(type),actual.size(),vacant,type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness)));
@@ -101,7 +102,7 @@ public class PublicPropertyService {
     }
     public Image roomImage(Integer id) {
         var file=images.findById(id).orElseThrow(this::missing);
-        if(!published(file.getRoomType().getProperty()))throw missing();
+        if(!published(file.getRoomType().getProperty())||!rooms.existsByRoomType_RoomTypeIdAndPublicVisibleTrue(file.getRoomType().getRoomTypeId()))throw missing();
         return image(file.getFileContent(),file.getContentType());
     }
     private Image image(byte[] bytes,String contentType) {

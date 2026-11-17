@@ -65,4 +65,43 @@ class PropertyLocationServiceTests {
         assertEquals("Trường Bình Yên",result.places().get(0).name());
         assertFalse(result.addressDetail().contains("Trường"));
     }
+
+    @Test void luxuryLivingGoogleLinkFillsHaBangFromCurrentPhotonAdministrativeName() {
+        provider.createContext("/ha-bang",exchange->{
+            assertTrue(exchange.getRequestURI().getQuery().contains("lat=21.0196169"));
+            assertTrue(exchange.getRequestURI().getQuery().contains("lon=105.5517238"));
+            // Actual provider response shape for the user's link: the nearest POI is a restaurant.
+            byte[] body="""
+                    {"features":[{"properties":{"name":"Quán Chú Béo","street":"Mục Uyên",
+                    "district":"Xã Hạ Bằng","city":"Hà Nội","country":"Việt Nam"}}]}
+                    """.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200,body.length);try(var out=exchange.getResponseBody()){out.write(body);}
+        });
+        var service=new PropertyLocationService(new ObjectMapper(),base+"/ha-bang",base+"/missing","NestHub-tests/1.0","photon");
+        var result=service.lookup("https://www.google.com/maps/place/Luxury+living/@21.0197739,105.5511254,123m/data=!3m1!1e3!4m6!3m5!8m2!3d21.0196169!4d105.5517238?entry=ttu");
+        assertEquals(21.0196169,result.latitude());assertEquals(105.5517238,result.longitude());
+        assertEquals("Hạ Bằng",result.commune());
+        assertEquals("Mục Uyên, Xã Hạ Bằng, Hà Nội, Việt Nam",result.addressDetail());
+        assertFalse(result.warnings().stream().anyMatch(warning->warning.contains("Chưa đối chiếu")));
+    }
+
+    @Test void administrativeAreaMatchingSupportsCurrentNamesWithoutGuessingAmbiguousAreas() {
+        assertEquals("Hòa Lạc",PropertyAreas.fromAdministrativeNames(java.util.List.of("Xã Hòa Lạc", "Hà Nội")));
+        assertEquals("Hạ Bằng",PropertyAreas.fromAdministrativeNames(java.util.List.of("Xa Ha Bang")));
+        assertEquals("Tân Xã",PropertyAreas.fromAdministrativeNames(java.util.List.of("Tân Xã", "Xã Hòa Lạc")));
+        assertNull(PropertyAreas.fromAdministrativeNames(java.util.List.of("Tân Xã", "Thạch Hòa")));
+        assertNull(PropertyAreas.fromAdministrativeNames(java.util.List.of("Xã khác", "Hà Nội")));
+        assertNull(PropertyAreas.fromAdministrativeNames(java.util.List.of("Bình Yênabc")));
+    }
+
+    @Test void registrationAcceptsTheAreasSuggestedByCurrentMapData() {
+        var registrations=new PropertyRegistrationService(null,null,null,null,null,null,null,null);
+        for(var commune:java.util.List.of("Hạ Bằng","Hòa Lạc")){
+            var request=new org.hlrcs.dto.request.PropertyRegistrationRequest(
+                    "Nhà trọ Luxury living","Chung cư mini","Thông tin nhà trọ đầy đủ để kiểm tra đăng ký.",
+                    "Chủ trọ kiểm thử","0912345678","",commune,"Mục Uyên, Xã Hạ Bằng, Hà Nội","",
+                    "21.0196169","105.5517238",java.util.List.of(),java.util.List.of(),"",true);
+            assertDoesNotThrow(()->registrations.validate(request));
+        }
+    }
 }

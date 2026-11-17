@@ -159,7 +159,7 @@ public class ViewingService {
 
         var type = booking.getRoomType();
         if (decision == BookingStatus.APPROVED
-                && rooms.findFirstByRoomTypeAndPropertyAndStatusOrderByRoomIdAsc(type, type.getProperty(), "VACANT").isEmpty()) {
+                && rooms.findFirstByRoomTypeAndPropertyAndStatusAndPublicVisibleTrueOrderByRoomIdAsc(type, type.getProperty(), "VACANT").isEmpty()) {
             throw new AppException("Loại phòng này đã hết phòng trống. Vui lòng tải lại trước khi xử lý.", HttpStatus.CONFLICT);
         }
 

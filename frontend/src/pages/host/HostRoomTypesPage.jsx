@@ -1,5 +1,6 @@
+import MultiFloorRoomSetup from '../../components/MultiFloorRoomSetup.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Download,
   DoorOpen,
@@ -266,19 +267,20 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 
   const created = record => {
     const wasEditing = Boolean(editing);
-    onCreated(record);
+    onCreated(record, !wasEditing);
     setCreate(false);
     setEditing(null);
     notify?.(
       wasEditing
         ? 'Đã cập nhật loại phòng thành công.'
-        : `Đã tạo loại phòng và ${(record.rooms || []).length} phòng thành công.`,
+        : record.rooms?.length ? `Đã tạo loại phòng và ${record.rooms.length} phòng thành công.` : 'Đã lưu loại phòng. Bạn có thể thiết lập phòng nhiều tầng.',
       'success'
     );
   };
 
   const headerActions = (
     <>
+      <Link className="hm-btn hm-btn-primary" to={`/host/room-types?propertyId=${property.propertyId}&layout=1`}><Layers size={16}/>Thiết lập phòng nhiều tầng</Link>
       <MotionButton
         type="button"
         className="hm-btn hm-btn-subtle"
@@ -658,6 +660,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 }
 
 export default function HostRoomTypesPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [params] = useSearchParams();
   const propertyId = params.get('propertyId');
@@ -695,13 +698,16 @@ export default function HostRoomTypesPage() {
             </MotionButton>
           </StateView>
         </HostManagementShell>
+      ) : params.get('layout')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
+        <MultiFloorRoomSetup key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId} onDone={()=>navigate(`/host/rooms?propertyId=${propertyId}&publication=1`)}/>
       ) : (
         <RoomTypesContent
           key={`${user?.userId}-${propertyId || ''}`}
           data={state.data}
           propertyId={propertyId}
           onRefresh={() => setRevision(value => value + 1)}
-          onCreated={record =>
+          onCreated={(record, created) => {
+            if(created&&record.rooms?.length) { navigate(`/host/rooms?propertyId=${record.propertyId}&publication=1`); return; }
             setState(previous => ({
               ...previous,
               data: {
@@ -711,8 +717,8 @@ export default function HostRoomTypesPage() {
                   ...previous.data.roomTypes.filter(type => type.roomTypeId !== record.roomTypeId),
                 ],
               },
-            }))
-          }
+            }));
+          }}
           onDeleted={id =>
             setState(previous => ({
               ...previous,

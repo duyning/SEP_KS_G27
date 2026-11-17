@@ -39,14 +39,25 @@ async function main(){
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),true,`overflow ${width}`);
    await trigger.focus();await page.keyboard.press('Enter');await page.getByRole('dialog').waitFor();
    assert.equal(await page.getByRole('dialog').isVisible(),true);
+   assert.equal(await page.getByRole('dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+2),true,`dialog overflow ${width}`);
    await page.screenshot({path:path.join(output,`host-confirm-${width}.png`),fullPage:true});
    await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
    assert.equal(await trigger.evaluate(el=>el===document.activeElement),true,'focus restored');
   }
   // 200% equivalent content viewport and explicit CSS zoom smoke check.
   await page.evaluate(()=>{document.documentElement.style.zoom='2';});
+  await page.getByRole('button',{name:'Xác nhận tình trạng phòng',exact:true}).click();
+  assert.equal(await page.getByRole('dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+2),true,'dialog zoom overflow');
+  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),true,'200% zoom overflow');
   await page.evaluate(()=>{document.documentElement.style.zoom='';});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.reload();
+  await page.getByRole('button',{name:'Xác nhận tình trạng phòng',exact:true}).click();
+  await page.waitForTimeout(100);
+  assert.equal(await page.getByRole('dialog').evaluate(el=>['none','matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(el).transform)),true,'reduced motion disables scale');
+  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await page.getByRole('button',{name:'Xác nhận tình trạng phòng',exact:true}).click();
   fail=true;await page.getByRole('button',{name:'Thông tin hiện tại chính xác',exact:true}).click();
   await page.getByRole('alert').filter({hasText:'Lỗi kiểm thử'}).waitFor();assert.equal(type.availabilityConfirmedAt,null);

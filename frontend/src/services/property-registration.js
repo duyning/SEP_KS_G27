@@ -1,5 +1,5 @@
 export const PROPERTY_TYPES = ['Nhà trọ truyền thống / Phòng trọ sinh viên', 'Chung cư mini', 'Căn hộ dịch vụ / Studio', 'Homestay'];
-export const AREAS = ['Tân Xã', 'Thạch Hòa', 'Bình Yên', 'Khu Công nghệ cao Hòa Lạc'];
+export const AREAS = ['Tân Xã', 'Thạch Hòa', 'Bình Yên', 'Khu Công nghệ cao Hòa Lạc', 'Hòa Lạc', 'Hạ Bằng'];
 // Approximate navigation centers from the original prototype, not property addresses.
 export const AREA_CENTERS = {
   'Tân Xã': [21.0188, 105.5215],
@@ -68,7 +68,7 @@ export function validatePropertyStep(data, step) {
     length('name', 3, 100, 'Tên nhà trọ');
     length('description', 30, 2000, 'Mô tả nhà trọ');
     length('managerName', 2, 100, 'Tên người quản lý');
-    if (!PROPERTY_TYPES.includes(data.propertyType)) errors.propertyType = 'Vui lòng chọn loại hình nhà trọ hợp lệ.';
+    if (typeof data.propertyType!=='string'||data.propertyType.trim().length<2||data.propertyType.trim().length>100||/[\x00-\x1f\x7f]/.test(data.propertyType)) errors.propertyType = 'Nhập loại hình nhà trọ từ 2 đến 100 ký tự.';
     if (!isVietnamesePhone(data.contactPhone)) errors.contactPhone = 'Nhập số di động Việt Nam hợp lệ (10 số hoặc +84).';
     if (data.zaloPhone.trim() && !isVietnamesePhone(data.zaloPhone)) errors.zaloPhone = 'Số Zalo không hợp lệ.';
   }

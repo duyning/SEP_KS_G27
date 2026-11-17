@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 @Service
 public class PropertyLocationService {
     private final ObjectMapper json;
+    private VietmapLocationService vietmap;
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setVietmap(VietmapLocationService vietmap){this.vietmap=vietmap;}
     private final String reverseUrl, nearbyUrl, userAgent, provider;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
             .followRedirects(HttpClient.Redirect.NEVER).build();
@@ -107,7 +110,7 @@ public class PropertyLocationService {
     public synchronized Location lookup(String input) {
         try {
             String inputKey="input:"+Objects.toString(input,"").trim();var known=cached(inputKey);if(known instanceof Location result)return result;
-            var savedPoint=cached("point:"+inputKey);double[] point=savedPoint instanceof double[] saved?saved:resolve(input);remember("point:"+inputKey,point);var warnings=new ArrayList<String>();String address=null,commune=null;
+            var savedPoint=cached("point:"+inputKey);double[] point=savedPoint instanceof double[] saved?saved:resolve(input);remember("point:"+inputKey,point);if(vietmap!=null&&vietmap.enabled())return vietmap.reverse(point[0],point[1]);var warnings=new ArrayList<String>();String address=null,commune=null;
             if(!reverseUrl.isBlank()){
                 try {
                     String reverseKey="reverse:"+key(point[0],point[1]);var stored=cached(reverseKey);JsonNode data;
@@ -117,18 +120,19 @@ public class PropertyLocationService {
                         data=fetch(URI.create(reverseUrl+(reverseUrl.contains("?")?"&":"?")+("photon".equals(provider)?"limit=1&lat=":"format=jsonv2&addressdetails=1&accept-language=vi&lat=")+point[0]+"&lon="+point[1]),null);
                         remember(reverseKey,data);
                     }
-                    String display=text(data,"display_name"),areaSource=data.path("address").toString();
+                    String display=text(data,"display_name");
+                    var administrativeFields=List.of("hamlet","village","suburb","locality","district","county","municipality","town","city","state");
+                    var addressData=data.path("address");
+                    List<String> areaNames=administrativeFields.stream().map(field->text(addressData,field)).toList();
                     if(data.path("features").isArray()&&!data.path("features").isEmpty()){
                         var properties=data.path("features").get(0).path("properties");
                         var parts=new LinkedHashSet<String>();
-                        for(var field:List.of("housenumber","street","locality","district","city","state","country")){var part=text(properties,field);if(!part.isBlank())parts.add(part);}
+                        for(var field:List.of("housenumber","street","locality","district","county","city","state","country")){var part=text(properties,field);if(!part.isBlank())parts.add(part);}
                         display=String.join(", ",parts);
-                        areaSource=List.of("locality","district","city","state").stream().map(field->text(properties,field)).reduce("",(a,b)->a+", "+b);
+                        areaNames=administrativeFields.stream().map(field->text(properties,field)).toList();
                         if(text(properties,"street").isBlank()&&text(properties,"housenumber").isBlank()&&text(properties,"locality").isBlank())display="";
                     }if(!display.isBlank())address=display.substring(0,Math.min(255,display.length()));
-                    var areas=new ArrayList<String>();String source=normalize(areaSource);
-                    for(var area:List.of("Tân Xã","Thạch Hòa","Bình Yên","Khu Công nghệ cao Hòa Lạc"))if(source.contains(normalize(area)))areas.add(area);
-                    if(areas.size()==1)commune=areas.get(0);
+                    commune=PropertyAreas.fromAdministrativeNames(areaNames);
                     if(address==null)warnings.add("OSM chưa có địa chỉ chi tiết tại ghim này; giữ nguyên địa chỉ đã nhập.");
                     if(commune==null)warnings.add("Chưa đối chiếu được khu vực với danh sách hiện có; hãy kiểm tra và chọn lại nếu cần.");
                 }catch(IOException|RuntimeException e){warnings.add("Chưa tải được địa chỉ gợi ý. Vị trí ghim vẫn dùng được; địa chỉ đã nhập được giữ nguyên.");}

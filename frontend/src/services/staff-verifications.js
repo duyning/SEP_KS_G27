@@ -55,8 +55,8 @@ export const SUBMISSION_KIND_FILTERS = [
 ];
 
 export const VERIFICATION_SORT_OPTIONS = [
+  { value: 'NEWEST', label: 'Mới nhất trước' },
   { value: 'PRIORITY', label: 'Ưu tiên xử lý (SLA)' },
-  { value: 'NEWEST', label: 'Mới gửi gần đây' },
   { value: 'FIFO', label: 'Chờ lâu nhất trước' },
   { value: 'UPDATED', label: 'Cập nhật xét duyệt gần nhất' },
 ];
@@ -106,12 +106,12 @@ export function classifyVerificationRecord(item) {
   const isUpdateProposal = item.targetPropertyId != null;
   const createdMs = toTimestamp(item.createdAt);
   const submittedMs = toTimestamp(item.submittedAt);
-  const isResubmitted = !isUpdateProposal && Boolean(item.submittedAt) && (submittedMs > createdMs + 1000 || item.status === 'PENDING');
+  const isResubmitted = !isUpdateProposal && Boolean(item.submittedAt) && submittedMs > createdMs + 1000;
   const submissionKind = isUpdateProposal ? 'UPDATE_PROPOSAL' : isResubmitted ? 'RESUBMITTED' : 'NEW_PROPERTY';
   const submissionLabel = isUpdateProposal
-    ? `Cập nhật NT-${item.targetPropertyId}`
+    ? 'Cập nhật'
     : isResubmitted
-      ? 'Đã bổ sung · Gửi lại'
+      ? 'Đã bổ sung'
       : 'Đăng ký mới';
   const submissionTone = isUpdateProposal ? 'indigo' : isResubmitted ? 'teal' : 'slate';
 
@@ -190,7 +190,7 @@ const STATUS_PRIORITY_RANK = {
   REJECTED: 3,
 };
 
-export function filterAndSortVerifications(items = [], { status = 'ALL', kind = 'ALL', search = '', sort = 'PRIORITY' } = {}) {
+export function filterAndSortVerifications(items = [], { status = 'ALL', kind = 'ALL', search = '', sort = 'NEWEST' } = {}) {
   const list = Array.isArray(items) ? items : [];
   const rawQuery = String(search || '').trim();
   const normalizedQuery = foldVietnamese(rawQuery);
@@ -248,146 +248,26 @@ export function filterAndSortVerifications(items = [], { status = 'ALL', kind = 
     });
 }
 
+// Match the existing host-registration queue's 48-hour reminder.
+export const VERIFICATION_WAIT_HOURS = 48;
+export function getVerificationWait(item, now = Date.now()) {
+  const sent = toTimestamp(item?.submittedAt || item?.createdAt);
+  const hours = sent ? Math.max(0, (now - sent) / 3_600_000) : 0;
+  return {
+    overdue: item?.status === 'PENDING' && hours > VERIFICATION_WAIT_HOURS,
+    label: hours >= 24 ? Math.floor(hours / 24) + ' ngày' : Math.floor(hours) + ' giờ',
+  };
+}
+
 export function getVerificationRowActions(item) {
   if (!item) return { primary: null, secondary: [], statusHint: '' };
-  const detailUrl = `/staff/verifications/detail?id=${item.registrationId}`;
-  const hasVersion = Number.isSafeInteger(item.assignmentVersion) && item.assignmentVersion >= 0;
-  const meta = classifyVerificationRecord(item);
-
-  if (item.status === 'PENDING') {
-    if (item.canReview === true) {
-      const secondary = [
-        {
-          id: 'supplement',
-          kind: 'link',
-          label: 'Yêu cầu bổ sung',
-          to: `${detailUrl}&decision=REQUEST_SUPPLEMENT`,
-          tone: 'amber',
-          title: 'Mở hồ sơ và chọn các mục cần chủ trọ bổ sung',
-        },
-      ];
-      if (meta.readyForApproval && hasVersion && !item.reverificationRequired) {
-        secondary.unshift({
-          id: 'quick-approve',
-          kind: 'quick_decision',
-          decision: 'APPROVE',
-          label: 'Duyệt nhanh',
-          tone: 'emerald',
-          title: 'Đủ điều kiện tài liệu cơ bản — mở xác nhận phê duyệt',
-        });
-      }
-      if (hasVersion) {
-        secondary.push({
-          id: 'quick-reject',
-          kind: 'quick_decision',
-          decision: 'REJECT',
-          label: 'Từ chối',
-          tone: 'rose',
-          title: 'Từ chối hồ sơ với lý do cụ thể',
-        });
-      }
-      return {
-        primary: {
-          id: 'inspect-review',
-          kind: 'link',
-          label: 'Thẩm định ngay',
-          to: detailUrl,
-          tone: 'primary',
-        },
-        secondary,
-        statusHint: item.reverificationRequired ? 'Cần đối chiếu thay đổi quan trọng · Nhà trọ tạm ẩn' : meta.readyForApproval ? 'Đủ hồ sơ bắt buộc · Sẵn sàng duyệt' : 'Cần kiểm tra kỹ tài liệu đính kèm',
-      };
-    }
-    return {
-      primary: {
-        id: 'supervise-pending',
-        kind: 'link',
-        label: 'Xem giám sát',
-        to: detailUrl,
-        tone: 'neutral',
-      },
-      secondary: [],
-      statusHint: item.assignedStaffName ? `Phụ trách: ${item.assignedStaffName}` : 'Chế độ giám sát (Chỉ xem)',
-    };
-  }
-
-  if (item.status === 'NEEDS_SUPPLEMENT') {
-    if (item.canReview === true) {
-      const secondary = [];
-      if (hasVersion) {
-        secondary.push({
-          id: 'reject-supplement',
-          kind: 'quick_decision',
-          decision: 'REJECT',
-          label: 'Từ chối hồ sơ',
-          tone: 'rose',
-          title: 'Đóng và từ chối nếu hồ sơ không đủ điều kiện bổ sung',
-        });
-      }
-      return {
-        primary: {
-          id: 'track-supplement',
-          kind: 'link',
-          label: 'Theo dõi bổ sung',
-          to: detailUrl,
-          tone: 'amber-outline',
-        },
-        secondary,
-        statusHint: 'Đang chờ chủ trọ cập nhật và gửi lại',
-      };
-    }
-    return {
-      primary: {
-        id: 'supervise-supplement',
-        kind: 'link',
-        label: 'Xem yêu cầu bổ sung',
-        to: detailUrl,
-        tone: 'neutral',
-      },
-      secondary: [],
-      statusHint: 'Đang chờ chủ trọ phản hồi',
-    };
-  }
-
-  if (item.status === 'APPROVED') {
-    const propertyId = item.publishedPropertyId ?? null;
-    const secondary = propertyId
-      ? [
-          {
-            id: 'view-public',
-            kind: 'link',
-            label: 'Xem tin đăng',
-            to: `/properties/detail?propertyId=${propertyId}`,
-            tone: 'ghost-teal',
-            external: true,
-            title: 'Mở trang chi tiết nhà trọ công khai dành cho người thuê',
-          },
-        ]
-      : [];
-    return {
-      primary: {
-        id: 'view-approved',
-        kind: 'link',
-        label: 'Xem hồ sơ đã duyệt',
-        to: detailUrl,
-        tone: 'emerald-outline',
-      },
-      secondary,
-      statusHint: propertyId ? `Đang hiển thị · Mã #NT-${propertyId}` : 'Đã hoàn tất phê duyệt',
-    };
-  }
-
-  // REJECTED
   return {
     primary: {
-      id: 'view-rejected',
-      kind: 'link',
-      label: 'Xem lý do từ chối',
-      to: detailUrl,
-      tone: 'rose-outline',
+      id: 'inspect-review', kind: 'link', label: 'Thẩm định ngay',
+      to: '/staff/verifications/detail?id=' + item.registrationId, tone: 'primary',
     },
     secondary: [],
-    statusHint: 'Hồ sơ đã đóng · Lưu biên bản',
+    statusHint: item.reverificationRequired ? 'Nhà trọ tạm ẩn · Cần đối chiếu thay đổi quan trọng' : '',
   };
 }
 
@@ -419,9 +299,9 @@ export function buildVerificationChecklist(detail) {
     },
     {
       key: 'idCard',
-      label: 'CCCD / CMND chủ trọ',
+      label: detail?.summary?.hostOnboarding ? 'CCCD chủ trọ (hai mặt)' : 'CCCD / CMND chủ trọ',
       detail: hasIdCard ? 'Đã đính kèm' : 'Thiếu tài liệu bắt buộc',
-      passed: hasIdCard,
+      passed: hasIdCard && (!detail?.summary?.hostOnboarding || documents.some(file=>file.type==='ID_CARD_BACK')),
       required: true,
     },
     {
@@ -429,7 +309,7 @@ export function buildVerificationChecklist(detail) {
       label: 'Chứng nhận an toàn PCCC',
       detail: hasFireSafety ? 'Đã đính kèm' : 'Chưa đính kèm (kiểm tra thực tế)',
       passed: hasFireSafety,
-      required: false,
+      required: detail?.summary?.hostOnboarding === true,
     },
     {
       key: 'terms',
@@ -478,7 +358,7 @@ export function getVerificationDetailActions(detail) {
       decisions: [
         {
           decision: 'APPROVE',
-          label: 'Phê duyệt & Xuất bản',
+          label: summary.hostOnboarding ? 'Duyệt chủ trọ & Nhà trọ' : 'Phê duyệt & Xuất bản',
           variant: 'primary',
           disabled: !mandatoryReady,
           disabledReason: !mandatoryReady ? 'Cần đủ Ảnh đại diện, Giấy phép kinh doanh, CCCD/CMND và Cam kết thông tin trước khi phê duyệt.' : '',

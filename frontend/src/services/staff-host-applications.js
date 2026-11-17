@@ -3,6 +3,7 @@ import { request } from './auth.js';
 const basePath = '/api/host-applications';
 
 export const applicationLabels = {
+  MERGED: 'Đã gộp vào hồ sơ nhà trọ',
   PENDING_REVIEW: 'Chờ xét duyệt',
   NEEDS_CHANGES: 'Cần bổ sung',
   APPROVED: 'Đã phê duyệt',
@@ -10,6 +11,7 @@ export const applicationLabels = {
 };
 
 export const applicationBadgeTones = {
+  MERGED: 'pending',
   PENDING_REVIEW: 'pending',
   NEEDS_CHANGES: 'warning needs-changes',
   APPROVED: 'approved',

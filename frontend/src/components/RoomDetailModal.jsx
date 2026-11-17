@@ -16,7 +16,7 @@ import HostDrawer from './HostDrawer.jsx';
 import { MotionButton } from './motion/MotionUI.jsx';
 import { hostApi } from '../services/host.js';
 import { ROOM_AMENITIES, money } from '../services/room-types.js';
-import { editRoom, roomPayload } from '../services/rooms.js';
+import { editRoom, roomPayload, leaseDateLabel } from '../services/rooms.js';
 import { formatFloorHeading, getRoomVisualState } from '../services/host-management.js';
 
 export default function RoomDetailModal({
@@ -26,6 +26,7 @@ export default function RoomDetailModal({
   onEdit,
   onDelete,
   onQuickSaved,
+  onChangeStatus,
 }) {
   const [quickBusy, setQuickBusy] = useState('');
   const [quickError, setQuickError] = useState('');
@@ -46,6 +47,7 @@ export default function RoomDetailModal({
 
   const quickUpdateStatus = async (nextStatus, actionKey) => {
     if (!canManage || requestRef.current || !onQuickSaved) return;
+    if(onChangeStatus&&(nextStatus!==room.status||nextStatus==='OCCUPIED'&&(!room.leaseStartDate||!room.leaseEndDate))){onChangeStatus(room,nextStatus);return;}
     const controller = new AbortController();
     requestRef.current = controller;
     setQuickBusy(actionKey);
@@ -231,6 +233,7 @@ export default function RoomDetailModal({
                 <AvailabilityNotice value={confirmation}/>
               </dd>
             </div>
+            {room.status==='OCCUPIED'&&<><div className="hm-kv-row"><dt>Ngày bắt đầu ở</dt><dd>{leaseDateLabel(room.leaseStartDate)}</dd></div><div className="hm-kv-row"><dt>Ngày kết thúc ở</dt><dd>{leaseDateLabel(room.leaseEndDate)}</dd></div></>}
           </dl>
         </section>
 

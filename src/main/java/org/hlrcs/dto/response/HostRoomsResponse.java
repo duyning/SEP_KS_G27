@@ -7,5 +7,6 @@ public record HostRoomsResponse(List<HostRoomTypesResponse.PropertySummary> prop
         List<HostRoomTypesResponse.RoomTypeSummary> roomTypes,List<RoomSummary> rooms) {
     public record RoomSummary(Integer roomId,Integer propertyId,Integer roomTypeId,String roomType,String roomNumber,String floor,
             String status,BigDecimal price,BigDecimal customPrice,Float areaSqm,Integer capacity,BigDecimal deposit,
-            List<String> amenities,LocalDateTime confirmedAt,String confirmationStatus,boolean confirmationStale) {}
+            List<String> amenities,LocalDateTime confirmedAt,String confirmationStatus,boolean confirmationStale,
+            java.time.LocalDate leaseStartDate,java.time.LocalDate leaseEndDate,boolean publicVisible) {}
 }

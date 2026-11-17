@@ -1,0 +1,4 @@
+import {request,ApiError} from './auth.js';
+import {AMENITIES,formatRuleLabel} from './property-registration.js';
+export function descriptionFacts(form){return {name:form.name?.trim()||'',propertyType:form.propertyType?.trim()||'',commune:form.commune||'',nearby:form.nearby||'',amenities:AMENITIES.filter(([key])=>(form.amenities||[]).includes(key)).map(([,label])=>label),rules:(form.selectedRules||[]).map(formatRuleLabel),existingDescription:form.description||''};}
+export async function generatePropertyDescription(form,signal){const data=await request('/description',{basePath:'/api/property-writing',method:'POST',body:descriptionFacts(form),signal});if(typeof data?.description!=='string'||data.description.trim().length<30||data.description.length>2000)throw new ApiError('AI trả mô tả chưa hợp lệ. Nội dung đang viết được giữ nguyên.',502);return data.description.trim();}

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Heart, Home, LogOut, Menu, Phone, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -8,6 +9,7 @@ export default function PublicNavbar({ savedCount = 0 }) {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  useEffect(()=>{if(!mobileOpen)return;const close=event=>{if(event.key==='Escape'){setMobileOpen(false);document.getElementById('mobileMenuBtn')?.focus();}};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close);},[mobileOpen]);
 
   const handleLogout = async () => {
     try {
@@ -20,29 +22,9 @@ export default function PublicNavbar({ savedCount = 0 }) {
 
   return (
     <header className="navbar-wrapper">
-      <div className="top-announcement">
-        <div className="container top-announcement-inner">
-          <div className="announcement-left">
-            <span className="badge-tag">Hòa Lạc Campus</span>
-            <span className="announcement-text">
-              Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT & Khu Công nghệ cao Hòa Lạc
-            </span>
-          </div>
-          <div className="announcement-right">
-            <a href="tel:0912345678" className="contact-link">
-              <Phone size={14} />
-              <span>Hotline hỗ trợ: 0912 345 678</span>
-            </a>
-            <span className="sep">•</span>
-            <span className="status-live">
-              <span className="live-dot" />
-              Cập nhật phòng trống hôm nay
-            </span>
-          </div>
-        </div>
-      </div>
+      <HostRegistrationBanner/>
 
-      <nav className="main-navbar">
+    <nav className="main-navbar">
         <div className="container navbar-container">
           {/* Logo */}
           <Link to="/" className="nav-brand" aria-label="Trang chủ HL_RCS">
@@ -72,8 +54,8 @@ export default function PublicNavbar({ savedCount = 0 }) {
             )}
             {user && user.role !== 'USER' && (
               <li>
-                <NavLink to={landingFor(user)} className="nav-item highlight-role" onClick={() => setMobileOpen(false)}>
-                  Khu vực {roleLabels[user.role]}
+                <NavLink to={user.role==='ROOM_HOST'?'/host/property':landingFor(user)} className="nav-item highlight-role" onClick={() => setMobileOpen(false)}>
+                  {user.role==='ROOM_HOST'?'Nhà trọ của tôi':`Khu vực ${roleLabels[user.role]}`}
                 </NavLink>
               </li>
             )}
@@ -119,8 +101,11 @@ export default function PublicNavbar({ savedCount = 0 }) {
 
           {/* Mobile Hamburger Toggle */}
           <button
+            type="button"
             className="mobile-toggle"
             id="mobileMenuBtn"
+            aria-expanded={mobileOpen}
+            aria-controls="navMenu"
             aria-label="Mở thực đơn"
             onClick={() => setMobileOpen(!mobileOpen)}
           >

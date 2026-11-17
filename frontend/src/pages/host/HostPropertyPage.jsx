@@ -333,7 +333,7 @@ function PropertyDetail({ property }) {
           </div>
         </section>
 
-        {showReview && (
+        {showReview && !property.reverificationRequired && (
           <aside
             className={`hp-review-feedback ${
               reviewStatus === 'REJECTED'
@@ -537,7 +537,7 @@ function PropertyDetail({ property }) {
           </dl>
           <h4>Hồ sơ xác minh đã gửi (Bảo mật cho Chủ trọ):</h4>
           <div className="hp-documents">
-            {documentLabels.map(([type, label]) => {
+            {[...documentLabels,...(property.documents.some(file=>file.type==='ID_CARD_BACK')?[['ID_CARD_BACK','Mặt sau CCCD chủ trọ']]:[])].map(([type, label]) => {
               const file = property.documents.find(item => item.type === type);
               const approved = file && ['APPROVED', 'VERIFIED'].includes(file.verificationStatus);
               const flagged = Boolean(notesByKey[type]);
@@ -708,6 +708,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
           </Link>
           {selected?.propertyId != null && ['VISIBLE', 'APPROVED', 'INACTIVE'].includes(selected.displayStatus) && (
             <div className="hm-detail-quick-links">
+              <Link className="hm-btn hm-btn-tonal" to={`/host/rooms?propertyId=${selected.propertyId}&publication=1`}>Chọn phòng công khai</Link>
               <Link
                 className="hm-btn hm-btn-subtle"
                 to={`/host/room-types?propertyId=${selected.propertyId}`}
@@ -799,6 +800,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
       : 'Xem hồ sơ';
 
     const menuItems = [
+      stats.canManageRooms && {key:'publication',label:'Chọn phòng công khai',icon:Eye,to:`/host/rooms?propertyId=${record.propertyId}&publication=1`},
       {
         key: 'detail',
         label: 'Xem chi tiết & hồ sơ',
@@ -938,13 +940,10 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                     aria-hidden="true"
                   >
                     <PropertyThumb property={record} />
-                    <span className={`hm-badge hm-prop-status tone-${stats.statusMeta.tone}`}>
-                      {stats.statusMeta.label}
-                    </span>
+                    {record.displayStatus!=='VISIBLE'&&<span className={`hm-badge hm-prop-status tone-${stats.statusMeta.tone}`}>{stats.statusMeta.label}</span>}
                   </Link>
 
                   <div className="hm-prop-body">
-                    <ReverificationNotice required={record.reverificationRequired} reasons={record.reverificationReasons} status={record.changeRequest?.status} note={record.changeRequest?.reasonNote} registrationId={record.changeRequest?.registrationId}/>
                     <div className="hm-prop-head">
                       <h2 className="hm-prop-name">
                         <Link to={detailLink(record)} title={record.name} onClick={() => rememberProperty(record)}>
@@ -977,7 +976,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                           {stats.needsSupplement
                             ? 'Cần bổ sung hồ sơ theo phản hồi Staff'
                             : record.displayStatus === 'PENDING'
-                            ? 'Đang chờ Staff thẩm định hồ sơ'
+                            ? 'Đang chờ Nhân viên thẩm định hồ sơ'
                             : 'Chưa khởi tạo danh sách phòng'}
                         </span>
                       )}
@@ -997,18 +996,17 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                       ) : (
                         <div className="hm-occ-row is-empty">
                           <span>Loại phòng: {stats.roomTypeCount}</span>
-                          <span>{record.propertyId != null ? `NT-${record.propertyId}` : `HS-${record.registrationId}`}</span>
+
                         </div>
                       )}
+                      <ReverificationNotice compact required={record.reverificationRequired} reasons={record.reverificationReasons} status={record.changeRequest?.status} note={record.changeRequest?.reasonNote} registrationId={record.changeRequest?.registrationId}/>
                     </div>
                   </div>
 
                   <footer className="hm-prop-footer">
                     <span className="hm-prop-code">
                       {stats.roomTypeCount > 0 ? `${stats.roomTypeCount} loại phòng` : `Đăng ký ${date(record.createdAt)}`}
-                      {record.propertyId != null && Number.isFinite(record.pendingViewingCount) && (
-                        <> · <Link to={`/host/viewings?propertyId=${record.propertyId}`} aria-label={`Xem lịch của ${record.name}, ${record.pendingViewingCount} yêu cầu chờ duyệt`}>{record.pendingViewingCount} lịch chờ duyệt</Link></>
-                      )}
+
                     </span>
                     {renderRecordActions(record)}
                   </footer>
@@ -1049,9 +1047,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                         </div>
                       </td>
                       <td>
-                        <span className={`hm-badge tone-${stats.statusMeta.tone}`}>
-                          {stats.statusMeta.label}
-                        </span>
+                        {record.displayStatus!=='VISIBLE'&&<span className={`hm-badge tone-${stats.statusMeta.tone}`}>{stats.statusMeta.label}</span>}
                       </td>
                       <td>
                         {stats.hasRoomStats ? (

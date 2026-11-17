@@ -133,6 +133,10 @@
 .registration-document { position: relative; font-size: 12px; padding: 12px 14px; }
 .registration-document > svg { color: #64748b; }
 .registration-document .registration-file-button { flex-shrink: 0; }
+.registration-saved-identity { margin-top: 12px; }
+.registration-saved-identity summary { cursor: pointer; color: var(--p-primary, #0f766e); padding: 8px 0; }
+.registration-saved-identity summary:focus-visible { outline: 2px solid var(--p-primary, #0f766e); outline-offset: 3px; }
+.registration-saved-identity .host-identity-image { display: block; width: 100%; max-width: 420px; max-height: 300px; object-fit: contain; margin-top: 12px; border-radius: 8px; }
 .registration-aside li.done { color: #0f172a; }
 .registration-aside li.done > span { color: white; background: #0d9488; }
 .registration-review-groups { display: grid; gap: 18px; margin-bottom: 24px; }

@@ -45,6 +45,20 @@ o thu muc cha neu ban dang mo `Code/HL-RCS` trong IntelliJ.
 - Mo http://127.0.0.1:5173/login; sua React se cap nhat ngay.
 - Bam Stop de dung ca hai. Neu frontend loi, backend cung dung va console hien nguyen nhan.
 
+### Chạy web và app cùng lúc
+
+| Thành phần | Cổng | Cách chạy |
+| --- | --- | --- |
+| Giao diện web (Vite) | 5173 | Run **HL-RCS Full Stack** trong IntelliJ |
+| API cho web | 8080 | Khởi động cùng cấu hình Full Stack |
+| API cho app | 8081 | Profile `mysql,mobile`; script mobile tự khởi động |
+| Expo cho app | 8082 | `cd mobile` rồi `npm run dev` |
+
+Web gọi API 8080, điện thoại gọi `http://<IP-LAN-máy-tính>:8081`.
+Hai API dùng chung MySQL nên dữ liệu được chia sẻ. Không đổi web sang 8081
+khi cổng 8080 bận; kiểm tra phiên web đang chạy trước. Nếu IntelliJ còn giữ
+cấu hình cũ, đặt **Program arguments** thành `--server.port=8080`.
+
 Can MySQL dang chay va Node.js 22.12+ (hoac 20.19+). Launcher tim Node trong
 NODE_HOME, PATH, bo runtime Codex co san tren may, hoac Program Files/nodejs.
 Neu thieu frontend dependencies, launcher tu chay pnpm/npm install; lan dau can Internet.
@@ -90,7 +104,7 @@ Mo terminal thu hai va chay:
 ```
 
 Mo http://localhost:5173/login. Dung Ctrl+C trong tung terminal de dung server.
-Neu cong 8080 dang duoc su dung, them `-Port 8081`.
+Cong 8080 danh rieng cho web API; cong 8081 danh rieng cho mobile API.
 Script tu tim JDK tu JAVA_HOME hoac thu muc cai Java thong dung va su dung Maven Wrapper.
 Lan build dau can Internet de tai cac thu vien Maven.
 

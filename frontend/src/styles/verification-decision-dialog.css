@@ -1,0 +1,62 @@
+.portal-modal.svd-decision-dialog {
+  --decision-action: #0f766e;
+  --decision-soft: #f0fdfa;
+  --decision-border: #99f6e4;
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  border-radius: 18px;
+  color: #0f172a;
+}
+.portal-modal.svd-decision-dialog.is-rejection {
+  --decision-action: #be123c;
+  --decision-soft: #fff1f2;
+  --decision-border: #fecdd3;
+}
+.svd-decision-dialog > header { padding: 22px 24px 18px; gap: 16px; }
+.svd-decision-dialog > header h2 { margin: 0; flex: 1; }
+.svd-decision-dialog .svd-dialog-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.svd-decision-dialog .svd-dialog-icon {
+  display: grid; place-items: center; flex: 0 0 44px; height: 44px;
+  border: 1px solid var(--decision-border); border-radius: 13px;
+  background: var(--decision-soft);
+}
+.svd-decision-dialog > header h2 .svd-dialog-icon svg { color: var(--decision-action); }
+.svd-decision-dialog .svd-dialog-title { display: block; font-size: 20px; line-height: 1.4; font-weight: 750; }
+.svd-decision-dialog .svd-dialog-subtitle { display: block; margin-top: 3px; font-size: 13px; line-height: 1.5; font-weight: 400; color: #64748b; }
+.svd-decision-dialog > header .p-icon { flex: 0 0 40px; width: 40px; height: 40px; }
+.svd-decision-dialog .sw-review-body { padding: 20px 24px; }
+.svd-dialog-property {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+  border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
+}
+.svd-dialog-property > svg { flex-shrink: 0; color: #64748b; margin-top: 2px; }
+.svd-dialog-property > div { min-width: 0; }
+.svd-dialog-property strong { display: block; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.svd-dialog-property span { display: block; margin-top: 3px; font-size: 12px; color: #64748b; line-height: 1.5; overflow-wrap: anywhere; }
+.svd-decision-dialog .sw-review-body > .svd-dialog-impact { margin: 14px 0 18px; color: #475569; font-size: 13px; line-height: 1.65; }
+.svd-decision-dialog .sw-review-label { margin: 0 0 8px; font-size: 14px; }
+.svd-dialog-optional { margin-left: 8px; font-size: 12px; color: #64748b; font-weight: 400; }
+.svd-decision-dialog #staff-review-note {
+  display: block; box-sizing: border-box; width: 100%; min-height: 104px;
+  padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px;
+  font: inherit; font-size: 14px; line-height: 1.6; resize: vertical;
+}
+.svd-decision-dialog #staff-review-note:focus { border-color: var(--decision-action); outline: 2px solid var(--decision-action); outline-offset: 2px; box-shadow: none; }
+.svd-dialog-input-help { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; color: #64748b; font-size: 12px; line-height: 1.5; }
+.svd-dialog-input-help > span:last-child { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.svd-decision-dialog .sw-review-footer { padding: 16px 24px; gap: 10px; background: #fff; }
+.svd-decision-dialog .sw-review-footer button { min-height: 44px; padding: 10px 16px; font-size: 14px; border-radius: 9px; }
+.svd-decision-dialog .sw-review-footer :is(.sw-primary, .sw-danger) { background: var(--decision-action); border-color: var(--decision-action); color: #fff; }
+.svd-decision-dialog .sw-review-footer :is(.sw-primary, .sw-danger):hover:not(:disabled) { filter: brightness(.92); }
+.svd-decision-dialog .sw-review-footer button:disabled { opacity: .5; cursor: not-allowed; }
+.svd-decision-dialog :is(button, textarea):focus-visible { outline: 2px solid var(--decision-action); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .svd-decision-dialog > header, .svd-decision-dialog .sw-review-body { padding: 18px; }
+  .svd-decision-dialog .sw-review-footer { padding: 14px 18px; }
+  .svd-decision-dialog .svd-dialog-heading { gap: 9px; }
+  .svd-decision-dialog .svd-dialog-title { font-size: 18px; }
+  .svd-decision-dialog .svd-dialog-subtitle { font-size: 12px; }
+  .svd-decision-dialog .sw-review-footer > button:first-child { flex: 0 0 auto; }
+  .svd-decision-dialog .sw-review-footer > button:last-child { flex: 1; }
+  .svd-dialog-input-help { flex-wrap: wrap; gap: 4px 10px; }
+}

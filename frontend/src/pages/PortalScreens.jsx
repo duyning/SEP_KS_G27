@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 // Public Pages
 import HomePage from './public/HomePage.jsx';
@@ -32,7 +33,6 @@ import StaffCommunityModerationDetailPage from './staff/StaffCommunityModeration
 import StaffAssistanceRequestsPage from './staff/StaffAssistanceRequestsPage.jsx';
 import StaffAssistanceRequestDetailPage from './staff/StaffAssistanceRequestDetailPage.jsx';
 
-import StaffHostRegistrationsPage from './staff/StaffHostRegistrationsPage.jsx';
 import StaffHostRegistrationDetailPage from './staff/StaffHostRegistrationDetailPage.jsx';
 
 // Admin Pages
@@ -44,7 +44,7 @@ export default function PortalScreens({ screen }) {
   }
 
   switch (screen.path) {
-    case '/staff/host-registrations': return <StaffHostRegistrationsPage />;
+    case '/staff/host-registrations': return <Navigate to="/staff/verifications" replace />;
     case '/staff/host-registrations/detail': return <StaffHostRegistrationDetailPage />;
     // Public & Member Routes
     case '/':

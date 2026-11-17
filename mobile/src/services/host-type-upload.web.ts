@@ -1,0 +1,3 @@
+import { getApiBase } from './accommodations';
+import { HostError } from './host';
+export async function updateHostType(id:number,details:unknown,token:string,signal:AbortSignal){const form=new FormData();form.append('details',new Blob([JSON.stringify(details)],{type:'application/json'}),'details.json');const response=await fetch(`${getApiBase()}/api/host/room-types/${id}`,{method:'PUT',credentials:'omit',headers:{Authorization:`Bearer ${token}`},body:form,signal});const result=await response.json().catch(()=>null);if(!response.ok||result?.success!==true)throw new HostError(result?.message||'Chưa thể lưu loại phòng.',response.status);return result.data;}
