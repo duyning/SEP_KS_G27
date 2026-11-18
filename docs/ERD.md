@@ -213,3 +213,20 @@ ServiceRequest is distinct from SupportRequest, ServiceRegistration and Booking.
 ## Mở rộng khu vực dịch vụ (2026-11-14)
 
 Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.
+
+## Đánh giá và báo cáo dịch vụ (2026-11-18)
+
+```mermaid
+erDiagram
+    services ||--o{ service_ratings : service
+    users ||--o{ service_ratings : author
+    service_ratings ||--o{ service_rating_images : images
+    services ||--o{ service_complaints : service
+    users ||--o{ service_complaints : reporter
+    service_complaints ||--o{ service_complaint_images : images
+    service_complaints ||--o{ service_complaint_events : history
+    users ||--o{ service_complaint_events : actor
+    service_complaint_events ||--o{ service_complaint_event_images : images
+```
+
+Một ServiceRating duy nhất theo cặp service/author. Service.moderationHidden chặn công khai độc lập với snapshot và capability. Xem [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).

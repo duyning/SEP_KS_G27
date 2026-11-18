@@ -308,3 +308,7 @@ Customer service requests now have authenticated submit/read and owner response 
 ## Mở rộng khu vực dịch vụ (2026-11-14)
 
 Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.
+
+## Đánh giá và báo cáo dịch vụ (2026-11-18)
+
+Đã nối đánh giá 0–5 sao, ảnh và phản hồi chủ dịch vụ; báo cáo riêng tư, giải trình và staff gỡ công khai qua moderationHidden. Chi tiết API, phân quyền, trạng thái và migration: [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).

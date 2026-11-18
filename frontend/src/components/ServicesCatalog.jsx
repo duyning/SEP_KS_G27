@@ -1,3 +1,5 @@
+import ServiceRatings from './ServiceRatings.jsx';
+import ServiceComplaints, { ServiceReportForm } from './ServiceComplaints.jsx';
 import ServicePrice from './ServicePrice.jsx';
 import { serviceCategoryStyle } from '../services/service-category.js';
 import { areaList, serviceAreaText } from '../services/service-areas.js';
@@ -16,7 +18,7 @@ import ServiceGallery from './ServiceGallery.jsx';
 import ServiceFormSelect from './ServiceFormSelect.jsx';
 import Modal from './common/Modal.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { MapPin, Phone, ArrowRight, ShieldCheck, Search, SlidersHorizontal, UserRound, X } from 'lucide-react';
+import { MapPin, Phone, ArrowRight, ShieldCheck, Search, SlidersHorizontal, UserRound, Flag, X } from 'lucide-react';
 import { publicServicesApi as api } from '../services/public-services.js';
 import { serviceRegistrationApi } from '../services/service-registration.js';
 import { filterPublicServices, serviceAreaOptions } from '../services/service-catalog.js';
@@ -37,6 +39,8 @@ export default function ServicesCatalog({ detail = false }) {
   const [manage, setManage] = useState(false); const [contact, setContact] = useState(null);
   const [ownership, setOwnership] = useState(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const notify = useToast();
   useEffect(() => {
@@ -83,10 +87,12 @@ export default function ServicesCatalog({ detail = false }) {
     {!detail && <div className="svc-heading">
       <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Tìm và liên hệ các đối tác đã được xác minh, đang hoạt động tại khu vực của bạn.</p></div>
       <div className="svc-actions svc-heading-actions">
+        {user && <UIButton className="svc-btn" onClick={() => setReportsOpen(true)}>Báo cáo của tôi</UIButton>}
         {user && <UIButton variant="secondary" className="svc-btn" onClick={() => setRequestsOpen(true)}>Yêu cầu dịch vụ</UIButton>}
         <UIButton variant="primary" className="svc-btn svc-btn-primary" disabled={checkingOwnership} onClick={openServices}>{actionLabel}</UIButton>
       </div>
     </div>}
+    {reportsOpen && <Modal title="Báo cáo của tôi" maxWidth="900px" onClose={() => setReportsOpen(false)}><ServiceComplaints key={user?.userId} /></Modal>}
     {requestsOpen && <ServiceRequests key={user?.userId} onClose={() => setRequestsOpen(false)} />}
     {!detail && ownState?.error && <p role="alert" className="service-error">Không tải được hồ sơ dịch vụ: {ownState.error}</p>}
     {!detail && <><div className="svc-discovery-toolbar" role="search" aria-label="Tìm kiếm và lọc dịch vụ">
@@ -121,6 +127,7 @@ export default function ServicesCatalog({ detail = false }) {
           <UIButton className="svc-btn" disabled={user?.userId === row.providerId} onClick={() => setRequestFormOpen(true)}>Gửi yêu cầu</UIButton>
           {user?.userId === row.providerId && <p className="svc-detail-owner-note">Đây là dịch vụ của bạn</p>}
         </div>
+        {user?.userId !== row.providerId && <UIButton className="svc-report-action" variant="destructive" onClick={() => setReportOpen(true)}><Flag size={19} aria-hidden="true" />Báo cáo dịch vụ</UIButton>}
         {user?.userId !== row.providerId && <p className="svc-detail-payment-note">Bạn chưa phải thanh toán ở bước này.</p>}
       </aside>
       <section className="svc-detail-copy"><h2>Mô tả dịch vụ</h2><p>{row.description}</p></section>
@@ -129,6 +136,8 @@ export default function ServicesCatalog({ detail = false }) {
       <div className="svc-grid">{filteredRows.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto url={row.imageUrl} alt={row.serviceName} /><div className="svc-card-body">{content(row)}<div className="svc-actions svc-card-footer"><Link className="svc-btn" to={`/services/detail?id=${row.serviceId}`}>Xem chi tiết<ArrowRight size={15} /></Link><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={15} />Liên hệ</UIButton></div></div></article>)}</div>
     </>}
     {detail && row && !loading && !error && <>
+      <ServiceRatings key={row.serviceId + "-" + user?.userId} service={row} />
+      {reportOpen && <ServiceReportForm key={row.serviceId + "-" + user?.userId} service={row} onClose={() => setReportOpen(false)} />}
       <div className="svc-detail-mobile-contact"><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={18} aria-hidden="true" />Liên hệ nhà cung cấp</UIButton></div>
     </>}
     {detail && row && requestFormOpen && <ServiceRequestModal key={row.serviceId + '-' + user?.userId} service={row}

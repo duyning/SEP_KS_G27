@@ -1,0 +1,116 @@
+classDiagram
+    direction TB
+    class HostRoomsController {
+        <<Controller>>
+        +list()
+        +create()
+        +update()
+        +delete()
+    }
+    class HostRoomsService {
+        <<Service>>
+        +list()
+        +save()
+        +delete()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class RoomRepository {
+        <<interface>>
+        +findByProperty_Owner_UserIdOrderByRoomNumberAsc()
+        +findByRoomType_RoomTypeIdOrderByRoomNumberAsc()
+        +existsByRoomType_RoomTypeId()
+        +existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot()
+        +countByProperty_PropertyId()
+        +countByProperty_PropertyIdAndStatus()
+        +countByProperty_Owner_UserId()
+    }
+    class RoomTypeRepository {
+        <<interface>>
+        +findByProperty_Owner_UserId()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCase()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCaseAndRoomTypeIdNot()
+    }
+    class HostRoomTypeService {
+        <<Service>>
+        +create()
+        +save()
+        +detail()
+        +image()
+        +delete()
+        +getRoomTypes()
+    }
+    class RoomMapping {
+        <<Service>>
+        +summary()
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class Room {
+        <<Entity>>
+        -Integer roomId
+        -Property property
+        -RoomType roomType
+        -String roomNumber
+        -String floor
+        -String status
+        -BigDecimal customPrice
+        -LocalDateTime confirmedAt
+    }
+    class RoomType {
+        <<Entity>>
+        -Integer roomTypeId
+        -Property property
+        -String roomType
+        -BigDecimal price
+        -Float areaSqm
+        -BigDecimal servicePrice
+        -String description
+        -Integer capacity
+    }
+    class RoomRequest {
+        <<DTO>>
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    HostRoomsController --> HostRoomsService : injected
+    HostRoomsService --> AuthService : injected
+    HostRoomsService --> UserRepository : injected
+    HostRoomsService --> RoomRepository : injected
+    HostRoomsService --> RoomTypeRepository : injected
+    HostRoomsService --> HostRoomTypeService : injected
+    HostRoomsService --> RoomMapping : injected
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    RoomRepository --|> JpaRepository
+    RoomRepository ..> Room : entity - ID Integer
+    RoomTypeRepository --|> JpaRepository
+    RoomTypeRepository ..> RoomType : entity - ID Integer
+    HostRoomsController ..> RoomRequest : DTO

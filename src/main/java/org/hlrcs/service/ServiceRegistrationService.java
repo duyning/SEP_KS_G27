@@ -66,6 +66,22 @@ public class ServiceRegistrationService {
 
     public boolean canManage(Integer userId) { return publication.hasCapability(userId); }
 
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public RegistrationInfo cancel(Integer id, int revision) {
+        var actor = auth.getCurrentUser();
+        var row = registrations.findForReview(id).filter(r -> r.getUser().getUserId().equals(actor.getUserId()))
+                .orElseThrow(() -> new AppException("Không tìm thấy hồ sơ của bạn.", HttpStatus.NOT_FOUND));
+        if (row.getStatus() != RegistrationStatus.PENDING || row.getRevision() != revision)
+            throw new AppException("Hồ sơ đã thay đổi hoặc không còn chờ duyệt. Vui lòng tải lại.", HttpStatus.CONFLICT);
+        users.findForRegistrationUpdate(actor.getUserId()).orElseThrow();
+        row.setStatus(RegistrationStatus.CANCELLED);
+        row.setRevision(row.getRevision() + 1);
+        registrations.saveAndFlush(row);
+        logs.save(org.hlrcs.entity.ModerationLog.builder().staff(actor).targetType("SERVICE_REGISTRATION").targetId(id)
+                .action("CANCELLED").note("Người đăng ký đã hủy hồ sơ chờ xét duyệt.").build());
+        return info(row);
+    }
+
     @Transactional(rollbackFor = Exception.class, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public RegistrationInfo change(Integer serviceId, org.hlrcs.dto.request.ServiceChangeRequest request, List<MultipartFile> images) throws IOException {
         var owner = users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow();
@@ -169,7 +185,8 @@ public class ServiceRegistrationService {
     public RegistrationInfo submit(ServiceRegistrationRequest value, List<MultipartFile> files, List<MultipartFile> images) throws IOException {
         validate(value);
         var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
-        if (files == null || files.isEmpty() || files.size() > 5) throw new BadRequestException("Cần đính kèm từ 1 đến 5 tài liệu xác minh.");
+        if (files == null) files = List.of();
+        if (files.size() > 5) throw new BadRequestException("Hồ sơ có tối đa 5 tài liệu xác minh.");
         var category = categories.findById(value.categoryId()).orElseThrow(() -> new BadRequestException("Danh mục dịch vụ không hợp lệ."));
         // Serialize submissions for this applicant, including concurrent requests.
         var user = users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow(() -> new BadRequestException("Không tìm thấy người đăng ký."));
@@ -207,7 +224,7 @@ public class ServiceRegistrationService {
         if (new HashSet<>(keep).size() != keep.size() || keep.stream().anyMatch(key -> oldFiles.stream().noneMatch(f -> key.equals(f.getDocumentId()))))
             throw new BadRequestException("Tài liệu giữ lại không hợp lệ hoặc không thuộc hồ sơ.");
         var files = uploads == null ? List.<MultipartFile>of() : uploads;
-        if (keep.size() + files.size() < 1 || keep.size() + files.size() > 5) throw new BadRequestException("Hồ sơ cần tổng cộng từ 1 đến 5 tài liệu.");
+        if (keep.size() + files.size() > 5) throw new BadRequestException("Hồ sơ có tối đa 5 tài liệu.");
         var value = request.details();
         var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
         row.setCategory(categories.findById(value.categoryId()).orElseThrow(() -> new BadRequestException("Danh mục không hợp lệ.")));

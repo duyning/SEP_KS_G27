@@ -1,5 +1,16 @@
 # Quản lý nhiều dịch vụ, ảnh và duyệt thay đổi
 
+## Hủy hồ sơ chờ duyệt (2026-11-14)
+
+Chủ hồ sơ được hủy hồ sơ CREATE/UPDATE/DELETE khi trạng thái còn PENDING qua
+`POST /api/service-registrations/{id}/cancel` với `{revision}`. Backend khóa hồ sơ
+rồi khóa tài khoản như luồng duyệt, kiểm tra ownership và revision; hồ sơ đã xử lý
+hoặc phiên bản cũ trả 409. Hủy chuyển sang CANCELLED, tăng revision, ghi lịch sử;
+không xóa tài liệu, không sửa capability hoặc snapshot công khai. Hồ sơ đã hủy
+không chặn gửi mới. UI chủ hồ sơ có xác nhận hủy; Staff có bộ lọc Đã hủy.
+Migration MySQL: `sql/migrations/20261114_service_registration_cancellation.sql`
+bổ sung giá trị CANCELLED cho cột ENUM nếu có; VARCHAR không cần đổi.
+
 Cập nhật 2026-11-08. Luồng này mở rộng service; không thay luồng host/property hoặc phân công Staff.
 
 ## Người dùng
@@ -79,3 +90,11 @@ Service và ServiceRegistration thêm `custom_service_areas` tách khu vực t�
 ## Đơn vị tính (2026-11-14)
 
 Hồ sơ và dịch vụ có `priceUnit` tùy chọn: bỏ trống lưu NULL, có nội dung thì trim và kiểm tra 2–20 ký tự. Trường được gửi/đọc qua các endpoint hiện có; bản công khai chỉ đổi sau khi duyệt đề nghị cập nhật. Migration `sql/migrations/20261114_service_price_unit.sql` thêm `price_unit VARCHAR(20) NULL` vào `service_registrations` và `services`, có thể chạy lại. Dữ liệu cũ giữ NULL. Trang chi tiết hiển thị đơn vị riêng sau giá và không hiển thị khi giá thỏa thuận.
+
+## Hồ sơ không yêu cầu tài liệu xác minh (2026-11-17)
+
+Form gửi mới/nộp bổ sung bỏ mục tài liệu xác minh; API cho phép không có tài liệu. Tài liệu cũ vẫn được giữ và truy cập theo quyền hiện có. Ảnh dịch vụ và quy trình xét duyệt không thay đổi.
+
+## Đánh giá và báo cáo dịch vụ (2026-11-18)
+
+Đã nối đánh giá 0–5 sao, ảnh và phản hồi chủ dịch vụ; báo cáo riêng tư, giải trình và staff gỡ công khai qua moderationHidden. Chi tiết API, phân quyền, trạng thái và migration: [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).

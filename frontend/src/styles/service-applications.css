@@ -26,8 +26,8 @@
 .service-status-filter{--filter-bg:#f1f5f9;--filter-border:#cbd5e1;--filter-color:#475569}
 .service-filter-all{--filter-bg:#f5f3ff;--filter-border:#ddd6fe;--filter-color:#6d28d9}
 .service-filter-approved{--filter-bg:#ecfdf5;--filter-border:#a7f3d0;--filter-color:#047857}
-.service-filter-pending{--filter-bg:#fffbeb;--filter-border:#fde68a;--filter-color:#92400e}
-.service-filter-needs_supplement{--filter-bg:#eff6ff;--filter-border:#bfdbfe;--filter-color:#1d4ed8}
+.service-filter-pending{--filter-bg:#eff6ff;--filter-border:#bfdbfe;--filter-color:#1d4ed8}
+.service-filter-needs_supplement{--filter-bg:#fff7ed;--filter-border:#fdba74;--filter-color:#9a3412}
 .service-filter-rejected{--filter-bg:#fef2f2;--filter-border:#fecaca;--filter-color:#b91c1c}
 .service-applications .service-status-filter{background:var(--filter-bg);border-color:var(--filter-border);color:var(--filter-color)}
 .service-applications .service-status-filter:hover{border-color:var(--filter-color)}
@@ -45,7 +45,6 @@
 /* Review presentation; API and decision rules are unchanged. */
 .service-applications .service-reload-icon{width:40px;padding:9px;flex-shrink:0}
 .service-applications .ui-badge[data-tone=supplement]{background:#fff7ed;border-color:#fdba74;color:#9a3412}
-.service-applications .service-filter-needs_supplement{--filter-bg:#fff7ed;--filter-border:#fdba74;--filter-color:#9a3412}
 .service-category-badge{display:inline-flex;margin-top:8px;padding:4px 10px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600}
 .service-change-note{padding:16px;border:1px solid #fed7aa;border-left:4px solid #c2410c;background:#fff7ed;border-radius:8px;margin:0 0 24px;color:#7c2d12}
 .service-change-note p{margin:8px 0 0;line-height:1.7}

@@ -1,3 +1,5 @@
+import ServiceComplaints from './ServiceComplaints.jsx';
+import { Link } from 'react-router-dom';
 import StatusBadge from './common/StatusBadge.jsx';
 import UIField from './common/Field.jsx';
 import UIButton from './common/Button.jsx';
@@ -5,9 +7,10 @@ import { useEffect, useState } from 'react';
 import Modal from './common/Modal.jsx';
 import ServiceRegistrationModal from './ServiceRegistrationModal.jsx';
 import ServicePhoto from './ServicePhoto.jsx';
+import ServiceCancellation from './ServiceCancellation.jsx';
 import { serviceRegistrationApi as api } from '../services/service-registration.js';
 
-const labels = { PENDING: 'Chờ nhân viên duyệt', NEEDS_SUPPLEMENT: 'Cần bổ sung', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối' };
+const labels = { PENDING: 'Chờ nhân viên duyệt', NEEDS_SUPPLEMENT: 'Cần bổ sung', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', CANCELLED: 'Đã hủy' };
 const actions = { CREATE: 'Thêm dịch vụ', UPDATE: 'Cập nhật', DELETE: 'Gỡ dịch vụ' };
 export default function ServiceManagement({ onClose }) {
   const [services, setServices] = useState([]);
@@ -44,9 +47,10 @@ export default function ServiceManagement({ onClose }) {
     <div className="svc-management"><div className="svc-toolbar"><p>Thông tin mới chỉ công khai khi nhân viên duyệt.</p><UIButton className="svc-btn svc-btn-primary" disabled={loading || !canAdd} onClick={() => setEditor({ createNew: true })}>+ Thêm dịch vụ</UIButton></div>
       {error && <p role="alert" className="service-error">{error}<UIButton onClick={() => setRevision(v => v + 1)}>Thử lại</UIButton></p>}
       {loading ? <p role="status">Đang tải dịch vụ...</p> : <>
-        <div className="svc-grid">{services.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto application={row} /><div className="svc-card-body"><h3>{row.serviceName}</h3><div className="svc-management-status"><StatusBadge status={row.publicEligible ? 'PUBLIC' : 'INACTIVE'} label={row.serviceState === 'DELETED' ? 'Đã gỡ dịch vụ' : row.publicEligible ? 'Đang công khai' : 'Chưa công khai'} />{pending(row.serviceId) && <StatusBadge status="PENDING" label="Thay đổi chờ duyệt" />}</div><div className="svc-actions"><UIButton className="svc-btn" disabled={pending(row.serviceId) || row.serviceState === 'DELETED' || !row.capabilityActive} onClick={() => setEditor({ editService: row })}>Cập nhật</UIButton><UIButton className="svc-btn svc-btn-danger" disabled={pending(row.serviceId) || row.serviceState === 'DELETED' || !row.capabilityActive} onClick={() => { setDeletion(row); setReason(''); setError(''); }}>Gỡ dịch vụ</UIButton></div>{pending(row.serviceId) && <small>Có yêu cầu đang xử lý — xem bên dưới.</small>}</div></article>)}</div>
+        <div className="svc-grid">{services.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto application={row} /><div className="svc-card-body"><h3>{row.serviceName}</h3><div className="svc-management-status"><StatusBadge status={row.publicEligible ? 'PUBLIC' : 'INACTIVE'} label={row.serviceState === 'DELETED' ? 'Đã gỡ dịch vụ' : row.publicEligible ? 'Đang công khai' : 'Chưa công khai'} />{pending(row.serviceId) && <StatusBadge status="PENDING" label="Thay đổi chờ duyệt" />}</div><div className="svc-actions">{row.publicEligible && <Link className="svc-btn" to={`/services/detail?id=${row.serviceId}`} onClick={onClose}>Xem đánh giá</Link>}<UIButton className="svc-btn" disabled={pending(row.serviceId) || row.serviceState === 'DELETED' || !row.capabilityActive} onClick={() => setEditor({ editService: row })}>Cập nhật</UIButton><UIButton className="svc-btn svc-btn-danger" disabled={pending(row.serviceId) || row.serviceState === 'DELETED' || !row.capabilityActive} onClick={() => { setDeletion(row); setReason(''); setError(''); }}>Gỡ dịch vụ</UIButton></div>{pending(row.serviceId) && <small>Có yêu cầu đang xử lý — xem bên dưới.</small>}</div></article>)}</div>
+        <ServiceComplaints scope="incoming" />
         <h3>Hồ sơ và yêu cầu thay đổi</h3>{!canAdd && <p>Vui lòng xử lý hồ sơ hiện có hoặc kiểm tra lại quyền cung cấp dịch vụ trước khi thêm mới.</p>}{!rows.length && <p>Bạn chưa có dịch vụ. Bấm “Thêm dịch vụ” để bắt đầu.</p>}
-        <div className="svc-request-list">{rows.map(row => <div className="svc-request" key={row.registrationId}><div><strong>{row.serviceName}</strong><p>{actions[row.operation] || 'Thêm dịch vụ'}</p><StatusBadge status={row.listingDecision === 'REJECT' ? 'REJECTED' : row.status} label={row.status === 'APPROVED' && row.listingDecision === 'REJECT' ? 'Nội dung bị từ chối' : labels[row.status]} />{row.reasonNote && <small>{row.reasonNote}</small>}</div><UIButton className="svc-btn" onClick={() => setEditor({ applicationId: row.registrationId })}>{row.status === 'NEEDS_SUPPLEMENT' ? 'Bổ sung hồ sơ' : 'Xem kết quả'}</UIButton></div>)}</div>
+        <div className="svc-request-list">{rows.map(row => <div className="svc-request" key={row.registrationId}><div><strong>{row.serviceName}</strong><p>{actions[row.operation] || 'Thêm dịch vụ'}</p><StatusBadge status={row.listingDecision === 'REJECT' ? 'REJECTED' : row.status} label={row.status === 'APPROVED' && row.listingDecision === 'REJECT' ? 'Nội dung bị từ chối' : labels[row.status]} />{row.reasonNote && <small>{row.reasonNote}</small>}</div><div className="svc-actions"><ServiceCancellation application={row} onChanged={finish} /><UIButton className="svc-btn" onClick={() => setEditor({ applicationId: row.registrationId })}>{row.status === 'NEEDS_SUPPLEMENT' ? 'Bổ sung hồ sơ' : 'Xem kết quả'}</UIButton></div></div>)}</div>
       </>}
     </div>
   </Modal>;

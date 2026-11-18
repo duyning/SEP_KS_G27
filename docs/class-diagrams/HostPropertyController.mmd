@@ -1,0 +1,160 @@
+classDiagram
+    direction TB
+    class HostPropertyController {
+        <<Controller>>
+        +getProperty()
+        +photo()
+    }
+    class HostPropertyService {
+        <<Service>>
+        +getProperties()
+        +getPhoto()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class PropertyRepository {
+        <<interface>>
+        +findByOwner_UserIdOrderByPropertyIdAsc()
+    }
+    class PropertyRegistrationRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findForReview()
+        +findByUser_UserIdOrderByCreatedAtDesc()
+        +findFirstByUser_UserIdAndStatusOrderByCreatedAtDesc()
+        +countByUser_UserIdAndStatus()
+    }
+    class PropertyDocumentRepository {
+        <<interface>>
+        +getDocumentId()
+        +getDocumentType()
+        +getFileName()
+        +getContentType()
+        +getVerificationStatus()
+        +findByRegistration_RegistrationIdOrderByDocumentIdAsc()
+        +existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull()
+    }
+    class RoomTypeRepository {
+        <<interface>>
+        +findByProperty_Owner_UserId()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCase()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCaseAndRoomTypeIdNot()
+    }
+    class BookingRepository {
+        <<interface>>
+        +existsByRoomType_RoomTypeId()
+        +countByRoomType_Property_PropertyIdAndStatus()
+        +findByRoomType_Property_Owner_UserIdOrderByCreatedAtDesc()
+        +countByRoomType_Property_Owner_UserIdAndStatus()
+        +findTop5ByRoomType_Property_Owner_UserIdOrderByCreatedAtDesc()
+    }
+    class RoomRepository {
+        <<interface>>
+        +findByProperty_Owner_UserIdOrderByRoomNumberAsc()
+        +findByRoomType_RoomTypeIdOrderByRoomNumberAsc()
+        +existsByRoomType_RoomTypeId()
+        +existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot()
+        +countByProperty_PropertyId()
+        +countByProperty_PropertyIdAndStatus()
+        +countByProperty_Owner_UserId()
+    }
+    class Property {
+        <<Entity>>
+        -Integer propertyId
+        -User owner
+        -PropertyRegistration registration
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -String description
+    }
+    class PropertyRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -RegistrationStatus status
+        -User reviewer
+    }
+    class PropertyDocument {
+        <<Entity>>
+        -Integer documentId
+        -PropertyRegistration registration
+        -String documentType
+        -String documentUrl
+        -String verificationStatus
+        -String fileName
+        -String contentType
+        -byte[] fileContent
+    }
+    class RoomType {
+        <<Entity>>
+        -Integer roomTypeId
+        -Property property
+        -String roomType
+        -BigDecimal price
+        -Float areaSqm
+        -BigDecimal servicePrice
+        -String description
+        -Integer capacity
+    }
+    class Booking {
+        <<Entity>>
+        -Integer bookingId
+        -User renter
+        -RoomType roomType
+        -LocalDateTime scheduledDate
+        -BookingStatus status
+        -String note
+        -LocalDateTime createdAt
+    }
+    class Room {
+        <<Entity>>
+        -Integer roomId
+        -Property property
+        -RoomType roomType
+        -String roomNumber
+        -String floor
+        -String status
+        -BigDecimal customPrice
+        -LocalDateTime confirmedAt
+    }
+    class HostPropertyResponse {
+        <<DTO>>
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    HostPropertyController --> HostPropertyService : injected
+    HostPropertyService --> AuthService : injected
+    HostPropertyService --> PropertyRepository : injected
+    HostPropertyService --> PropertyRegistrationRepository : injected
+    HostPropertyService --> PropertyDocumentRepository : injected
+    HostPropertyService --> RoomTypeRepository : injected
+    HostPropertyService --> BookingRepository : injected
+    HostPropertyService --> RoomRepository : injected
+    PropertyRepository --|> JpaRepository
+    PropertyRepository ..> Property : entity - ID Integer
+    PropertyRegistrationRepository --|> JpaRepository
+    PropertyRegistrationRepository ..> PropertyRegistration : entity - ID Integer
+    PropertyDocumentRepository --|> JpaRepository
+    PropertyDocumentRepository ..> PropertyDocument : entity - ID Integer
+    RoomTypeRepository --|> JpaRepository
+    RoomTypeRepository ..> RoomType : entity - ID Integer
+    BookingRepository --|> JpaRepository
+    BookingRepository ..> Booking : entity - ID Integer
+    RoomRepository --|> JpaRepository
+    RoomRepository ..> Room : entity - ID Integer
+    HostPropertyController ..> HostPropertyResponse : DTO

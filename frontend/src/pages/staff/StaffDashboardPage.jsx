@@ -19,7 +19,7 @@ export default function StaffDashboardPage() {
   const queue = data.queue.filter(item => queryFilter === 'ALL' || item.type === queryFilter);
   const metrics = [
     ['Xác minh đang chờ', data.pendingVerifications, 'Cần thẩm định', Building2, 'teal', 'PROPERTY'],
-    ['Tin chờ kiểm duyệt', data.pendingReports, 'Báo cáo vi phạm', ShieldAlert, 'blue', 'REPORT'],
+    ['Báo cáo chờ xử lý', data.pendingReports, 'Tin đăng và dịch vụ', ShieldAlert, 'blue', 'REPORT'],
     ['Đánh giá chờ xác minh', data.pendingFeedback, 'Chưa có quy trình xác minh đánh giá', Star, 'violet', 'FEEDBACK'],
     ['Yêu cầu hỗ trợ', data.pendingSupport, 'Đang cần trợ giúp', MessageSquare, 'amber', 'SUPPORT'],
   ];

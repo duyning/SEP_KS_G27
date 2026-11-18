@@ -5,9 +5,15 @@ import { isVietnamesePhone, validateRegistrationFile } from './property-registra
 
 const basePath = '/api/service-registrations';
 const validRegistration = data => data && Number.isInteger(data.registrationId) && data.registrationId > 0
-  && ['PENDING', 'NEEDS_SUPPLEMENT', 'APPROVED', 'REJECTED'].includes(data.status)
+  && ['PENDING', 'NEEDS_SUPPLEMENT', 'APPROVED', 'REJECTED', 'CANCELLED'].includes(data.status)
   && typeof data.serviceName === 'string' && Array.isArray(data.documents);
 export const serviceRegistrationApi = {
+  cancel: async (id, revision) => {
+    const data = await request('/' + id + '/cancel', { basePath, method: 'POST', body: { revision } });
+    if (!validRegistration(data) || data.registrationId !== id || data.status !== 'CANCELLED' || data.revision !== revision + 1)
+      throw new ApiError('Chưa xác nhận được việc hủy hồ sơ. Vui lòng tải lại danh sách.', 502);
+    return data;
+  },
   services: async signal => {
     const rows = await request('/services', { basePath, signal });
     if (!Array.isArray(rows) || !rows.every(validRegistration)) throw new ApiError('Danh sách dịch vụ không hợp lệ.', 502);
@@ -40,7 +46,7 @@ export const serviceRegistrationApi = {
     documents.forEach(file => body.append('documents', file));
     for (const file of (Array.isArray(image) ? image : image ? [image] : [])) body.append('image', file);
     const data = await request('', { basePath, method: 'POST', body });
-    if (!validRegistration(data) || data.status !== 'PENDING' || !data.documents.length)
+    if (!validRegistration(data) || data.status !== 'PENDING')
       throw new ApiError('Chưa xác nhận được hồ sơ đã lưu. Vui lòng đóng và mở lại để kiểm tra trạng thái trước khi gửi lại.', 502);
     return data;
   },
@@ -78,7 +84,7 @@ export function validateServiceRegistrationFields(form, files, options = {}) {
   if (!isVietnamesePhone(String(form.contactPhone ?? ''))) errors.contactPhone = 'Nhập số di động Việt Nam hợp lệ: 10 số hoặc bắt đầu bằng +84.';
   if (form.contactEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail) || form.contactEmail.length > 255)) errors.contactEmail = 'Email chưa đúng định dạng, ví dụ: ten@example.com (tối đa 255 ký tự).';
   if (options.noteRequired && (String(options.note ?? '').trim().length < 10 || options.note.length > 2000)) errors.note = 'Mô tả nội dung thay đổi từ 10 đến 2000 ký tự.';
-  if (files.length + (options.retainedCount || 0) < 1 || files.length + (options.retainedCount || 0) > 5) errors.documents = 'Hồ sơ cần tổng cộng từ 1 đến 5 tài liệu xác minh.';
+  if (files.length + (options.retainedCount || 0) > 5) errors.documents = 'Hồ sơ có tối đa 5 tài liệu xác minh.';
   for (const file of files) { const message = validateRegistrationFile(file, true); if (message) { errors.documents = file.name + ': ' + message; break; } }
   return errors;
 }

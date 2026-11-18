@@ -36,8 +36,10 @@ public class PublicServiceController {
         return ("FROM".equals(row.getPricingType()) ? "Từ " : "") + format.format(row.getPrice()) + " VNĐ";
     }
     private Listing dto(org.hlrcs.entity.Service row) {
+        String providerName = row.getRegistration().getApplicantName();
+        if (providerName == null || providerName.isBlank()) providerName = row.getProvider().getFullName();
         return new Listing(row.getServiceId(), row.getServiceName(), row.getCategory().getCategoryId(), row.getCategory().getName(),
-                row.getDescription(), row.getPricingType(), row.getPrice(), row.getServiceArea(), row.getContactInfo(), row.getContactEmail(), row.getProvider().getFullName(),
+                row.getDescription(), row.getPricingType(), row.getPrice(), row.getServiceArea(), row.getContactInfo(), row.getContactEmail(), providerName,
                 row.getProvider().getUserId(), pricingLabel(row), row.getStatus(), true,
                 row.getRegistration().getImageContent() == null ? null : "/api/services/" + row.getServiceId() + "/image?v=" + row.getRevision(),
                 java.util.stream.IntStream.range(0, row.getRegistration().imageCount()).mapToObj(i -> "/api/services/" + row.getServiceId() + "/image?index=" + i + "&v=" + row.getRevision()).toList(), row.getCustomServiceAreas(), row.getPriceUnit());

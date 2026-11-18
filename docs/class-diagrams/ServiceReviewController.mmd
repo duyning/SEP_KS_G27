@@ -1,0 +1,181 @@
+classDiagram
+    direction TB
+    class ServiceReviewController {
+        <<Controller>>
+        +supplement()
+        +list()
+        +detail()
+        +review()
+        +file()
+    }
+    class ServiceReviewService {
+        <<Service>>
+        +list()
+        +detail()
+        +file()
+        +review()
+        +requestSupplement()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class ServiceRegistrationRepository {
+        <<interface>>
+        +existsByTargetService_ServiceIdAndStatusIn()
+        +existsByUser_UserIdAndServiceNameIgnoreCaseAndStatusIn()
+        +findForReview()
+        +findAllByOrderByRegistrationIdDesc()
+        +findByAssignedStaff_UserIdOrderByRegistrationIdDesc()
+        +findByUser_UserIdOrderByRegistrationIdDesc()
+        +existsByUser_UserIdAndStatusIn()
+    }
+    class ServiceDocumentRepository {
+        <<interface>>
+        +findByRegistration_RegistrationIdOrderByDocumentIdAsc()
+        +findByDocumentIdAndRegistration_User_UserId()
+    }
+    class ServiceRepository {
+        <<interface>>
+        +findByProvider_UserIdOrderByServiceIdDesc()
+        +existsByProvider_UserIdAndServiceNameIgnoreCaseAndStatusNot()
+        +existsByRegistration_RegistrationId()
+        +findByStatusOrderByServiceIdDesc()
+        +findByStatusAndCategory_CategoryIdOrderByServiceIdDesc()
+        +findByRegistration_RegistrationId()
+    }
+    class UserCapabilityRepository {
+        <<interface>>
+        +existsByUser_UserIdAndCapability_CodeAndStatus()
+        +findByUser_UserId()
+        +findByUser_UserIdAndStatus()
+    }
+    class CapabilityRepository {
+        <<interface>>
+        +findByCode()
+        +existsByCode()
+    }
+    class ModerationLogRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findByTargetTypeAndTargetIdOrderByCreatedAtDesc()
+    }
+    class ServiceRegistrationService {
+        <<Service>>
+        +current()
+        +mine()
+        +myServices()
+        +canManage()
+        +cancel()
+        +change()
+        +image()
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class ServiceRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -ServiceCategory category
+        -String serviceName
+        -String contactInfo
+        -String applicantName
+        -String contactEmail
+        -String pricingType
+    }
+    class ServiceDocument {
+        <<Entity>>
+        -Integer documentId
+        -ServiceRegistration registration
+        -String documentName
+        -String documentUrl
+        -String verificationStatus
+        -String contentType
+        -byte[] fileContent
+    }
+    class Service {
+        <<Entity>>
+        -Integer serviceId
+        -User provider
+        -ServiceCategory category
+        -ServiceRegistration registration
+        -String serviceName
+        -String contactInfo
+        -String contactEmail
+        -String pricingType
+    }
+    class UserCapability {
+        <<Entity>>
+        -Integer userCapabilityId
+        -User user
+        -Capability capability
+        -String status
+        -LocalDateTime grantedAt
+    }
+    class Capability {
+        <<Entity>>
+        -Integer capabilityId
+        -String name
+        -String code
+    }
+    class ModerationLog {
+        <<Entity>>
+        -Integer logId
+        -User staff
+        -String targetType
+        -Integer targetId
+        -String action
+        -String note
+        -LocalDateTime createdAt
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    ServiceReviewController --> ServiceReviewService : injected
+    ServiceReviewService --> AuthService : injected
+    ServiceReviewService --> UserRepository : injected
+    ServiceReviewService --> ServiceRegistrationRepository : injected
+    ServiceReviewService --> ServiceDocumentRepository : injected
+    ServiceReviewService --> ServiceRepository : injected
+    ServiceReviewService --> UserCapabilityRepository : injected
+    ServiceReviewService --> CapabilityRepository : injected
+    ServiceReviewService --> ModerationLogRepository : injected
+    ServiceReviewService --> ServiceRegistrationService : injected
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    ServiceRegistrationRepository --|> JpaRepository
+    ServiceRegistrationRepository ..> ServiceRegistration : entity - ID Integer
+    ServiceDocumentRepository --|> JpaRepository
+    ServiceDocumentRepository ..> ServiceDocument : entity - ID Integer
+    ServiceRepository --|> JpaRepository
+    ServiceRepository ..> Service : entity - ID Integer
+    UserCapabilityRepository --|> JpaRepository
+    UserCapabilityRepository ..> UserCapability : entity - ID Integer
+    CapabilityRepository --|> JpaRepository
+    CapabilityRepository ..> Capability : entity - ID Integer
+    ModerationLogRepository --|> JpaRepository
+    ModerationLogRepository ..> ModerationLog : entity - ID Integer

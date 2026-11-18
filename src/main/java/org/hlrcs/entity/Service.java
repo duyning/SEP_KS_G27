@@ -63,6 +63,10 @@ public class Service {
     @Column(name = "status")
     private String status;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean moderationHidden = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

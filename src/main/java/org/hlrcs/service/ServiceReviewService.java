@@ -92,7 +92,7 @@ public class ServiceReviewService {
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id);
         boolean approveCapability = capabilityDecision.equals("APPROVE");
         if (approveCapability && target == null) {
-            if (!"DELETE".equals(row.getOperation()) && (files.isEmpty() || files.stream().anyMatch(f -> f.getFileContent() == null || f.getFileContent().length == 0)))
+            if (!"DELETE".equals(row.getOperation()) && files.stream().anyMatch(f -> f.getFileContent() == null || f.getFileContent().length == 0))
                 throw new BadRequestException("Hồ sơ thiếu tài liệu xác minh, chưa thể cấp capability.");
             var type = capabilityTypes.findByCode("MANAGE_SERVICE").orElseThrow(() -> new BadRequestException("Chưa cấu hình capability MANAGE_SERVICE."));
             var existing = capabilities.findByUser_UserId(owner.getUserId()).stream().filter(c -> c.getCapability().getCode().equals("MANAGE_SERVICE")).findFirst();

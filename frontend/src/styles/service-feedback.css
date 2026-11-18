@@ -1,0 +1,43 @@
+.svc-feedback,.svc-complaints,.svc-complaint-detail{min-width:0;padding:24px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;margin-top:24px;overflow-wrap:anywhere}
+.svc-feedback h2,.svc-feedback h3,.svc-complaints h3{margin:0}
+.svc-feedback-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.svc-rating-summary{color:#0f766e;font-weight:700}
+.svc-rating-filters{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.svc-rating-filters button[aria-pressed=true]{background:#0f766e;color:white;border-color:#0f766e}
+.svc-rating-card{border-top:1px solid #e2e8f0;padding:24px 0}
+.svc-rating-card time,.svc-complaint-event small{color:#64748b;font-size:13px}
+.svc-rating-stars{display:inline-flex;align-items:center;gap:3px;color:#b77907}
+.svc-rating-stars strong{margin-left:8px;color:#334155;font-size:14px}
+.svc-feedback-content{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.svc-rating-reply{background:#f0fdfa;border-left:3px solid #0f766e;padding:16px;margin-top:16px;border-radius:0 8px 8px 0}
+.svc-feedback-form{display:grid;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;min-width:0}
+.svc-feedback-form p{margin:0;line-height:1.6}
+.svc-feedback-form textarea,.svc-feedback-form select,.svc-complaints select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:8px;padding:12px;background:#fff;font:inherit}
+.svc-feedback-form textarea{resize:vertical}
+.svc-feedback-form fieldset{border:0;margin:0;padding:0;min-width:0}
+.svc-feedback-form legend{font-weight:600;margin-bottom:8px}
+.svc-rating-options{display:flex;gap:8px;flex-wrap:wrap}
+.svc-rating-options label{display:flex;align-items:center;gap:6px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer}
+.svc-rating-options label:has(input:checked){border-color:#0f766e;background:#f0fdfa;color:#0f766e}
+.svc-feedback-images{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.svc-feedback-images>a,.svc-feedback-images>div{display:flex;flex-direction:column;gap:6px;width:110px;max-width:100%}
+.svc-feedback-images img{display:block;width:110px;height:100px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0}
+.svc-feedback-images button{font-size:12px}
+.svc-feedback-form input[type=file]{max-width:100%;width:100%}
+.svc-feedback-success{background:#f0fdfa;color:#115e59;padding:14px;border-radius:8px}
+.svc-complaint-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid #e2e8f0}
+.svc-complaint-row>div{min-width:0}.svc-complaint-row button{flex-shrink:0}
+.svc-complaint-status{display:inline-block;border-radius:20px;padding:4px 10px;margin:8px;font-size:13px;background:#f1f5f9;color:#334155}
+.svc-complaint-status.status-needs_explanation{background:#fff7ed;color:#9a3412}
+.svc-complaint-status.status-removed{background:#fef2f2;color:#991b1b}
+.svc-complaint-status.status-explained{background:#f0fdfa;color:#115e59}
+.svc-complaint-event{border-left:2px solid #cbd5e1;padding:12px 16px;margin:16px 0;background:#f8fafc}
+.svc-complaint-event small{display:block;margin-top:6px}
+.svc-remove-confirm{display:flex;align-items:flex-start;gap:10px;line-height:1.6;color:#991b1b}
+.svc-remove-confirm input{margin-top:6px;flex:none}
+.svc-detail-info .ui-button.svc-report-action{--report-text:#b42318;--report-border:#f2a59d;--report-bg:#fff1f0;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;margin-top:12px;padding:12px 16px;border:1.5px solid var(--report-border);border-radius:10px;background:var(--report-bg);color:var(--report-text);font-weight:700;box-shadow:0 2px 6px #b423180c;transition:background .15s ease,border-color .15s ease}
+.svc-detail-info .ui-button.svc-report-action:hover{background:#ffe3df;border-color:var(--report-text)}
+.svc-detail-info .ui-button.svc-report-action:focus-visible{outline:3px solid var(--report-border);outline-offset:3px}
+.svc-report-action svg{flex:none}
+@media(prefers-reduced-motion:reduce){.svc-detail-info .ui-button.svc-report-action{transition:none}}
+@media(max-width:600px){.svc-feedback,.svc-complaints,.svc-complaint-detail{padding:16px}.svc-complaint-row{align-items:flex-start;flex-direction:column}.svc-rating-options label{padding:9px}.svc-feedback-heading{gap:10px}}

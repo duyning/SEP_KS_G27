@@ -470,7 +470,7 @@ Ba PostDetail dùng `postId` và quan hệ Post @MapsId, không tạo một ID d
 | [MediaType](../src/main/java/org/hlrcs/entity/enums/MediaType.java) | `IMAGE`, `VIDEO` |
 | [PostStatus](../src/main/java/org/hlrcs/entity/enums/PostStatus.java) | `PENDING`, `APPROVED`, `REJECTED` |
 | [PostType](../src/main/java/org/hlrcs/entity/enums/PostType.java) | `ROOMMATE`, `PASS_ROOM`, `PASS_ITEM` |
-| [RegistrationStatus](../src/main/java/org/hlrcs/entity/enums/RegistrationStatus.java) | `PENDING`, `NEEDS_SUPPLEMENT`, `APPROVED`, `REJECTED` |
+| [RegistrationStatus](../src/main/java/org/hlrcs/entity/enums/RegistrationStatus.java) | `PENDING`, `NEEDS_SUPPLEMENT`, `APPROVED`, `REJECTED`, `CANCELLED` (2026-11-14: chủ hồ sơ dịch vụ hủy khi còn PENDING) |
 | [ReportStatus](../src/main/java/org/hlrcs/entity/enums/ReportStatus.java) | `PENDING`, `RESOLVED`, `DISMISSED` |
 | [ReportTargetType](../src/main/java/org/hlrcs/entity/enums/ReportTargetType.java) | `POST`, `PROPERTY`, `SERVICE`, `USER` |
 | [RoommateType](../src/main/java/org/hlrcs/entity/enums/RoommateType.java) | `HAS_ROOM`, `NO_ROOM` |
@@ -504,3 +504,11 @@ So sánh tên bảng/cột khai báo trong entity với [SQL tham khảo](../sql
 ## ServiceRequest → service_requests (2026-11-14)
 
 New entity: Integer requestId (identity PK), required ManyToOne Service service and User customer; contactName (100), contactPhone (20), description (2000), optional address (500); Instant scheduledAt/createdAt (required), optional handledAt; String status (PENDING/ACCEPTED/REJECTED, 20); optional ManyToOne User handledBy and responseReason (2000); int revision (@Version). No cascade deletion is configured. Instant timestamps represent UTC. See SERVICE_REQUESTS.md and the dated SQL migration. This adds an entity beyond the older inventory above.
+
+## Đánh giá và báo cáo dịch vụ (2026-11-18)
+
+- Service thêm moderationHidden boolean NOT NULL default false, độc lập status; mọi public eligibility kiểm tra cờ này.
+- ServiceRating: ratingId, service (ManyToOne), author (ManyToOne User), stars 0–5, content, createdAt, reply, repliedAt, images (ElementCollection ServiceImage); unique service_id/author_id.
+- ServiceComplaint: complaintId, service (ManyToOne), reporter (ManyToOne User), content, status (PENDING/NEEDS_EXPLANATION/EXPLAINED/DISMISSED/REMOVED), createdAt, revision, images.
+- ServiceComplaintEvent: eventId, complaint (ManyToOne), actor (ManyToOne User), action (REQUEST_EXPLANATION/EXPLAINED/DISMISS/REMOVE), content, createdAt, images.
+- Collection tables: service_rating_images, service_complaint_images, service_complaint_event_images; image_position giữ thứ tự, image_content LONGBLOB và content_type. Instant dùng cho thời gian; revision tăng thủ công trong transaction khóa báo cáo. Xem [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
