@@ -1,5 +1,10 @@
 # HL-RCS — Entity catalog
 
+Bổ sung 2026-11-19: `CollectedPost` → `collected_posts` và element collection
+`collected_post_images`; quan hệ người thu thập/người đăng tới `User`. Chi tiết
+fields, index, FK và sơ đồ bổ sung trong [COLLECTED_POSTS.md](COLLECTED_POSTS.md).
+Số lượng entity ở snapshot bên dưới chưa tính module này.
+
 Đối chiếu JPA source ngày **2026-11-05**, commit `350dc13`.
 
 Có **29 @Entity**, **1 @Embeddable** (`RoomTypeAmenityId`) và **11 enums**.

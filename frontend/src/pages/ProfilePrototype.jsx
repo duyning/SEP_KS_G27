@@ -48,7 +48,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">0</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
-          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
+          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li><li><Link className="nav-item" to="/collected-posts">Bài tổng hợp</Link></li>
           <li><Link className="nav-item active" to="/profile">Hồ sơ cá nhân</Link></li><li className="pm-menu-account">{account}</li>
         </ul>
 

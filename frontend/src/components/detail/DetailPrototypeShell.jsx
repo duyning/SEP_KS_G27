@@ -52,6 +52,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/bookings">Lịch xem phòng</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
+          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/collected-posts">Bài tổng hợp</NavLink></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
           {menuExtras}
           {user && user.role !== 'USER' && <li className="shell-mobile-dashboard"><Link className="nav-item" to={landingFor(user)}>Bảng điều khiển</Link></li>}

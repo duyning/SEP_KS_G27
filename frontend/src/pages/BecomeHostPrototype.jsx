@@ -389,6 +389,7 @@ export default function BecomeHostPrototype({
                   Cộng đồng
                 </Link>
               </li>
+              <li><Link className="nav-item" to="/collected-posts">Bài tổng hợp</Link></li>
               <li>
                 <Link className="nav-item" to="/profile">
                   Hồ sơ cá nhân
