@@ -20,7 +20,6 @@ public class PublicPropertyService {
     // Campus center from OpenStreetMap way 800878327 (FPT University, Hòa Lạc).
     private static final double FPT_LATITUDE = 21.01354;
     private static final double FPT_LONGITUDE = 105.52522;
-    private static final double EARTH_RADIUS_METERS = 6_371_000;
 
     private final PropertyRepository properties;
     private final PropertyDocumentRepository documents;
@@ -29,7 +28,8 @@ public class PublicPropertyService {
     private final RoomTypeImageRepository images;
     private final ObjectMapper json;
     public record Type(Integer roomTypeId,String name,BigDecimal price,Float area,Integer capacity,
-                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms) {}
+                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms,
+                       java.time.Instant availabilityConfirmedAt,String availabilityConfirmationStatus,boolean availabilityStale) {}
     public record Listing(Integer propertyId,String name,String address,String commune,String propertyType,
                           String description,List<String> photos,List<String> amenities,
                           List<String> rules,List<Type> roomTypes,BigDecimal minPrice,int totalRooms,int vacantRooms,
@@ -42,7 +42,8 @@ public class PublicPropertyService {
         catch(Exception ignored){return null;}
     }
     private boolean published(Property property) {
-        if(!"ACTIVE".equals(property.getStatus())||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
+        if(!"ACTIVE".equals(property.getStatus())||property.isReverificationRequired()
+                ||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
         var form=submission(property);
         return form!=null&&Boolean.TRUE.equals(form.termsAccepted());
     }
@@ -61,7 +62,8 @@ public class PublicPropertyService {
             for(var type:types.findByProperty_PropertyId(property.getPropertyId())) {
                 var actual=rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(type.getRoomTypeId());
                 int vacant=(int)actual.stream().filter(room->"VACANT".equals(room.getStatus())).count();
-                values.add(new Type(type.getRoomTypeId(),type.getRoomType(),type.getPrice(),type.getAreaSqm(),type.getCapacity(),type.getElectricityPrice(),type.getWaterPrice(),amenities(type),actual.size(),vacant));
+                var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
+                values.add(new Type(type.getRoomTypeId(),type.getRoomType(),type.getPrice(),type.getAreaSqm(),type.getCapacity(),type.getElectricityPrice(),type.getWaterPrice(),amenities(type),actual.size(),vacant,type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness)));
                 actual.stream().filter(room->"VACANT".equals(room.getStatus())).map(room->room.getCustomPrice()!=null?room.getCustomPrice():type.getPrice()).filter(Objects::nonNull).forEach(prices::add);
                 images.findByRoomType_RoomTypeIdOrderByImageIdAsc(type.getRoomTypeId()).forEach(image->photos.add("/api/public/properties/room-images/"+image.getImageId()));
             }
@@ -80,12 +82,7 @@ public class PublicPropertyService {
             if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
                     || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
 
-            double latitudeDelta = Math.toRadians(latitude - FPT_LATITUDE);
-            double longitudeDelta = Math.toRadians(longitude - FPT_LONGITUDE);
-            double haversine = Math.pow(Math.sin(latitudeDelta / 2), 2)
-                    + Math.cos(Math.toRadians(latitude)) * Math.cos(Math.toRadians(FPT_LATITUDE))
-                    * Math.pow(Math.sin(longitudeDelta / 2), 2);
-            return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, haversine)));
+            return new SearchOrigin(FPT_LATITUDE, FPT_LONGITUDE).distanceKm(latitude, longitude) * 1000;
         } catch (NumberFormatException ignored) {
             return null;
         }

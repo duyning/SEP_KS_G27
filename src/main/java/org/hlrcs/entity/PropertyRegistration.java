@@ -46,6 +46,8 @@ public class PropertyRegistration {
     private Integer targetPropertyId;
     private Integer baseRegistrationId;
     @Column(columnDefinition = "TEXT")
+    private String reverificationReasonsJson;
+    @Column(columnDefinition = "TEXT")
     private String requestedFieldsJson;
     @Column(columnDefinition = "TEXT")
     private String fieldNotesJson;

@@ -50,7 +50,7 @@ export function computePropertyCardStats(record) {
     canManageRooms,
     needsSupplement,
     shortAddress: formatShortAddress(record),
-    statusMeta: PROPERTY_STATUS_META[record?.displayStatus] || {
+    statusMeta: record?.reverificationRequired ? {label:'Chờ tái xác minh',detailLabel:'Tạm ẩn để tái xác minh',tone:'warning'} : PROPERTY_STATUS_META[record?.displayStatus] || {
       label: record?.displayStatus || 'Chưa xác định',
       detailLabel: record?.displayStatus || 'Chưa xác định',
       tone: 'neutral',

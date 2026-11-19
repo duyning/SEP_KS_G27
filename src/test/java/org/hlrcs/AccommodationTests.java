@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.hlrcs.service.GeminiAccommodationClient;
+import org.hlrcs.service.SearchOrigin;
+import org.hlrcs.exception.AppException;
+import org.springframework.http.HttpStatus;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -18,9 +23,14 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.datasource.url=jdbc:h2:mem:hlrcs-favorites-isolated;MODE=MySQL;DB_CLOSE_DELAY=-1",
@@ -39,6 +49,7 @@ class AccommodationTests {
     @Autowired FeedbackRepository feedbacks;
     @Autowired PropertyDocumentRepository documents;
     @Autowired JwtTokenProvider jwt;
+    @MockitoBean GeminiAccommodationClient gemini;
     private final HttpClient client = HttpClient.newHttpClient();
     private String prefix;
     private User host;
@@ -77,6 +88,94 @@ class AccommodationTests {
     }
     private String detailUrl(RoomType type) {
         return "/api/properties/" + type.getProperty().getPropertyId() + "/room-types/" + type.getRoomTypeId();
+    }
+
+    @Test void radiusAndNearestUseApprovedCoordinatesBeforeCountingAndPaging() throws Exception {
+        var outside = located("21.04354");
+        var edge = located("21.022533216059187");
+        var origin = located("21.01354");
+        var tie = type(origin.getProperty(), 2300000);
+        room(tie, "tie-vacant", "VACANT");
+        var legacy = type(property("ACTIVE", RegistrationStatus.APPROVED), 2200000);
+        var hidden = located("21.01354");
+        hidden.getProperty().setReverificationRequired(true);
+        properties.save(hidden.getProperty());
+        var point = "&originLat=21.01354&originLng=105.52522";
+        assertEquals(1.0, new SearchOrigin(21.01354, 105.52522).distanceKm(21.022533216059187, 105.52522), 1e-10);
+
+        var query = point + "&radiusKm=1&sort=nearest&size=1&availableOnly=true&price=15-25&location=tan-xa";
+        var first = list(query);
+        assertEquals(3, first.path("totalElements").asInt());
+        assertEquals(3, first.path("totalPages").asInt());
+        assertEquals(origin.getRoomTypeId(), first.path("items").get(0).path("roomTypeId").asInt());
+        assertEquals(0, first.path("items").get(0).path("distanceKm").asDouble());
+        assertEquals(tie.getRoomTypeId(), list(query + "&page=1").path("items").get(0).path("roomTypeId").asInt());
+        assertEquals(edge.getRoomTypeId(), list(query + "&page=2").path("items").get(0).path("roomTypeId").asInt());
+        var unsorted = list(point + "&radiusKm=1&sort=price-desc&size=1");
+        assertEquals(3, unsorted.path("totalElements").asInt());
+        var all = list(point + "&sort=nearest").path("items");
+        assertEquals(outside.getRoomTypeId(), all.get(3).path("roomTypeId").asInt());
+        assertEquals(legacy.getRoomTypeId(), all.get(4).path("roomTypeId").asInt());
+        assertTrue(all.get(4).path("distanceKm").isNull());
+        var summary = get(detailUrl(edge) + "/details?" + point.substring(1), null);
+        assertEquals(200, summary.statusCode());
+        assertEquals(all.get(2).path("distanceKm"), json.readTree(summary.body()).path("data").path("summary").path("distanceKm"));
+        assertEquals(404, get(detailUrl(hidden), null).statusCode());
+        for (var invalid : List.of("&sort=nearest", "&radiusKm=1", "&originLat=0", "&originLat=91&originLng=0",
+                "&originLat=0&originLng=181", "&originLat=NaN&originLng=0", point + "&radiusKm=0", point + "&radiusKm=51")) {
+            assertEquals(400, get(listUrl(invalid), null).statusCode(), invalid);
+        }
+    }
+
+    private RoomType located(String latitude) {
+        var property = property("ACTIVE", RegistrationStatus.APPROVED);
+        var registration = property.getRegistration();
+        registration.setRegistrationDetails(json.writeValueAsString(Map.of("latitude", latitude, "longitude", "105.52522")));
+        registrations.save(registration);
+        var type = type(property, 2200000);
+        room(type, "vacant", "VACANT");
+        return type;
+    }
+
+    @Test void recommendationsClarifyAndReturnOnlyCurrentEligibleRooms() throws Exception {
+        var eligible = located("21.01354");
+        var closed = type(property("ACTIVE", RegistrationStatus.APPROVED), 2345678);
+        room(closed, "occupied", "OCCUPIED");
+        var hidden = type(property("HIDDEN", RegistrationStatus.APPROVED), 2345678);
+        room(hidden, "hidden", "VACANT");
+        eligible.setPrice(BigDecimal.valueOf(2345678));
+        eligible.setAvailabilityConfirmedAt(Instant.now().minus(8, ChronoUnit.DAYS));
+        types.save(eligible);
+        var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).get(0);
+        var member = users.save(User.builder().email(prefix + "-ai@test.local").passwordHash("unused")
+                .role(UserRole.USER).status(UserStatus.ACTIVE).build());
+        var token = jwt.generateTokenFromUser(member);
+        assertEquals(401, recommend(null).statusCode());
+        when(gemini.generate(anyString(), any(), any())).thenReturn(json.readTree("{\"question\":\"Bạn có ngân sách bao nhiêu?\"}"));
+        assertEquals("CLARIFY", json.readTree(recommend(token).body()).path("data").path("status").asText());
+        var criteria = json.readTree("{\"question\":\"\",\"minBudget\":2345678,\"maxBudget\":2345678,\"location\":\"tan-xa\",\"amenities\":[]}");
+        when(gemini.generate(anyString(), any(), any())).thenReturn(criteria,
+                json.readTree(json.writeValueAsString(Map.of("ids", List.of(hidden.getRoomTypeId(), closed.getRoomTypeId(), eligible.getRoomTypeId(), eligible.getRoomTypeId())))));
+        var response = recommend(token);
+        assertEquals(200, response.statusCode(), response.body());
+        var items = json.readTree(response.body()).path("data").path("items");
+        assertEquals(1, items.size());
+        assertEquals(eligible.getRoomTypeId(), items.get(0).path("roomTypeId").asInt());
+        assertTrue(items.get(0).path("availabilityStale").asBoolean());
+        unit.setStatus("OCCUPIED");
+        rooms.save(unit);
+        when(gemini.generate(anyString(), any(), any())).thenReturn(criteria);
+        assertEquals("EMPTY", json.readTree(recommend(token).body()).path("data").path("status").asText());
+        when(gemini.generate(anyString(), any(), any())).thenThrow(new AppException("AI phản hồi quá chậm. Vui lòng thử lại.", HttpStatus.GATEWAY_TIMEOUT));
+        assertEquals(504, recommend(token).statusCode());
+    }
+
+    private HttpResponse<String> recommend(String token) throws Exception {
+        var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + environment.getProperty("local.server.port")
+                + "/api/properties/recommendations")).header("Content-Type", "application/json");
+        if (token != null) request.header("Authorization", "Bearer " + token);
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofString("{\"description\":\"Tìm phòng ở Tân Xã\"}"))
+                .build(), HttpResponse.BodyHandlers.ofString());
     }
 
     @Test void mapCoordinatesComeFromApprovedProfileAndRemainOptionalForLegacyData() throws Exception {

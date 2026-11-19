@@ -1,4 +1,16 @@
 /* Search layout refinements and accessible React controls. */
+.prototype-search .search-discovery-tools {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px;margin-bottom:6px;--discovery-surface:#f0fdfa;--discovery-border:#99d5ce;--discovery-accent:#0f766e;--discovery-icon:#ccfbf1;--discovery-copy:#475569;--discovery-heading:#0f172a}
+.prototype-search .search-discovery-card {display:flex;align-items:flex-start;gap:14px;width:100%;min-width:0;padding:18px;border:1px solid var(--discovery-border);border-radius:12px;background:var(--discovery-surface);color:var(--discovery-heading);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.prototype-search .search-discovery-ai {--discovery-surface:#f5f3ff;--discovery-border:#c4b5fd;--discovery-accent:#6d28d9;--discovery-icon:#ede9fe}
+.prototype-search .search-discovery-card:hover {border-color:var(--discovery-accent);box-shadow:0 2px 8px #0f172a0d}
+.prototype-search .search-discovery-card:focus-visible {outline:3px solid var(--discovery-accent);outline-offset:3px}
+.prototype-search .search-discovery-icon {display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border-radius:10px;background:var(--discovery-icon);color:var(--discovery-accent)}
+.prototype-search .search-discovery-copy {display:grid;gap:7px;min-width:0}
+.prototype-search .search-discovery-copy strong {font-size:1rem;line-height:1.5;font-weight:750}
+.prototype-search .search-discovery-copy>span {font-size:.875rem;line-height:1.65;color:var(--discovery-copy)}
+.prototype-search .search-discovery-copy .search-discovery-action {display:flex;align-items:center;gap:6px;margin-top:3px;font-weight:700;color:var(--discovery-accent)}
+@media(max-width:640px) {.prototype-search .search-discovery-tools {grid-template-columns:1fr}.prototype-search .search-discovery-card {padding:16px;gap:12px}}
+@media(prefers-reduced-motion:reduce) {.prototype-search .search-discovery-card {transition:none}}
 .prototype-search {min-width:0;overflow-wrap:anywhere;background:#fff;--search-action:#0f766e}
 .prototype-search main {display:block;min-width:0}
 .prototype-search .search-header-section {padding:20px 0 12px}

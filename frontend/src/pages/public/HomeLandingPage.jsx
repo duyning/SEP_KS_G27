@@ -1,3 +1,4 @@
+import AvailabilityNotice from '../../components/AvailabilityNotice.jsx';
 import {useFavoriteActions} from '../../context/FavoritesContext.jsx';
 import FavoriteNotice from '../../components/FavoriteNotice.jsx';
 import {useEffect, useMemo, useRef, useState} from 'react';
@@ -54,6 +55,7 @@ function PropertyCard({property, saved, onSave,saveBusy}) {
       <div className="room-location"><MapPin size={14}/><span>{property.address || property.commune || 'Chưa cập nhật địa chỉ'}</span></div>
       <h3 className="room-title" title={property.name}>{detailUrl?<Link className="home-title-button" to={detailUrl}>{property.name}</Link>:<span className="home-title-button" title={unavailable}>{property.name}</span>}</h3>
       <div className="room-amenities">{type?.area!=null&&<span className="amenity-pill">📐 {type.area}m²</span>}{tags.slice(0,3).map(key=><span className="amenity-pill" key={key}>{publicAmenityLabel(key)}</span>)}{tags.length>3&&<span className="amenity-pill">+{tags.length-3}</span>}</div>
+      <AvailabilityNotice value={type} label={type?.name}/>
       <div className="room-price-row"><div><span className="price-main">{price==null?'Đang cập nhật':money(price)}</span>{price!=null&&<span className="price-unit">/tháng</span>}</div><div className="utility-rates">⚡ {type?.electricityPrice!=null?`${money(type.electricityPrice)}/kWh`:'Chưa cập nhật'}<br/>💧 {type?.waterPrice!=null?money(type.waterPrice):'Chưa cập nhật'}</div></div>
       <div className="room-actions">{detailUrl?<Link className="btn-card-detail" to={detailUrl}>Chi tiết phòng</Link>:<button type="button" className="btn-card-detail" disabled title={unavailable}>Chi tiết phòng</button>}{contactUrl?<Link className="btn-card-contact" to={contactUrl} title="Xem số điện thoại và Zalo tại trang chi tiết"><Phone size={14}/><span>Gọi chủ trọ</span></Link>:<button type="button" className="btn-card-contact" disabled title={unavailable}><Phone size={14}/><span>Gọi chủ trọ</span></button>}</div>
     </div>

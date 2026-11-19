@@ -16,6 +16,7 @@ import org.hlrcs.repository.PropertyDocumentRepository;
 import org.hlrcs.repository.PropertyRepository;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -44,8 +45,69 @@ public class AccommodationService {
             "khep-kin", "khép kín", "gac-lung", "gác", "chung-cu-mini", "chung cư mini");
 
     public AccommodationPage list(int page, int size, String q, String location, String price, String sort, String type,
-                                  String amenities, boolean availableOnly) {
+                                  String amenities, boolean availableOnly, SearchOrigin origin, Double radiusKm) {
         if (page < 0 || size < 1 || size > 50) throw new BadRequestException("Trang phải từ 0; kích thước trang từ 1 đến 50.");
+        var filter = searchFilters(q, location, price, type, amenities, availableOnly);
+        if (radiusKm != null) {
+            // Coordinates live in the approved registration JSON. Calculate each public property once.
+            var included = properties.findPublicProfiles().stream().filter(profile -> {
+                var distance = distance(origin, publishedCoordinates(profile.getDetails()));
+                return distance != null && distance <= radiusKm + 1e-9;
+            }).map(PropertyRepository.PublicProfile::getPropertyId).toList();
+            filter = filter.and((root, query, cb) -> included.isEmpty() ? cb.disjunction()
+                    : root.get("property").get("propertyId").in(included));
+        }
+        if ("nearest".equals(sort)) {
+            if (origin == null) throw new BadRequestException("Cần chọn điểm gốc để sắp xếp gần nhất.");
+            var distances = new HashMap<Integer, Double>();
+            var matches = roomTypes.findAll(filter, Pageable.unpaged()).getContent();
+            var ordered = matches.stream().sorted(Comparator
+                    .comparing((RoomType room) -> {
+                        var property = room.getProperty();
+                        return distances.computeIfAbsent(property.getPropertyId(), id -> Optional
+                                .ofNullable(distance(origin, publishedCoordinates(property.getRegistration().getRegistrationDetails())))
+                                .orElse(Double.POSITIVE_INFINITY));
+                    }).thenComparing(RoomType::getRoomTypeId)).toList();
+            int start = (int) Math.min((long) page * size, ordered.size());
+            int end = start + Math.min(size, ordered.size() - start);
+            int totalPages = (int) ((ordered.size() + (long) size - 1) / size);
+            return new AccommodationPage(summaries(ordered.subList(start, end), origin), page, size, ordered.size(), totalPages);
+        }
+        if ("rating-desc".equals(sort)) filter = filter.and((root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                var rating = query.subquery(Double.class);
+                var review = rating.from(org.hlrcs.entity.Feedback.class);
+                rating.select(cb.avg(review.get("rating"))).where(
+                        cb.equal(review.get("property"),root.get("property")),
+                        cb.equal(review.get("user").get("status"),org.hlrcs.entity.enums.UserStatus.ACTIVE),
+                        cb.between(review.get("rating"),1,5));
+                query.orderBy(cb.desc(cb.coalesce(rating,0.0)),cb.desc(root.get("roomTypeId")));
+            }
+            return cb.conjunction();
+        });
+        Sort ordering = switch (sort) {
+            case "recommended", "newest" -> Sort.by(Sort.Direction.DESC, "roomTypeId");
+            case "price-asc" -> Sort.by("price").and(Sort.by("roomTypeId"));
+            case "price-desc" -> Sort.by(Sort.Direction.DESC, "price").and(Sort.by("roomTypeId"));
+            case "area-desc" -> Sort.by(Sort.Direction.DESC, "areaSqm").and(Sort.by("roomTypeId"));
+            case "rating-desc" -> Sort.unsorted();
+            default -> throw new BadRequestException("Cách sắp xếp không hợp lệ.");
+        };
+        var result = roomTypes.findAll(filter, PageRequest.of(page, size, ordering));
+        return new AccommodationPage(summaries(result.getContent(), origin), result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages());
+    }
+
+    List<AccommodationSummary> recommendationCandidates(String location, BigDecimal minimum, BigDecimal maximum,
+                                                         String amenities, int limit) {
+        var filter = searchFilters("", location, "all", "all", amenities, true);
+        if (minimum != null) filter = filter.and((root, query, cb) -> cb.ge(root.get("price"), minimum));
+        if (maximum != null) filter = filter.and((root, query, cb) -> cb.le(root.get("price"), maximum));
+        return summaries(roomTypes.findAll(filter, PageRequest.of(0, limit, Sort.by("price", "roomTypeId"))).getContent());
+    }
+
+    private Specification<RoomType> searchFilters(String q, String location, String price, String type,
+                                                   String amenities, boolean availableOnly) {
         if (q.length() > 200) throw new BadRequestException("Từ khóa tối đa 200 ký tự.");
         Specification<RoomType> filter = PublicAccommodationPolicy.visible();
         if (!q.isBlank()) filter = filter.and((root, query, cb) -> {
@@ -74,32 +136,11 @@ public class AccommodationService {
         if (availableOnly) filter = filter.and((root, query, cb) -> {
             var vacant = query.subquery(Integer.class);
             var room = vacant.from(org.hlrcs.entity.Room.class);
-            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"));
+            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root),
+                    cb.equal(room.get("property"), root.get("property")), cb.equal(room.get("status"), "VACANT"));
             return cb.exists(vacant);
         });
-        if ("rating-desc".equals(sort)) filter = filter.and((root, query, cb) -> {
-            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-                var rating = query.subquery(Double.class);
-                var review = rating.from(org.hlrcs.entity.Feedback.class);
-                rating.select(cb.avg(review.get("rating"))).where(
-                        cb.equal(review.get("property"),root.get("property")),
-                        cb.equal(review.get("user").get("status"),org.hlrcs.entity.enums.UserStatus.ACTIVE),
-                        cb.between(review.get("rating"),1,5));
-                query.orderBy(cb.desc(cb.coalesce(rating,0.0)),cb.desc(root.get("roomTypeId")));
-            }
-            return cb.conjunction();
-        });
-        Sort ordering = switch (sort) {
-            case "recommended", "newest" -> Sort.by(Sort.Direction.DESC, "roomTypeId");
-            case "price-asc" -> Sort.by("price").and(Sort.by("roomTypeId"));
-            case "price-desc" -> Sort.by(Sort.Direction.DESC, "price").and(Sort.by("roomTypeId"));
-            case "area-desc" -> Sort.by(Sort.Direction.DESC, "areaSqm").and(Sort.by("roomTypeId"));
-            case "rating-desc" -> Sort.unsorted();
-            default -> throw new BadRequestException("Cách sắp xếp không hợp lệ.");
-        };
-        var result = roomTypes.findAll(filter, PageRequest.of(page, size, ordering));
-        return new AccommodationPage(summaries(result.getContent()), result.getNumber(), result.getSize(),
-                result.getTotalElements(), result.getTotalPages());
+        return filter;
     }
 
     private List<String> roomAmenities(RoomType type) {
@@ -158,11 +199,11 @@ public class AccommodationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nhà trọ hoặc loại phòng không còn được công khai."));
     }
 
-    public AccommodationSummary detail(Integer propertyId, Integer roomTypeId) {
-        return summaries(List.of(publicType(propertyId, roomTypeId))).get(0);
+    public AccommodationSummary detail(Integer propertyId, Integer roomTypeId, SearchOrigin origin) {
+        return summaries(List.of(publicType(propertyId, roomTypeId)), origin).get(0);
     }
 
-    public AccommodationDetail fullDetail(Integer propertyId, Integer roomTypeId) {
+    public AccommodationDetail fullDetail(Integer propertyId, Integer roomTypeId, SearchOrigin origin) {
         var type = publicType(propertyId, roomTypeId);
         var property = type.getProperty();
         var registration = property.getRegistration();
@@ -171,7 +212,7 @@ public class AccommodationService {
             try { profile = json.readValue(registration.getRegistrationDetails(), PropertyRegistrationRequest.class); }
             catch (tools.jackson.core.JacksonException ignored) { /* Legacy registrations may have no structured fields. */ }
         }
-        var summary = summaries(List.of(type)).get(0);
+        var summary = summaries(List.of(type), origin).get(0);
         Map<String, AccommodationDetail.Photo> gallery = new LinkedHashMap<>();
         for (var image : images.findPublicImageMetadata(List.of(roomTypeId))) {
             String url = IMAGE_TYPES.contains(Objects.toString(image.getContentType(), ""))
@@ -245,10 +286,15 @@ public class AccommodationService {
     }
 
     private List<AccommodationSummary> summaries(List<RoomType> types) {
+        return summaries(types, null);
+    }
+
+    private List<AccommodationSummary> summaries(List<RoomType> types, SearchOrigin origin) {
         if (types.isEmpty()) return List.of();
         var ids = types.stream().map(RoomType::getRoomTypeId).toList();
         var vacancies = rooms.countPublicVacancies(ids).stream().collect(Collectors.toMap(
                 RoomRepository.VacancyCount::getRoomTypeId, RoomRepository.VacancyCount::getAvailableRooms));
+        var now = java.time.Instant.now();
         Map<Integer, Integer> coverIds = new HashMap<>();
         for (var image : images.findPublicImageMetadata(ids)) {
             if (IMAGE_TYPES.contains(Objects.toString(image.getContentType(), ""))) coverIds.putIfAbsent(image.getRoomTypeId(), image.getImageId());
@@ -258,19 +304,22 @@ public class AccommodationService {
             String imageUrl = safeImageUrl(type.getImageUrl());
             if (coverIds.containsKey(type.getRoomTypeId())) imageUrl = "/api/properties/" + property.getPropertyId()
                     + "/room-types/" + type.getRoomTypeId() + "/images/" + coverIds.get(type.getRoomTypeId());
-            var coordinates = publishedCoordinates(property);
+            var coordinates = publishedCoordinates(property.getRegistration().getRegistrationDetails());
+            var confirmedAt = type.getAvailabilityConfirmedAt();
+            var freshness = AvailabilityFreshness.status(confirmedAt, now);
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
-                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
-                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1]);
+                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED",
+                    vacancies.getOrDefault(type.getRoomTypeId(), 0L), type.getCapacity(), roomAmenities(type),
+                    type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1],
+                    confirmedAt, freshness, "STALE".equals(freshness), distance(origin, coordinates));
         }).toList();
     }
 
     /** Read only the approved registration, never a pending location change. */
-    private BigDecimal[] publishedCoordinates(org.hlrcs.entity.Property property) {
+    private BigDecimal[] publishedCoordinates(String details) {
         try {
-            var registration = property.getRegistration();
-            if (registration != null && registration.getRegistrationDetails() != null) {
-                var profile = json.readValue(registration.getRegistrationDetails(), PropertyRegistrationRequest.class);
+            if (details != null) {
+                var profile = json.readValue(details, PropertyRegistrationRequest.class);
                 var latitude = new BigDecimal(profile.latitude().trim());
                 var longitude = new BigDecimal(profile.longitude().trim());
                 if (latitude.abs().compareTo(BigDecimal.valueOf(90)) <= 0
@@ -281,6 +330,11 @@ public class AccommodationService {
             // Legacy profiles remain public without an invented marker.
         }
         return new BigDecimal[]{null, null};
+    }
+
+    private static Double distance(SearchOrigin origin, BigDecimal[] coordinates) {
+        return origin == null || coordinates[0] == null ? null
+                : origin.distanceKm(coordinates[0].doubleValue(), coordinates[1].doubleValue());
     }
 
     private String safeImageUrl(String value) {

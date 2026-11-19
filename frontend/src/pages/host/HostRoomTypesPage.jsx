@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import HostAvailabilityConfirmation from '../../components/HostAvailabilityConfirmation.jsx';
 import { hostApi } from '../../services/host.js';
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
 import RoomTypeCreateModal from '../../components/RoomTypeCreateModal.jsx';
@@ -106,7 +107,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
             </select></label></>;
 }
 
-function RoomTypeCard({ type, onSelect, actions }) {
+function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
   const total = Number.isInteger(type.totalRooms) ? type.totalRooms : null;
   const vacant = Number.isInteger(type.vacantRooms) ? type.vacantRooms : null;
   const occupied = total != null && vacant != null ? Math.max(0, total - vacant) : null;
@@ -130,6 +131,7 @@ function RoomTypeCard({ type, onSelect, actions }) {
       <div className="is-vacant"><dt>Còn trống</dt><dd>{vacant ?? '—'}<House size={15} aria-hidden="true"/></dd></div>
       <div><dt>Đang thuê</dt><dd>{occupied ?? '—'}</dd></div>
     </dl>
+    <HostAvailabilityConfirmation type={type} onConfirmed={onConfirmed}/>
     <footer className="hm-rt-card-footer">
       <Link className="hm-rt-manage-link" to={roomLink}><DoorOpen size={15}/><span>Quản lý phòng</span></Link>
       {actions}
@@ -491,7 +493,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
           </div>
         ) : view === 'cards' ? (
           <div className="hm-rt-grid">
-            {shown.map(type => <RoomTypeCard key={type.roomTypeId} type={type} onSelect={setSelected} actions={renderTypeActions(type)} />)}
+            {shown.map(type => <RoomTypeCard key={type.roomTypeId} type={type} onSelect={setSelected} actions={renderTypeActions(type)} onConfirmed={onCreated} />)}
           </div>
         ) : (
           <div className="hm-table-wrap">
@@ -544,7 +546,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
                         <span className="hm-muted">Chưa có dữ liệu</span>
                       )}
                     </td>
-                    <td>{renderRoomTypeStatusBadge(type)}</td>
+                    <td>{renderRoomTypeStatusBadge(type)}<HostAvailabilityConfirmation type={type} onConfirmed={onCreated}/></td>
                     <td className="is-right">{renderTypeActions(type)}</td>
                   </tr>
                 ))}

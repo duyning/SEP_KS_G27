@@ -50,7 +50,7 @@ public class StaffService {
         var linkedProperty = registration.getTargetPropertyId() != null
                 ? properties.findById(registration.getTargetPropertyId()).orElse(null)
                 : properties.findByRegistration_RegistrationId(registration.getRegistrationId()).orElse(null);
-        Integer publishedPropertyId = linkedProperty != null && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
+        Integer publishedPropertyId = linkedProperty != null && !linkedProperty.isReverificationRequired() && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
         String assignedStaffName = registration.getAssignedStaff() == null ? null : registration.getAssignedStaff().getFullName();
         return new Verification(registration.getRegistrationId(), registration.getName(), registration.getAddress(),
                 registration.getUser().getFullName(), registration.getUser().getEmail(), registration.getUser().getPhoneNumber(),
@@ -59,7 +59,7 @@ public class StaffService {
                 registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover,
                 registration.getUser().getUserId(), registration.getTargetPropertyId(), registration.getSubmittedAt(),
                 assignedStaffName, registration.getAssignmentVersion(), verificationAccess.canReview(registration),
-                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote());
+                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote(), !PropertyReverification.reasons(registration.getReverificationReasonsJson(),json).isEmpty(), PropertyReverification.reasons(registration.getReverificationReasonsJson(),json));
     }
     private Activity activity(ModerationLog log) {
         return new Activity(log.getLogId(), log.getStaff().getFullName(), log.getTargetType(), log.getTargetId(), log.getAction(), log.getNote(), log.getCreatedAt());
@@ -77,7 +77,7 @@ public class StaffService {
             if (Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")) photos.add(value);
             else if (Set.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))) privateFiles.add(value);
         }
-        var published=registration.getTargetPropertyId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).map(Property::getRegistration).map(this::submission).orElse(null);
+        var published=registration.getTargetPropertyId()==null||registration.getBaseRegistrationId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).flatMap(p->registrations.findById(registration.getBaseRegistrationId())).filter(r->r.getUser().getUserId().equals(registration.getUser().getUserId())).map(this::submission).orElse(null);
         return new Detail(summary(registration), submission(registration), photos, privateFiles, registration.getReasonNote(),
                 logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).stream().map(this::activity).toList(),published,
                 submissionEvents.findByRegistration_RegistrationIdOrderByCreatedAtAsc(id).stream().map(event->new SubmissionEvent(event.getEventId(),event.getActor().getFullName(),event.getAction(),event.getCreatedAt())).toList(),
@@ -135,6 +135,10 @@ public class StaffService {
                 if(!property.getOwner().getUserId().equals(owner.getUserId())||property.getRegistration()==null||!Objects.equals(registration.getBaseRegistrationId(),property.getRegistration().getRegistrationId()))throw new AppException("Phiên bản công khai đã thay đổi. Không thể phê duyệt đề nghị cũ.",HttpStatus.CONFLICT);
                 property.getRegistration().setTargetPropertyId(property.getPropertyId());
                 property.setRegistration(registration);property.setName(registration.getName());property.setAddress(registration.getAddress());property.setContactInfo(registration.getContactInfo());property.setGoogleMapLink(registration.getGoogleMapLink());property.setDescription(data.description());
+                if (!PropertyReverification.reasons(registration.getReverificationReasonsJson(),json).isEmpty()) {
+                    property.setReverificationRequired(false);
+                    property.setReverificationReasonsJson(null);
+                }
                 properties.save(property);
             }
             for (var document : documents.findByRegistration_RegistrationId(id)) if (!Objects.toString(document.getDocumentType(), "").startsWith("PHOTO_")) document.setVerificationStatus("APPROVED");

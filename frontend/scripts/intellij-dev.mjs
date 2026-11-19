@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 
@@ -23,7 +23,10 @@ process.on('SIGTERM', () => void stop(0));
 process.on('SIGINT', () => void stop(0));
 
 try {
-  if (!existsSync('node_modules/vite/package.json')) {
+  const { dependencies, devDependencies } = JSON.parse(readFileSync('package.json', 'utf8'));
+  const missingDependencies = Object.keys({ ...dependencies, ...devDependencies })
+    .filter(name => !existsSync(resolve('node_modules', name, 'package.json')));
+  if (missingDependencies.length > 0) {
     const nodeDirectory = dirname(process.execPath);
     const candidates = [
       resolve(nodeDirectory, '../node_modules/pnpm/bin/pnpm.mjs'),
@@ -32,7 +35,7 @@ try {
     ];
     const manager = candidates.find(existsSync);
     if (!manager) throw new Error('Dependencies are missing. Install Node.js with npm, then run npm install in frontend.');
-    console.log('[frontend] Installing dependencies...');
+    console.log(`[frontend] Installing missing dependencies: ${missingDependencies.join(', ')}`);
     await new Promise((accept, reject) => {
       installer = spawn(process.execPath, [manager, 'install'], { stdio: 'inherit' });
       installer.once('error', reject);

@@ -1,10 +1,11 @@
 import { ApiError, request } from './auth.js';
 import { detailPhone } from './accommodation-detail.js';
+import { withSearchOrigin } from './search-origin.js';
 
 export function accommodationQuery(values = {}) {
   const query = new URLSearchParams();
-  for (const key of ['page', 'size', 'q', 'location', 'price', 'sort', 'type', 'amenities', 'availableOnly']) {
-    if (values[key] !== undefined && values[key] !== '') query.set(key, String(values[key]));
+  for (const key of ['page', 'size', 'q', 'location', 'price', 'sort', 'type', 'amenities', 'availableOnly', 'originLat', 'originLng', 'radiusKm']) {
+    if (values[key] != null && values[key] !== '') query.set(key, String(values[key]));
   }
   return query.toString();
 }
@@ -17,7 +18,9 @@ export const validAccommodation = item => item && [item.propertyId, item.roomTyp
   && typeof item.propertyName === 'string' && typeof item.roomTypeName === 'string'
   && Number.isFinite(item.price) && item.price > 0 && Number.isFinite(item.areaSqm) && item.areaSqm > 0
   && item.verificationStatus === 'APPROVED' && Number.isInteger(item.availableRooms) && item.availableRooms >= 0
-  && (item.address == null || typeof item.address === 'string') && (item.imageUrl == null || typeof item.imageUrl === 'string');
+  && (item.address == null || typeof item.address === 'string') && (item.imageUrl == null || typeof item.imageUrl === 'string')
+  && (item.distanceKm == null || Number.isFinite(item.distanceKm) && item.distanceKm >= 0)
+  && (item.availabilityStale == null || typeof item.availabilityStale === 'boolean');
 export const accommodationApi = {
   async list(query, signal) {
     const data = await publicRequest(`/search?${query}`, signal);
@@ -28,11 +31,11 @@ export const accommodationApi = {
     }
     return data;
   },
-  async detail(propertyId, roomTypeId, signal) {
+  async detail(propertyId, roomTypeId, signal, origin) {
     if (![propertyId, roomTypeId].every(id => /^[1-9]\d*$/.test(String(id)))) {
       throw new ApiError('Mã nhà trọ hoặc loại phòng không hợp lệ.', 400);
     }
-    const data = await publicRequest(`/${propertyId}/room-types/${roomTypeId}/details`, signal);
+    const data = await publicRequest(withSearchOrigin(`/${propertyId}/room-types/${roomTypeId}/details`, origin), signal);
     if (!validAccommodation(data?.summary) || !['gallery', 'amenities', 'propertyAmenities', 'selectedRules', 'similar'].every(key => Array.isArray(data[key]))
         || !data.gallery.every(photo => photo && typeof photo.url === 'string') || !data.similar.every(validAccommodation)
         || (data.propertyGallery != null && (!Array.isArray(data.propertyGallery) || !data.propertyGallery.every(photo=>photo && typeof photo.url==='string')))
@@ -42,5 +45,21 @@ export const accommodationApi = {
       throw new ApiError('Dữ liệu thông tin phòng không hợp lệ.', 502);
     }
     return { ...data, ...data.summary };
+  },
+  async recommend(description, clarification, signal) {
+    const data = await request('/recommendations', { basePath: '/api/properties', method: 'POST',
+      body: { description, clarification }, signal });
+    const validItems = Array.isArray(data?.items) && data.items.length <= 6 && data.items.every(item =>
+      validAccommodation(item) && item.availableRooms > 0);
+    const criteria = data?.criteria;
+    const validCriteria = criteria && typeof criteria.location === 'string' && Array.isArray(criteria.amenities)
+      && criteria.amenities.every(key => typeof key === 'string')
+      && [criteria.minBudget, criteria.maxBudget].every(value => value == null || Number.isFinite(value) && value >= 0);
+    if (!validItems || !(data.status === 'CLARIFY' && typeof data.question === 'string' && data.question.trim() && !data.items.length
+        || data.status === 'EMPTY' && validCriteria && !data.items.length
+        || data.status === 'RESULTS' && validCriteria && data.items.length)) {
+      throw new ApiError('Dữ liệu gợi ý phòng không hợp lệ. Vui lòng thử lại.', 502);
+    }
+    return data;
   },
 };

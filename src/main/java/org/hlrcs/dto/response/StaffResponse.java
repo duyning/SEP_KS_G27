@@ -10,7 +10,7 @@ public class StaffResponse {
             String status, LocalDateTime createdAt, LocalDateTime reviewedAt, String reviewerName,
             int documentCount, int requiredDocumentCount, Integer coverId, Integer ownerId, Integer targetPropertyId,
             LocalDateTime submittedAt, String assignedStaffName, long assignmentVersion, boolean canReview,
-            boolean readyForApproval, int photoCount, Integer publishedPropertyId, String reasonNote) {}
+            boolean readyForApproval, int photoCount, Integer publishedPropertyId, String reasonNote, boolean reverificationRequired, List<String> reverificationReasons) {}
     public record Attachment(Integer documentId, String type, String fileName, String verificationStatus,
             String contentType, Long fileSize, LocalDateTime uploadedAt) {}
     public record Activity(Integer logId, String staffName, String targetType, Integer targetId,
