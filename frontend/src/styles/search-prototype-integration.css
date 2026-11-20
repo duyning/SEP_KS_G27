@@ -1,16 +1,4 @@
 /* Search layout refinements and accessible React controls. */
-.prototype-search .search-discovery-tools {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px;margin-bottom:6px;--discovery-surface:#f0fdfa;--discovery-border:#99d5ce;--discovery-accent:#0f766e;--discovery-icon:#ccfbf1;--discovery-copy:#475569;--discovery-heading:#0f172a}
-.prototype-search .search-discovery-card {display:flex;align-items:flex-start;gap:14px;width:100%;min-width:0;padding:18px;border:1px solid var(--discovery-border);border-radius:12px;background:var(--discovery-surface);color:var(--discovery-heading);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.prototype-search .search-discovery-ai {--discovery-surface:#f5f3ff;--discovery-border:#c4b5fd;--discovery-accent:#6d28d9;--discovery-icon:#ede9fe}
-.prototype-search .search-discovery-card:hover {border-color:var(--discovery-accent);box-shadow:0 2px 8px #0f172a0d}
-.prototype-search .search-discovery-card:focus-visible {outline:3px solid var(--discovery-accent);outline-offset:3px}
-.prototype-search .search-discovery-icon {display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border-radius:10px;background:var(--discovery-icon);color:var(--discovery-accent)}
-.prototype-search .search-discovery-copy {display:grid;gap:7px;min-width:0}
-.prototype-search .search-discovery-copy strong {font-size:1rem;line-height:1.5;font-weight:750}
-.prototype-search .search-discovery-copy>span {font-size:.875rem;line-height:1.65;color:var(--discovery-copy)}
-.prototype-search .search-discovery-copy .search-discovery-action {display:flex;align-items:center;gap:6px;margin-top:3px;font-weight:700;color:var(--discovery-accent)}
-@media(max-width:640px) {.prototype-search .search-discovery-tools {grid-template-columns:1fr}.prototype-search .search-discovery-card {padding:16px;gap:12px}}
-@media(prefers-reduced-motion:reduce) {.prototype-search .search-discovery-card {transition:none}}
 .prototype-search {min-width:0;overflow-wrap:anywhere;background:#fff;--search-action:#0f766e}
 .prototype-search main {display:block;min-width:0}
 .prototype-search .search-header-section {padding:20px 0 12px}
@@ -23,7 +11,91 @@
 .prototype-search .search-main-inputs-row {gap:10px}
 .prototype-search .search-text-input,.prototype-search .search-select-dropdown {min-height:42px;padding-top:9px;padding-bottom:9px}
 .prototype-search .btn-search-trigger {min-height:42px;padding:9px 18px}
+.prototype-search .search-submit-actions {display:flex;align-items:stretch;gap:8px}
+.prototype-search .search-origin-trigger {display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 11px;border:1px solid #b9dcd0;border-radius:var(--radius-md);background:#edf7f2;color:#0f6655;font:inherit;font-size:13px;font-weight:750;line-height:1.3;white-space:nowrap;cursor:pointer}
+.prototype-search .search-origin-trigger svg {flex:none}
+.prototype-search .search-origin-trigger:hover {background:#deefe6;border-color:#87b9a8}
+.prototype-search :is(.search-origin-trigger,.search-assistant-launcher,.search-filter-actions button):focus-visible {outline:2px solid var(--search-action);outline-offset:3px}
+.prototype-search .search-filter-actions {display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.prototype-search .search-floating-actions {
+  position:fixed;
+  z-index:80;
+  inset-inline:0;
+  bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-inline:24px;
+  pointer-events:none;
+}
+.prototype-search .search-floating-actions > .comparison-bar {
+  position:static;
+  align-self:center;
+  width:min(1100px,100%);
+  transform:none;
+  pointer-events:auto;
+}
+.prototype-search .search-assistant-launcher {
+  display:flex;
+  align-items:center;
+  align-self:flex-end;
+  gap:8px;
+  min-height:56px;
+  padding:0;
+  border:0;
+  border-radius:999px;
+  background:none;
+  color:#18352b;
+  cursor:pointer;
+  font:inherit;
+  font-size:.875rem;
+  font-weight:750;
+  pointer-events:auto;
+}
+.prototype-search .search-assistant-label {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:40px;
+  padding:7px 13px;
+  border:1px solid #d6e9e0;
+  border-radius:999px;
+  background:#fff;
+  box-shadow:0 4px 14px #103a2b1a;
+  white-space:nowrap;
+}
+.prototype-search .search-assistant-label svg {flex:none;color:var(--search-action)}
+.prototype-search .search-assistant-avatar {
+  display:grid;
+  width:66px;
+  height:66px;
+  place-items:center;
+  border:3px solid #91d7c5;
+  border-radius:50%;
+  background:#e9f7f0;
+  box-shadow:0 4px 14px #103a2b22;
+}
+.prototype-search .search-assistant-avatar img {display:block;width:56px;height:56px;object-fit:contain}
+.prototype-search .search-assistant-launcher:hover .search-assistant-label {background:#edf7f2;border-color:#91c7b7}
+.prototype-search .search-assistant-launcher:hover .search-assistant-avatar {border-color:#4da88c}
+.prototype-search .has-comparison-selection:has(.search-floating-actions) {padding-bottom:225px}
 .prototype-search .search-secondary-row {padding-top:10px;gap:8px}
+@media(max-width:1080px) {
+  .prototype-search .search-submit-actions {grid-column:1 / -1}
+  .prototype-search .search-submit-actions > button {flex:1 1 0;min-width:0}
+}
+@media(max-width:480px) {
+  .prototype-search .search-submit-actions > button {min-height:44px;padding-inline:8px;white-space:normal}
+  .prototype-search .search-submit-actions > .search-origin-trigger {flex:0 1 auto;padding-inline:11px}
+  .prototype-search .search-filter-actions button {min-height:44px}
+}
+@media(max-width:700px) {
+  .prototype-search .search-floating-actions {bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-inline:12px;gap:8px}
+  .prototype-search .search-assistant-avatar {width:56px;height:56px}
+  .prototype-search .search-assistant-avatar img {width:46px;height:46px}
+  .prototype-search .search-assistant-label {min-height:36px;padding-inline:10px}
+  .prototype-search .has-comparison-selection:has(.search-floating-actions) {padding-bottom:255px}
+}
 .prototype-search .filter-pill-btn {padding:5px 12px;min-height:32px}
 .prototype-search .active-chips-wrapper {margin-top:0}
 .prototype-search .active-chips-wrapper:empty {display:none}

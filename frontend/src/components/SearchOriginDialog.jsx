@@ -31,7 +31,7 @@ export default function SearchOriginDialog({ origin, radiusKm, onApply, onClose 
     onApply(parsed, km);
   }
 
-  return <Modal title="Chọn địa điểm tính khoảng cách" maxWidth="720px" onClose={onClose}>
+  return <Modal title="Tìm quanh địa điểm" onClose={onClose}>
     <form className="location-search-form" onSubmit={submit}>
       <p>Chọn địa điểm bạn quan tâm trên bản đồ để xem mỗi phòng cách đó bao nhiêu km. Bạn có thể kéo ghim hoặc nhập tọa độ; thêm bán kính nếu muốn giới hạn khu vực tìm kiếm.</p>
       <MapCanvas label="Bản đồ chọn địa điểm tính khoảng cách" onSelect={select} nearbyPoint={null}

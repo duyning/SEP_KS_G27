@@ -68,17 +68,24 @@ async function check() {
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base + '/search?price=15-25&page=2');
-      await page.getByRole('group', { name: 'Công cụ tìm phòng' }).waitFor();
-      assert.equal(await page.getByRole('group', { name: 'Công cụ tìm phòng' }).getByRole('button').count(), 2);
+      const sortMenu = page.getByRole('combobox', { name: /Sắp xếp theo/ });
+      const aiButton = page.getByRole('button', { name: 'Hỏi Trọ Mây', exact: true });
+      const open = page.getByRole('button', { name: 'Tìm quanh địa điểm', exact: true });
+      await aiButton.waitFor();
+      await open.waitFor();
+      assert.equal(await page.locator('.search-submit-actions').getByRole('button', { name: 'Tìm quanh địa điểm' }).count(), 1);
+      assert.ok(await aiButton.locator('img').evaluate(async image => { await image.decode(); return image.naturalWidth > 0; }));
+      assert.equal(await sortMenu.locator('option[value="nearest"]').count(), 0);
       assert.equal(await page.locator('.quick-filter-pills').getByRole('button', { name: /AI|địa điểm|điểm gốc/ }).count(), 0);
-      await page.locator('.search-discovery-tools').screenshot({ path: `../../outputs/search-tools-${width}.png` });
+      await page.locator('.search-controls-box').screenshot({ path: `../../outputs/search-tools-${width}.png` });
       await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
-      assert.ok(await page.locator('.search-discovery-tools').evaluate(el => [...el.querySelectorAll('button')].every(button => button.scrollWidth <= button.clientWidth + 1)), `Feature content overflow at ${width}, 200% zoom`);
+      for (const button of [aiButton, open]) {
+        assert.ok(await button.evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Feature content overflow at ${width}, 200% zoom`);
+      }
       await page.evaluate(() => { document.documentElement.style.zoom = ''; });
-      const open = page.getByRole('button', { name: 'Chọn địa điểm tính khoảng cách', exact: true });
       await open.focus();
       await page.keyboard.press('Enter');
-      const picker = page.getByRole('dialog', { name: 'Chọn địa điểm tính khoảng cách' });
+      const picker = page.getByRole('dialog', { name: 'Tìm quanh địa điểm' });
       await picker.locator('.leaflet-container').click({ position: { x: 100, y: 100 } });
       assert.notEqual(await picker.getByLabel('Vĩ độ').inputValue(), '');
       await picker.getByLabel('Vĩ độ').fill(origin.originLat);
@@ -90,6 +97,9 @@ async function check() {
       assert.equal(lastSearch.get('radiusKm'), '1');
       assert.equal(lastSearch.get('price'), '15-25');
       assert.equal(lastSearch.get('sort'), 'nearest');
+      await page.getByRole('button', { name: 'Đổi địa điểm', exact: true }).waitFor();
+      assert.equal(await sortMenu.inputValue(), 'nearest');
+      assert.ok(await sortMenu.locator('option[value="nearest"]').evaluate(option => option.hidden));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Overflow at ${width}`);
     }
 
@@ -109,14 +119,29 @@ async function check() {
     await selections.nth(1).focus();
     await page.keyboard.press('Space');
     await page.getByText('Đã chọn 2/4 phòng').waitFor();
+    const compareBar = page.getByRole('complementary', { name: 'Các phòng đã chọn so sánh' });
+    for (const width of [375, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const launcher = await page.getByRole('button', { name: 'Hỏi Trọ Mây' }).boundingBox();
+      const bar = await compareBar.boundingBox();
+      assert.ok(launcher && bar && launcher.y + launcher.height <= bar.y, `Assistant overlaps comparison at ${width}px`);
+    }
     await page.getByRole('link', { name: 'So sánh ngay' }).click();
     const row = page.getByRole('row', { name: /Khoảng cách đến địa điểm đã chọn/ });
     await row.waitFor();
     assert.equal(await row.getByText('0,72 km', { exact: true }).count(), 2);
 
     await page.goto(base + '/search');
-    await page.getByRole('button', { name: 'Tìm phòng bằng AI' }).click();
-    const ai = page.getByRole('dialog', { name: 'Tìm phòng bằng AI' });
+    const aiTrigger = page.getByRole('button', { name: 'Hỏi Trọ Mây' });
+    await aiTrigger.focus();
+    await page.keyboard.press('Enter');
+    const ai = page.getByRole('dialog', { name: /Trọ Mây/ });
+    const description = ai.getByLabel('Nhu cầu thuê phòng');
+    assert.ok(await description.evaluate(field => field === document.activeElement));
+    assert.ok(await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).isDisabled());
+    await ai.getByRole('button', { name: 'Dưới 2,5 triệu' }).click();
+    assert.match(await description.inputValue(), /2,5 triệu\/tháng/);
+    assert.ok(await description.evaluate(field => field === document.activeElement));
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã có điều hòa');
     await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();
     await ai.getByLabel('Ngân sách mỗi tháng?').fill('Tối đa 2,5 triệu');
@@ -127,8 +152,8 @@ async function check() {
     await ai.getByRole('button', { name: 'Thử lại' }).click();
     await ai.getByRole('link', { name: 'Nhà trọ DEMO — Studio' }).waitFor();
     await ai.getByText('7,5/10 phù hợp', { exact: true }).waitFor();
-    await ai.getByText('Khớp 3/4 tiêu chí:', { exact: true }).waitFor();
-    await ai.getByText(/Chưa khớp:.*Ban công/).waitFor();
+    await ai.getByRole('heading', { name: 'Khớp 3/4 tiêu chí' }).waitFor();
+    await ai.getByRole('list', { name: 'Tiêu chí chưa khớp' }).getByText(/Ban công/).waitFor();
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       assert.ok(await ai.evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth + 1), `AI dialog overflow at ${width}px`);
@@ -141,6 +166,9 @@ async function check() {
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã dưới 100 nghìn');
     await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();
     await ai.getByText(/Chưa có loại phòng công khai/).waitFor();
+    await page.keyboard.press('Escape');
+    await ai.waitFor({ state: 'hidden' });
+    assert.ok(await aiTrigger.evaluate(trigger => trigger === document.activeElement));
     assert.deepEqual(errors, []);
     console.log('PASS: origin, radius, filters, map, details, comparison, and AI clarification/timeout/results/empty with fixtures.');
   } finally {
