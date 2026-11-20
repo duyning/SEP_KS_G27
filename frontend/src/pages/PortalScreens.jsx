@@ -23,7 +23,8 @@ import HostViewingRequestsPage from './host/HostViewingRequestsPage.jsx';
 import HostSupportPage from './host/HostSupportPage.jsx';
 import HostNotificationsPage from './host/HostNotificationsPage.jsx';
 
-// Staff Pages
+// nhân viên Pages
+import StaffServiceComplaintsPage from './staff/StaffServiceComplaintsPage.jsx';
 import StaffDashboardPage from './staff/StaffDashboardPage.jsx';
 import StaffServiceApplicationsPage from './staff/StaffServiceApplicationsPage.jsx';
 import StaffPropertyVerificationsPage from './staff/StaffPropertyVerificationsPage.jsx';
@@ -86,9 +87,11 @@ export default function PortalScreens({ screen }) {
     case '/host/notifications':
       return <HostNotificationsPage />;
 
-    // Staff Routes
+    // nhân viên Routes
     case '/staff':
       return <StaffDashboardPage />;
+    case '/staff/service-complaints':
+      return <StaffServiceComplaintsPage />;
     case '/staff/service-applications':
       return <StaffServiceApplicationsPage />;
     case '/staff/verifications':

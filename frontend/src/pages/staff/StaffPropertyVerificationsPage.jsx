@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, useIsPresent } from 'motion/react';
@@ -482,7 +484,7 @@ export default function StaffPropertyVerificationsPage() {
                     activeClassName={`tone-${tab.tone}`}
                     className="sv-tab-item"
                   >
-                    <button
+                    <UIButton
                       type="button"
                       role="tab"
                       id={`sv-tab-${tab.value}`}
@@ -497,7 +499,7 @@ export default function StaffPropertyVerificationsPage() {
                       <TabIcon size={15} className="sv-tab-icon" />
                       <span className="sv-tab-label">{tab.label}</span>
                       <span className="sv-tab-count">{metrics.counts[tab.value] ?? 0}</span>
-                    </button>
+                    </UIButton>
                   </HighlightItem>
                 );
               })}
@@ -536,7 +538,7 @@ export default function StaffPropertyVerificationsPage() {
                   const chipActive = kind === chip.value;
                   return (
                     <HighlightItem key={chip.value} value={chip.value} className="sv-kind-item">
-                      <button
+                      <UIButton
                         type="button"
                         aria-pressed={chipActive}
                         className={`sv-kind-filter-btn ${chipActive ? 'is-active' : ''}`}
@@ -547,7 +549,7 @@ export default function StaffPropertyVerificationsPage() {
                       >
                         <span>{chip.label}</span>
                         <small>{metrics.kinds[chip.value] ?? 0}</small>
-                      </button>
+                      </UIButton>
                     </HighlightItem>
                   );
                 })}
@@ -556,7 +558,7 @@ export default function StaffPropertyVerificationsPage() {
           </div>
 
           <div className="sv-controls-row">
-            <label className="sv-search-field">
+            <UIField className="sv-search-field">
               <span className="sr-only">Tìm kiếm hồ sơ</span>
               <div className="sw-search sv-search-box">
                 <Search size={16} />
@@ -570,7 +572,7 @@ export default function StaffPropertyVerificationsPage() {
                   placeholder="Tìm theo tên nhà trọ, mã HS-..., chủ trọ, SĐT, email hoặc nhân viên phụ trách..."
                 />
                 {search && (
-                  <button
+                  <UIButton
                     type="button"
                     className="sv-clear-input"
                     aria-label="Xóa từ khóa tìm kiếm"
@@ -580,12 +582,12 @@ export default function StaffPropertyVerificationsPage() {
                     }}
                   >
                     <X size={14} />
-                  </button>
+                  </UIButton>
                 )}
               </div>
-            </label>
+            </UIField>
 
-            <label className="sv-sort-field">
+            <UIField className="sv-sort-field">
               <ArrowUpDown size={15} aria-hidden="true" />
               <select
                 aria-label="Sắp xếp hồ sơ"
@@ -601,7 +603,7 @@ export default function StaffPropertyVerificationsPage() {
                   </option>
                 ))}
               </select>
-            </label>
+            </UIField>
 
             {hasActiveFilters && (
               <MotionButton
@@ -763,10 +765,10 @@ export default function StaffPropertyVerificationsPage() {
                     : 'Quyết định từ chối sẽ đóng hồ sơ này và gửi trực tiếp nguyên nhân từ chối đến chủ trọ.'}
                 </p>
 
-                <label className="sw-review-label" htmlFor="sv-quick-review-note">
+                <UIField className="sw-review-label" htmlFor="sv-quick-review-note">
                   {quickTarget.decision === 'REJECT' ? 'Lý do từ chối hồ sơ' : 'Ghi chú phê duyệt (tùy chọn)'}
                   {quickTarget.decision === 'REJECT' && <span className="sw-required"> *</span>}
-                </label>
+                </UIField>
                 <textarea
                   id="sv-quick-review-note"
                   autoFocus

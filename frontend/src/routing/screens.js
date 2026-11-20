@@ -40,6 +40,7 @@ export const screens = [
   screen('staff-host-registrations.html', '/staff/host-registrations', 'staff', 'Xác minh đăng ký chủ trọ', 'hostApplications', { integration: 'connected' }),
   screen('staff-host-registration-detail.html', '/staff/host-registrations/detail', 'staff', 'Chi tiết đăng ký làm chủ trọ', 'hostApplicationDetail', { integration: 'connected' }),
 
+  screen(null, '/staff/service-complaints', 'staff', 'Báo cáo dịch vụ', 'list', { integration: 'connected' }),
   screen(null, '/staff/service-applications', 'staff', 'Xét duyệt hồ sơ dịch vụ', 'list', { integration: 'connected' }),
   screen('staff-property-verifications.html', '/staff/verifications', 'staff', 'Hồ sơ xác minh nhà trọ', 'list', { metrics: ['Tổng hồ sơ', 'Chờ xác minh', 'Cần bổ sung', 'Đã xử lý'], columns: ['Nhà trọ & mã hồ sơ', 'Chủ trọ / đại diện', 'Ngày gửi', 'Trạng thái', 'Cập nhật gần nhất', 'Thao tác'], filters: ['Tất cả trạng thái', 'Chờ xác minh', 'Cần bổ sung', 'Đã xác minh', 'Từ chối'] }),
   screen('staff-property-verification-detail.html', '/staff/verifications/detail', 'staff', 'Thẩm định hồ sơ xác minh', 'detail', { sections: ['Thông tin nhà trọ', 'Chủ trọ / Đại diện', 'Tài liệu xác minh', 'Lịch sử thẩm định'], actions: ['Yêu cầu bổ sung', 'Từ chối hồ sơ', 'Xác minh nhà trọ'] }),

@@ -1,7 +1,7 @@
 /* ==========================================================================
    HL_RCS | STAFF DASHBOARD DESIGN SYSTEM (staff-dashboard.css)
    Bảng điều khiển dành riêng cho Nhân viên vận hành & Kiểm duyệt (HL_RCS Staff)
-   Design System Tokens: Slate (#0f172a, #334155, #64748b), Teal (#0d9488), White (#fff)
+   Design System Tokens: Slate (#0f172a, #334155, #64748b), Teal (#0f766e), White (#fff)
    ========================================================================== */
 
 :root {
@@ -17,13 +17,13 @@
   --staff-text-subtle: #94a3b8;
 
   /* Primary Brand (Teal HL_RCS) */
-  --staff-primary: #0d9488;
+  --staff-primary: #0f766e;
   --staff-primary-hover: #0f766e;
   --staff-primary-light: #f0fdfa;
   --staff-primary-border: #99f6e4;
 
   /* KPI Accents */
-  --kpi-teal: #0d9488;
+  --kpi-teal: #0f766e;
   --kpi-teal-bg: #f0fdfa;
   --kpi-teal-border: #99f6e4;
 
@@ -234,7 +234,7 @@ body.staff-body {
 .brand-logo-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #0d9488, #0f766e);
+  background: linear-gradient(135deg, #0f766e, #0f766e);
   color: #ffffff;
   border-radius: var(--staff-radius-md);
   display: flex;
@@ -261,7 +261,7 @@ body.staff-body {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #0d9488;
+  color: #0f766e;
   background: #f0fdfa;
   padding: 1px 6px;
   border-radius: 4px;
@@ -562,7 +562,7 @@ body.staff-body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0d9488, #0369a1);
+  background: linear-gradient(135deg, #0f766e, #0369a1);
   color: #ffffff;
   font-weight: 700;
   font-size: 13px;
@@ -587,7 +587,7 @@ body.staff-body {
 .staff-user-role {
   font-size: 11px;
   font-weight: 600;
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .chevron-icon {
@@ -2262,7 +2262,7 @@ body.staff-body {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0d9488, #0369a1);
+  background: linear-gradient(135deg, #0f766e, #0369a1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3156,7 +3156,7 @@ body.staff-body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -3220,7 +3220,7 @@ body.staff-body {
 .comm-preview-price {
   font-size: 24px;
   font-weight: 800;
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .comm-preview-price.secondhand {
@@ -3585,7 +3585,7 @@ body.staff-body {
 
 .role-switcher-menu .menu-item.active {
   background: #f0fdfa;
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .role-switcher-menu .menu-item strong {
@@ -3612,7 +3612,7 @@ body.staff-body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -3716,7 +3716,7 @@ body.staff-body {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0d9488, #0f766e);
+  background: linear-gradient(135deg, #0f766e, #0f766e);
   color: #ffffff;
   font-weight: 700;
   font-size: 12px;

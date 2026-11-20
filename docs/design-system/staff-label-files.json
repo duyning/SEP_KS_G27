@@ -1,0 +1,23 @@
+[
+  "frontend/src/components/common/Breadcrumb.jsx",
+  "frontend/src/components/layout/HostSidebar.jsx",
+  "frontend/src/components/ServiceManagement.jsx",
+  "frontend/src/components/ServiceRegistrationModal.jsx",
+  "frontend/src/fixtures/mockHostData.js",
+  "frontend/src/fixtures/mockStaffData.js",
+  "frontend/src/layouts/PortalLayout.jsx",
+  "frontend/src/pages/admin/AdminDashboardPage.jsx",
+  "frontend/src/pages/AuthPage.jsx",
+  "frontend/src/pages/host/HostDashboardPage.jsx",
+  "frontend/src/pages/host/HostNotificationsPage.jsx",
+  "frontend/src/pages/host/HostPropertyCreatePage.jsx",
+  "frontend/src/pages/host/HostPropertyPage.jsx",
+  "frontend/src/pages/host/HostSupportPage.jsx",
+  "frontend/src/pages/PortalScreens.jsx",
+  "frontend/src/pages/public/CommunityPage.jsx",
+  "frontend/src/pages/public/NotificationsPage.jsx",
+  "frontend/src/pages/staff/StaffAssistanceRequestDetailPage.jsx",
+  "frontend/src/pages/staff/StaffCommunityModerationDetailPage.jsx",
+  "frontend/src/pages/staff/StaffServiceApplicationsPage.jsx",
+  "frontend/src/routing/screens.js"
+]

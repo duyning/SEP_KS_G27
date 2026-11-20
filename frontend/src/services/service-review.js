@@ -5,7 +5,7 @@ const id = value => {
   return value;
 };
 const application = row => row && Number.isInteger(row.registrationId) && typeof row.serviceName === 'string'
-  && ['PENDING', 'APPROVED', 'REJECTED', 'NEEDS_SUPPLEMENT'].includes(row.status) && Array.isArray(row.documents);
+  && ['PENDING', 'APPROVED', 'REJECTED', 'NEEDS_SUPPLEMENT', 'CANCELLED'].includes(row.status) && Array.isArray(row.documents);
 const detail = row => {
   if (!application(row?.application) || !Array.isArray(row.history)) throw new ApiError('Phản hồi hồ sơ không hợp lệ.', 502);
   return row;

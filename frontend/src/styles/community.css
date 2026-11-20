@@ -54,7 +54,7 @@ a, a:visited {
 }
 
 .community-breadcrumb-list a:hover {
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .breadcrumb-sep {
@@ -173,7 +173,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   border: none;
   padding: 12px 22px;
@@ -273,7 +273,7 @@ a, a:visited {
 }
 
 .category-tab-btn.active {
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 }
@@ -328,7 +328,7 @@ a, a:visited {
 
 .community-search-input:focus {
   background: #ffffff;
-  border-color: #0d9488;
+  border-color: #0f766e;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
@@ -416,7 +416,7 @@ a, a:visited {
   gap: 5px;
   background: #f0fdfa;
   border: 1px solid #99f6e4;
-  color: #0d9488;
+  color: #0f766e;
   padding: 3px 8px;
   border-radius: 6px;
   font-weight: 600;
@@ -426,7 +426,7 @@ a, a:visited {
 .active-tag-chip button {
   background: none;
   border: none;
-  color: #0d9488;
+  color: #0f766e;
   cursor: pointer;
   padding: 0;
   font-size: 13px;
@@ -599,7 +599,7 @@ a, a:visited {
 
 .badge-transfer {
   background: #f0fdfa;
-  color: #0d9488;
+  color: #0f766e;
   border: 1px solid #99f6e4;
 }
 
@@ -650,7 +650,7 @@ a, a:visited {
 }
 
 .post-card-title:hover {
-  color: #0d9488 !important;
+  color: #0f766e !important;
 }
 
 /* Price & Specs */
@@ -665,7 +665,7 @@ a, a:visited {
 .post-main-price {
   font-size: 18px;
   font-weight: 800;
-  color: #0d9488;
+  color: #0f766e;
   letter-spacing: -0.01em;
 }
 
@@ -750,7 +750,7 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #0d9488;
+  color: #0f766e;
   font-size: 13px;
   border: 1.5px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -784,7 +784,7 @@ a, a:visited {
   gap: 5px;
   background: #f0fdfa;
   border: 1px solid #99f6e4;
-  color: #0d9488;
+  color: #0f766e;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12.5px;
@@ -793,7 +793,7 @@ a, a:visited {
 }
 
 .btn-quick-call:hover {
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
 }
 
@@ -943,7 +943,7 @@ a, a:visited {
 
 .rule-icon {
   background: #f0fdfa;
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .zone-icon {
@@ -990,7 +990,7 @@ a, a:visited {
 }
 
 .rule-bullet {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 800;
   font-size: 14px;
 }
@@ -1045,7 +1045,7 @@ a, a:visited {
 .zone-item-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #0d9488;
+  color: #0f766e;
   background: #ffffff;
   padding: 2px 8px;
   border-radius: 6px;
@@ -1080,7 +1080,7 @@ a, a:visited {
 .hotline-number {
   font-size: 15px;
   font-weight: 800;
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .btn-sidebar-zalo {
@@ -1088,7 +1088,7 @@ a, a:visited {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   font-size: 13.5px;
   font-weight: 700;
@@ -1165,7 +1165,7 @@ a, a:visited {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   border: none;
   font-size: 13.5px;
@@ -1412,7 +1412,7 @@ a, a:visited {
 }
 
 .spec-item-value.price-val {
-  color: #0d9488;
+  color: #0f766e;
   font-size: 16px;
 }
 
@@ -1492,7 +1492,7 @@ a, a:visited {
   justify-content: center;
   font-size: 16px;
   font-weight: 800;
-  color: #0d9488;
+  color: #0f766e;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -1511,7 +1511,7 @@ a, a:visited {
 .author-card-phone {
   font-size: 14px;
   font-weight: 700;
-  color: #0d9488;
+  color: #0f766e;
   margin-top: 2px;
 }
 
@@ -1523,7 +1523,7 @@ a, a:visited {
 }
 
 .btn-author-call {
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   padding: 9px 16px;
   border-radius: 8px;
@@ -1612,13 +1612,13 @@ a, a:visited {
 }
 
 .category-choice-card input[type="radio"]:checked + .choice-card-content {
-  border-color: #0d9488;
+  border-color: #0f766e;
   background: #f0fdfa;
   box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
 }
 
 .category-choice-card input[type="radio"]:checked + .choice-card-content .choice-title {
-  color: #0d9488;
+  color: #0f766e;
 }
 
 .form-divider {
@@ -1671,7 +1671,7 @@ a, a:visited {
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-  border-color: #0d9488;
+  border-color: #0f766e;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
@@ -1723,7 +1723,7 @@ a, a:visited {
 }
 
 .checkbox-chip-item input[type="checkbox"] {
-  accent-color: #0d9488;
+  accent-color: #0f766e;
 }
 
 /* Image presets */
@@ -1762,7 +1762,7 @@ a, a:visited {
 }
 
 .preset-thumb-btn.active {
-  border-color: #0d9488;
+  border-color: #0f766e;
   transform: scale(1.05);
 }
 
@@ -1828,7 +1828,7 @@ a, a:visited {
 }
 
 .btn-form-submit {
-  background: #0d9488;
+  background: #0f766e;
   border: none;
   color: #ffffff;
   padding: 10px 24px;
@@ -1957,7 +1957,7 @@ a, a:visited {
 }
 
 .btn-auth-login {
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   padding: 10px 24px;
   border-radius: 8px;
@@ -1994,8 +1994,8 @@ a, a:visited {
 
 .btn-quick-demo-user {
   background: #f8fafc;
-  border: 1.5px solid #0d9488;
-  color: #0d9488;
+  border: 1.5px solid #0f766e;
+  color: #0f766e;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 12.5px;

@@ -1,3 +1,4 @@
+import UIField from '../../components/common/Field.jsx';
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
@@ -106,13 +107,13 @@ export default function StaffAssistanceRequestDetailPage() {
       <div style={{ marginBottom: '16px' }}>
         <Link
           to="/staff/assistance"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0d9488', fontWeight: '600', textDecoration: 'none', marginBottom: '8px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#0f766e', fontWeight: '600', textDecoration: 'none', marginBottom: '8px' }}
         >
           <ArrowLeft size={16} /> Quay lại danh sách yêu cầu
         </Link>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0d9488', marginRight: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', background: '#f0fdfa', color: '#0f766e', marginRight: '8px' }}>
               {currentReq.categoryLabel}
             </span>
             <span style={{ fontSize: '12px', color: '#94a3b8' }}>Mã: {currentReq.code}</span>
@@ -149,7 +150,7 @@ export default function StaffAssistanceRequestDetailPage() {
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '12px', color: '#64748b' }}>Chủ trọ gửi yêu cầu:</span>
                 <div style={{ fontWeight: '700', color: '#0f172a' }}>{currentReq.hostName}</div>
-                <div style={{ fontSize: '12px', color: '#0d9488' }}>{currentReq.hostPhone}</div>
+                <div style={{ fontSize: '12px', color: '#0f766e' }}>{currentReq.hostPhone}</div>
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '12px', color: '#64748b' }}>Nhà trọ liên quan:</span>
@@ -188,9 +189,9 @@ export default function StaffAssistanceRequestDetailPage() {
 
             {currentReq.status !== 'RESOLVED' && (
               <div>
-                <label htmlFor="staff-response-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                <UIField htmlFor="staff-response-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
                   Gửi phản hồi cho Chủ trọ:
-                </label>
+                </UIField>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <textarea
                     id="staff-response-input"
@@ -222,7 +223,7 @@ export default function StaffAssistanceRequestDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {(currentReq.history || []).map((h, i) => (
                 <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0d9488', marginTop: '6px', flexShrink: 0 }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0f766e', marginTop: '6px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '13px', color: '#334155' }}>
                       <strong>{h.actor}</strong>: {h.action} — {h.note}
@@ -327,9 +328,9 @@ export default function StaffAssistanceRequestDetailPage() {
               {actionModal === 'RESOLVED' && 'Xác nhận đã xử lý xong và hoàn tất giải quyết phiếu hỗ trợ.'}
             </p>
             <div>
-              <label htmlFor="action-note-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+              <UIField htmlFor="action-note-input" style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
                 Ghi chú nghiệp vụ (tùy chọn):
-              </label>
+              </UIField>
               <textarea
                 id="action-note-input"
                 rows={3}

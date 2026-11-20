@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -75,7 +77,7 @@ function renderRoomTypeStatusBadge(type) {
 }
 
 function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
-  return <><label className="hm-filter-field"><span>Trạng thái phòng</span><select
+  return <><UIField className="hm-filter-field"><span>Trạng thái phòng</span><select
               className="hm-select hm-type-status"
               aria-label="Lọc trạng thái loại phòng"
               value={filter}
@@ -92,7 +94,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
               <option value="EMPTY">
                 Chưa tạo phòng ({types.filter(item => (item.totalRooms ?? 0) === 0).length})
               </option>
-            </select></label><label className="hm-filter-field"><span>Sắp xếp</span><select
+            </select></UIField><UIField className="hm-filter-field"><span>Sắp xếp</span><select
               className="hm-select hm-type-sort"
               aria-label="Sắp xếp loại phòng"
               value={sort}
@@ -103,7 +105,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
               <option value="PRICE_DESC">Giá cao → thấp</option>
               <option value="ROOMS_DESC">Nhiều phòng nhất</option>
               <option value="NAME">Tên A–Z</option>
-            </select></label></>;
+            </select></UIField></>;
 }
 
 function RoomTypeCard({ type, onSelect, actions }) {
@@ -113,10 +115,10 @@ function RoomTypeCard({ type, onSelect, actions }) {
   const roomLink = `/host/rooms?propertyId=${type.propertyId}&roomTypeId=${type.roomTypeId}`;
   return <article className="hm-rt-card">
     <div className="hm-rt-card-hero">
-      <button type="button" className="hm-rt-thumb-trigger" onClick={() => onSelect(type)} aria-label={`Xem chi tiết ${type.roomType}`}><TypeImage type={type}/></button>
+      <UIButton type="button" className="hm-rt-thumb-trigger" onClick={() => onSelect(type)} aria-label={`Xem chi tiết ${type.roomType}`}><TypeImage type={type}/></UIButton>
       <div className="hm-rt-card-info">
         <header className="hm-rt-card-top">
-          <h2 className="hm-rt-card-title"><button type="button" onClick={() => onSelect(type)} title={type.roomType}>{type.roomType}</button></h2>
+          <h2 className="hm-rt-card-title"><UIButton type="button" onClick={() => onSelect(type)} title={type.roomType}>{type.roomType}</UIButton></h2>
           <div className="hm-rt-card-status">{renderRoomTypeStatusBadge(type)}</div>
         </header>
         <div className="hm-rt-card-body">
@@ -421,7 +423,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
             selectedPropertyId={property.propertyId}
           />
 
-          <label className="hm-search-box">
+          <UIField className="hm-search-box">
             <Search size={15} aria-hidden="true" />
             <input
               aria-label="Tìm loại phòng"
@@ -429,7 +431,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
-          </label>
+          </UIField>
 
           <div className="hm-toolbar-controls">
             {compactFilters ? <MotionButton type="button" id="hm-type-filter-toggle" className={`hm-btn hm-btn-subtle hm-type-filter-toggle ${filter !== 'ALL' || sort !== 'NEWEST' ? 'is-active' : ''}`} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(value => !value)}><Filter size={15}/>Bộ lọc{filter !== 'ALL' || sort !== 'NEWEST' ? ' •' : ''}</MotionButton> : <RoomTypeFilters {...{types, filter, setFilter, sort, setSort}} />}
@@ -513,13 +515,13 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
                       <div className="hm-entity-cell">
                         <TypeImage type={type} className="hm-rt-row-thumb" />
                         <div className="hm-entity-copy">
-                          <button
+                          <UIButton
                             type="button"
                             className="hm-entity-title-btn"
                             onClick={() => setSelected(type)}
                           >
                             {type.roomType}
-                          </button>
+                          </UIButton>
                           <span className="hm-entity-sub">
                             {type.areaSqm != null ? `${type.areaSqm}m²` : '—'} · Tối đa{' '}
                             {type.capacity ?? '—'} người

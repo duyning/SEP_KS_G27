@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -323,7 +325,7 @@ export default function StaffPropertyVerificationDetailPage() {
               const isCurrent = activeSection === section.id;
               return (
                 <HighlightItem key={section.id} value={section.id} className="svd-nav-item">
-                  <button
+                  <UIButton
                     type="button"
                     className={`svd-nav-btn ${isCurrent ? 'is-active' : ''}`}
                     aria-current={isCurrent ? 'location' : undefined}
@@ -331,7 +333,7 @@ export default function StaffPropertyVerificationDetailPage() {
                   >
                     <Icon size={14} />
                     <span>{section.label}</span>
-                  </button>
+                  </UIButton>
                 </HighlightItem>
               );
             })}
@@ -497,7 +499,7 @@ export default function StaffPropertyVerificationDetailPage() {
                           </Link>
                         )}
                         {decisionConfig.jumpLinks.map(jump => (
-                          <button
+                          <UIButton
                             key={jump.target}
                             type="button"
                             className="svd-jump-btn"
@@ -505,7 +507,7 @@ export default function StaffPropertyVerificationDetailPage() {
                           >
                             <span>{jump.label}</span>
                             <ArrowUpRight size={14} />
-                          </button>
+                          </UIButton>
                         ))}
                       </div>
                     </div>
@@ -587,10 +589,10 @@ export default function StaffPropertyVerificationDetailPage() {
                       ? 'Xác nhận đã kiểm tra đầy đủ thông tin và tài liệu. Nếu là đề nghị thay đổi, bản mới sẽ được áp dụng cho nhà trọ hiện tại sau khi phê duyệt.'
                       : 'Lý do từ chối sẽ được lưu và hiển thị cho chủ trọ.'}
                   </p>
-                  <label className="sw-review-label" htmlFor="staff-review-note">
+                  <UIField className="sw-review-label" htmlFor="staff-review-note">
                     {decision === 'REJECT' ? 'Lý do từ chối' : 'Ghi chú xét duyệt (tùy chọn)'}
                     {decision !== 'APPROVE' && <span className="sw-required"> *</span>}
-                  </label>
+                  </UIField>
                   <textarea
                     id="staff-review-note"
                     autoFocus

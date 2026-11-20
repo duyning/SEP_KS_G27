@@ -1,5 +1,16 @@
 # Quản lý nhiều dịch vụ, ảnh và duyệt thay đổi
 
+## Hủy hồ sơ chờ duyệt (2026-11-14)
+
+Chủ hồ sơ được hủy hồ sơ CREATE/UPDATE/DELETE khi trạng thái còn PENDING qua
+`POST /api/service-registrations/{id}/cancel` với `{revision}`. Backend khóa hồ sơ
+rồi khóa tài khoản như luồng duyệt, kiểm tra ownership và revision; hồ sơ đã xử lý
+hoặc phiên bản cũ trả 409. Hủy chuyển sang CANCELLED, tăng revision, ghi lịch sử;
+không xóa tài liệu, không sửa capability hoặc snapshot công khai. Hồ sơ đã hủy
+không chặn gửi mới. UI chủ hồ sơ có xác nhận hủy; Staff có bộ lọc Đã hủy.
+Migration MySQL: `sql/migrations/20261114_service_registration_cancellation.sql`
+bổ sung giá trị CANCELLED cho cột ENUM nếu có; VARCHAR không cần đổi.
+
 Cập nhật 2026-11-08. Luồng này mở rộng service; không thay luồng host/property hoặc phân công Staff.
 
 ## Người dùng
@@ -66,3 +77,28 @@ Artifacts kiểm tra UI nằm ở `frontend/migration/service-management-check/`
 ### Kiểm tra phiên bản backend khi chỉ thấy một ảnh
 
 Nếu API `/api/services` chỉ có `imageUrl`, không có `imageUrls`, tiến trình backend vẫn là phiên bản cũ; cần chạy lại cấu hình IntelliJ, không chỉ refresh frontend. Phiên kiểm tra 2026-11-08 đã xác minh API sau khi người dùng chạy lại có `imageUrls`, nhưng các dịch vụ cũ chỉ lưu 1 ảnh. Các ảnh chưa được backend cũ lưu không thể tự phục hồi; người đăng ký cần chọn lại bộ ảnh trong yêu cầu cập nhật và gửi Staff duyệt. Gallery hiển thị ảnh nhỏ, chỉ số hiện tại/tổng ảnh và nút trước/sau; tên tệp được rút gọn, tên gốc vẫn giữ khi tải xuống.
+
+## Lifecycle completion — 2026-11-14
+
+GET /api/service-registrations/services returns the authenticated owner’s approved non-deleted snapshots. Staff detail includes currentListing comparison for proposal review. Rejecting an update does not reactivate a revoked capability. Customer service requests are documented separately in [SERVICE_REQUESTS.md](SERVICE_REQUESTS.md); existing DELETE approval/public-snapshot semantics are retained.
+
+
+## Mở rộng khu vực dịch vụ (2026-11-14)
+
+Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.
+
+## Đơn vị tính (2026-11-14)
+
+Hồ sơ và dịch vụ có `priceUnit` tùy chọn: bỏ trống lưu NULL, có nội dung thì trim và kiểm tra 2–20 ký tự. Trường được gửi/đọc qua các endpoint hiện có; bản công khai chỉ đổi sau khi duyệt đề nghị cập nhật. Migration `sql/migrations/20261114_service_price_unit.sql` thêm `price_unit VARCHAR(20) NULL` vào `service_registrations` và `services`, có thể chạy lại. Dữ liệu cũ giữ NULL. Trang chi tiết hiển thị đơn vị riêng sau giá và không hiển thị khi giá thỏa thuận.
+
+## Hồ sơ không yêu cầu tài liệu xác minh (2026-11-17)
+
+Form gửi mới/nộp bổ sung bỏ mục tài liệu xác minh; API cho phép không có tài liệu. Tài liệu cũ vẫn được giữ và truy cập theo quyền hiện có. Ảnh dịch vụ và quy trình xét duyệt không thay đổi.
+
+## Đánh giá và báo cáo dịch vụ (2026-11-18)
+
+Đã nối đánh giá 0–5 sao, ảnh và phản hồi chủ dịch vụ; báo cáo riêng tư, giải trình và staff gỡ công khai qua moderationHidden. Chi tiết API, phân quyền, trạng thái và migration: [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
+
+## Cập nhật nền giao diện dịch vụ (2026-11-20)
+
+Các màn dịch vụ tự đọc lại dữ liệu mỗi 5 giây khi tab hiển thị, khi quay lại tab, kết nối mạng trở lại và sau thao tác dịch vụ thành công, kể cả từ tab khác. Cơ chế dùng polling. Bỏ nút tải lại ở nhánh dịch vụ. Đọc nền giữ nội dung form đang nhập. Form hồ sơ kiểm tra dữ liệu khi nhập; dashboard admin có khối hồ sơ/báo cáo dịch vụ dùng API thực tế.

@@ -2,7 +2,7 @@
    HL_RCS | ROOM HOST PORTAL - INDIVIDUAL ROOMS MANAGEMENT CSS (host-rooms.css)
    Module: Quản lý từng phòng thực tế (Individual Rooms Management)
    Hierarchy: 1 Host -> Max 1 Property -> Many Room Types -> Many Individual Rooms
-   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488), Emerald (#10b981)
+   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e), Emerald (#10b981)
    ============================================================================= */
 
 :root {
@@ -10,7 +10,7 @@
   --rm-slate-dark: #1e293b;
   --rm-slate-muted: #64748b;
   --rm-slate-subtle: #94a3b8;
-  --rm-teal: #0d9488;
+  --rm-teal: #0f766e;
   --rm-teal-hover: #0f766e;
   --rm-teal-light: #f0fdfa;
   --rm-teal-border: #99f6e4;

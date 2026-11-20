@@ -1,7 +1,7 @@
 /* =============================================================================
    HL_RCS | ROOM HOST PORTAL - VIEWING REQUESTS CSS (host-viewing-requests.css)
    Module: Quản lý yêu cầu xem phòng (Viewing Requests Management)
-   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488), Emerald (#10b981), Amber (#d97706)
+   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e), Emerald (#10b981), Amber (#d97706)
    ============================================================================= */
 
 :root {
@@ -9,7 +9,7 @@
   --vr-slate-dark: #1e293b;
   --vr-slate-muted: #64748b;
   --vr-slate-subtle: #94a3b8;
-  --vr-teal: #0d9488;
+  --vr-teal: #0f766e;
   --vr-teal-hover: #0f766e;
   --vr-teal-light: #f0fdfa;
   --vr-teal-border: #99f6e4;

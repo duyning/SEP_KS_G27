@@ -1,3 +1,4 @@
+import UIField from '../../components/common/Field.jsx';
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -187,7 +188,7 @@ export default function HostSupportPage() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Tất cả yêu cầu</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0f766e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={18} />
             </div>
           </div>
@@ -302,7 +303,7 @@ export default function HostSupportPage() {
               <MotionButton
                 type="button"
                 onClick={() => setViewMode('table')}
-                style={{ padding: '8px 12px', border: 'none', background: viewMode === 'table' ? '#0d9488' : '#fff', color: viewMode === 'table' ? '#fff' : '#64748b', cursor: 'pointer' }}
+                style={{ padding: '8px 12px', border: 'none', background: viewMode === 'table' ? '#0f766e' : '#fff', color: viewMode === 'table' ? '#fff' : '#64748b', cursor: 'pointer' }}
                 title="Xem dạng bảng"
               >
                 <List size={16} />
@@ -310,7 +311,7 @@ export default function HostSupportPage() {
               <MotionButton
                 type="button"
                 onClick={() => setViewMode('cards')}
-                style={{ padding: '8px 12px', border: 'none', borderLeft: '1px solid #cbd5e1', background: viewMode === 'cards' ? '#0d9488' : '#fff', color: viewMode === 'cards' ? '#fff' : '#64748b', cursor: 'pointer' }}
+                style={{ padding: '8px 12px', border: 'none', borderLeft: '1px solid #cbd5e1', background: viewMode === 'cards' ? '#0f766e' : '#fff', color: viewMode === 'cards' ? '#fff' : '#64748b', cursor: 'pointer' }}
                 title="Xem dạng thẻ"
               >
                 <LayoutGrid size={16} />
@@ -387,7 +388,7 @@ export default function HostSupportPage() {
               <tbody>
                 {filteredRequests.map((item, index) => (
                   <tr key={item.id} style={{ borderBottom: index < filteredRequests.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0d9488' }}>
+                    <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0f766e' }}>
                       {item.ticketCode || item.code}
                     </td>
                     <td style={{ padding: '14px 16px', maxWidth: '380px' }}>
@@ -396,7 +397,7 @@ export default function HostSupportPage() {
                         {item.content || item.description}
                       </div>
                       {item.assignedStaff && (
-                        <div style={{ fontSize: '11px', color: '#0d9488', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11px', color: '#0f766e', marginTop: '2px' }}>
                           Phụ trách: {item.assignedStaff}
                         </div>
                       )}
@@ -434,7 +435,7 @@ export default function HostSupportPage() {
             <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#0d9488' }}>{item.ticketCode || item.code}</span>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f766e' }}>{item.ticketCode || item.code}</span>
                   <h3 style={{ fontSize: '15px', fontWeight: '700', margin: '2px 0 0 0', color: '#0f172a' }}>{item.subject || item.title}</h3>
                 </div>
                 <StatusBadge status={item.status}>{item.statusLabel}</StatusBadge>
@@ -473,9 +474,9 @@ export default function HostSupportPage() {
             </div>
 
             <div>
-              <label htmlFor="req-title" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+              <UIField htmlFor="req-title" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
                 Tiêu đề yêu cầu <span style={{ color: '#ef4444' }}>*</span>
-              </label>
+              </UIField>
               <input
                 id="req-title"
                 type="text"
@@ -489,9 +490,9 @@ export default function HostSupportPage() {
             </div>
 
             <div>
-              <label htmlFor="req-cat" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+              <UIField htmlFor="req-cat" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
                 Loại vấn đề <span style={{ color: '#ef4444' }}>*</span>
-              </label>
+              </UIField>
               <select
                 id="req-cat"
                 value={formCategory}
@@ -507,9 +508,9 @@ export default function HostSupportPage() {
             </div>
 
             <div>
-              <label htmlFor="req-desc" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
+              <UIField htmlFor="req-desc" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '4px' }}>
                 Mô tả chi tiết <span style={{ color: '#ef4444' }}>*</span>
-              </label>
+              </UIField>
               <textarea
                 id="req-desc"
                 rows={4}

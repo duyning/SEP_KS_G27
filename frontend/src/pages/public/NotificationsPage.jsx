@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import { useCallback, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { StateView } from '../../components/PortalUI.jsx';
@@ -39,11 +40,11 @@ export default function NotificationsPage({ host = false }) {
   return <section className="viewing-flow">
     <header className="viewing-heading">
       <div>{!host && <h1>Thông báo của bạn</h1>}<p>Yêu cầu mới, phản hồi và lịch xem phòng đã hủy.</p></div>
-      <button type="button" className="p-button" disabled={busy !== null} onClick={reload}>Làm mới</button>
+      <UIButton type="button" className="p-button" disabled={busy !== null} onClick={reload}>Làm mới</UIButton>
     </header>
     <div className="viewing-actions">
-      <button type="button" className={unread ? 'p-button' : 'p-button primary'} aria-pressed={!unread} onClick={() => change(false)}>Tất cả</button>
-      <button type="button" className={unread ? 'p-button primary' : 'p-button'} aria-pressed={unread} onClick={() => change(true)}>Chưa đọc{data ? ` (${data.unreadCount})` : ''}</button>
+      <UIButton type="button" className={unread ? 'p-button' : 'p-button primary'} aria-pressed={!unread} onClick={() => change(false)}>Tất cả</UIButton>
+      <UIButton type="button" className={unread ? 'p-button primary' : 'p-button'} aria-pressed={unread} onClick={() => change(true)}>Chưa đọc{data ? ` (${data.unreadCount})` : ''}</UIButton>
     </div>
     {actionError && <p className="viewing-error" role="alert">{actionError}</p>}
     {!data ? <ViewingLoadState error={error} retry={reload} /> : <>
@@ -52,9 +53,9 @@ export default function NotificationsPage({ host = false }) {
           <div><h2>{item.content}</h2><p>{item.read ? 'Đã đọc' : 'Chưa đọc'} · {formatViewingDate(item.createdAt)}</p></div>
           <div className="viewing-actions">
             <Link className="p-button" to={(['REQUESTED', 'CANCELLED'].includes(item.event) ? hostViewingLink : viewingLink)(item.bookingId)}>Xem lịch #{item.bookingId}</Link>
-            {!item.read && <button type="button" className="p-button" disabled={busy !== null} onClick={() => markRead(item.notificationId)}>
+            {!item.read && <UIButton type="button" className="p-button" disabled={busy !== null} onClick={() => markRead(item.notificationId)}>
               {busy === item.notificationId ? 'Đang lưu…' : 'Đánh dấu đã đọc'}
-            </button>}
+            </UIButton>}
           </div>
         </article>)}</div>}
       <ViewingPagination page={page} hasNext={data.hasNext} onPage={value => change(unread, value)} />

@@ -1,0 +1,238 @@
+classDiagram
+    direction TB
+    class StaffController {
+        <<Controller>>
+        +dashboard()
+        +verifications()
+        +detail()
+        +file()
+        +review()
+    }
+    class StaffService {
+        <<Service>>
+        +verifications()
+        +detail()
+        +file()
+        +review()
+        +dashboard()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class PropertyRegistrationRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findForReview()
+        +findByUser_UserIdOrderByCreatedAtDesc()
+        +findFirstByUser_UserIdAndStatusOrderByCreatedAtDesc()
+        +countByUser_UserIdAndStatus()
+    }
+    class PropertyDocumentRepository {
+        <<interface>>
+        +getDocumentId()
+        +getDocumentType()
+        +getFileName()
+        +getContentType()
+        +getVerificationStatus()
+        +findByRegistration_RegistrationIdOrderByDocumentIdAsc()
+        +existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull()
+    }
+    class PropertyRepository {
+        <<interface>>
+        +findByOwner_UserIdOrderByPropertyIdAsc()
+    }
+    class ModerationLogRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findByTargetTypeAndTargetIdOrderByCreatedAtDesc()
+    }
+    class ReportRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtAsc()
+    }
+    class SupportRequestRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtAsc()
+    }
+    class PostRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtAsc()
+    }
+    class ServiceRegistrationRepository {
+        <<interface>>
+        +existsByTargetService_ServiceIdAndStatusIn()
+        +existsByUser_UserIdAndServiceNameIgnoreCaseAndStatusIn()
+        +findForReview()
+        +findAllByOrderByRegistrationIdDesc()
+        +findByAssignedStaff_UserIdOrderByRegistrationIdDesc()
+        +findByUser_UserIdOrderByRegistrationIdDesc()
+        +existsByUser_UserIdAndStatusIn()
+    }
+    class ServiceComplaintRepository {
+        <<interface>>
+        +findAllByOrderByComplaintIdDesc()
+        +findByService_Provider_UserIdOrderByComplaintIdDesc()
+        +findByReporter_UserIdOrderByComplaintIdDesc()
+        +existsByService_ServiceIdAndReporter_UserIdAndStatusIn()
+        +findForReview()
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class PropertyRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -RegistrationStatus status
+        -User reviewer
+    }
+    class PropertyDocument {
+        <<Entity>>
+        -Integer documentId
+        -PropertyRegistration registration
+        -String documentType
+        -String documentUrl
+        -String verificationStatus
+        -String fileName
+        -String contentType
+        -byte[] fileContent
+    }
+    class Property {
+        <<Entity>>
+        -Integer propertyId
+        -User owner
+        -PropertyRegistration registration
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -String description
+    }
+    class ModerationLog {
+        <<Entity>>
+        -Integer logId
+        -User staff
+        -String targetType
+        -Integer targetId
+        -String action
+        -String note
+        -LocalDateTime createdAt
+    }
+    class Report {
+        <<Entity>>
+        -Integer reportId
+        -User reporter
+        -ReportTargetType targetType
+        -Integer targetId
+        -String reason
+        -ReportStatus status
+        -User handler
+        -LocalDateTime createdAt
+    }
+    class SupportRequest {
+        <<Entity>>
+        -Integer requestId
+        -User requester
+        -Property targetProperty
+        -String requestType
+        -String description
+        -SupportStatus status
+        -LocalDateTime createdAt
+        -LocalDateTime completedAt
+    }
+    class Post {
+        <<Entity>>
+        -Integer postId
+        -User author
+        -PostType postType
+        -String title
+        -String description
+        -PostStatus status
+        -User reviewer
+        -LocalDateTime reviewedAt
+    }
+    class ServiceRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -ServiceCategory category
+        -String serviceName
+        -String contactInfo
+        -String applicantName
+        -String contactEmail
+        -String pricingType
+    }
+    class ServiceComplaint {
+        <<Entity>>
+        -Integer complaintId
+        -Service service
+        -User reporter
+        -String content
+        -String status
+        -Instant createdAt
+        -int revision
+        -List~ServiceImage~ images
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    StaffController --> StaffService : injected
+    StaffService --> AuthService : injected
+    StaffService --> UserRepository : injected
+    StaffService --> PropertyRegistrationRepository : injected
+    StaffService --> PropertyDocumentRepository : injected
+    StaffService --> PropertyRepository : injected
+    StaffService --> ModerationLogRepository : injected
+    StaffService --> ReportRepository : injected
+    StaffService --> SupportRequestRepository : injected
+    StaffService --> PostRepository : injected
+    StaffService --> ServiceRegistrationRepository : injected
+    StaffService --> ServiceComplaintRepository : injected
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    PropertyRegistrationRepository --|> JpaRepository
+    PropertyRegistrationRepository ..> PropertyRegistration : entity - ID Integer
+    PropertyDocumentRepository --|> JpaRepository
+    PropertyDocumentRepository ..> PropertyDocument : entity - ID Integer
+    PropertyRepository --|> JpaRepository
+    PropertyRepository ..> Property : entity - ID Integer
+    ModerationLogRepository --|> JpaRepository
+    ModerationLogRepository ..> ModerationLog : entity - ID Integer
+    ReportRepository --|> JpaRepository
+    ReportRepository ..> Report : entity - ID Integer
+    SupportRequestRepository --|> JpaRepository
+    SupportRequestRepository ..> SupportRequest : entity - ID Integer
+    PostRepository --|> JpaRepository
+    PostRepository ..> Post : entity - ID Integer
+    ServiceRegistrationRepository --|> JpaRepository
+    ServiceRegistrationRepository ..> ServiceRegistration : entity - ID Integer
+    ServiceComplaintRepository --|> JpaRepository
+    ServiceComplaintRepository ..> ServiceComplaint : entity - ID Integer

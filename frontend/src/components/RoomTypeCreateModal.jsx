@@ -1,3 +1,4 @@
+import UIField from './common/Field.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import { SlidingNumber } from '@animate-ui/react/primitives/texts/sliding-number';
@@ -185,10 +186,10 @@ export default function RoomTypeCreateModal({
 
   const field = (name, label, control, required = false, hint = null) => (
     <div className="rt-field">
-      <label htmlFor={`rt-${name}`}>
+      <UIField htmlFor={`rt-${name}`}>
         {label}
         {required && <span> *</span>}
-      </label>
+      </UIField>
       {control}
       {hint && <small>{hint}</small>}
       {errors[name] && (
@@ -411,9 +412,9 @@ export default function RoomTypeCreateModal({
                     <fieldset disabled={busy} className="rtc-photos">
                       <legend>Hình ảnh loại phòng</legend>
                       <div className="rt-field">
-                        <label className="rtc-photo-label" htmlFor="rt-photos">
+                        <UIField className="rtc-photo-label" htmlFor="rt-photos">
                           Chọn ảnh thực tế của loại phòng
-                        </label>
+                        </UIField>
                         <input
                           ref={filePicker}
                           className="rt-file-input"
@@ -497,7 +498,7 @@ export default function RoomTypeCreateModal({
                             {keys.map(key => {
                               const label = ROOM_AMENITIES.find(([value]) => value === key)[1];
                               return (
-                                <label key={key} className={data.amenities.includes(key) ? 'selected' : ''}>
+                                <UIField key={key} className={data.amenities.includes(key) ? 'selected' : ''}>
                                   <input
                                     type="checkbox"
                                     checked={data.amenities.includes(key)}
@@ -511,7 +512,7 @@ export default function RoomTypeCreateModal({
                                     }
                                   />
                                   <span>{label}</span>
-                                </label>
+                                </UIField>
                               );
                             })}
                           </div>

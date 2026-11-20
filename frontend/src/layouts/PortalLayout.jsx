@@ -1,3 +1,5 @@
+import UIButton from '../components/common/Button.jsx';
+import {PageTitleContext} from '../components/common/Breadcrumb.jsx';
 import { AnimatePresence, MotionMenu, MotionButton } from '../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
@@ -35,12 +37,12 @@ const menus = {
       ['Xem trang khách thuê', '/', Globe]
     ]]
   ],
-  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
+  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
   admin: [
     ['TỔNG QUAN', [adminDashboardViews.overview, adminDashboardViews.accounts]],
     ['ĐIỀU PHỐI', [adminDashboardViews.assignment, adminReportsLink]],
     ['HỆ THỐNG', [adminDashboardViews.activity]],
-    ['CỔNG NHÂN VIÊN', [['Hồ sơ dịch vụ', '/staff/service-applications', Wrench]]],
+    ['CỔNG NHÂN VIÊN', [['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag]]],
   ],
 };
 const adminLinks = menus.admin.flatMap(([, links]) => links).filter(([, to]) => to.startsWith('/admin'));
@@ -67,6 +69,7 @@ export default function PortalLayout({ screen, children }) {
   const { user, logout } = useAuth();
   const notify = useToast();
   const location = useLocation();
+  const [pageTitle,setPageTitle]=useState('');
 
   const [open, setOpen] = useState(false);
   const [hostHeaderTarget,setHostHeaderTarget] = useState(null);
@@ -80,7 +83,7 @@ export default function PortalLayout({ screen, children }) {
   const adminDestination = location.pathname === '/admin'
     ? adminDashboardViews[getAdminDashboardView(new URLSearchParams(location.search))][1]
     : location.pathname;
-  const topbarTitle = ['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'Quản lý nhà trọ' : screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
+  const topbarTitle = ['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'Quản lý nhà trọ' : screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : pageTitle || screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
   const [pendingHostApplications, setPendingHostApplications] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
@@ -265,7 +268,7 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
-  if (portal === 'public' && ['/', '/favorites', '/favorites/compare', '/profile', '/become-host', '/properties/detail', '/search', '/bookings', '/map', '/community', '/services', '/services/detail'].includes(location.pathname)) return children;
+  if (portal === 'public' && ['/', '/favorites', '/favorites/compare', '/profile', '/become-host', '/properties/detail', '/search', '/bookings', '/map', '/community', '/services', '/services/detail'].includes(location.pathname)) return <PageTitleContext.Provider value={setPageTitle}>{children}</PageTitleContext.Provider>;
 
   return (
     <div className={`portal-app ${portal}-portal ${portal === 'host' && ['/host', '/host/property', '/host/property/new', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'host-workspace' : ''} ${location.pathname==='/'?'home-route':''} ${screen.path === '/host' ? 'host-dashboard-route' : ''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>
@@ -394,7 +397,7 @@ export default function PortalLayout({ screen, children }) {
             ))}
           </nav>
         )}
-        <HostHeaderTarget.Provider value={hostHeaderTarget}>{children}</HostHeaderTarget.Provider>
+        <HostHeaderTarget.Provider value={hostHeaderTarget}><PageTitleContext.Provider value={setPageTitle}>{children}</PageTitleContext.Provider></HostHeaderTarget.Provider>
       </main>
 
       {portal === 'host' && (

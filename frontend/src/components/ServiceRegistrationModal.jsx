@@ -1,114 +1,213 @@
-import {useEffect,useRef,useState} from 'react';
-import {Link} from 'react-router-dom';
-import {ArrowUpRight,CheckCircle2,Clock3,FileText,Upload,Trash2,ShieldCheck,LockKeyhole,BriefcaseBusiness,UserRound,ArrowRight,RotateCcw,Download,LoaderCircle,AlertCircle} from 'lucide-react';
+import useServiceLive from '../hooks/useServiceLive.js';
+import ServicePrice from './ServicePrice.jsx';
+import ServiceCancellation from './ServiceCancellation.jsx';
+import { PRICE_UNITS, normalizePriceUnit, suggestedPriceUnit } from '../services/service-price.js';
+import { areaList, splitServiceAreas, serviceAreaText } from '../services/service-areas.js';
+import ServiceAreaSelect from './ServiceAreaSelect.jsx';
+import StatusBadge from './common/StatusBadge.jsx';
+import UIField from './common/Field.jsx';
+import UIButton from './common/Button.jsx';
+import { serviceFileName } from '../services/service-form.js';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Clock3, Download, FileText, X } from 'lucide-react';
 import Modal from './common/Modal.jsx';
-import {MotionButton} from './motion/MotionUI.jsx';
-import {useAuth} from '../context/AuthContext.jsx';
-import {serviceRegistrationApi as api,validateServiceRegistrationFields,serviceRegistrationFieldErrors} from '../services/service-registration.js';
-import {validateRegistrationFile} from '../services/property-registration.js';
 import ServiceGallery from './ServiceGallery.jsx';
+import ServiceFormSelect from './ServiceFormSelect.jsx';
+import ServiceMoneyInput from './ServiceMoneyInput.jsx';
 import ServiceExpandableText from './ServiceExpandableText.jsx';
-import {serviceFileName} from '../services/service-form.js';
 import '../styles/service-registration-form.css';
-import '../styles/service-catalog.css';
-import '../styles/service-registration-modal.css';
+import { useAuth } from '../context/AuthContext.jsx';
+import { serviceRegistrationApi as api, validateServiceRegistrationFields, serviceRegistrationFieldErrors } from '../services/service-registration.js';
+import {validateRegistrationFile} from '../services/property-registration.js';
 
-const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung hồ sơ',APPROVED:'Đã được duyệt',REJECTED:'Bị từ chối'};
-const reasons={HAS_CAPABILITY:'Tài khoản đã có quyền cung cấp dịch vụ.',APPROVED:'Hồ sơ của bạn đã được duyệt.',IN_REVIEW:'Hồ sơ đang được xử lý. Bạn chưa thể gửi hồ sơ mới.'};
-const priceLabel=(type,price)=>type==='NEGOTIABLE'?'Thỏa thuận':price!==''&&price!=null&&Number.isFinite(Number(price))?`${type==='FROM'?'Từ ':''}${Number(price).toLocaleString('vi-VN')} VNĐ`:'Chưa nhập giá';
-const date=value=>{
- const parsed=new Date(value);
- if(!value||!Number.isFinite(parsed.getTime()))return '—';
- return <time className="sr-date-time" dateTime={value}><span>{parsed.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><span aria-hidden="true">•</span><span>{parsed.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})}</span></time>;
-};
-function Field({name,label,form,errors,onChange,hint,required=true,children,...props}){
- return <div className={`sr-field${errors[name]?' has-error':''}`}><label htmlFor={`sr-${name}`}>{label}{required&&<span aria-hidden="true"> *</span>}</label>{children||<input id={`sr-${name}`} name={name} value={form[name]} onChange={onChange} required={required} aria-invalid={!!errors[name]} aria-describedby={errors[name]?`sr-error-${name}`:hint?`sr-hint-${name}`:undefined} {...props}/>}{errors[name]?<p className="sr-field-error" id={`sr-error-${name}`}>{errors[name]}</p>:hint&&<p className="sr-field-hint" id={`sr-hint-${name}`}>{hint}</p>}</div>;
+
+const statuses = { PENDING: 'Chờ xét duyệt', NEEDS_SUPPLEMENT: 'Cần bổ sung hồ sơ', APPROVED: 'Đã được duyệt', REJECTED: 'Bị từ chối', CANCELLED: 'Đã hủy' };
+const reasons = { HAS_CAPABILITY: 'Tài khoản đã có quyền cung cấp dịch vụ.', APPROVED: 'Hồ sơ của bạn đã được duyệt.', IN_REVIEW: 'Hồ sơ đang được xử lý. Bạn chưa thể gửi hồ sơ mới.' };
+const inputStyle = { width: '100%', padding: '9px var(--space-3)', borderRadius: 8 };
+
+export default function ServiceRegistrationModal({ onClose, applicationId, createNew = false, editService }) {
+  const { user } = useAuth();
+  const [customUnit, setCustomUnit] = useState(false);
+  const unitChosen = useRef(false);
+  const [form, setForm] = useState({ applicantName: user?.fullName || '', contactPhone: user?.phoneNumber || '', contactEmail: user?.email || '', categoryId: '', serviceName: '', description: '', serviceArea: '', customServiceAreas: '', otherAreasEnabled: false, pricingType: 'FIXED', price: '', priceUnit: '' });
+  const [image, setImage] = useState([]);
+  const [documents,setDocuments]=useState([]),[retained,setRetained]=useState([]);
+  const submission=useRef(null),inFlight=useRef(false);
+  useEffect(()=>()=>submission.current?.abort(),[]);
+  const [preview, setPreview] = useState([]);
+  useEffect(() => { const urls = image.map(file => URL.createObjectURL(file)); setPreview(urls); return () => urls.forEach(url => URL.revokeObjectURL(url)); }, [image]);
+  const [categories, setCategories] = useState([]);
+  const [state, setState] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const content = useRef(null); const focusError = useRef(false); const formId = useId();
+  useEffect(() => {
+    if (!focusError.current) return;
+    const target = content.current?.querySelector('[aria-invalid="true"]') || content.current?.querySelector('[data-form-error]');
+    if (target?.disabled) return;
+    if (target) { target.focus({ preventScroll: true }); target.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    focusError.current = false;
+  }, [fieldErrors, error, busy]);
+  useEffect(() => {
+    if (!submitted) return;
+    const dialog = content.current?.closest('dialog');
+    dialog?.scrollTo({ top: 0, behavior: 'instant' });
+    content.current?.querySelector('.svc-submit-success')?.focus({ preventScroll: true });
+  }, [submitted]);
+  const clearFieldError = name => setFieldErrors(previous => { if (!previous[name]) return previous; const next = { ...previous }; delete next[name]; return next; });
+  const feedback = (name, hint) => <small id={formId + '-' + name} className={fieldErrors[name] ? 'svc-field-error' : 'svc-field-hint'} role={fieldErrors[name] ? 'alert' : undefined}>{fieldErrors[name] || hint}</small>;
+  const hints = { applicantName: 'Từ 2 đến 100 ký tự.', serviceName: 'Từ 3 đến 255 ký tự; tên không trùng với dịch vụ khác của bạn.', serviceArea: 'Từ 2 đến 500 ký tự, ví dụ: Tân Xã, Thạch Hòa.', contactPhone: 'Số di động Việt Nam: 10 số hoặc bắt đầu bằng +84.', contactEmail: 'Không bắt buộc; ví dụ: ten@example.com, tối đa 255 ký tự.' };
+  const [reload, setReload] = useState(0);
+  const [note, setNote] = useState('');
+  const [stale, setStale] = useState(false);
+  const supplement = state?.registration?.status === 'NEEDS_SUPPLEMENT';
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    const controller = new AbortController();
+    setLoading(true); setError(''); setFieldErrors({});
+    Promise.all([api.categories(controller.signal), (applicationId ? api.mine(controller.signal).then(rows => { const registration = rows.find(row => String(row.registrationId) === String(applicationId)); if (!registration) throw new Error('Không tìm thấy hồ sơ.'); return { canRegister: false, reason: 'IN_REVIEW', registration }; }) : api.current(controller.signal))]).then(([rows, current]) => {
+      if (controller.signal.aborted) return;
+      setCategories(rows); setState(editService || createNew ? { canRegister: true, reason: 'ELIGIBLE', registration: null } : current); setStale(false);
+      setDocuments([]);setRetained((current.registration?.documents||[]).map(doc=>doc.documentId));
+      const loadedUnit = (editService || current.registration)?.priceUnit || '';
+      if (editService || (!createNew && current.registration?.status === 'NEEDS_SUPPLEMENT')) { setCustomUnit(!!loadedUnit && !PRICE_UNITS.includes(loadedUnit)); unitChosen.current = true; }
+      if (editService) setForm(previous => ({ ...Object.fromEntries(Object.keys(previous).map(key => [key, editService[key] ?? ''])), ...splitServiceAreas(editService) }));
+      if (!editService && !createNew && current.registration?.status === 'NEEDS_SUPPLEMENT') {
+        const row = current.registration;
+        setForm(previous => ({ ...Object.fromEntries(Object.keys(previous).map(key => [key, row[key] ?? ''])), ...splitServiceAreas(row) }));
+        setNote('');
+      }
+    }).catch(err => { if (!controller.signal.aborted) setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [user, reload, applicationId, createNew, editService]);
+  useServiceLive(signal => applicationId ? api.mine(signal).then(rows => ({ canRegister: false, reason: 'IN_REVIEW', registration: rows.find(row => String(row.registrationId) === String(applicationId)) })) : api.current(signal), fresh => {
+    if (fresh.registration?.status === 'NEEDS_SUPPLEMENT' && state?.registration?.status !== 'NEEDS_SUPPLEMENT') { setReload(v => v + 1); return; }
+    setState(fresh); setError('');
+  }, { enabled: !busy && !loading && !createNew && !editService && !!state?.registration && !supplement, identity: applicationId || user?.userId });
+  useEffect(() => {
+    if (loading || busy) return;
+    const timer = setTimeout(() => {
+      const errors = validateServiceRegistrationFields(form, [], { customUnit, image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories });
+      setFieldErrors(previous => Object.fromEntries(Object.entries(errors).filter(([key]) => previous[key] || (key === 'image' ? image.length : key === 'note' ? note.length : String(form[key] ?? '').length))));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [form, image, note, customUnit, loading, busy, supplement, editService, categories]);
+  const close = () => { if (!busy) onClose(); };
+  const update = e => {
+    const { name, value } = e.target;
+    if (name === 'priceUnit') unitChosen.current = true;
+    setForm(previous => ({ ...previous, [name]: value, ...(name === 'categoryId' && !unitChosen.current ? { priceUnit: suggestedPriceUnit(categories.find(item => String(item.categoryId) === String(value))?.name || '') } : {}) })); clearFieldError(name);
+    if (['otherAreasEnabled', 'customServiceAreas'].includes(name)) clearFieldError('serviceArea');
+    if (name === 'otherAreasEnabled') clearFieldError('customServiceAreas');
+  };
+  const validateField = name => {
+    if (!name) return;
+    const errors = validateServiceRegistrationFields(form, documents, { customUnit, retainedCount: supplement?retained.length:0,
+      image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories,
+    });
+    setFieldErrors(previous => ({ ...previous, [name]: errors[name] }));
+  };
+  async function submit(event) {
+    event.preventDefault();
+    if (inFlight.current) return;
+    const errors = validateServiceRegistrationFields(form, documents, { customUnit, retainedCount: supplement?retained.length:0,
+      image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories,
+    });
+    setFieldErrors(errors); setError('');
+    if (Object.keys(errors).length) { focusError.current = true; return; }
+    const controller=new AbortController();submission.current=controller;inFlight.current=true;
+    setBusy(true); setError('');
+    try {
+      const details = { ...form, priceUnit: normalizePriceUnit(form.priceUnit) || null, customServiceAreas: areaList(form.customServiceAreas).join(', '), categoryId: Number(form.categoryId), price: form.pricingType === 'NEGOTIABLE' ? null : Number(form.price) };
+      const registration = editService ? await api.change(editService.serviceId, { operation: 'UPDATE', serviceRevision: editService.serviceRevision, details, note }, image,controller.signal) : supplement ? await api.resubmit(state.registration.registrationId,
+        { details, revision: state.registration.revision, retainedDocumentIds: retained, note }, documents, image,controller.signal) : await api.submit(details, documents, image,controller.signal);
+      if(controller.signal.aborted)return;
+      setState({ canRegister: false, reason: 'IN_REVIEW', registration }); setImage([]); setSubmitted(true);
+    } catch (err) {
+      if(controller.signal.aborted)return;
+      const errors = serviceRegistrationFieldErrors(err);
+      focusError.current = true; setFieldErrors(errors);
+      if (Object.keys(errors).length) { setError(''); }
+      else {
+        setError(err.message);
+        if (err.status === 409) {
+          setStale(true); if (!supplement && !editService && !createNew) { try { setState(await api.current()); } catch { /* Keep error visible. */ } }
+        }
+      }
+    } finally { inFlight.current=false;if(!controller.signal.aborted)setBusy(false); }
+  }
+  async function download(document) {
+    setError('');
+    try {
+      const blob = await api.document(document.documentId);
+      const url = URL.createObjectURL(blob);
+      const anchor = window.document.createElement('a'); anchor.href = url; anchor.download = document.name; anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) { setError(err.message); }
+  }
+  const field = (name, label, props = {}) => <UIField style={{ display: 'grid', gap: 6 }} key={name}><span>{label.replace('*', '').trimEnd()}{props.required !== false && <span className="svc-required"> *</span>}</span><input className="svc-text-input" style={inputStyle} name={name} value={form[name]} onChange={update} required {...props} aria-invalid={!!fieldErrors[name]} aria-describedby={formId + '-' + name} />{feedback(name, hints[name])}</UIField>;
+  const row = state?.registration;
+  return <Modal title={editService ? "Cập nhật dịch vụ — chờ nhân viên duyệt" : "Hồ sơ cung cấp dịch vụ"} onClose={close} maxWidth="680px"><div className="svc-registration-content" ref={content}>
+    {submitted && <p role="status" tabIndex={-1} className="svc-submit-success">Đã gửi hồ sơ thành công. Bạn có thể theo dõi kết quả xét duyệt tại đây.</p>}
+    {!user ? <p>Bạn cần <Link to="/login" state={{ from: '/services' }}>đăng nhập</Link> để gửi và theo dõi hồ sơ.</p> : loading ? <p role="status">Đang tải hồ sơ...</p> : <>
+      {error && <p role="alert" data-form-error tabIndex={-1} style={{ color: '#b91c1c' }}>{error}</p>}
+      {!state && <UIButton className="svc-btn" onClick={() => setReload(v => v + 1)}>Thử lại</UIButton>}
+      {supplement && <section className="svc-supplement-request" role="status" aria-label="Yêu cầu bổ sung từ nhân viên">
+        <h4>Yêu cầu bổ sung từ nhân viên</h4>
+        <p className="svc-supplement-reviewer">{row.reviewerName || 'Nhân viên xét duyệt'}{row.supplementRequestedAt && ` · ${new Date(row.supplementRequestedAt).toLocaleString('vi-VN')}`}</p>
+        <p className="svc-supplement-instructions">{row.requestedChanges || row.reasonNote || 'Vui lòng liên hệ nhân viên xét duyệt để làm rõ nội dung cần bổ sung.'}</p>
+        <p>Sửa thông tin bên dưới rồi nộp lại hồ sơ #{row.registrationId}.</p>
+      </section>}
+      {row && <section className="svc-application-summary" aria-label="Hồ sơ đã gửi">
+        <div className="svc-application-heading"><h4>Hồ sơ #{row.registrationId}</h4><StatusBadge status={row.status} label={statuses[row.status] || row.status} /></div>
+        <p>{row.serviceName} · {row.categoryName}</p>
+        <p>Người đăng ký: {row.applicantName}</p>
+        <ServiceExpandableText key={`${row.registrationId}-${row.revision}-description`} text={row.description} label="Mô tả dịch vụ" />
+        <p>Khu vực: {serviceAreaText(row)}</p>
+        <p>Giá: <ServicePrice service={row} /></p>
+        <p>Liên hệ: {row.contactPhone} {row.contactEmail && `· ${row.contactEmail}`}</p>
+        {row.resubmittedAt && <><p>Nộp lại: {new Date(row.resubmittedAt).toLocaleString('vi-VN')} · Phiên bản {row.revision}</p><ServiceExpandableText key={`${row.registrationId}-${row.revision}-note`} text={row.resubmissionNote} label="Nội dung thay đổi" /></>}
+        {row.createdAt && <p>Ngày gửi: {new Date(row.createdAt).toLocaleString('vi-VN')}</p>}
+        {row.hasImage && <ServiceGallery key={row.registrationId + "-" + row.revision} application={row} />}
+        {!supplement && row.reasonNote && <ServiceExpandableText key={`${row.registrationId}-${row.revision}-reason`} text={row.reasonNote} label={row.status === 'REJECTED' || row.listingDecision === 'REJECT' ? 'Lý do từ chối:' : 'Nhận xét xét duyệt:'} />}
+        {row.reviewedAt && ['APPROVED', 'REJECTED'].includes(row.status) && <><p>Quyền Service Owner: {row.capabilityDecision === 'APPROVE' ? 'Đã cấp' : 'Từ chối'} · Quyết định nội dung: {row.listingDecision === 'APPROVE' ? 'Đã duyệt' : 'Từ chối công khai'}</p><p>Người duyệt: {row.reviewerName} · {new Date(row.reviewedAt).toLocaleString('vi-VN')}</p></>}
+        {row.reviewedAt && ['APPROVED', 'REJECTED'].includes(row.status) && <><p>Quyền Service Owner hiện tại: {row.capabilityActive ? 'Đang hoạt động' : 'Chưa được cấp / Đã ngừng'}. Vai trò tài khoản được giữ nguyên.</p><p>Mã nhà cung cấp: #{row.providerId}{row.serviceId && ` · Mã dịch vụ: #${row.serviceId}`}</p><p>{row.publicEligible ? 'Dịch vụ đang công khai.' : row.serviceId ? 'Dịch vụ hiện không đủ điều kiện công khai.' : 'Chưa có dịch vụ công khai.'}</p>{row.publicEligible && <Link to={`/services/detail?id=${row.serviceId}`} onClick={onClose}>Xem dịch vụ công khai</Link>}</>}
+        {!!row.documents.length && <div className="svc-application-documents"><h5>Tài liệu xác minh <span>({row.documents.length})</span></h5><div className="svc-attachment-list">{row.documents.map(doc => <UIButton className="svc-attachment svc-attachment-download" key={doc.documentId} type="button" onClick={() => download(doc)} aria-label={`Tải xuống ${doc.name}`} title={doc.name}>
+          <span className="svc-attachment-icon"><FileText size={19} aria-hidden="true" /></span><span className="svc-attachment-info"><span className="svc-attachment-name">{serviceFileName(doc.name)}</span><small>Tải xuống tài liệu</small></span><Download size={18} aria-hidden="true" />
+        </UIButton>)}</div></div>}
+        {row.status === 'PENDING' && <div className="svc-application-notice" role="status"><Clock3 size={18} aria-hidden="true" /><p>Hồ sơ đã được gửi và đang chờ xét duyệt. Bạn có thể theo dõi kết quả tại đây.</p></div>}
+      </section>}
+      {row && <div className="svc-application-actions"><ServiceCancellation application={row} disabled={busy} onChanged={() => { setSubmitted(false); setReload(value => value + 1); }} /></div>}
+      {state && !state.canRegister && !supplement && row?.status !== 'PENDING' && <p className="svc-field-hint">{reasons[state.reason]}</p>}
+      {(state?.canRegister || supplement) && <form noValidate aria-busy={busy} onBlur={event => validateField(event.target.name)} onSubmit={submit} style={{ display: 'grid', gap: 14 }}>
+        {!supplement && <p style={{ margin: 0 }}>Gửi thông tin dịch vụ để đăng ký cung cấp dịch vụ. Hồ sơ sẽ được nhân viên xét duyệt.</p>}
+        <fieldset disabled={busy || stale} style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 14 }}>
+          <UIField style={{ display: 'grid', gap: 6 }}><span>Ảnh dịch vụ{!editService && !supplement && <span className="svc-required"> *</span>}</span><input name="image" aria-invalid={!!fieldErrors.image} aria-describedby={formId + '-image'} type="file" multiple accept="image/jpeg,image/png,image/webp" required={!editService && !supplement} onChange={e => {
+            const chosen = Array.from(e.target.files || []); if (!chosen.length) return;
+            const next = [...image, ...chosen];
+            e.target.value = '';
+            setImage(next); clearFieldError('image');
+          }} />{feedback('image', `Tối đa 5 ảnh JPG, PNG, WEBP; 5 MB/ảnh. Ảnh đầu là ảnh đại diện.${editService || supplement ? ' Chọn ảnh mới để thay thế bộ ảnh hiện tại.' : ''}`)}</UIField>
+          {preview.length ? <div className="svc-upload-gallery" role="list" aria-label="Ảnh dịch vụ đã chọn">{preview.map((url, index) => <div className="svc-upload-photo" role="listitem" key={url}><img className="svc-editor-photo" src={url} alt={`Ảnh dịch vụ mới chọn ${index + 1}`} /><span>{index === 0 ? 'Ảnh đại diện' : `Ảnh ${index + 1}`}</span><small className="svc-upload-file-name" title={image[index]?.name}>{serviceFileName(image[index]?.name)}</small><UIButton className="svc-remove-photo" type="button" aria-label={`Xóa ảnh ${index + 1}: ${image[index]?.name || 'ảnh dịch vụ'}`} onClick={() => { setImage(previous => previous.filter((_, i) => i !== index)); clearFieldError('image'); }}><X size={16} aria-hidden="true" /></UIButton></div>)}</div> : (editService || supplement && row)?.hasImage ? <ServiceGallery application={editService || row} /> : null}
+          {field('applicantName', 'Họ tên người đăng ký *', { minLength: 2, maxLength: 100 })}
+          {field('serviceName', 'Tên dịch vụ / đơn vị *', { minLength: 3, maxLength: 255 })}
+          <ServiceFormSelect label="Danh mục" name="categoryId" value={form.categoryId} onChange={update} required error={fieldErrors.categoryId} options={categories.map(cat => ({ value: cat.categoryId, label: cat.name }))} />
+          <UIField style={{ display: 'grid', gap: 6 }}><span>Mô tả dịch vụ<span className="svc-required"> *</span></span><textarea name="description" aria-invalid={!!fieldErrors.description} aria-describedby={formId + '-description'} required minLength={20} maxLength={5000} rows={4} value={form.description} onChange={update} className="svc-text-input" style={inputStyle} />{feedback('description', 'Từ 20 đến 5000 ký tự. Đã nhập: ' + form.description.trim().length + '/5000 ký tự.')}</UIField>
+          <ServiceFormSelect label="Loại giá" name="pricingType" value={form.pricingType} onChange={update} required error={fieldErrors.pricingType} options={[{ value: 'FIXED', label: 'Giá cố định' }, { value: 'FROM', label: 'Giá từ' }, { value: 'NEGOTIABLE', label: 'Thỏa thuận' }]} />
+          <div className="svc-price-fields">{form.pricingType !== 'NEGOTIABLE' && <ServiceMoneyInput value={form.price} error={fieldErrors.price} onChange={update} />}<div><ServiceFormSelect label="Đơn vị tính (tùy chọn)" name="priceUnit" value={customUnit ? 'OTHER' : form.priceUnit} onChange={event => { unitChosen.current = true; setCustomUnit(event.target.value === 'OTHER'); update({ target: { name: 'priceUnit', value: event.target.value === 'OTHER' ? '' : event.target.value } }); }} error={fieldErrors.priceUnit} options={[{ value: '', label: 'Không có đơn vị' }, ...PRICE_UNITS.map(value => ({ value, label: value })), { value: 'OTHER', label: 'Khác' }]} />{customUnit && field('priceUnit', 'Đơn vị khác', { required: true, minLength: 2, maxLength: 20, placeholder: 'VD: Bộ, Tháng', onBlur: event => { const unit = normalizePriceUnit(event.target.value); setForm(previous => ({ ...previous, priceUnit: unit })); } })}</div></div>
+          <ServiceAreaSelect value={form.serviceArea} customValue={form.customServiceAreas} otherEnabled={form.otherAreasEnabled} onChange={update} error={fieldErrors.serviceArea} customError={fieldErrors.customServiceAreas} />
+          {field('contactPhone', 'Số điện thoại liên hệ *', { type: 'tel', maxLength: 30 })}
+          {field('contactEmail', 'Email liên hệ', { type: 'email', maxLength: 255, required: false })}
+          {(supplement || editService) && <UIField><span>Nội dung thay đổi<span className="svc-required"> *</span></span><textarea name="note" aria-invalid={!!fieldErrors.note} aria-describedby={formId + '-note'} required minLength={10} maxLength={2000} rows={3} value={note} onChange={e => { setNote(e.target.value); clearFieldError('note'); }} className="svc-text-input" style={inputStyle} />{feedback('note', 'Mô tả thay đổi từ 10 đến 2000 ký tự.')}</UIField>}
+          {!editService&&<UIField><span>Tài liệu xác minh (không bắt buộc, tối đa 5 tệp)</span><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={event=>{const files=Array.from(event.target.files||[]);const invalid=files.map(file=>validateRegistrationFile(file,true)).find(Boolean);if(invalid)setFieldErrors(old=>({...old,documents:invalid}));else{setDocuments(files);clearFieldError('documents');}}}/>{documents.map((file,index)=><span key={`${file.name}-${index}`}>{file.name}<UIButton type="button" onClick={()=>setDocuments(old=>old.filter((_,i)=>i!==index))}>Bỏ tệp</UIButton></span>)}{supplement&&state.registration.documents.map(doc=><label key={doc.documentId}><input type="checkbox" checked={retained.includes(doc.documentId)} onChange={event=>setRetained(old=>event.target.checked?[...old,doc.documentId]:old.filter(id=>id!==doc.documentId))}/>{doc.name||doc.documentName||`Tài liệu #${doc.documentId}`}</label>)}{feedback('documents')}</UIField>}
+          <UIButton type="submit" className="p-button primary">{busy ? 'Đang gửi hồ sơ...' : editService ? 'Gửi cập nhật cho nhân viên duyệt' : supplement ? 'Nộp lại hồ sơ xét duyệt' : 'Gửi hồ sơ xét duyệt'}</UIButton>
+        </fieldset>
+      </form>}
+    </>}
+  </div></Modal>;
 }
-export default function ServiceRegistrationModal({onClose,applicationId,createNew=false,editService}){
- const {user}=useAuth(),picker=useRef(null),submission=useRef(null),content=useRef(null),pendingFocus=useRef(false),submittedApplication=useRef(null);
- const emptyForm=()=>({applicantName:user?.fullName||'',contactPhone:user?.phoneNumber||'',contactEmail:user?.email||'',categoryId:'',serviceName:'',description:'',serviceArea:'',pricingType:'FIXED',price:''});
- const [form,setForm]=useState(emptyForm);
- const [files,setFiles]=useState([]),[images,setImages]=useState([]),[previews,setPreviews]=useState([]),[retained,setRetained]=useState([]),[note,setNote]=useState(''),[stale,setStale]=useState(false);
- const [categories,setCategories]=useState([]),[state,setState]=useState(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[errors,setErrors]=useState({}),[reload,setReload]=useState(0),[dragging,setDragging]=useState(false),[downloading,setDownloading]=useState(null);
- const row=state?.registration,supplement=row?.status==='NEEDS_SUPPLEMENT',editing=!!editService&&!row;
- const editable=!!user&&!loading&&!!state&&(state.canRegister||supplement);
- const submitLabel=editing?'Gửi cập nhật xét duyệt':supplement?'Nộp lại hồ sơ xét duyệt':'Gửi hồ sơ xét duyệt';
- useEffect(()=>{const urls=images.map(file=>URL.createObjectURL(file));setPreviews(urls);return()=>urls.forEach(url=>URL.revokeObjectURL(url));},[images]);
- useEffect(()=>{
-  if(!user){setState(null);setLoading(false);return;}
-  const controller=new AbortController();setLoading(true);setBusy(false);setError('');setErrors({});setState(null);
-  const selectedId=applicationId??submittedApplication.current;
-  const current=selectedId!=null?api.mine(controller.signal).then(rows=>{const registration=rows.find(item=>String(item.registrationId)===String(selectedId));if(!registration)throw new Error('Không tìm thấy hồ sơ.');return {canRegister:false,reason:'IN_REVIEW',registration};}):api.current(controller.signal);
-  Promise.all([api.categories(controller.signal),current]).then(([options,current])=>{
-   if(controller.signal.aborted)return;
-   setCategories(options);setStale(false);setFiles([]);setImages([]);setRetained([]);setNote('');
-   const fresh=(editService||createNew)&&selectedId==null;
-   setState(fresh?{canRegister:true,reason:'ELIGIBLE',registration:null}:current);
-   const source=fresh?editService:current.registration?.status==='NEEDS_SUPPLEMENT'?current.registration:null;
-   setForm(Object.fromEntries(Object.entries(emptyForm()).map(([key,value])=>[key,source?String(source[key]??(key==='pricingType'?'FIXED':'')):value])));
-   if(!fresh&&source)setRetained((source.documents||[]).map(doc=>doc.documentId));
-  }).catch(err=>{if(!controller.signal.aborted)setError(err.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
-  return()=>controller.abort();
- },[user?.userId,reload,applicationId,createNew,editService]);
- useEffect(()=>()=>{submission.current?.abort();submission.current=null;submittedApplication.current=null;},[user?.userId,applicationId,createNew,editService]);
- useEffect(()=>{
-  if(!pendingFocus.current||busy||loading)return;
-  const target=content.current?.querySelector('[aria-invalid="true"]')||content.current?.querySelector('[data-form-error]');
-  if(target&&!target.disabled){target.focus();target.scrollIntoView({block:'nearest'});}
-  pendingFocus.current=false;
- },[errors,error,busy,loading]);
- const close=()=>{if(!busy)onClose();};
- const clearError=name=>setErrors(previous=>({...previous,[name]:undefined}));
- function update(event){const {name,value}=event.target;setForm(previous=>({...previous,[name]:value}));clearError(name);}
- function addFiles(incoming){if(busy||stale)return;const combined=[...files];for(const file of incoming)if(!combined.some(value=>value.name===file.name&&value.size===file.size&&value.lastModified===file.lastModified))combined.push(file);let message=combined.length+retained.length>5?'Mỗi hồ sơ được đính kèm tối đa 5 tài liệu (gồm tài liệu giữ lại).':'';for(const file of combined){const failure=validateRegistrationFile(file,true);if(failure){message=file.name+': '+failure;break;}}if(message){setErrors(previous=>({...previous,documents:message}));return;}setFiles(combined);clearError('documents');}
- function addImages(incoming){if(busy||stale)return;const combined=[...images];for(const file of incoming)if(!combined.some(value=>value.name===file.name&&value.size===file.size&&value.lastModified===file.lastModified))combined.push(file);const message=combined.length>5?'Chọn tối đa 5 ảnh dịch vụ.':combined.map(file=>validateRegistrationFile(file)).find(Boolean);if(message){setErrors(previous=>({...previous,image:message}));return;}setImages(combined);clearError('image');}
- async function submit(event){
-  event.preventDefault();if(submission.current||busy||stale||!editable)return;
-  const next=validateServiceRegistrationFields(form,files,{retainedCount:editing?1:supplement?retained.length:0,image:images,imageRequired:!editing&&!supplement,note,noteRequired:editing||supplement,categories});
-  setErrors(next);setError('');if(Object.keys(next).length){pendingFocus.current=true;return;}
-  const controller=new AbortController();submission.current=controller;setBusy(true);
-  try{
-   const details={...form,applicantName:form.applicantName.trim(),serviceName:form.serviceName.trim(),description:form.description.trim(),serviceArea:form.serviceArea.trim(),contactPhone:form.contactPhone.trim(),contactEmail:form.contactEmail.trim(),categoryId:Number(form.categoryId),price:form.pricingType==='NEGOTIABLE'?null:Number(form.price)};
-   const registration=editing?await api.change(editService.serviceId,{operation:'UPDATE',serviceRevision:editService.serviceRevision,details,note:note.trim()},images,controller.signal):supplement?await api.resubmit(row.registrationId,{details,revision:row.revision,retainedDocumentIds:retained,note:note.trim()},files,images,controller.signal):await api.submit(details,files,images,controller.signal);
-   if(!controller.signal.aborted){submittedApplication.current=registration.registrationId;setState({canRegister:false,reason:'IN_REVIEW',registration});setFiles([]);setImages([]);setRetained([]);setNote('');}
-  }catch(err){
-   if(!controller.signal.aborted){const fields=serviceRegistrationFieldErrors(err);setErrors(fields);setError(Object.keys(fields).length?'':err.message);pendingFocus.current=true;
-    if(err.status===409&&!Object.keys(fields).length)setStale(true);
-   }
-  }finally{if(submission.current===controller){submission.current=null;if(!controller.signal.aborted)setBusy(false);}}
- }
- async function download(doc){if(downloading)return;setDownloading(doc.documentId);setError('');try{const blob=await api.document(doc.documentId),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=doc.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){setError(err.message);}finally{setDownloading(null);}}
- const control=(name,label,props={})=><Field name={name} label={label} form={form} errors={errors} onChange={update} {...props}/>;
- return <Modal title={editing?"Cập nhật dịch vụ — chờ xét duyệt":supplement?"Bổ sung hồ sơ dịch vụ":"Đăng ký cung cấp dịch vụ"} onClose={close} maxWidth={editable?'1240px':'1040px'} className={`service-registration-modal sr-modal${editable?' sr-modal--compact-form':row?' sr-modal--compact-result':''}`} closeOnEscape={!busy} closeOnBackdrop={false} footer={<div className="sr-footer"><span><LockKeyhole size={15}/>{editable?'Tài liệu xác minh chỉ phục vụ xét duyệt hồ sơ.':'Theo dõi kết quả từ đội ngũ HL_RCS.'}</span><div><MotionButton type="button" className="sr-button sr-secondary" onClick={close} disabled={busy}>{editable?'Hủy':'Đóng hồ sơ'}</MotionButton>{editable&&<MotionButton type="submit" form="service-registration-form" className="sr-button sr-primary" disabled={busy||stale}>{busy?<LoaderCircle size={16} className="spin"/>:<ArrowUpRight size={16}/>}{busy?'Đang gửi hồ sơ...':submitLabel}</MotionButton>}{(row||(stale&&!editing))&&<MotionButton type="button" className="sr-button sr-primary" onClick={()=>setReload(value=>value+1)} disabled={loading||busy}><RotateCcw size={15}/>Cập nhật kết quả hồ sơ</MotionButton>}</div></div>}>
-  <div className="svc-registration-content" ref={content}>
-  <div className="sr-welcome"><span className="sr-welcome-icon"><BriefcaseBusiness size={27} strokeWidth={1.7}/></span><div><span className="sr-eyebrow">HL_RCS · ĐỐI TÁC DỊCH VỤ</span><h2>{editing?'Cập nhật dịch vụ của bạn.':row?'Hồ sơ của bạn, luôn trong tầm tay.':'Mang tay nghề của bạn đến gần cộng đồng.'}</h2><p>{editing?'Thông tin và ảnh mới chỉ công khai sau khi được duyệt.':row?'Kiểm tra thông tin đã gửi và kết quả xét duyệt tại một nơi.':'Giới thiệu dịch vụ và gửi giấy tờ xác minh để kết nối tại Hòa Lạc.'}</p></div><span className={`sr-header-status ${row?.status?.toLowerCase()||''}`}>{row?statuses[row.status]:<><span/>Hồ sơ mới</>}</span></div>
-  {!user?<div className="sr-access"><UserRound size={34}/><h2>Đăng nhập để trở thành đối tác</h2><p>Tài khoản giúp bạn gửi giấy tờ và theo dõi kết quả hồ sơ.</p><Link className="sr-button sr-primary" to="/login" state={{from:'/services'}}>đăng nhập<ArrowRight size={16}/></Link></div>:loading?<div className="sr-access" role="status"><LoaderCircle className="spin" size={28}/><p>Đang tải hồ sơ...</p></div>:<>
-   {error&&<div className="sr-error-banner" role="alert" data-form-error tabIndex={-1}><AlertCircle size={18}/><div><strong>Chưa thể hoàn tất thao tác</strong><p>{error}</p></div></div>}
-   {!state&&<div className="sr-access"><p>Chưa tải được thông tin hồ sơ của bạn.</p><MotionButton className="sr-button sr-secondary" onClick={()=>setReload(value=>value+1)}>Thử lại</MotionButton></div>}
-   {stale&&<div className="sr-error-banner" role="alert"><p>Thông tin đã thay đổi. {editing?'Đóng và mở lại dịch vụ từ danh sách để cập nhật phiên bản mới.':'Bấm “Cập nhật kết quả hồ sơ” trước khi sửa và nộp lại.'}</p></div>}
-   {supplement&&<section className="sr-panel svc-supplement-request" aria-label="Yêu cầu bổ sung từ nhân viên" role="status"><h3>Yêu cầu bổ sung từ nhân viên</h3><p>{row.reviewerName||'Nhân viên xét duyệt'}{row.supplementRequestedAt&&<> · {date(row.supplementRequestedAt)}</>}</p><p className="svc-supplement-instructions">{row.requestedChanges||row.reasonNote||'Vui lòng liên hệ nhân viên xét duyệt để làm rõ nội dung cần bổ sung.'}</p><p>Sửa thông tin, chọn tài liệu giữ lại hoặc thêm tệp mới và nộp lại hồ sơ #{row.registrationId}.</p></section>}
-   {row&&<section className="sr-submitted" aria-label="Hồ sơ đã gửi"><div className={`sr-result-banner ${row.status.toLowerCase()}`}><span>{row.status==='APPROVED'?<CheckCircle2 size={27}/>:row.status==='PENDING'?<Clock3 size={27}/>:<FileText size={27}/>}</span><div><h2>Hồ sơ #{row.registrationId} — {statuses[row.status]||row.status}</h2><p role={row.status==='PENDING'?'status':undefined}>{row.status==='PENDING'?'Hồ sơ đã được lưu và gửi xét duyệt. Quyền cung cấp dịch vụ chỉ được cấp sau khi hồ sơ được phê duyệt.':row.publicEligible?'Dịch vụ đã đủ điều kiện và đang được hiển thị công khai.':'Xem phản hồi và kết quả xét duyệt bên dưới.'}</p></div></div><div className="sr-submitted-grid"><div className="sr-panel"><h3>{row.serviceName}</h3><span className="sr-category-tag">{row.categoryName}</span><ServiceExpandableText key={row.registrationId+"-"+row.revision+"-description"} text={row.description} label="Mô tả dịch vụ"/>{row.hasImage&&<ServiceGallery key={row.registrationId+"-"+row.revision} application={row}/>}{row.resubmittedAt&&<><p>Nộp lại: {date(row.resubmittedAt)} · Phiên bản {row.revision}</p><ServiceExpandableText text={row.resubmissionNote} label="Nội dung thay đổi"/></>}<dl><dt>Khu vực phục vụ</dt><dd>{row.serviceArea}</dd><dt>Giá dịch vụ</dt><dd>{priceLabel(row.pricingType,row.price)}</dd><dt>Người đăng ký</dt><dd>{row.applicantName}</dd><dt>Điện thoại</dt><dd>{row.contactPhone}</dd>{row.contactEmail&&<><dt>Email</dt><dd>{row.contactEmail}</dd></>}<dt>Ngày gửi</dt><dd>{date(row.createdAt)}</dd></dl><section className="sr-submitted-documents" aria-label="Tài liệu đã gửi"><h3>Tài liệu đã gửi</h3><div className="sr-file-list">{row.documents.map(doc=><button type="button" className="sr-document" key={doc.documentId} onClick={()=>download(doc)} disabled={!!downloading}><FileText size={20}/><span>{doc.name}</span>{downloading===doc.documentId?<LoaderCircle className="spin" size={16}/>:<Download size={16}/>}</button>)}{!row.documents.length&&<p>Chưa có tài liệu trong hồ sơ này.</p>}</div></section></div><div className="sr-panel"><h3>Kết quả xét duyệt</h3>{!supplement&&row.reasonNote&&<div className="sr-review-note"><strong>Phản hồi từ người xét duyệt</strong><ServiceExpandableText text={row.reasonNote} label="Nhận xét xét duyệt"/></div>}{row.reviewedAt&&!supplement&&<><dl><dt>Quyền cung cấp dịch vụ</dt><dd>{row.capabilityDecision==='APPROVE'?'Đã cấp':'Từ chối'}</dd><dt>Nội dung dịch vụ</dt><dd>{row.listingDecision==='APPROVE'?'Đã duyệt':'Từ chối công khai'}</dd><dt>Người duyệt</dt><dd>{row.reviewerName||'—'}</dd><dt>Ngày xử lý</dt><dd>{date(row.reviewedAt)}</dd><dt>Quyền hiện tại</dt><dd>{row.capabilityActive?'Đang hoạt động':'Chưa được cấp / Đã ngừng'}</dd><dt>Mã nhà cung cấp</dt><dd>#{row.providerId}{row.serviceId&&` · Dịch vụ #${row.serviceId}`}</dd></dl>{row.publicEligible?<Link className="sr-button sr-primary" to={`/services/detail?id=${row.serviceId}`} onClick={onClose}>Xem dịch vụ công khai<ArrowUpRight size={16}/></Link>:<p>Dịch vụ hiện chưa được công khai trên hệ thống.</p>}</>}{(!row.reviewedAt||supplement)&&<p className="sr-preserve">{supplement?'Vui lòng xem yêu cầu bổ sung hồ sơ ở trên và nộp lại bên dưới.':'Hồ sơ chưa có quyết định xét duyệt. Mở lại hồ sơ để theo dõi kết quả.'}</p>}</div></div></section>}
-   {state&&!state.canRegister&&!supplement&&!row&&<div className="sr-access"><ShieldCheck size={34}/><h2>Thông tin đối tác</h2><p>{reasons[state.reason]}</p></div>}
-   {editable&&<div className="sr-layout"><form id="service-registration-form" noValidate onSubmit={submit}><fieldset disabled={busy||stale}>
-    <section className="sr-panel"><header className="sr-section-heading"><span>01</span><div><h3>Thông tin dịch vụ</h3><p>Thông tin này được dùng để giới thiệu dịch vụ sau khi xét duyệt.</p></div></header><div className="sr-fields">
-     {control('serviceName','Tên dịch vụ / đơn vị',{minLength:3,maxLength:255,placeholder:'Ví dụ: Chuyển trọ An Tâm',autoComplete:'organization'})}
-     <Field name="categoryId" label="Danh mục" form={form} errors={errors}><select id="sr-categoryId" name="categoryId" value={form.categoryId} onChange={update} aria-invalid={!!errors.categoryId} aria-describedby={errors.categoryId?'sr-error-categoryId':undefined}><option value="">Chọn danh mục phù hợp</option>{categories.map(cat=><option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>)}</select></Field>
-     <Field name="description" label="Mô tả dịch vụ" form={form} errors={errors} hint="Nêu công việc bạn nhận làm, phạm vi hỗ trợ và cách tính phí."><textarea id="sr-description" name="description" value={form.description} onChange={update} rows={4} maxLength={5000} minLength={20} placeholder="Giới thiệu kinh nghiệm, công việc nhận thực hiện và những thông tin khách hàng cần biết..." aria-invalid={!!errors.description} aria-describedby={errors.description?'sr-error-description':'sr-hint-description'}/></Field>
-     <div className="sr-two-fields"><Field name="pricingType" label="Loại giá" form={form} errors={errors}><select id="sr-pricingType" name="pricingType" value={form.pricingType} onChange={update} aria-invalid={!!errors.pricingType} aria-describedby={errors.pricingType?'sr-error-pricingType':undefined}><option value="FIXED">Giá cố định</option><option value="FROM">Giá từ</option><option value="NEGOTIABLE">Thỏa thuận</option></select></Field>{form.pricingType!=='NEGOTIABLE'?control('price','Giá dịch vụ (VNĐ)',{inputMode:'decimal',placeholder:'150000',hint:'Nhập số tiền, ví dụ 150000 hoặc 150000.50.'}):<div className="sr-price-explainer"><ReceiptIcon/><p>Bạn và khách hàng sẽ trao đổi báo giá dựa trên công việc thực tế.</p></div>}</div>
-     {control('serviceArea','Khu vực phục vụ',{minLength:2,maxLength:500,placeholder:'Ví dụ: Tân Xã, Thạch Hòa, Bình Yên',hint:'Ghi rõ các khu vực bạn có thể nhận việc.'})}
-    </div>
-    <header className="sr-section-heading"><span><Upload size={16}/></span><div><h3>Ảnh dịch vụ</h3><p>Ảnh đầu là ảnh đại diện. Tối đa 5 ảnh JPG, PNG, WEBP · 5 MB/ảnh.</p></div></header>
-     <Field name="image" label="Chọn ảnh dịch vụ" form={form} errors={errors} required={!editing&&!supplement} hint={editing||supplement?'Không chọn ảnh mới sẽ giữ bộ ảnh hiện tại. Chọn ảnh mới để thay toàn bộ bộ ảnh khi được duyệt.':'Chọn ít nhất một ảnh để giới thiệu dịch vụ.'}><input id="sr-image" name="image" type="file" multiple accept="image/jpeg,image/png,image/webp" required={!editing&&!supplement} aria-invalid={!!errors.image} aria-describedby={errors.image?'sr-error-image':'sr-hint-image'} onChange={event=>{addImages(Array.from(event.target.files||[]));event.target.value='';}}/></Field>
-     {previews.length>0?<div className="svc-upload-gallery">{previews.map((url,index)=><div className="svc-upload-photo" key={url}><img className="svc-editor-photo" src={url} alt={'Ảnh dịch vụ mới chọn '+(index+1)}/><span>{index===0?'Ảnh đại diện':'Ảnh '+(index+1)}</span><small className="svc-upload-file-name" title={images[index]?.name}>{serviceFileName(images[index]?.name)}</small><button type="button" className="svc-remove-photo" aria-label={'Xóa ảnh '+(index+1)} onClick={()=>{setImages(previous=>previous.filter((_,i)=>i!==index));clearError('image');}}><Trash2 size={16}/></button></div>)}</div>:editing&&editService.hasImage?<ServiceGallery application={editService}/>:supplement&&row.hasImage?<p className="sr-field-hint">Bộ ảnh hiện tại được giữ nguyên và hiển thị trong hồ sơ ở trên.</p>:null}
-    </section>
-    <div className="sr-form-secondary"><section className="sr-panel"><header className="sr-section-heading"><span>02</span><div><h3>Thông tin liên hệ</h3><p>Người phụ trách tiếp nhận trao đổi từ khách hàng.</p></div></header><div className="sr-fields">{control('applicantName','Họ tên người đăng ký',{minLength:2,maxLength:100,autoComplete:'name',placeholder:'Họ và tên người phụ trách'})}<div className="sr-two-fields">{control('contactPhone','Số điện thoại liên hệ',{type:'tel',maxLength:30,autoComplete:'tel',placeholder:'0912 345 678'})}{control('contactEmail','Email liên hệ',{type:'email',maxLength:255,autoComplete:'email',required:false,placeholder:'ten@example.com'})}</div></div></section>
-    {(editing||supplement)&&<section className="sr-panel"><h3>Nội dung thay đổi</h3><Field name="note" label="Mô tả phần đã cập nhật / bổ sung" form={form} errors={errors} hint="Mô tả thay đổi từ 10 đến 2000 ký tự."><textarea id="sr-note" name="note" required minLength={10} maxLength={2000} rows={3} value={note} onChange={event=>{setNote(event.target.value);clearError('note');}} aria-invalid={!!errors.note} aria-describedby={errors.note?'sr-error-note':'sr-hint-note'}/></Field>{editing&&<p className="sr-field-hint">Tài liệu xác minh gốc được sao chép sang yêu cầu cập nhật để xét duyệt. Dịch vụ công khai giữ nguyên đến khi được duyệt.</p>}</section>}
-    {!editing&&<section className="sr-panel"><header className="sr-section-heading"><span>03</span><div><h3>Tài liệu xác minh</h3><p>Giúp đội ngũ HL_RCS có cơ sở kiểm tra hồ sơ của bạn.</p></div></header>{supplement&&<div><h3>Tài liệu giữ lại</h3><div className="svc-attachment-list">{row.documents.map(doc=><label key={doc.documentId} className="svc-attachment svc-retained-file" title={doc.name}><input type="checkbox" checked={retained.includes(doc.documentId)} onChange={event=>{setRetained(previous=>event.target.checked?[...previous,doc.documentId]:previous.filter(id=>id!==doc.documentId));clearError('documents');}}/><span className="svc-attachment-name">{serviceFileName(doc.name)}</span></label>)}</div><p className="sr-field-hint">Bỏ chọn để xóa khi nộp lại thành công. Tổng tài liệu giữ lại và mới: {retained.length+files.length}/5.</p></div>}<input ref={picker} className="sr-file-input" id="sr-file-input" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" aria-label="Chọn tài liệu xác minh" onChange={event=>{addFiles(Array.from(event.target.files||[]));event.target.value='';}}/><button type="button" id="sr-documents" className={`sr-dropzone${dragging?' is-dragging':''}${errors.documents?' has-error':''}`} aria-describedby={errors.documents?'sr-error-documents':'sr-upload-hint'} aria-invalid={!!errors.documents} onClick={()=>picker.current?.click()} onDragOver={event=>{event.preventDefault();if(!busy&&!stale)setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={event=>{event.preventDefault();setDragging(false);addFiles(Array.from(event.dataTransfer.files||[]));}}><span className="sr-upload-icon"><Upload size={24}/></span><strong>Kéo thả tài liệu hoặc bấm để chọn</strong><span>PDF, JPG, PNG, WEBP · Tối đa 5 tệp · 10 MB/tệp</span><span className="sr-upload-button">Chọn tài liệu<PlusIcon/></span></button><p className="sr-field-hint" id="sr-upload-hint">Đính kèm giấy tờ định danh, giấy phép kinh doanh hoặc tài liệu chứng minh khả năng cung cấp dịch vụ.</p>{errors.documents&&<p className="sr-field-error" id="sr-error-documents">{errors.documents}</p>}<div className="sr-file-list">{files.map((file,index)=><div className="sr-document" key={`${file.name}-${file.size}-${file.lastModified}`}><FileText size={22}/><span><strong>{file.name}</strong><small>{file.size>=1048576?`${(file.size/1048576).toFixed(1)} MB`:`${(file.size/1024).toFixed(1)} KB`}</small></span><MotionButton type="button" aria-label={`Bỏ tài liệu ${file.name}`} onClick={()=>{setFiles(previous=>previous.filter((_,i)=>i!==index));setErrors(previous=>({...previous,documents:undefined}));}}><Trash2 size={16}/></MotionButton></div>)}</div></section>}
-    <aside className="sr-process sr-compact-process" aria-label="Các bước xử lý hồ sơ"><h3>Sau khi bạn gửi hồ sơ</h3><ol><li><span>1</span><div><strong>Tiếp nhận</strong><p>Lưu thông tin và tài liệu để xét duyệt.</p></div></li><li><span>2</span><div><strong>Kiểm tra &amp; phản hồi</strong><p>Mở lại hồ sơ để theo dõi kết quả.</p></div></li><li><span>3</span><div><strong>Công khai dịch vụ</strong><p>Chỉ hiển thị sau khi đủ điều kiện.</p></div></li></ol></aside>
-    </div></fieldset></form></div>}
-  </>}
-  </div>
- </Modal>;
-}
-function ReceiptIcon(){return <FileText size={19} aria-hidden="true"/>;}
-function PlusIcon(){return <ArrowUpRight size={14} aria-hidden="true"/>;}

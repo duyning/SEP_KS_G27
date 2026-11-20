@@ -1,6 +1,6 @@
 /* ==========================================================================
    HL_RCS | MAP SEARCH PAGE STYLES (map-search.css)
-   Inherits design system from home.css (Teal #0d9488, Navy #0f172a, Slate scale)
+   Inherits design system from home.css (Teal #0f766e, Navy #0f172a, Slate scale)
    ========================================================================== */
 
 /* 1. VIEWPORT & RESET */
@@ -856,7 +856,7 @@ body.map-page-body {
   font-size: 13px;
   font-weight: 800;
   border-radius: 9999px;
-  border: 1.5px solid #0d9488;
+  border: 1.5px solid #0f766e;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
   white-space: nowrap;
   cursor: pointer;
@@ -879,25 +879,25 @@ body.map-page-body {
   transform: translateX(-50%);
   border-width: 6px 5px 0;
   border-style: solid;
-  border-color: #0d9488 transparent transparent transparent;
+  border-color: #0f766e transparent transparent transparent;
   transition: border-color 0.2s ease;
 }
 
 .map-price-chip:hover {
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   z-index: 990 !important;
   box-shadow: 0 8px 24px rgba(13, 148, 136, 0.4);
 }
 .map-price-chip:hover::after {
-  border-color: #0d9488 transparent transparent transparent;
+  border-color: #0f766e transparent transparent transparent;
 }
 
 /* Active / Selected Marker State */
 .map-price-chip.active {
   background: #0f172a !important;
   color: #ffffff !important;
-  border-color: #0d9488 !important;
+  border-color: #0f766e !important;
   transform: translate(-50%, -55%) scale(1.18);
   z-index: 1000 !important;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.45);
@@ -937,7 +937,7 @@ body.map-page-body {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0d9488, #0f766e);
+  background: linear-gradient(135deg, #0f766e, #0f766e);
   color: #ffffff;
   font-family: inherit;
   font-weight: 800;

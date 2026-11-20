@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -50,17 +52,17 @@ function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }
 
   return <form className="viewing-decision" onSubmit={event => { event.preventDefault(); void decide('REJECTED'); }}>
     {!future && <p>Giờ hẹn đã qua. Bạn có thể từ chối và đề nghị khách gửi lịch mới.</p>}
-    {rejecting && <label>Lý do từ chối<textarea autoFocus required rows={3} maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} /></label>}
+    {rejecting && <UIField>Lý do từ chối<textarea autoFocus required rows={3} maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} /></UIField>}
     {error && <p role="alert" className="viewing-error">{error.message}</p>}
     <div className="viewing-actions">
       {rejecting ? <>
-        <button type="button" className="p-button" disabled={busy} onClick={() => { setRejecting(false); setError(null); }}>Quay lại</button>
-        <button type="submit" className="p-button primary" disabled={busy}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</button>
+        <UIButton type="button" className="p-button" disabled={busy} onClick={() => { setRejecting(false); setError(null); }}>Quay lại</UIButton>
+        <UIButton type="submit" className="p-button primary" disabled={busy}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</UIButton>
       </> : <>
-        <button type="button" className="p-button primary" disabled={busy || !canApprove} onClick={() => decide('APPROVED')}>{busy ? 'Đang lưu…' : 'Xác nhận lịch'}</button>
-        <button type="button" className="p-button" disabled={busy} onClick={() => setRejecting(true)}>Từ chối</button>
+        <UIButton type="button" className="p-button primary" disabled={busy || !canApprove} onClick={() => decide('APPROVED')}>{busy ? 'Đang lưu…' : 'Xác nhận lịch'}</UIButton>
+        <UIButton type="button" className="p-button" disabled={busy} onClick={() => setRejecting(true)}>Từ chối</UIButton>
       </>}
-      {error?.status === 409 && <button type="button" className="p-button" onClick={onRefresh}>Tải lại kết quả</button>}
+      {error?.status === 409 && <UIButton type="button" className="p-button" onClick={onRefresh}>Tải lại kết quả</UIButton>}
     </div>
   </form>;
 }
@@ -71,7 +73,7 @@ function HostViewingDetail({ item, canDecide, onDecision, onRefresh, onBusy }) {
   return <>
     <ViewingDetails item={item} />
     <div className="host-viewings-availability">
-      {error ? <><p role="alert">{error}</p><button type="button" className="p-button" onClick={reload}>Kiểm tra lại phòng trống</button></>
+      {error ? <><p role="alert">{error}</p><UIButton type="button" className="p-button" onClick={reload}>Kiểm tra lại phòng trống</UIButton></>
         : <p role="status">{availableRooms === undefined ? 'Đang kiểm tra phòng trống…' : availableRooms > 0
           ? `Còn ${availableRooms} phòng trống thuộc loại này.` : 'Loại phòng này hiện đã hết phòng trống.'}</p>}
     </div>
@@ -132,15 +134,15 @@ function ViewingProperties({ data, onRefresh }) {
       <MotionButton type="button" className="hp-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton>
     </header>
     <div className="hp-portfolio-stats" role="group" aria-label="Lọc nhà trọ theo yêu cầu xem phòng">
-      {filters.map(([key, label, Icon]) => <button key={key} type="button" aria-pressed={group === key}
+      {filters.map(([key, label, Icon]) => <UIButton key={key} type="button" aria-pressed={group === key}
         className={group === key ? 'selected' : undefined} onClick={() => changeFilter('group', key)}>
         <span>{label}<Icon size={18} aria-hidden="true" /></span>
         <strong>{key ? summaries.filter(item => category(item) === key).length : summaries.length}</strong>
-      </button>)}
+      </UIButton>)}
     </div>
     <div className="hp-portfolio-toolbar host-viewings-property-toolbar">
-      <label className="hp-portfolio-search"><Search size={17} aria-hidden="true" /><input aria-label="Tìm nhà trọ"
-        placeholder="Tìm tên nhà trọ hoặc địa chỉ…" value={search} onChange={event => changeFilter('q', event.target.value)} /></label>
+      <UIField className="hp-portfolio-search"><Search size={17} aria-hidden="true" /><input aria-label="Tìm nhà trọ"
+        placeholder="Tìm tên nhà trọ hoặc địa chỉ…" value={search} onChange={event => changeFilter('q', event.target.value)} /></UIField>
       <select aria-label="Trạng thái yêu cầu" value={group} onChange={event => changeFilter('group', event.target.value)}>
         {filters.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
       </select>
@@ -148,7 +150,7 @@ function ViewingProperties({ data, onRefresh }) {
         <option value="pending">Nhiều lịch chờ duyệt trước</option><option value="name">Tên nhà trọ A–Z</option>
       </select>
     </div>
-    {error && <p role="status" className="host-viewings-empty">Chưa tải được ảnh và địa chỉ. <button type="button" className="hp-button" onClick={reload}>Thử lại</button></p>}
+    {error && <p role="status" className="host-viewings-empty">Chưa tải được ảnh và địa chỉ. <UIButton type="button" className="hp-button" onClick={reload}>Thử lại</UIButton></p>}
     <div className="hp-portfolio-result"><strong>{filtered.length} nhà trọ</strong></div>
     {!filtered.length && <p className="hp-portfolio-empty" role="status">Không có nhà trọ phù hợp với bộ lọc.</p>}
     <div className="hp-property-grid">{current.items.map(property => {
@@ -175,8 +177,8 @@ function ViewingProperties({ data, onRefresh }) {
     })}</div>
     {current.pages > 1 && <nav className="hp-pagination" aria-label="Phân trang nhà trọ">
       <span>Trang {current.page} / {current.pages}</span>
-      <div><button type="button" className="p-button" disabled={current.page === 1} onClick={() => changePage(current.page - 1)}><ChevronLeft size={16} />Trước</button>
-        <button type="button" className="p-button" disabled={current.page === current.pages} onClick={() => changePage(current.page + 1)}>Sau<ChevronRight size={16} /></button></div>
+      <div><UIButton type="button" className="p-button" disabled={current.page === 1} onClick={() => changePage(current.page - 1)}><ChevronLeft size={16} />Trước</UIButton>
+        <UIButton type="button" className="p-button" disabled={current.page === current.pages} onClick={() => changePage(current.page + 1)}>Sau<ChevronRight size={16} /></UIButton></div>
     </nav>}
   </section>;
 }
@@ -233,11 +235,11 @@ function ViewingList({ data, property, onRefresh, onDecision, canDecide }) {
     </Link>
     <div className="hp-portfolio-heading"><div><h2>{property.name}</h2><p>Xem và phản hồi lịch hẹn của nhà trọ này.</p></div><MotionButton type="button" className="p-button" onClick={onRefresh}><RefreshCw size={16} />Làm mới</MotionButton></div>
     <div className="host-viewings-tabs" role="group" aria-label="Nhóm trạng thái lịch">
-      <button type="button" className={`p-button ${tab === 'pending' ? 'primary' : ''}`} aria-pressed={tab === 'pending'} onClick={() => changeTab('pending')}>Chờ duyệt ({pendingCount})</button>
-      <button type="button" className={`p-button ${tab === 'processed' ? 'primary' : ''}`} aria-pressed={tab === 'processed'} onClick={() => changeTab('processed')}>Đã xử lý ({ownedRequests.length - pendingCount})</button>
+      <UIButton type="button" className={`p-button ${tab === 'pending' ? 'primary' : ''}`} aria-pressed={tab === 'pending'} onClick={() => changeTab('pending')}>Chờ duyệt ({pendingCount})</UIButton>
+      <UIButton type="button" className={`p-button ${tab === 'processed' ? 'primary' : ''}`} aria-pressed={tab === 'processed'} onClick={() => changeTab('processed')}>Đã xử lý ({ownedRequests.length - pendingCount})</UIButton>
     </div>
     <div className="hp-portfolio-toolbar host-viewings-filters">
-      <label className="hp-portfolio-search"><Search size={16} /><input aria-label="Tìm yêu cầu" placeholder="Tên khách, số điện thoại, loại phòng…" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <UIField className="hp-portfolio-search"><Search size={16} /><input aria-label="Tìm yêu cầu" placeholder="Tên khách, số điện thoại, loại phòng…" value={search} onChange={event => setSearch(event.target.value)} /></UIField>
       <input type="date" aria-label="Ngày xem phòng" value={date} onChange={event => setDate(event.target.value)} />
       <select aria-label="Sắp xếp" value={sort} onChange={event => setSort(event.target.value)}><option value="NEWEST">Mới nhất trước</option><option value="APPOINTMENT">Giờ hẹn sớm trước</option></select>
     </div>

@@ -10,6 +10,7 @@ import './styles/auth.css';
 import './styles/portal.css';
 import './styles/host-dashboard.css';
 import './styles/motion.css';
+import './styles/design-system.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode><AppMotionProvider><BrowserRouter><AuthProvider><FavoritesProvider><App /></FavoritesProvider></AuthProvider></BrowserRouter></AppMotionProvider></React.StrictMode>

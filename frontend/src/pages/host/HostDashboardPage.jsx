@@ -236,7 +236,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                     <div className="my-prop-info">
                       <div className="my-prop-name" style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
                       <div className="my-prop-address" style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
-                      <div className="my-prop-config" style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
+                      <div className="my-prop-config" style={{ fontSize: '12px', color: '#0f766e', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
                     </div>
                     <div className="my-prop-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <StatusBadge>{property.status === 'ACTIVE' ? 'Đang hoạt động' : property.status || 'Chưa cập nhật trạng thái'}</StatusBadge>

@@ -1,5 +1,5 @@
 :root {
-  --primary: #0d9488;
+  --primary: #0f766e;
   --primary-hover: #0f766e;
   --primary-active: #115e59;
   --primary-light: #f0fdfa;
@@ -897,14 +897,14 @@ form {
 
 .btn-notif-top:hover {
   background: var(--slate-100, #f1f5f9);
-  color: var(--primary, #0d9488);
+  color: var(--primary, #0f766e);
   border-color: var(--slate-300, #cbd5e1);
 }
 
 .btn-notif-top.active {
   background: #f0fdfa;
-  color: var(--primary, #0d9488);
-  border-color: var(--primary, #0d9488);
+  color: var(--primary, #0f766e);
+  border-color: var(--primary, #0f766e);
   box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
 }
 
@@ -991,7 +991,7 @@ form {
 .notif-header-count-badge {
   font-size: 11px;
   font-weight: 700;
-  color: var(--primary, #0d9488);
+  color: var(--primary, #0f766e);
   background: #f0fdfa;
   padding: 2px 7px;
   border-radius: 9999px;
@@ -1014,7 +1014,7 @@ form {
 }
 
 .notif-mark-read-all-btn:hover {
-  color: var(--primary, #0d9488);
+  color: var(--primary, #0f766e);
   background: #f0fdfa;
 }
 
@@ -1063,7 +1063,7 @@ form {
   top: 0;
   bottom: 0;
   width: 3.5px;
-  background: var(--primary, #0d9488);
+  background: var(--primary, #0f766e);
 }
 
 .notif-item-icon {
@@ -1109,7 +1109,7 @@ form {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--primary, #0d9488);
+  background: var(--primary, #0f766e);
   flex-shrink: 0;
 }
 
@@ -1142,7 +1142,7 @@ form {
 .notif-view-all-link {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--primary, #0d9488);
+  color: var(--primary, #0f766e);
   text-decoration: none;
   display: inline-flex;
   align-items: center;

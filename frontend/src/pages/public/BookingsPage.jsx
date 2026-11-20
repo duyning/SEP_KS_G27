@@ -1,3 +1,4 @@
+import UIButton from '../../components/common/Button.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronRight, Clock, RefreshCw, Search } from 'lucide-react';
@@ -33,7 +34,7 @@ function BookingEmpty({ filtered, onReset }) {
     <h2 className="search-empty-title">{filtered ? 'Không có lịch phù hợp' : 'Bạn chưa có lịch hẹn xem phòng nào'}</h2>
     <p className="search-empty-desc">{filtered ? 'Đổi bộ lọc để xem các lịch hẹn khác.' : 'Khám phá nhà trọ phù hợp và gửi lịch xem trực tiếp cho chủ trọ.'}</p>
     {filtered
-      ? <button type="button" className="bookings-button" onClick={onReset}>Xem tất cả lịch</button>
+      ? <UIButton type="button" className="bookings-button" onClick={onReset}>Xem tất cả lịch</UIButton>
       : <Link to="/search" className="bookings-button primary"><Search size={17} aria-hidden="true" />Đi tìm phòng ngay</Link>}
   </div>;
 }
@@ -79,15 +80,15 @@ function BookingDetail({ id, close, onSaved }) {
         <label>Lý do hủy (không bắt buộc)<textarea autoFocus name="reason" rows={3} maxLength={500} disabled={busy} /></label>
         {cancelError && <p className="viewing-error" role="alert">{cancelError.message}</p>}
         <div className="viewing-actions">
-          <button type="button" className="p-button" disabled={busy} onClick={() => { setConfirming(false); setCancelError(null); }}>Giữ lịch</button>
+          <UIButton type="button" className="p-button" disabled={busy} onClick={() => { setConfirming(false); setCancelError(null); }}>Giữ lịch</UIButton>
           {cancelError?.status === 409
-            ? <button type="button" className="p-button" onClick={() => { setConfirming(false); reload(); onSaved(); }}>Tải lại trạng thái</button>
-            : <button type="submit" className="p-button bookings-cancel" disabled={busy}>{busy ? 'Đang hủy…' : 'Xác nhận hủy lịch'}</button>}
+            ? <UIButton type="button" className="p-button" onClick={() => { setConfirming(false); reload(); onSaved(); }}>Tải lại trạng thái</UIButton>
+            : <UIButton type="submit" className="p-button bookings-cancel" disabled={busy}>{busy ? 'Đang hủy…' : 'Xác nhận hủy lịch'}</UIButton>}
         </div>
       </form>}
       {data.status === 'PENDING' && !confirming && <div className="viewing-actions viewing-details">
-        <button type="button" className="p-button primary" onClick={() => setEditing(true)}>Cập nhật lịch xem phòng</button>
-        <button type="button" className="p-button bookings-cancel" onClick={() => setConfirming(true)}>Hủy lịch xem phòng</button>
+        <UIButton type="button" className="p-button primary" onClick={() => setEditing(true)}>Cập nhật lịch xem phòng</UIButton>
+        <UIButton type="button" className="p-button bookings-cancel" onClick={() => setConfirming(true)}>Hủy lịch xem phòng</UIButton>
       </div>}
     </> : <ViewingLoadState error={error} retry={reload} />}
   </Modal>;
@@ -137,7 +138,7 @@ export default function BookingsPage() {
                 <option value="">Tất cả trạng thái</option>
                 {Object.entries(viewingStatuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
-              <button type="button" className="bookings-button" onClick={reload}><RefreshCw size={16} aria-hidden="true" />Làm mới</button>
+              <UIButton type="button" className="bookings-button" onClick={reload}><RefreshCw size={16} aria-hidden="true" />Làm mới</UIButton>
             </div>
             <div className="bookings-toolbar-actions">
               <Link className="bookings-button" to="/notifications"><Bell size={16} aria-hidden="true" />Thông báo</Link>
@@ -168,8 +169,8 @@ export default function BookingsPage() {
                     </p>
                   </div>
                 </div>
-                <button type="button" className="bookings-button bookings-detail" aria-label={`Xem chi tiết lịch hẹn #${item.bookingId} tại ${item.propertyName}`}
-                  onClick={() => update('id', item.bookingId)}>Xem chi tiết<ChevronRight size={18} aria-hidden="true" /></button>
+                <UIButton type="button" className="bookings-button bookings-detail" aria-label={`Xem chi tiết lịch hẹn #${item.bookingId} tại ${item.propertyName}`}
+                  onClick={() => update('id', item.bookingId)}>Xem chi tiết<ChevronRight size={18} aria-hidden="true" /></UIButton>
               </li>)}</ul>}
             <ViewingPagination page={page} hasNext={data.hasNext} onPage={value => update('page', value)} />
           </>}
