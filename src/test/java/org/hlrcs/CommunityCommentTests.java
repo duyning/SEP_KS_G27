@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:community-comments;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CommunityCommentTests {
+class CommunityCommentTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     private String author;
@@ -42,8 +42,9 @@ class CommunityCommentTests {
     }
 
     private String register(String name) throws Exception {
-        return data("POST", "/api/auth/register", Map.of("email", "comment-" + UUID.randomUUID() + "@hlrcs.test",
-                "password", "Password@123", "fullName", name), null, 201).path("accessToken").asString();
+        String email = "comment-" + UUID.randomUUID() + "@hlrcs.test";
+        return data("POST", "/api/auth/register", Map.of("email", email,
+                "password", "Password@123", "fullName", name, "verificationToken", verifyContact(email)), null, 201).path("accessToken").asString();
     }
 
     private int post(boolean approve) throws Exception {

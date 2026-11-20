@@ -44,7 +44,13 @@ export async function request(path, { method = 'GET', body, signal, basePath = '
 }
 export const authApi = {
   login: data => request('/login', { method: 'POST', body: data }),
-  register: data => request('/register', { method: 'POST', body: data }),
+  register: data => request('/register', { method: 'POST', body: data, authenticated: false }),
+  sendRegistrationOtp: identifier => request('/register/otp/send', {
+    method: 'POST', body: { identifier }, authenticated: false,
+  }),
+  verifyRegistrationOtp: (identifier, code) => request('/register/otp/verify', {
+    method: 'POST', body: { identifier, code }, authenticated: false,
+  }),
   me: signal => request('/me', { signal }),
   logout: () => request('/logout', { method: 'POST' }),
   updateProfile: data => request('/profile', { method: 'PUT', body: data }),

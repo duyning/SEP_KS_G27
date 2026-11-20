@@ -11,12 +11,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @TestPropertySource("classpath:application-test.properties")
-class HlRcsApplicationTests {
+class HlRcsApplicationTests extends RegistrationOtpTestSupport {
     @Autowired
     private Environment environment;
     @Autowired
@@ -37,6 +38,17 @@ class HlRcsApplicationTests {
                 "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}", null);
         assertEquals(200, response.statusCode(), response.body());
         return objectMapper.readTree(response.body()).path("data").path("accessToken").asString();
+    }
+
+    private HttpResponse<String> post(String path, Map<String, String> body) throws Exception {
+        return request("/api/auth/register" + path, objectMapper.writeValueAsString(body), null);
+    }
+
+    private String registerProfile(String email, String name) throws Exception {
+        var response = post("", Map.of("email", email, "fullName", name,
+                "password", "Original@123", "verificationToken", verifyContact(email)));
+        assertEquals(201, response.statusCode(), response.body());
+        return response.body();
     }
 
     @Test
@@ -84,8 +96,8 @@ class HlRcsApplicationTests {
         String suffix = Long.toString(System.nanoTime());
         String emailA = "profile-a-" + suffix + "@hlrcs.test";
         String emailB = "profile-b-" + suffix + "@hlrcs.test";
-        String registerA = request("/api/auth/register", "{\"email\":\"" + emailA + "\",\"password\":\"Original@123\",\"fullName\":\"Profile A\"}", null).body();
-        String registerB = request("/api/auth/register", "{\"email\":\"" + emailB + "\",\"password\":\"Original@123\",\"fullName\":\"Profile B\"}", null).body();
+        String registerA = registerProfile(emailA, "Profile A");
+        String registerB = registerProfile(emailB, "Profile B");
         String tokenA = objectMapper.readTree(registerA).path("data").path("accessToken").asString();
         String tokenB = objectMapper.readTree(registerB).path("data").path("accessToken").asString();
         int userB = objectMapper.readTree(registerB).path("data").path("userId").asInt();
@@ -144,11 +156,68 @@ class HlRcsApplicationTests {
     }
 
     @Test
-    void publicRegistrationCannotGrantAdminRole() throws Exception {
-        HttpResponse<String> response = request("/api/auth/register",
-                "{\"email\":\"new-user@hlrcs.test\",\"password\":\"Test@12345\",\"fullName\":\"Test User\",\"role\":\"ADMIN\"}", null);
+    void emailRegistrationRequiresVerifiedContactAndStrongPassword() throws Exception {
+        String email = "new-user@hlrcs.test";
+        var code = captureCode(email);
+        var body = new java.util.HashMap<>(Map.of("email", email, "password", "Strong123",
+                "fullName", "Test User", "role", "ADMIN"));
+        assertEquals(400, post("", body).statusCode());
+        var sent = post("/otp/send", Map.of("identifier", "NEW-USER@hlrcs.test"));
+        assertEquals(200, sent.statusCode(), sent.body());
+        assertTrue(code.get().matches("[0-9]{6}"));
+        assertFalse(objectMapper.readTree(sent.body()).path("data").has("code"));
+        assertEquals(429, post("/otp/send", Map.of("identifier", email)).statusCode());
+        var verified = post("/otp/verify", Map.of("identifier", email, "code", code.get()));
+        assertEquals(200, verified.statusCode(), verified.body());
+        body.put("verificationToken", objectMapper.readTree(verified.body()).path("data").path("verificationToken").asString());
+        body.put("email", "different@hlrcs.test");
+        assertEquals(400, post("", body).statusCode());
+        body.put("email", email);
+        body.put("password", "shortA1");
+        assertEquals(400, post("", body).statusCode());
+        body.put("password", "lowercase123");
+        assertEquals(400, post("", body).statusCode());
+        body.put("password", "Strong123");
+        var response = post("", body);
         assertEquals(201, response.statusCode(), response.body());
         assertEquals("USER", objectMapper.readTree(response.body()).path("data").path("role").asString());
+        assertEquals(400, post("", body).statusCode());
+    }
+
+    @Test
+    void zaloRegistrationAcceptsBothPhoneFormatsAndGrantsOnlyUserRole() throws Exception {
+        String phone = "0355550141";
+        String international = "+84355550141";
+        var code = captureCode(phone);
+        assertEquals(200, post("/otp/send", Map.of("identifier", international)).statusCode());
+        assertEquals(429, post("/otp/send", Map.of("identifier", phone)).statusCode());
+        var verified = post("/otp/verify", Map.of("identifier", phone, "code", code.get()));
+        assertEquals(200, verified.statusCode(), verified.body());
+        String token = objectMapper.readTree(verified.body()).path("data").path("verificationToken").asString();
+        var response = post("", Map.of("phoneNumber", international, "password", "Strong123",
+                "fullName", "Phone User", "role", "ROOM_HOST", "verificationToken", token));
+        assertEquals(201, response.statusCode(), response.body());
+        var account = objectMapper.readTree(response.body()).path("data");
+        assertEquals("USER", account.path("role").asString());
+        assertEquals(phone, account.path("phoneNumber").asString());
+        assertEquals(403, request("/api/host/rooms", null, account.path("accessToken").asString()).statusCode());
+        assertFalse(login(international, "Strong123").isBlank());
+        assertEquals(409, post("/otp/send", Map.of("identifier", phone)).statusCode());
+        String otherUser = login("user@hlrcs.com", "123456");
+        assertEquals(400, put("/api/auth/profile", objectMapper.writeValueAsString(
+                Map.of("fullName", "Other User", "phoneNumber", international)), otherUser).statusCode());
+    }
+
+    @Test
+    void tooManyWrongCodesInvalidatesChallenge() throws Exception {
+        String email = "wrong-otp@hlrcs.test";
+        var code = captureCode(email);
+        assertEquals(200, post("/otp/send", Map.of("identifier", email)).statusCode());
+        String wrongCode = code.get().equals("000000") ? "000001" : "000000";
+        for (int attempt = 0; attempt < 5; attempt++) {
+            assertEquals(400, post("/otp/verify", Map.of("identifier", email, "code", wrongCode)).statusCode());
+        }
+        assertEquals(400, post("/otp/verify", Map.of("identifier", email, "code", code.get())).statusCode());
     }
 
 }
