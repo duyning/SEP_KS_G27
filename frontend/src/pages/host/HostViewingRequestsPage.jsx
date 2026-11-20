@@ -8,7 +8,7 @@ import { hostApi } from '../../services/host.js';
 import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
-import { useViewingData, ViewingDetails, ViewingStatus } from '../../components/ViewingUI.jsx';
+import { CopyPhoneButton, useViewingData, ViewingDetails, ViewingStatus } from '../../components/ViewingUI.jsx';
 import { viewingApi, canReviewViewing, viewingStatuses, viewingDateRange } from '../../services/viewings.js';
 
 
@@ -66,11 +66,11 @@ function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }
   </form>;
 }
 
-function HostViewingDetail({ item, canDecide, onDecision, onRefresh, onBusy }) {
+function HostViewingDetail({ item, canDecide, onDecision, onRefresh, onBusy, onContactChange }) {
   const load = useCallback(signal => viewingApi.availability(item.bookingId, signal), [item.bookingId]);
   const { data: availableRooms, error, reload } = useViewingData(load, item.bookingId);
   return <>
-    <ViewingDetails item={item} />
+    <ViewingDetails item={item} host onContactChange={onContactChange} />
     <div className="host-viewings-availability">
       {error ? <><p role="alert">{error}</p><button type="button" className="p-button" onClick={reload}>Kiểm tra lại phòng trống</button></>
         : <p role="status">{availableRooms === undefined ? 'Đang kiểm tra phòng trống…' : availableRooms > 0
@@ -133,6 +133,7 @@ function ViewingCalendar({ day, today, month, requests, properties, propertyColo
 }
 
 function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDecision }) {
+  const [contactPhone,setContactPhone]=useState(null);
   const [params, setParams] = useSearchParams();
   const notify = useToast();
   const today = viewingDateRange().min;
@@ -215,7 +216,6 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
       <div className="host-calendar-heading">
         <h2><CalendarDays size={20} aria-hidden="true" />Yêu cầu xem phòng</h2>
         <span className="host-calendar-date">Ngày {displayDate(day)} · {daily.length} yêu cầu</span>
-        <button type="button" className="p-button" onClick={onRefresh}><RefreshCw size={15} />Làm mới</button>
       </div>
       <div className="host-calendar-filters">
         <label className="host-calendar-search">Tìm khách hoặc loại phòng
@@ -261,8 +261,9 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
     </section>
     {selected && <Modal className="viewing-dialog" title={`Yêu cầu xem phòng #${selected.bookingId}`}
       onClose={() => { if (!busy) changeParams({ id: null, date: day }); }}>
-      <HostViewingDetail key={selected.bookingId} item={selected} canDecide={canDecide} onRefresh={onRefresh}
+      <HostViewingDetail key={selected.bookingId} item={selected} canDecide={canDecide} onRefresh={onRefresh} onContactChange={setContactPhone}
         onBusy={setBusy} onDecision={item => { onDecision(item); setStatus(item.status); changeParams({ id: null, date: day }); }} />
+      <footer className="notice-viewing-footer"><CopyPhoneButton phone={contactPhone}/><button type="button" className="notice-button" disabled={busy} onClick={()=>changeParams({ id: null, date: day })}>Đóng</button></footer>
     </Modal>}
     {confirm && <Modal className="viewing-dialog" title="Xác nhận các lịch đã chọn" onClose={() => { if (!busy) setConfirm(false); }}>
       <div className="viewing-details">

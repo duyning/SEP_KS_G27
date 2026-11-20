@@ -27,7 +27,10 @@ public final class ViewingResponses {
         }
     }
 
-    public record ViewingPage(List<Viewing> items, boolean hasNext, Map<Integer, String> coverImages) {}
+    public record ViewingRoom(java.math.BigDecimal price, Float areaSqm, String address) {}
+    public record ViewingSummary(Map<BookingStatus, Long> counts, long upcoming, long ended) {}
+    public record ViewingPage(List<Viewing> items, boolean hasNext, Map<Integer, String> coverImages,
+                              Map<Integer, ViewingRoom> rooms, ViewingSummary summary) {}
 
     public record Notification(Integer notificationId, Integer bookingId, ViewingNotification.Event event,
                                String content, boolean read, LocalDateTime createdAt) {

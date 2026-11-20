@@ -130,14 +130,31 @@ public class ViewingService {
     }
 
     @Transactional(readOnly = true)
-    public ViewingPage list(BookingStatus status, int page) {
+    public ViewingPage list(BookingStatus status, int page, String query, String sort) {
         Integer userId = currentId();
         var pageable = page(page, "bookingId");
-        var result = status == null ? bookings.findByRenter_UserId(userId, pageable)
-                : bookings.findByRenter_UserIdAndStatus(userId, status, pageable);
+        String q = query == null ? "" : query.strip().toLowerCase(java.util.Locale.ROOT);
+        if (q.length() > 100) throw new BadRequestException("Từ khóa tối đa 100 ký tự.");
+        var ordering = switch (sort == null ? "newest" : sort) {
+            case "newest" -> Sort.by(Sort.Direction.DESC, "bookingId");
+            case "oldest" -> Sort.by("bookingId");
+            case "appointment" -> Sort.by("scheduledDate", "bookingId");
+            default -> throw new BadRequestException("Thứ tự sắp xếp không hợp lệ.");
+        };
+        var result = bookings.searchMine(userId, status, q, PageRequest.of(pageable.getPageNumber(), 20, ordering));
         var items = result.map(Viewing::from).getContent();
         var covers = accommodations.publicCoverImages(items.stream().map(Viewing::roomTypeId).distinct().toList());
-        return new ViewingPage(items, result.hasNext(), covers);
+        var rooms = new java.util.HashMap<Integer, ViewingRoom>();
+        for (var booking : result.getContent()) {
+            var type = booking.getRoomType();
+            rooms.put(type.getRoomTypeId(), new ViewingRoom(type.getPrice(), type.getAreaSqm(), type.getProperty().getAddress()));
+        }
+        var counts = new java.util.EnumMap<BookingStatus, Long>(BookingStatus.class);
+        for (var row : bookings.countMine(userId)) counts.put((BookingStatus) row[0], ((Number) row[1]).longValue());
+        long upcoming = bookings.countByRenter_UserIdAndStatusAndScheduledDateAfter(userId, BookingStatus.APPROVED, LocalDateTime.now(VIEWING_ZONE));
+        long total = counts.values().stream().mapToLong(Long::longValue).sum();
+        return new ViewingPage(items, result.hasNext(), covers, rooms,
+                new ViewingSummary(counts, upcoming, total - upcoming - counts.getOrDefault(BookingStatus.PENDING, 0L)));
     }
 
     @Transactional(readOnly = true)

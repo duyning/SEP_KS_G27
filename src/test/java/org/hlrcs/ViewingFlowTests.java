@@ -84,6 +84,32 @@ class ViewingFlowTests {
     }
 
     @Test
+    void memberSearchSortAndSummaryStayScopedToTheRequesterAcrossFilters() throws Exception {
+        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+                .roomNumber("S101").floor("1").status("VACANT").build());
+        int first = data(create(renter, payload(appointment.plusHours(3))).andExpect(status().isOk())).path("bookingId").asInt();
+        decide(host, first, "APPROVED", "").andExpect(status().isOk());
+        int second = data(create(renter, payload(appointment.plusHours(2))).andExpect(status().isOk())).path("bookingId").asInt();
+        decide(host, second, "REJECTED", "Bận").andExpect(status().isOk());
+        int third = data(create(renter, payload(appointment.plusHours(1))).andExpect(status().isOk())).path("bookingId").asInt();
+        create(account(UserRole.USER), payload(appointment.plusHours(4))).andExpect(status().isOk());
+        getAs(VIEWINGS + "?q=TEST&sort=oldest", renter).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(3))
+                .andExpect(jsonPath("$.data.items[0].bookingId").value(first))
+                .andExpect(jsonPath("$.data.summary.counts.PENDING").value(1))
+                .andExpect(jsonPath("$.data.summary.counts.APPROVED").value(1))
+                .andExpect(jsonPath("$.data.summary.upcoming").value(1))
+                .andExpect(jsonPath("$.data.summary.ended").value(1))
+                .andExpect(jsonPath("$.data.rooms['" + type.getRoomTypeId() + "'].price").value(2000000));
+        getAs(VIEWINGS + "?sort=appointment", renter).andExpect(jsonPath("$.data.items[0].bookingId").value(third));
+        getAs(VIEWINGS + "?status=APPROVED", renter).andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.summary.counts.REJECTED").value(1));
+        getAs(VIEWINGS + "?q=no-such-property", renter).andExpect(jsonPath("$.data.items.length()").value(0))
+                .andExpect(jsonPath("$.data.summary.counts.PENDING").value(1));
+        getAs(VIEWINGS + "?sort=invalid", renter).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void viewingAndNotificationsPersistAcrossBothRolesAndDoNotReserveRooms() throws Exception {
         var room = rooms.save(Room.builder().property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());

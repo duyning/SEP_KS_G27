@@ -42,8 +42,8 @@ export const viewingApi = {
   pending: (propertyId, roomTypeId, signal) => call('/pending?' + new URLSearchParams({ propertyId, roomTypeId }), { signal }),
   update: (id, body) => call('/' + encodeURIComponent(id), { method: 'PUT', body }),
   availability: (id, signal) => request('/viewings/' + encodeURIComponent(id) + '/availability', { basePath: '/api/host', signal }),
-  list: (page, status, signal) => call('?' + new URLSearchParams({
-    page, ...(status ? { status } : {}),
+  list: (page, status, signal, { q = '', sort = 'newest' } = {}) => call('?' + new URLSearchParams({
+    page, ...(status ? { status } : {}), ...(q ? { q } : {}), ...(sort !== 'newest' ? { sort } : {}),
   }), { signal }),
   detail: (id, signal) => call('/' + encodeURIComponent(id), { signal }),
   cancel: (id, body) => call('/' + encodeURIComponent(id) + '/cancel', { method: 'POST', body }),

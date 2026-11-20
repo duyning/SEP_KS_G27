@@ -15,6 +15,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
+    @EntityGraph(attributePaths = {"renter", "roomType", "roomType.property"})
+    @Query("select b from Booking b where b.renter.userId = :userId and (:status is null or b.status = :status) " +
+            "and (locate(:q, lower(b.roomType.property.name)) > 0 or locate(:q, lower(b.roomType.roomType)) > 0)")
+    Slice<Booking> searchMine(Integer userId, BookingStatus status, String q, Pageable page);
+
+    @Query("select b.status, count(b) from Booking b where b.renter.userId = :userId group by b.status")
+    List<Object[]> countMine(Integer userId);
+
+    long countByRenter_UserIdAndStatusAndScheduledDateAfter(Integer userId, BookingStatus status, LocalDateTime now);
     @Query("select b.bookingId from Booking b where b.status = :status and b.scheduledDate <= :cutoff order by b.scheduledDate, b.bookingId")
     List<Integer> findDueIds(BookingStatus status, LocalDateTime cutoff, Pageable page);
 

@@ -39,8 +39,10 @@ public class ViewingController {
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ROOM_HOST')")
     public ApiResponse<ViewingPage> list(@RequestParam(required = false) BookingStatus status,
-                                         @RequestParam(defaultValue = "0") int page) {
-        return ApiResponse.success(service.list(status, page));
+                                         @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "") String q,
+                                         @RequestParam(defaultValue = "newest") String sort) {
+        return ApiResponse.success(service.list(status, page, q, sort));
     }
 
     @GetMapping("/pending")
