@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
-import {useLocation,useNavigate} from 'react-router-dom';
+import {Link,useLocation,useNavigate} from 'react-router-dom';
 import {Plus,FileText,Search,MapPin,Phone,RotateCcw,X,ArrowUp,LoaderCircle,SlidersHorizontal} from 'lucide-react';
-import {communityApi} from '../services/community.js';
+import {canReportCommunityPost,communityApi} from '../services/community.js';
 import {communityCategories,communityZones,communitySorts,communityDate} from '../services/community-prototype.js';
 import {readFeedFilters} from '../services/community-feed.js';
 import {detailPhone} from '../services/accommodation-detail.js';
@@ -9,17 +9,13 @@ import CommunityPrototypeSidebar from './CommunityPrototypeSidebar.jsx';
 import {useCommunityImage} from './CommunityImageViewer.jsx';
 import CommunityPostVideo from './CommunityPostVideo.jsx';
 import CommunityPostFooter from './CommunityPostFooter.jsx';
-import CommunityPostMedia from './CommunityPostMedia.jsx';
-import CommunityPostDescription from './CommunityPostDescription.jsx';
+import CommunityFeedCard, {CommunityCategoryBadge} from './CommunityFeedCard.jsx';
 import CommunityPostContactLinks from './CommunityPostContactLinks.jsx';
-import CommunityPhoneDialog from './CommunityPhoneDialog.jsx';
+import CommunityReportDialog from './CommunityReportDialog.jsx';
 import Modal from './common/Modal.jsx';
-import StatusBadge from './common/StatusBadge.jsx';
 import {AnimatePresence,MotionButton} from './motion/MotionUI.jsx';
 
-const badges={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'};
 function InlinePhoto({postId,image}){const photo=useCommunityImage(postId,image.id);return photo.url?<img src={photo.url} alt={image.fileName} onError={photo.fail}/>:<p role="status">{photo.loading?'Đang tải ảnh...':'Không tải được ảnh'}</p>}
-function Badge({post,className}){const category=communityCategories.find(([key])=>key===post.type);return <span data-category={post.type} className={className||`post-cat-badge ${badges[post.type]}`}><span aria-hidden="true">{category?.[1]}</span> <span>{post.typeLabel}</span></span>}
 export default function CommunityPrototype({state,mine,user,params,setParams,onCreate,onEdit,onDelete,deleting}){
  const navigate=useNavigate(),route=useLocation(),posts=state.data||[];
  const {category,q,location,sort}=readFeedFilters(params);
@@ -32,7 +28,7 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
  const [showBackToTop,setShowBackToTop]=useState(false);
  const [mineCount,setMineCount]=useState(null);
  const [filtersOpen,setFiltersOpen]=useState(false);
- const [contactPhone,setContactPhone]=useState(null);
+ const [reportPost,setReportPost]=useState(null);
  useEffect(()=>{
   const update=()=>setShowBackToTop(window.scrollY>400);
   update();window.addEventListener('scroll',update,{passive:true});
@@ -85,35 +81,17 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
    </div></div></section>
   {shared?.scope===sharedScope&&shared.error&&<div className="container community-background-status community-background-status--error" role="alert"><span>{shared.error}</span><button type="button" onClick={closeDetail}>Đóng</button></div>}
   <main className="community-main-section"><div className="container community-layout-grid"><section className="community-feed-column" aria-label={mine?'Bài viết của tôi':'Bài viết công khai'} aria-busy={state.loading||state.refreshing}>
+   {user && <Link className="community-report-history-link" to="/community/reports">Báo cáo của tôi</Link>}
    {state.refreshing&&<p className="community-background-status" role="status"><LoaderCircle className="spin" size={16}/>Đang cập nhật dữ liệu mới. Nội dung hiện tại vẫn được giữ nguyên.</p>}
    {state.refreshError&&<div className="community-background-status community-background-status--error" role="alert"><span>Không thể cập nhật dữ liệu mới: {state.refreshError}</span><button type="button" onClick={state.reload}>Thử lại</button></div>}
    {state.loading&&<div className="community-empty-state" role="status">Đang tải bài viết...</div>}{state.error&&<div className="community-empty-state" role="alert"><h2>Không thể tải bài viết</h2><p>{state.error}</p><button type="button" className="btn-empty-reset" onClick={state.reload}>Thử lại</button></div>}
    {!state.loading&&!state.error&&!posts.length&&<div className="community-empty-state" role="status"><div className="empty-icon-box"><Search size={48}/></div><h2 className="empty-title">Không tìm thấy bài viết phù hợp</h2><p className="empty-desc">{mine?'Bạn chưa có bài viết phù hợp trong danh mục này.':'Không có bài viết nào khớp với bộ lọc hiện tại. Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.'}</p><div className="empty-actions"><button type="button" className="btn-empty-reset" onClick={reset}>Xóa bộ lọc</button><button type="button" className="btn-create-post" onClick={onCreate}>Đăng bài mới</button></div></div>}
    <div className="community-feed-list" id="communityFeedList" tabIndex={-1} aria-label="Danh sách bài viết">{posts.map(post=>{
-    const hasMedia=Boolean(post.images?.length||post.videos?.length);
-    return <article className="community-feed-card community-restored-post" id={`post-${post.id}`} key={post.id} data-id={post.id}>
-     <div className="community-feed-card-header">
-      <div className="community-restored-author"><div className="community-restored-avatar" aria-hidden="true">{post.authorName.slice(0,2).toUpperCase()}</div><div><strong>{post.authorName}</strong><time className="community-feed-time" dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('vi-VN')}><span>{new Date(post.createdAt).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span><span aria-hidden="true">•</span><span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span></time></div></div>
-      <div className="community-feed-badges"><Badge post={post} className="community-feed-category"/>{mine&&<StatusBadge status={post.status} label={post.statusLabel}/>}</div>
-     </div>
-     <div className={`community-feed-body${hasMedia?' community-feed-body--media':''}`}>
-      <div className="community-feed-copy"><h2 className="community-feed-title">{post.title}</h2><CommunityPostDescription content={post.content} contentFormat={post.contentFormat}/>
-       <dl className="community-feed-facts">
-        {post.priceDisplay&&<div className="community-feed-price"><dt>{post.type==='SECOND_HAND'?'Giá bán':post.type==='ROOM_TRANSFER'?'Giá thuê':'Chi phí ở ghép'}</dt><dd>{post.priceDisplay}</dd></div>}
-        {post.location&&<div><dt>Địa chỉ</dt><dd><MapPin size={16} aria-hidden="true"/> {post.location}</dd></div>}
-        {post.authorPhone&&<div><dt>Số điện thoại</dt><dd>
-         <button type="button" className="community-phone-trigger" aria-haspopup="dialog"
-           aria-label={`Liên hệ qua số ${post.authorPhone}`} onClick={()=>setContactPhone(post.authorPhone)}>
-          <Phone size={16} aria-hidden="true" /> {post.authorPhone}
-         </button>
-        </dd></div>}
-        <CommunityPostContactLinks post={post} asFacts/>
-       </dl>
-      </div>{hasMedia&&<CommunityPostMedia post={post}/>}</div>
+    return <CommunityFeedCard key={post.id} post={post} showStatus={mine}>
      {mine&&post.status==='NEED_CHANGES'&&<section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên"><strong>Nhân viên yêu cầu chỉnh sửa</strong><p>{post.decisionNote||'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p><button type="button" className="btn-view-detail" onClick={()=>onEdit(post)}>Chỉnh sửa và gửi duyệt lại</button></section>}
      {mine&&post.status==='REJECTED'&&<p className="community-rejected-note">Lý do từ chối: {post.decisionNote||'Nội dung không phù hợp tiêu chuẩn cộng đồng.'}</p>}
-     <CommunityPostFooter post={post} mine={mine} deleting={deleting} onDelete={()=>onDelete(post)}/>
-     </article>;
+     <CommunityPostFooter post={post} deleting={deleting} onDelete={()=>onDelete(post)} onReport={setReportPost}/>
+     </CommunityFeedCard>;
    })}</div>
    <div ref={sentinel} className="community-feed-load-more" aria-busy={state.loadingMore}>
     {state.loadingMore&&<p role="status"><LoaderCircle size={18} className="spin" aria-hidden="true"/>Đang tải thêm bài viết...</p>}
@@ -123,7 +101,9 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
    </div>
   </section><CommunityPrototypeSidebar onZone={value=>change({location:value})}/></div></main>
   {showBackToTop&&<button type="button" className="community-back-to-top" aria-label="Cuộn lên đầu trang" title="Cuộn lên đầu trang" onClick={scrollToTop}><ArrowUp size={22} aria-hidden="true"/></button>}
-  {contactPhone&&<CommunityPhoneDialog number={contactPhone} onClose={()=>setContactPhone(null)}/>}
-  <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><Badge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p><div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
+  {reportPost&&<CommunityReportDialog post={reportPost} user={user} onClose={()=>setReportPost(null)}/>}
+  <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} closeOnEscape={!reportPost} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}{canReportCommunityPost(selected,user)&&<MotionButton className="p-button" onClick={()=>setReportPost(selected)}>Báo cáo bài viết</MotionButton>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><CommunityCategoryBadge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p>
+    <CommunityPostContactLinks post={selected}/>
+    <div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
  </>;
 }

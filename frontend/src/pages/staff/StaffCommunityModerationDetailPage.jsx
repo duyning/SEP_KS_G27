@@ -222,7 +222,8 @@ export default function StaffCommunityModerationDetailPage() {
           </div>
         </> : <div className="staff-community-review-result">
           <p>{currentPost.status === 'NEED_CHANGES' ? 'Đang chờ tác giả chỉnh sửa và gửi lại để kiểm duyệt.'
-            : currentPost.status === 'APPROVED' ? 'Bài viết đã được duyệt và hiển thị công khai.' : 'Bài viết đã bị từ chối.'}</p>
+            : currentPost.status === 'APPROVED' ? 'Bài viết đã được duyệt và hiển thị công khai.'
+              : currentPost.status === 'HIDDEN' ? 'Bài viết đã bị quản trị viên ẩn sau khi xử lý báo cáo.' : 'Bài viết đã bị từ chối.'}</p>
           {currentPost.reviewedBy && <small>Xử lý bởi: <strong>{currentPost.reviewedBy}</strong>
             {currentPost.reviewedAt && <time dateTime={currentPost.reviewedAt}>
               <span>{new Date(currentPost.reviewedAt).toLocaleTimeString('vi-VN')}</span>
@@ -240,7 +241,7 @@ export default function StaffCommunityModerationDetailPage() {
           {[...state.data.history].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)).map(item => <div className="staff-community-history-item" key={item.id}>
             <div className="staff-community-section-heading">
               <strong>{item.staffName}</strong>
-              <StatusBadge status={item.action} label={({ APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', NEED_CHANGES: 'Yêu cầu chỉnh sửa' })[item.action] || item.action} />
+              <StatusBadge status={item.action} label={({ APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', NEED_CHANGES: 'Yêu cầu chỉnh sửa', HIDDEN: 'Ẩn bài viết' })[item.action] || item.action} />
             </div>
             <p>{item.note}</p>
             <time dateTime={item.createdAt}>

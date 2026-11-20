@@ -224,7 +224,7 @@ public class CommunityService {
         post.setZaloUrl(request.zaloUrl());
     }
 
-    private CommunityPostResponse response(Post post, boolean privateView) {
+    CommunityPostResponse response(Post post, boolean privateView) {
         return response(post, privateView, comments.countByPost_PostId(post.getPostId()));
     }
 

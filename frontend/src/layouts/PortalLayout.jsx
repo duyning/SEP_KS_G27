@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Bell, CalendarDays, ChevronDown, ChevronRight, ClipboardCheck, ExternalLink, Flag, Globe, Heart, History, House, Layers, LayoutDashboard, LogOut, Menu, MessagesSquare, PanelTop, PlusCircle, Shield, Star, UserRound, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { landingFor, roleLabels } from '../routing/screens.js';
+import { adminDashboardViews, adminReportsLink, getAdminDashboardView } from '../routing/admin-navigation.js';
 import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
@@ -35,8 +36,14 @@ const menus = {
     ]]
   ],
   staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
-  admin: [['TỔNG QUAN', [['Bảng điều khiển', '/admin', LayoutDashboard], ['Tài khoản hệ thống', '/admin?view=accounts', Users]]], ['ĐIỀU PHỐI', [['Giám sát phân công', '/admin?view=assignment', ClipboardCheck], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench]]], ['HỆ THỐNG', [['Nhật ký kiểm duyệt', '/admin?view=activity', History]]]],
+  admin: [
+    ['TỔNG QUAN', [adminDashboardViews.overview, adminDashboardViews.accounts]],
+    ['ĐIỀU PHỐI', [adminDashboardViews.assignment, adminReportsLink]],
+    ['HỆ THỐNG', [adminDashboardViews.activity]],
+    ['CỔNG NHÂN VIÊN', [['Hồ sơ dịch vụ', '/staff/service-applications', Wrench]]],
+  ],
 };
+const adminLinks = menus.admin.flatMap(([, links]) => links).filter(([, to]) => to.startsWith('/admin'));
 export function Brand({ portal = 'public', onClick }) {
   return (
     <Link className="sidebar-brand-link" to={portal === 'public' ? '/' : `/${portal}`} onClick={onClick}>
@@ -69,6 +76,10 @@ export default function PortalLayout({ screen, children }) {
   const sidebar = useRef();
   const popoverRef = useRef();
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
+  const communityReports = screen.path === '/admin/community/reports';
+  const adminDestination = location.pathname === '/admin'
+    ? adminDashboardViews[getAdminDashboardView(new URLSearchParams(location.search))][1]
+    : location.pathname;
   const topbarTitle = ['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'Quản lý nhà trọ' : screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
   const [pendingHostApplications, setPendingHostApplications] = useState(null);
@@ -275,7 +286,7 @@ export default function PortalLayout({ screen, children }) {
           </div>
         </header>
       ) : (
-        <header className="portal-topbar">
+        <header className={`portal-topbar${communityReports ? ' report-portal-topbar' : ''}`}>
           <div className="portal-topbar-left">
             <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={22} />
@@ -316,7 +327,7 @@ export default function PortalLayout({ screen, children }) {
                 if (portal === 'host' && to === '/host/property/new' && !canRegister) return null;
                 const selectedPropertyId = new URLSearchParams(location.search).get('propertyId') || new URLSearchParams(location.search).get('id') || (portal === 'host' ? getHostWorkspaceMemory(user?.userId).selectedPropertyId : null);
                 const scopedLink = portal === 'host' && selectedPropertyId && ['/host/room-types','/host/rooms'].includes(to) ? `${to}?propertyId=${encodeURIComponent(selectedPropertyId)}` : to;
-                const active = to.startsWith('/admin') ? location.pathname === '/admin' && (new URLSearchParams(to.split('?')[1] || '').get('view') || 'overview') === (new URLSearchParams(location.search).get('view') || 'overview') : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
+                const active = portal === 'admin' ? to === adminDestination : to === '/staff' ? location.pathname === '/staff' && !new URLSearchParams(location.search).has('view') : location.pathname === to || `${location.pathname}${location.search}` === to || (!to.includes('?') && to !== `/${portal}` && location.pathname.startsWith(`${to}/`) && !(to === '/host/property' && location.pathname === '/host/property/new'));
                 return (
                   <Link key={to} to={scopedLink} className={`portal-nav-link ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined} onClick={() => setOpen(false)}>
                     <Icon size={19} />
@@ -361,8 +372,8 @@ export default function PortalLayout({ screen, children }) {
         )}
       </aside>
 
-      <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''} ${screen.path === '/properties/detail' ? 'detail-public-content' : ''}`}>
-        {!['host','staff'].includes(portal) && location.pathname !== '/' && screen.path !== '/properties/detail' && (
+      <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''} ${screen.path === '/properties/detail' ? 'detail-public-content' : ''}${communityReports ? ' report-portal-content' : ''}`}>
+        {!communityReports && !['host','staff'].includes(portal) && location.pathname !== '/' && screen.path !== '/properties/detail' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
             <Link to="/">HL_RCS</Link>
             <ChevronRight size={13} />
@@ -370,7 +381,17 @@ export default function PortalLayout({ screen, children }) {
               {portal === 'public' ? 'Trang chủ' : `${portal[0].toUpperCase()}${portal.slice(1)} Portal`}
             </Link>
             <ChevronRight size={13} />
-            <span aria-current="page">{screen.title}</span>
+            <span aria-current="page">{portal === 'admin' ? adminLinks.find(([, to]) => to === adminDestination)?.[0] ?? screen.title : screen.title}</span>
+          </nav>
+        )}
+        {portal === 'admin' && !communityReports && (
+          <nav className="portal-admin-nav" aria-label="Mục quản trị">
+            {adminLinks.map(([label, to, Icon]) => (
+              <Link key={to} to={to} aria-current={to === adminDestination ? 'page' : undefined}>
+                <Icon size={17} aria-hidden="true" />
+                {label}
+              </Link>
+            ))}
           </nav>
         )}
         <HostHeaderTarget.Provider value={hostHeaderTarget}>{children}</HostHeaderTarget.Provider>

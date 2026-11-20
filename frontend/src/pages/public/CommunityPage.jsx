@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { X, ImagePlus, Video, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost } from '../../services/community.js';
+import { communityApi, editPostPrice, formatPostPrice, hasPostDraftChanges, parsePostPrice, postPayload, validatePost, validPostContactLink } from '../../services/community.js';
 import { PostFieldError } from '../../components/CommunityUI.jsx';
 import useCommunityFeed from '../../components/useCommunityFeed.js';
 import CommunityPostImage, { LocalPostImage } from '../../components/CommunityPostImage.jsx';
@@ -164,6 +164,11 @@ export default function CommunityPage() {
   const [authorPhone, setAuthorPhone] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
   const [zaloUrl, setZaloUrl] = useState('');
+  const hasZaloLink = Boolean(zaloUrl && validPostContactLink(zaloUrl, 'zalo'));
+  const zaloNumber = hasZaloLink
+    ? zaloUrl.match(/^https:\/\/(?:www\.)?zalo\.me\/((?:0|\+?84)[35789]\d{8})\/?$/)?.[1]?.replace(/^\+?84/, '0') ?? ''
+    : zaloUrl;
+  const hasLegacyZaloLink = hasZaloLink && !zaloNumber;
   const revisionChanged = editingId == null || hasPostDraftChanges({
     type: postType, title: postTitle, content: postContent, contentFormat, price: postPrice, location: postLocation,
     authorName, authorPhone, facebookUrl, zaloUrl, photos, videos, retainedImageIds: retainedImages.map(image => image.id), retainedVideoIds: retainedVideos.map(video => video.id),
@@ -563,12 +568,13 @@ export default function CommunityPage() {
                 <PostFieldError name="facebookUrl" errors={errors} />
               </div>
               <div>
-                <label htmlFor="zaloUrl">Zalo <span>Không bắt buộc</span></label>
-                <input id="zaloUrl" type="url" maxLength={500} value={zaloUrl}
+                <label htmlFor="zaloUrl">Số Zalo <span>Không bắt buộc</span></label>
+                <input id="zaloUrl" type="tel" autoComplete="off" maxLength={24} value={zaloNumber}
                   className="community-post-location-control" aria-invalid={Boolean(errors.zaloUrl)}
                   aria-describedby="zaloUrl-help zaloUrl-error" onChange={event => setZaloUrl(event.target.value)}
-                  placeholder="https://zalo.me/0912345678" />
-                <small id="zaloUrl-help" className="community-input-help-hidden">Link HTTPS zalo.me; tối đa 500 ký tự.</small>
+                  placeholder={hasLegacyZaloLink ? 'Nhập số để thay liên kết đã lưu' : 'VD: 0912345678'} />
+                <small id="zaloUrl-help" className="community-input-help-hidden">Nhập số điện thoại đăng ký Zalo để tạo liên kết công khai trên bài viết.</small>
+                {hasLegacyZaloLink && <button type="button" className="community-remove-saved-zalo" onClick={() => setZaloUrl('')}>Xóa liên kết Zalo đã lưu</button>}
                 <PostFieldError name="zaloUrl" errors={errors} />
               </div>
             </div>

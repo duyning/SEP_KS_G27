@@ -14,7 +14,7 @@ export default function StatusBadge({ status, label, tone }) {
     } else if (['IN_PROGRESS', 'ASSIGNED'].includes(normalized)) {
       resolvedTone = 'blue';
       resolvedLabel = resolvedLabel || 'Đang xử lý';
-    } else if (['REJECTED', 'CANCELLED', 'OCCUPIED'].includes(normalized)) {
+    } else if (['REJECTED', 'CANCELLED', 'OCCUPIED', 'HIDDEN'].includes(normalized)) {
       resolvedTone = 'rose';
       resolvedLabel = resolvedLabel || (normalized === 'OCCUPIED' ? 'Đã thuê' : 'Từ chối');
     } else {
