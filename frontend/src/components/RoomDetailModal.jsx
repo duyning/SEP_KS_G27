@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import AvailabilityNotice from './AvailabilityNotice.jsx';
+import { roomAvailability } from '../services/availability.js';
 import {
   Check,
   CheckCircle2,
-  Clock3,
   Layers,
   LoaderCircle,
   Pencil,
@@ -15,15 +16,8 @@ import HostDrawer from './HostDrawer.jsx';
 import { MotionButton } from './motion/MotionUI.jsx';
 import { hostApi } from '../services/host.js';
 import { ROOM_AMENITIES, money } from '../services/room-types.js';
-import { editRoom, roomPayload } from '../services/rooms.js';
+import { editRoom, roomPayload, leaseDateLabel } from '../services/rooms.js';
 import { formatFloorHeading, getRoomVisualState } from '../services/host-management.js';
-
-const formatConfirmedDate = value => {
-  const parsed = value ? new Date(value) : null;
-  return parsed && Number.isFinite(parsed.getTime())
-    ? parsed.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
-    : 'Chưa xác nhận';
-};
 
 export default function RoomDetailModal({
   room,
@@ -32,6 +26,7 @@ export default function RoomDetailModal({
   onEdit,
   onDelete,
   onQuickSaved,
+  onChangeStatus,
 }) {
   const [quickBusy, setQuickBusy] = useState('');
   const [quickError, setQuickError] = useState('');
@@ -46,10 +41,13 @@ export default function RoomDetailModal({
   if (!room) return null;
 
   const visual = getRoomVisualState(room);
+  const confirmation = roomAvailability(room);
+  const confirmedCurrent = confirmation.availabilityConfirmationStatus === 'CURRENT';
   const floorLabel = formatFloorHeading(room.floor);
 
   const quickUpdateStatus = async (nextStatus, actionKey) => {
     if (!canManage || requestRef.current || !onQuickSaved) return;
+    if(onChangeStatus&&(nextStatus!==room.status||nextStatus==='OCCUPIED'&&(!room.leaseStartDate||!room.leaseEndDate))){onChangeStatus(room,nextStatus);return;}
     const controller = new AbortController();
     requestRef.current = controller;
     setQuickBusy(actionKey);
@@ -153,6 +151,7 @@ export default function RoomDetailModal({
             <header className="hm-drawer-section-head">
               <h3>Cập nhật nhanh tình trạng</h3>
               {!room.confirmedAt && <span className="hm-badge tone-warning">Chưa xác nhận</span>}
+              {confirmation.availabilityConfirmationStatus === 'STALE' && <span className="hm-badge tone-warning">Quá 7 ngày chưa xác nhận</span>}
             </header>
             <div className="hm-quick-status-grid">
               {[
@@ -166,7 +165,7 @@ export default function RoomDetailModal({
                     key={value}
                     type="button"
                     aria-pressed={isCurrent}
-                    disabled={Boolean(quickBusy) || (isCurrent && Boolean(room.confirmedAt))}
+                    disabled={Boolean(quickBusy) || (isCurrent && confirmedCurrent)}
                     className={`hm-quick-choice is-${value.toLowerCase()} ${isCurrent ? 'is-selected' : ''}`}
                     onClick={() => quickUpdateStatus(value, actionKey)}
                   >
@@ -179,7 +178,7 @@ export default function RoomDetailModal({
                         <CheckCircle2 size={14} />
                       ) : null}
                     </div>
-                    <small>{isCurrent && !room.confirmedAt ? 'Nhấn để xác nhận trạng thái này' : hint}</small>
+                    <small>{isCurrent && !confirmedCurrent ? 'Nhấn để xác nhận lại trạng thái này' : hint}</small>
                   </MotionButton>
                 );
               })}
@@ -230,11 +229,11 @@ export default function RoomDetailModal({
             </div>
             <div className="hm-kv-row">
               <dt>Xác nhận gần nhất</dt>
-              <dd className="hm-inline-icon-text">
-                {room.confirmedAt ? <Check size={14} aria-hidden="true" /> : <Clock3 size={14} aria-hidden="true" />}
-                <span>{formatConfirmedDate(room.confirmedAt)}</span>
+              <dd>
+                <AvailabilityNotice value={confirmation}/>
               </dd>
             </div>
+            {room.status==='OCCUPIED'&&<><div className="hm-kv-row"><dt>Ngày bắt đầu ở</dt><dd>{leaseDateLabel(room.leaseStartDate)}</dd></div><div className="hm-kv-row"><dt>Ngày kết thúc ở</dt><dd>{leaseDateLabel(room.leaseEndDate)}</dd></div></>}
           </dl>
         </section>
 

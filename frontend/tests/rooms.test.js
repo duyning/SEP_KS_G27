@@ -1,6 +1,6 @@
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyRoom,editRoom,roomPayload,validateRoom } from '../src/services/rooms.js';
+import { emptyRoom,editRoom,roomPayload,validateRoom,validateLeaseDates } from '../src/services/rooms.js';
 import {hostApi} from '../src/services/host.js';
 const types=[{roomTypeId:12,price:2400000}];
 const valid=()=>({...emptyRoom('12'),roomNumber:' p.101 '});
@@ -11,12 +11,29 @@ test('room creation must select an existing linked type and has no sample room n
 test('room fields and optional integer custom prices are validated',()=>{
   for(const [key,value]of [['roomNumber','<P.101>'],['roomNumber','x'.repeat(31)],['floor',' '],['status','unknown'],['customPrice','-1'],['customPrice','1.5']])assert.ok(validateRoom({...valid(),overridePrice:true,customPrice:'2400000',[key]:value},types)[key]);
   assert.ok(validateRoom(valid(),[{roomTypeId:12,price:null}]).customPrice);
-  assert.deepEqual(roomPayload(valid()),{roomTypeId:12,roomNumber:'P.101',floor:'Tầng 1',status:'VACANT',customPrice:null});
+  assert.deepEqual(roomPayload(valid()),{roomTypeId:12,roomNumber:'P.101',floor:'Tầng 1',status:'VACANT',customPrice:null,leaseStartDate:null,leaseEndDate:null});
   assert.equal(editRoom({roomTypeId:12,roomNumber:'P.102',floor:'Tầng 1',status:'OCCUPIED',customPrice:2500000}).overridePrice,true);
 });
 const original={fetch:globalThis.fetch,sessionStorage:globalThis.sessionStorage,localStorage:globalThis.localStorage};
 globalThis.sessionStorage={getItem:()=> 'room-token'};globalThis.localStorage={getItem:()=>null};after(()=>Object.assign(globalThis,original));
 const room={roomId:34,propertyId:1,roomTypeId:12,roomNumber:'P.101',floor:'Tầng 1',status:'VACANT',amenities:[]};
+test('occupied status requires real chronological lease dates and vacancy clears them',()=>{
+ assert.deepEqual(validateLeaseDates({status:'VACANT'}),{});
+ const occupied={...valid(),status:'OCCUPIED',leaseStartDate:'2026-11-14',leaseEndDate:'2027-11-14'};
+ assert.deepEqual(validateRoom(occupied,types),{});
+ for(const invalid of [{leaseStartDate:''},{leaseEndDate:''},{leaseStartDate:'2026-02-30'},{leaseEndDate:'2026-11-13'}])assert.ok(Object.keys(validateRoom({...occupied,...invalid},types)).length);
+ assert.equal(roomPayload(occupied).leaseEndDate,'2027-11-14');
+ assert.equal(roomPayload({...occupied,status:'VACANT'}).leaseStartDate,null);
+ assert.equal(editRoom({...room,status:'OCCUPIED',leaseStartDate:'2026-11-14',leaseEndDate:'2027-11-14'}).leaseEndDate,'2027-11-14');
+});
+test('batch status updates require complete matching server results',async()=>{
+ const payload={propertyId:1,roomIds:[34,35],status:'OCCUPIED',leaseStartDate:'2026-11-14',leaseEndDate:'2027-11-14'};
+ const rows=payload.roomIds.map(roomId=>({...room,roomId,status:payload.status,leaseStartDate:payload.leaseStartDate,leaseEndDate:payload.leaseEndDate}));
+ globalThis.fetch=async(url,options)=>{assert.equal(url,'/api/host/rooms/status');assert.equal(options.method,'PATCH');assert.deepEqual(JSON.parse(options.body),payload);return new Response(JSON.stringify({success:true,data:rows}));};
+ assert.equal((await hostApi.updateRoomStatuses(payload)).length,2);
+ globalThis.fetch=async()=>new Response(JSON.stringify({success:true,data:[rows[0]]}));
+ await assert.rejects(hostApi.updateRoomStatuses(payload),error=>error.status===502);
+});
 test('room list, save and delete use real owner endpoints',async()=>{
   globalThis.fetch=async(url,options)=>{assert.equal(url,'/api/host/rooms?propertyId=1&roomTypeId=12');assert.equal(options.headers.Authorization,'Bearer room-token');return new Response(JSON.stringify({success:true,data:{properties:[],roomTypes:[],pendingRegistrationCount:0,rooms:[room]}}));};
   assert.equal((await hostApi.rooms(undefined,1,12)).rooms[0].roomId,34);

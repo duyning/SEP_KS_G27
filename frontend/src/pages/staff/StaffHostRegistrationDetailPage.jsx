@@ -6,18 +6,14 @@ import { StateView, useToast } from '../../components/PortalUI.jsx';
 import { staffHostApi } from '../../services/staff-host-applications.js';
 import StaffHostShell, { HostApplicationStatus, date, applicationLabels } from './StaffHostShell.jsx';
 import StaffHostDetailTemplate from './StaffHostDetailTemplate.jsx';
-import { applicantCapacities, rentalExperiences, applicationFieldLabel } from '../../services/host-applications.js';
 import StaffHostModalTemplate from './StaffHostModalTemplate.jsx';
 
 const fields = [
-  ['targetCommune', 'Khu vực hoạt động chính', 'Vui lòng làm rõ khu vực dự kiến quản lý nhà trọ.'],
-  ['expectedScale', 'Quy mô phòng dự kiến', 'Vui lòng xác nhận số phòng dự kiến vận hành.'],
-  ['introduction', 'Giới thiệu bản thân & cơ sở cho thuê', 'Vui lòng mô tả rõ kinh nghiệm, địa chỉ sơ bộ và tiện ích cơ sở.'],
-  ['applicantCapacity', 'Tư cách cho thuê', 'Vui lòng xác nhận bạn là chủ sở hữu, người được ủy quyền hay người thuê để cho thuê lại.'],
-  ['rentalExperience', 'Kinh nghiệm quản lý', 'Vui lòng xác nhận kinh nghiệm quản lý cho thuê của bạn.'],
-  ['accPhone', 'Số điện thoại liên hệ chính chủ', 'Vui lòng cập nhật số điện thoại chính chủ tại Hồ sơ cá nhân.'],
-  ['accFullName', 'Họ và tên người đăng ký', 'Vui lòng cập nhật họ và tên thật tại Hồ sơ cá nhân.'],
-  ['accEmail', 'Email tài khoản', 'Email đăng nhập được quản lý riêng; cần liên hệ hỗ trợ khi thay đổi.']
+ ['identityImage','Ảnh mặt trước Căn cước / CCCD','Vui lòng thay ảnh mặt trước rõ toàn bộ thẻ, không lóa và không cắt góc.'],
+ ['introduction','Ghi chú cho nhân viên xét duyệt','Vui lòng làm rõ thông tin cần bổ sung.'],
+ ['accPhone','Số điện thoại liên hệ','Vui lòng cập nhật số điện thoại tại Hồ sơ cá nhân.'],
+ ['accFullName','Họ và tên','Vui lòng cập nhật họ và tên tại Hồ sơ cá nhân.'],
+ ['accEmail','Email tài khoản','Liên hệ hỗ trợ nếu cần cập nhật email.']
 ];
 
 const supplementNote = (selected, commonNote) =>
@@ -238,18 +234,13 @@ export default function StaffHostRegistrationDetailPage() {
     setModalError('');
   }
 
-  const currentValue = (key) =>
-    key === 'applicantCapacity'
-      ? applicationFieldLabel(applicantCapacities, a.applicantCapacity)
-      : key === 'rentalExperience'
-        ? applicationFieldLabel(rentalExperiences, a.rentalExperience)
-        : a[{ accPhone: 'userPhone', accFullName: 'userName', accEmail: 'userEmail' }[key] || key] || 'Chưa cung cấp';
+  const currentValue=key=>key==='identityImage'?(a.hasIdentityImage?'Đã có ảnh mặt trước':'Chưa có ảnh định danh'):a[{accPhone:'userPhone',accFullName:'userName',accEmail:'userEmail'}[key]||key]||'Chưa cung cấp';
 
   const checklist = (
     <>
       {[
-        ['Thông tin nguyện vọng đối tác', fields.slice(0, 5)],
-        ['Thông tin tài khoản chính chủ', fields.slice(5)]
+        ['Hồ sơ cấp quyền tài khoản', fields.slice(0, 2)],
+        ['Thông tin tài khoản chính chủ', fields.slice(2)]
       ].map(([group, items]) => (
         <section className="shrd-schema-group" key={group}>
           <header className="shrd-schema-group-header">

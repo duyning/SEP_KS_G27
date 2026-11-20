@@ -1,0 +1,14 @@
+.reverification-notice{--rv-border:#fde2a4;--rv-surface:#fffbef;--rv-text:#78350f;display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:12px;padding:18px 20px;margin:12px 0;border:1px solid var(--rv-border);border-radius:12px;background:var(--rv-surface);color:var(--rv-text);min-width:0;text-align:left;font-size:.875rem;line-height:1.6;overflow-wrap:anywhere}
+.reverification-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#fff3d6;color:#92400e}
+.reverification-content{min-width:0}.reverification-notice .reverification-title{display:block;margin:2px 0 0;font-size:.9375rem;font-weight:700;line-height:1.5;color:var(--rv-text)}
+.reverification-notice .reverification-meta{display:block;margin-top:3px;font-size:.75rem;color:#92400e}
+.reverification-notice p{margin:6px 0 0;font-size:inherit;line-height:1.6;color:inherit}
+.reverification-notice .reverification-reasons{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--rv-border);font-size:.8125rem;line-height:1.6}
+.reverification-notice .reverification-reasons dt{font-weight:600}.reverification-notice .reverification-reasons dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.reverification-feedback{margin-top:10px;padding-top:10px;border-top:1px solid var(--rv-border)}
+.reverification-notice a{display:inline-flex;align-items:center;min-height:40px;margin-top:8px;color:#115e59;text-decoration:underline;text-underline-offset:3px;font-weight:600}.reverification-notice a:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+.reverification-notice.is-compact{grid-template-columns:24px minmax(0,1fr);gap:8px;padding:12px;margin:12px 0 0;font-size:.75rem;line-height:1.5;border-radius:10px}
+.reverification-notice.is-compact .reverification-icon{width:24px;height:24px;background:transparent}.reverification-notice.is-compact .reverification-title{font-size:.8125rem;margin:0;line-height:1.5}
+.reverification-notice.is-compact .reverification-reasons{grid-template-columns:minmax(0,1fr);gap:2px;margin-top:8px;padding-top:8px;font-size:.75rem}
+.reverification-notice.is-compact a{min-height:36px;margin-top:4px}
+@media(max-width:480px){.reverification-notice{padding:14px;gap:10px;grid-template-columns:26px minmax(0,1fr)}.reverification-icon{width:26px;height:26px}.reverification-notice .reverification-reasons{grid-template-columns:minmax(0,1fr);gap:2px}.reverification-notice.is-compact{padding:10px}}

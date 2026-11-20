@@ -50,10 +50,11 @@ class FavoriteTests {
         property=properties.save(Property.builder().owner(host).registration(registration).name("Public favorite test")
                 .address("Tân Xã").status("ACTIVE").build());
         type=type("Studio A");
-        rooms.save(Room.builder().roomType(type).property(property).roomNumber("A01").floor("1").status("VACANT").build());
     }
     private RoomType type(String name) {
-        return types.save(RoomType.builder().property(property).roomType(name).price(BigDecimal.valueOf(2100000)).areaSqm(25F).build());
+        var value=types.save(RoomType.builder().property(property).roomType(name).price(BigDecimal.valueOf(2100000)).areaSqm(25F).build());
+        rooms.save(Room.builder().roomType(value).property(property).roomNumber("A"+value.getRoomTypeId()).floor("1").status("VACANT").publicVisible(true).build());
+        return value;
     }
     private HttpRequest request(String method, String path, User user, String body) {
         var builder=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+environment.getProperty("local.server.port")+path));

@@ -1,9 +1,10 @@
 import UIField from '../../components/common/Field.jsx';
 import UIButton from '../../components/common/Button.jsx';
+import VerificationHostApplication from '../../components/VerificationHostApplication.jsx';
+import ReverificationNotice from '../../components/ReverificationNotice.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { AutoHeight } from '@animate-ui/react/primitives/effects/auto-height';
 import { Highlight, HighlightItem } from '@animate-ui/react/primitives/effects/highlight';
 import { useMotionTokens, useShouldReduceMotion, useTempoTransition } from '@animate-ui/react/utils/motion';
 import {
@@ -43,6 +44,7 @@ import VerificationChangeComparison from '../../components/VerificationChangeCom
 import { classifyVerificationRecord, getVerificationDetailActions } from '../../services/staff-verifications.js';
 import '../../styles/staff-verification-detail.css';
 import '../../styles/staff-verifications-refinement.css';
+import '../../styles/verification-decision-dialog.css';
 
 const DETAIL_SECTIONS = [
   { id: 'svd-section-property', label: '1. Nhà trọ & Bản đồ', icon: House },
@@ -302,7 +304,6 @@ export default function StaffPropertyVerificationDetailPage() {
           Quay lại danh sách xác minh
         </Link>
         <div className="sw-heading-actions">
-          <span className="svd-record-code">HS-{summary.registrationId}</span>
           <span className={`sv-kind-chip tone-${recordMeta.submissionTone}`}>
             {recordMeta.isResubmitted && <Sparkles size={11} />}
             {recordMeta.submissionLabel}
@@ -332,7 +333,7 @@ export default function StaffPropertyVerificationDetailPage() {
                     onClick={() => scrollToTarget(section.id)}
                   >
                     <Icon size={14} />
-                    <span>{section.label}</span>
+                    <span>{summary.hostOnboarding&&section.id==='svd-section-owner'?'2. Đơn đăng ký Chủ trọ':section.label}</span>
                   </UIButton>
                 </HighlightItem>
               );
@@ -367,19 +368,8 @@ export default function StaffPropertyVerificationDetailPage() {
         </section>
       )}
 
+      <ReverificationNotice required={summary.reverificationRequired} reasons={summary.reverificationReasons} status={summary.status} staff/>
       <div className="sw-detail-layout svd-grid">
-        <div className="svd-main">
-          <VerificationChangeComparison
-            previous={state.data.publishedSubmission}
-            current={form}
-            propertyId={summary.targetPropertyId}
-          />
-          <VerificationPropertyInfo summary={summary} submission={form} photos={photos} onOpen={openFile} />
-          <VerificationOwnerInfo summary={summary} submission={form} />
-          <VerificationDocuments documents={documents} onOpen={openFile} loading={fileLoading} error={fileError} />
-          <VerificationHistory summary={summary} history={history} submissionEvents={state.data.submissionEvents} />
-        </div>
-
         <aside className="svd-decision-column">
           <section className="sw-panel svd-decision-card">
             <header>
@@ -394,41 +384,10 @@ export default function StaffPropertyVerificationDetailPage() {
               <StaffStatus status={summary.status} />
             </div>
 
-            <VerificationFields
-              rows={[
-                ['Mã hồ sơ', `HS-${summary.registrationId}`],
-                ['Phân loại hồ sơ', recordMeta.submissionLabel],
-                ['Ngày nộp ban đầu', staffDate(summary.createdAt)],
-                ['Gửi lại gần nhất', staffDate(summary.submittedAt || summary.createdAt)],
-                ['Cập nhật xét duyệt', summary.reviewedAt ? staffDate(summary.reviewedAt) : 'Chưa xử lý'],
-                ...(state.data.assignedStaffName ? [['Staff phụ trách', state.data.assignedStaffName]] : []),
-                ['Người xử lý cuối', summary.reviewerName || 'Chưa có người xử lý'],
-              ]}
-            />
-
-            <div className="svd-checklist-box" aria-label="Bảng kiểm điều kiện hồ sơ">
-              <div className="svd-checklist-header">
-                <h4 className="svd-label">Kiểm tra điều kiện hồ sơ</h4>
-                <span className={`svd-ready-tag ${decisionConfig.mandatoryReady ? 'ready' : 'missing'}`}>
-                  {decisionConfig.mandatoryReady ? 'Đủ mục bắt buộc' : 'Thiếu mục bắt buộc'}
-                </span>
-              </div>
-              <ul className="svd-checklist">
-                {decisionConfig.checklist.map(item => (
-                  <li key={item.key} className={item.passed ? 'passed' : item.required ? 'missing' : 'optional'}>
-                    <span className="svd-check-mark" aria-hidden="true">
-                      {item.passed ? <Check size={12} /> : item.required ? <AlertTriangle size={12} /> : '•'}
-                    </span>
-                    <div>
-                      <strong>{item.label}</strong>
-                      <small>{item.detail}</small>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <AutoHeight deps={[decisionConfig.mode, summary.status, decisionConfig.mandatoryReady]}>
+            <p className={`svd-decision-readiness ${decisionConfig.mandatoryReady ? 'ready' : 'missing'}`}>
+              {decisionConfig.mandatoryReady ? <CheckCircle2 size={15} aria-hidden="true" /> : <AlertTriangle size={15} aria-hidden="true" />}
+              {decisionConfig.mandatoryReady ? 'Đủ điều kiện hồ sơ bắt buộc' : 'Thiếu ' + decisionConfig.checklist.filter(item => item.required && !item.passed).length + ' mục bắt buộc · Xem bảng kiểm bên dưới'}
+            </p>
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.div
                   key={`${decisionConfig.mode}-${summary.status}`}
@@ -437,17 +396,17 @@ export default function StaffPropertyVerificationDetailPage() {
                   exit={{ opacity: 0, filter: reduce ? 'none' : tokens.blur.icon, transition: swapTransition }}
                   className="svd-state-action-zone"
                 >
-                  <div className={`svd-mode-banner tone-${decisionConfig.tone}`}>
+                  {decisionConfig.mode !== 'ACTIVE_REVIEW' && <div className={`svd-mode-banner tone-${decisionConfig.tone}`}>
                     <StatusModeIcon mode={decisionConfig.mode} />
                     <div>
                       <strong>{decisionConfig.headline}</strong>
                       <p>{decisionConfig.description}</p>
                     </div>
-                  </div>
+                  </div>}
 
                   {decisionConfig.decisions.length > 0 && (
                     <>
-                      <h4 className="svd-label">Hành động khả dụng ở trạng thái này</h4>
+                      <h4 className="svd-label">Chọn quyết định</h4>
                       <div className="sw-review-actions">
                         {decisionConfig.decisions.map(action => {
                           const btnClass =
@@ -482,10 +441,10 @@ export default function StaffPropertyVerificationDetailPage() {
                   )}
 
                   {(decisionConfig.publicPropertyUrl || decisionConfig.jumpLinks.length > 0) && (
-                    <div className="svd-post-actions">
-                      <h4 className="svd-label">
+                    <details className="svd-post-actions svd-decision-details">
+                      <summary>
                         {decisionConfig.decisions.length > 0 ? 'Lối tắt kiểm tra nhanh' : 'Tác vụ tra cứu hồ sơ'}
-                      </h4>
+                      </summary>
                       <div className="svd-jump-links">
                         {decisionConfig.publicPropertyUrl && (
                           <Link
@@ -510,13 +469,63 @@ export default function StaffPropertyVerificationDetailPage() {
                           </UIButton>
                         ))}
                       </div>
-                    </div>
+                    </details>
                   )}
                 </motion.div>
               </AnimatePresence>
-            </AutoHeight>
+            <details className="svd-decision-details">
+              <summary>Điều kiện &amp; thông tin hồ sơ</summary>
+              <div className="svd-decision-details-body">
+            <VerificationFields
+              rows={[
+                ['Phân loại hồ sơ', recordMeta.submissionLabel],
+                ['Ngày nộp ban đầu', staffDate(summary.createdAt)],
+                ['Gửi lại gần nhất', staffDate(summary.submittedAt || summary.createdAt)],
+                ['Cập nhật xét duyệt', summary.reviewedAt ? staffDate(summary.reviewedAt) : 'Chưa xử lý'],
+                ...(state.data.assignedStaffName ? [['Staff phụ trách', state.data.assignedStaffName]] : []),
+                ['Người xử lý cuối', summary.reviewerName || 'Chưa có người xử lý'],
+              ]}
+            />
+
+            <div className="svd-checklist-box" aria-label="Bảng kiểm điều kiện hồ sơ">
+              <div className="svd-checklist-header">
+                <h4 className="svd-label">Kiểm tra điều kiện hồ sơ</h4>
+                <span className={`svd-ready-tag ${decisionConfig.mandatoryReady ? 'ready' : 'missing'}`}>
+                  {decisionConfig.mandatoryReady ? 'Đủ mục bắt buộc' : 'Thiếu mục bắt buộc'}
+                </span>
+              </div>
+              <ul className="svd-checklist">
+                {decisionConfig.checklist.map(item => (
+                  <li key={item.key} className={item.passed ? 'passed' : item.required ? 'missing' : 'optional'}>
+                    <span className="svd-check-mark" aria-hidden="true">
+                      {item.passed ? <Check size={12} /> : item.required ? <AlertTriangle size={12} /> : '•'}
+                    </span>
+                    <div>
+                      <strong>{item.label}</strong>
+                      <small>{item.detail}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+              </div>
+            </details>
           </section>
         </aside>
+        <div className="svd-main">
+          <VerificationChangeComparison
+            previous={state.data.publishedSubmission}
+            current={form}
+            propertyId={summary.targetPropertyId}
+          />
+          <VerificationPropertyInfo summary={summary} submission={form} photos={photos} onOpen={openFile} />
+          {summary.hostOnboarding?<VerificationHostApplication application={state.data.hostApplication} summary={summary} submission={form} documents={documents} onOpen={openFile} loading={fileLoading}/>:<VerificationOwnerInfo summary={summary} submission={form}/>}
+          <VerificationDocuments documents={documents} onOpen={openFile} loading={fileLoading} error={fileError} />
+          <VerificationHistory summary={summary} history={history} submissionEvents={state.data.submissionEvents} />
+        </div>
+
+
       </div>
 
       <AnimatePresence>
@@ -543,17 +552,20 @@ export default function StaffPropertyVerificationDetailPage() {
       <AnimatePresence>
         {decision && (
           <Modal
-            className={`sw-review-modal ${supplement ? 'sw-supplement-modal' : ''}`}
+            className={`sw-review-modal ${supplement ? 'sw-supplement-modal' : `svd-decision-dialog ${decision === 'APPROVE' ? 'is-approval' : 'is-rejection'}`}`}
             title={
               supplement ? (
                 <>
                   <FilePenLine size={24} />
                   Yêu cầu Chủ trọ Bổ sung thông tin / Hồ sơ
                 </>
-              ) : decision === 'APPROVE' ? (
-                'Phê duyệt hồ sơ nhà trọ'
               ) : (
-                'Từ chối hồ sơ nhà trọ'
+                <span className="svd-dialog-heading">
+                  <span className="svd-dialog-icon" aria-hidden="true">{decision === 'APPROVE' ? <CheckCircle2 size={23} /> : <XCircle size={23} />}</span>
+                  <span><span className="svd-dialog-title">{decision === 'APPROVE' ? 'Phê duyệt hồ sơ' : 'Từ chối hồ sơ'}</span>
+                    <span className="svd-dialog-subtitle">{decision === 'APPROVE' ? 'Xác nhận kết quả thẩm định' : 'Phản hồi cho người đăng ký'}</span>
+                  </span>
+                </span>
               )
             }
             onClose={() => {
@@ -584,27 +596,36 @@ export default function StaffPropertyVerificationDetailPage() {
                 />
               ) : (
                 <div className="sw-review-body">
-                  <p>
+                  <div className="svd-dialog-property">
+                    <House size={19} aria-hidden="true" />
+                    <div><strong>{summary.name || 'Nhà trọ chưa đặt tên'}</strong><span>{summary.address || form?.addressDetail || 'Chưa cập nhật địa chỉ'}</span></div>
+                  </div>
+                  <p id="staff-review-impact" className="svd-dialog-impact">
                     {decision === 'APPROVE'
-                      ? 'Xác nhận đã kiểm tra đầy đủ thông tin và tài liệu. Nếu là đề nghị thay đổi, bản mới sẽ được áp dụng cho nhà trọ hiện tại sau khi phê duyệt.'
-                      : 'Lý do từ chối sẽ được lưu và hiển thị cho chủ trọ.'}
+                      ? summary.hostOnboarding
+                        ? 'Phê duyệt sẽ cấp quyền Chủ trọ cho tài khoản và công khai nhà trọ đầu tiên.'
+                        : summary.targetPropertyId != null
+                          ? 'Thông tin đã thẩm định sẽ được áp dụng cho nhà trọ sau khi phê duyệt.'
+                          : 'Nhà trọ sẽ được công khai sau khi phê duyệt.'
+                      : 'Lý do từ chối sẽ được lưu trong lịch sử và hiển thị cho người đăng ký.'}
                   </p>
                   <UIField className="sw-review-label" htmlFor="staff-review-note">
-                    {decision === 'REJECT' ? 'Lý do từ chối' : 'Ghi chú xét duyệt (tùy chọn)'}
+                    {decision === 'REJECT' ? 'Lý do từ chối' : 'Ghi chú xét duyệt'}
+                    {decision === 'APPROVE' && <span className="svd-dialog-optional">Tùy chọn</span>}
                     {decision !== 'APPROVE' && <span className="sw-required"> *</span>}
                   </UIField>
                   <textarea
                     id="staff-review-note"
                     autoFocus
-                    rows={4}
+                    rows={3}
                     maxLength={2000}
                     required={decision !== 'APPROVE'}
                     aria-invalid={Boolean(reviewError)}
-                    aria-describedby={reviewError ? 'staff-review-error' : 'staff-review-count'}
+                    aria-describedby={`staff-review-impact staff-review-count${reviewError ? ' staff-review-error' : ''}`}
                     placeholder={
                       decision === 'REJECT'
-                        ? 'Nêu rõ lý do hồ sơ chưa đáp ứng yêu cầu...'
-                        : 'Nhập ghi chú xét duyệt...'
+                        ? 'Nêu rõ thông tin hoặc giấy tờ chưa đáp ứng yêu cầu…'
+                        : 'Ghi chú kết quả kiểm tra, nếu có…'
                     }
                     value={note}
                     disabled={busy}
@@ -613,10 +634,10 @@ export default function StaffPropertyVerificationDetailPage() {
                       setReviewError('');
                     }}
                   />
-                  <small id="staff-review-count">
-                    {note.trim().length}/2000 ký tự
-                    {decision !== 'APPROVE' ? ' · Tối thiểu 10 ký tự' : ''}
-                  </small>
+                  <div id="staff-review-count" className="svd-dialog-input-help">
+                    <span>{decision === 'REJECT' ? 'Nhập ít nhất 10 ký tự, nêu lý do cụ thể.' : 'Ghi chú được lưu cùng kết quả thẩm định.'}</span>
+                    <span>{note.length}/2000</span>
+                  </div>
                   {reviewError && (
                     <p id="staff-review-error" className="sw-error" role="alert">
                       {reviewError}
@@ -631,7 +652,7 @@ export default function StaffPropertyVerificationDetailPage() {
                 <MotionButton
                   type="submit"
                   className={supplement ? 'sw-amber' : decision === 'APPROVE' ? 'sw-primary' : 'sw-danger'}
-                  disabled={busy}
+                  disabled={busy || (!supplement && decision === 'REJECT' && note.trim().length < 10)}
                 >
                   {busy ? (
                     <>
@@ -640,8 +661,10 @@ export default function StaffPropertyVerificationDetailPage() {
                     </>
                   ) : supplement ? (
                     'Gửi yêu cầu bổ sung'
+                  ) : decision === 'APPROVE' ? (
+                    <><Check size={16} aria-hidden="true" /> Phê duyệt hồ sơ</>
                   ) : (
-                    'Xác nhận quyết định'
+                    <><X size={16} aria-hidden="true" /> Từ chối hồ sơ</>
                   )}
                 </MotionButton>
               </footer>

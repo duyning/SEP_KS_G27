@@ -1,0 +1,15 @@
+.host-entry-banner{--entry-bg:#0f172a;--entry-text:#dbe7ef;--entry-action:#66e7d4;background:var(--entry-bg);color:var(--entry-text);font:500 13px/1.5 'Segoe UI',system-ui,sans-serif}
+.host-entry-banner .host-entry-inner{max-width:1500px;margin:0 auto;padding:4px 24px;display:flex;align-items:center;gap:14px;min-height:38px;box-sizing:border-box}
+.host-entry-banner .host-entry-badge{flex:none;border:1px solid #28786f;border-radius:20px;padding:2px 9px;background:#153b40;color:var(--entry-action);font-weight:650;font-size:12px}
+.host-entry-viewport{flex:1;min-width:0;overflow:hidden}
+.host-entry-track{display:flex;width:max-content;animation:host-entry-scroll var(--host-entry-duration,20s) linear infinite;will-change:transform}
+.host-entry-group{display:flex;flex:none;width:max-content}
+.host-entry-copy{display:inline-flex;align-items:center;flex:none;white-space:nowrap}
+.host-entry-banner .host-entry-separator{flex:none;padding:0 14px;color:var(--entry-action)}
+.host-entry-link,.host-entry-contact{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;flex:none;color:var(--entry-action)!important;text-decoration:none;font-size:13px;font-weight:650;white-space:nowrap}
+.host-entry-link:hover,.host-entry-contact:hover{text-decoration:underline}
+.host-entry-banner:hover .host-entry-track,.host-entry-banner:focus-within .host-entry-track{animation-play-state:paused}
+.host-entry-link:focus-visible,.host-entry-contact:focus-visible{outline:2px solid var(--entry-action);outline-offset:3px;border-radius:4px}
+@keyframes host-entry-scroll{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@media(max-width:600px){.host-entry-banner .host-entry-inner{padding:5px 16px;gap:10px;min-height:42px}.host-entry-banner .host-entry-badge{display:none}.host-entry-link{font-size:12px;min-height:32px}}
+@media(prefers-reduced-motion:reduce){.host-entry-track,.host-entry-group{display:block;animation:none;width:auto;will-change:auto}.host-entry-copy{display:block;white-space:normal}.host-entry-group[aria-hidden],.host-entry-copy[aria-hidden],.host-entry-separator{display:none}.host-entry-banner .host-entry-inner{align-items:center;flex-wrap:wrap}.host-entry-viewport{min-width:160px}}

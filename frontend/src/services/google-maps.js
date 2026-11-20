@@ -7,7 +7,10 @@ export function loadGoogleMaps() {
   // Google leaves its namespace behind after rejecting a key. It is not a
   // usable SDK instance; reusing it on the next form step can throw internally.
   if (authorizationFailed) return Promise.reject(new Error('Bản đồ chưa khả dụng trong phiên này. Bạn có thể tiếp tục mà không ghim vị trí.'));
-  if (globalThis.google?.maps?.importLibrary) return Promise.resolve(globalThis.google.maps);
+  if (globalThis.google?.maps?.importLibrary) {
+    globalThis.gm_authFailure=()=>{authorizationFailed=true;globalThis.dispatchEvent(new Event('hlrcs:google-maps-auth-error'));};
+    return Promise.resolve(globalThis.google.maps);
+  }
   if (loading) return loading;
   loading = new Promise((resolve,reject) => {
     const script=document.createElement('script');const callback='__hlrcsGoogleMapsReady';let timer;

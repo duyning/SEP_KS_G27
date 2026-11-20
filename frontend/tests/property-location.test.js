@@ -1,8 +1,19 @@
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {applyLocationSuggestion,lookupPropertyLocation,nearbyPlaces} from '../src/services/property-location.js';
+import {AREAS,createPropertyForm,validatePropertyStep} from '../src/services/property-registration.js';
 const fetch=globalThis.fetch;
 after(()=>globalThis.fetch=fetch);
+
+test('current administrative names returned by map lookup select valid registration areas',()=>{
+  for(const commune of ['Hạ Bằng','Hòa Lạc']){
+    const form=createPropertyForm();
+    const next=applyLocationSuggestion(form,{latitude:21.0196169,longitude:105.5517238,addressDetail:'Mục Uyên, Xã Hạ Bằng, Hà Nội',commune},['latitude','longitude','addressDetail','commune']);
+    assert.ok(AREAS.includes(next.commune));
+    assert.equal(next.commune,commune);
+    assert.deepEqual(validatePropertyStep(next,1),{});
+  }
+});
 
 test('location suggestions update only editable fields and preserve missing suggestions and unrelated data',()=>{
   const form={latitude:'21',longitude:'105',addressDetail:'Old address',commune:'Thạch Hòa',nearby:'Owner note',photos:['keep'],price:2500000};

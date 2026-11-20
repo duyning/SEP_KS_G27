@@ -2,6 +2,9 @@
 .sv-list,
 .staff-portal .svd-page {
   --sv-action: #0f766e;
+  --sv-wait-text: #92400e;
+  --sv-wait-background: #fffbeb;
+  --sv-wait-border: #fcd34d;
   --sv-action-strong: #115e59;
   --sv-border: #e2e8f0;
   --sv-border-strong: #cbd5e1;
@@ -2111,4 +2114,67 @@
   .sv-quick-btn {
     transition: none;
   }
+}
+
+/* Adapt the review columns to the available content width, including browser zoom. */
+.staff-portal .svd-page { container-type: inline-size; container-name: verification-detail; }
+@container verification-detail (max-width: 900px) {
+  .staff-portal .svd-page .svd-grid { grid-template-columns: minmax(0, 1fr); }
+  .staff-portal .svd-page .svd-decision-column,
+  .staff-portal .svd-page .svd-decision-card { position: static; }
+}
+
+/* Pending review reminder: time-based and distinct from submission kind. */
+.sv-list .sv-wait-warning {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 1px solid var(--sv-wait-border);
+  border-radius: 8px;
+  background: var(--sv-wait-background);
+  color: var(--sv-wait-text);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sv-list .sv-wait-warning svg { flex: 0 0 auto; margin-top: 2px; }
+
+/* Compact review panel: decisions first, supporting detail available on demand. */
+.staff-portal .svd-page .svd-grid { grid-template-areas: "record decision"; }
+.staff-portal .svd-page .svd-main { grid-area: record; }
+.staff-portal .svd-page .svd-decision-column { grid-area: decision; }
+.staff-portal .svd-page .svd-tags > span,
+.staff-portal .svd-page .svd-tags.rules > span {
+  color: #065f46;
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+.staff-portal .svd-page .svd-decision-card { padding: 18px; }
+.staff-portal .svd-page .svd-decision-card > header { padding-bottom: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.staff-portal .svd-page .svd-current-status { padding: 8px 10px; margin-bottom: 10px; }
+.staff-portal .svd-page .svd-decision-readiness {
+  display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.5;
+  margin: 0 0 12px;
+}
+.svd-decision-readiness svg { flex-shrink: 0; margin-top: 2px; }
+.svd-decision-readiness.ready { color: #065f46; }
+.svd-decision-readiness.missing { color: #92400e; }
+.staff-portal .svd-page .svd-decision-card .sw-review-actions { gap: 8px; }
+.staff-portal .svd-page .svd-decision-card .sw-review-actions button { min-height: 44px; padding: 10px 12px; }
+.staff-portal .svd-page .svd-decision-details { margin: 12px 0 0; border-top: 1px solid var(--sv-border); padding-top: 8px; }
+.staff-portal .svd-page .svd-decision-details > summary {
+  cursor: pointer; color: var(--sv-subtext); font-weight: 600; font-size: 13px;
+  padding: 8px 0; min-height: 36px; line-height: 1.5;
+}
+.staff-portal .svd-page .svd-decision-details > summary:focus-visible { outline: 2px solid var(--sv-action); outline-offset: 3px; }
+.staff-portal .svd-page .svd-decision-details-body { padding-top: 8px; }
+.staff-portal .svd-page .svd-decision-details .svd-checklist-box { margin-bottom: 0; }
+@media (max-width: 1100px) {
+  .staff-portal .svd-page .svd-grid { grid-template-areas: "decision" "record"; grid-template-columns: minmax(0, 1fr); }
+  .staff-portal .svd-page .svd-decision-column { position: static; }
+}
+@container verification-detail (max-width: 900px) {
+  .staff-portal .svd-page .svd-grid { grid-template-areas: "decision" "record"; }
 }

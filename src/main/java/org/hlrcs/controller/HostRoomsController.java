@@ -16,5 +16,8 @@ public class HostRoomsController {
     @GetMapping public ApiResponse<HostRoomsResponse> list(@RequestParam(required=false) String propertyId,@RequestParam(required=false) String roomTypeId){return ApiResponse.success(service.list(id(propertyId),id(roomTypeId)));}
     @PostMapping public ApiResponse<HostRoomsResponse.RoomSummary> create(@Valid @RequestBody RoomRequest request){return ApiResponse.success(service.save(null,request));}
     @PutMapping("/{id}") public ApiResponse<HostRoomsResponse.RoomSummary> update(@PathVariable Integer id,@Valid @RequestBody RoomRequest request){return ApiResponse.success(service.save(id,request));}
+    @PatchMapping("/status") public ApiResponse<java.util.List<HostRoomsResponse.RoomSummary>> updateStatuses(@Valid @RequestBody org.hlrcs.dto.request.RoomStatusRequest request){return ApiResponse.success(service.updateStatuses(request));}
+    @PostMapping("/layout") public ApiResponse<java.util.List<HostRoomsResponse.RoomSummary>> layout(@Valid @RequestBody org.hlrcs.dto.request.RoomLayoutRequest request){return ApiResponse.success(service.layout(request));}
+    @PutMapping("/publication") public ApiResponse<java.util.List<HostRoomsResponse.RoomSummary>> publish(@Valid @RequestBody org.hlrcs.dto.request.RoomPublicationRequest request){return ApiResponse.success(service.publish(request));}
     @DeleteMapping("/{id}") public ApiResponse<Void> delete(@PathVariable Integer id){service.delete(id);return ApiResponse.success(null);}
 }

@@ -31,3 +31,22 @@
 .hpe-options .hpe-quiet-hours input.hpe-quiet-time:focus{outline:2px solid #99f6e4;border-color:#0f766e}
 .hpe-options .hpe-quiet-hours input.hpe-quiet-time:disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
 @media(max-width:600px){.hpe-options .hpe-quiet-hours input.hpe-quiet-time{font-size:16px;height:36px}}
+/* Paired identity documents keep feedback and replacement controls for each side. */
+.hpe-identity-document { container-type: inline-size; }
+.hpe-identity-document > h4 { margin-top: 0; }
+.hpe-identity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.hpe-identity-side { min-width: 0; border: 1px solid #e2e8f0; border-radius: 9px; padding: 14px; background: #f8fafc; }
+.hpe-identity-side h4 { margin-top: 0; }
+.hpe-identity-side p { overflow-wrap: anywhere; }
+.hpe-identity-side.is-flagged { border-color: #fcd34d; background: #fffdf5; }
+.hpe-identity-side input:focus-visible, .hpe-identity-side button:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; }
+.hpe-identity-side input::file-selector-button { padding: 8px 10px; margin-right: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f766e; cursor: pointer; }
+.hpe-identity-side input:disabled::file-selector-button { cursor: not-allowed; color: #64748b; }
+@container (max-width: 540px) { .hpe-identity-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .hpe-identity-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.hpe-editor .hpe-identity-document > h4, .hpe-editor .hpe-identity-side h4 { margin-top: 0; }
+/* Reflow the edit form by its available width, including browser zoom. */
+.hpe-editor{container-type:inline-size;width:100%;box-sizing:border-box;min-width:0}
+@container(max-width:900px){.hpe-editor .hpe-columns{grid-template-columns:minmax(0,1fr)}.hpe-editor .hpe-sidebar{position:static}}
+@container(max-width:500px){.hpe-editor .hpe-grid{grid-template-columns:minmax(0,1fr)}.hpe-editor .hpe-options{grid-template-columns:minmax(0,1fr)}}

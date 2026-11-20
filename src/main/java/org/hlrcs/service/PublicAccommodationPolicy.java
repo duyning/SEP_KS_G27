@@ -14,8 +14,13 @@ public final class PublicAccommodationPolicy {
             var property = root.join("property");
             var registration = property.join("registration");
             var owner = property.join("owner");
-            return cb.and(
+            var selected = query.subquery(Integer.class);
+            var room = selected.from(org.hlrcs.entity.Room.class);
+            selected.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root),
+                    cb.equal(room.get("property"), property), cb.isTrue(room.get("publicVisible")));
+            return cb.and(cb.exists(selected),
                     cb.equal(property.get("status"), "ACTIVE"),
+                    cb.isFalse(property.get("reverificationRequired")),
                     cb.equal(registration.get("status"), RegistrationStatus.APPROVED),
                     cb.equal(owner.get("status"), UserStatus.ACTIVE),
                     cb.greaterThan(root.get("price"), java.math.BigDecimal.ZERO),

@@ -47,19 +47,22 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final org.hlrcs.service.PhoneVerificationService phoneVerification;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
                            JwtTokenProvider tokenProvider,
-                           GoogleTokenVerifier googleTokenVerifier) {
+                           GoogleTokenVerifier googleTokenVerifier,
+                           org.hlrcs.service.PhoneVerificationService phoneVerification) {
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.phoneVerification = phoneVerification;
     }
 
     @Override
@@ -102,6 +105,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(savedUser.getAuthProvider()) || savedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(savedUser.getPhoneVerifiedAt())
                 .role(savedUser.getRole())
                 .status(savedUser.getStatus())
                 .capabilities(List.of())
@@ -135,6 +140,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -196,6 +203,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -259,6 +268,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -272,14 +283,19 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserProfileResponse updateProfile(UpdateProfileRequest request) {
-        User user = getCurrentUser();
+        User user = userRepository.findForRegistrationUpdate(getCurrentUser().getUserId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName().trim());
         }
 
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            String newPhone = request.getPhoneNumber().trim();
+            String newPhone = org.hlrcs.service.PhoneVerificationService.normalize(request.getPhoneNumber());
+            if (org.hlrcs.service.PhoneVerificationService.requiresVerification(user, newPhone)) {
+                phoneVerification.consume(user,newPhone);
+            } else if (!newPhone.equals(org.hlrcs.service.PhoneVerificationService.normalize(user.getPhoneNumber()))) {
+                user.setPhoneVerifiedAt(null);
+            }
             if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumber(newPhone)) {
                 throw new BadRequestException("Số điện thoại này đã được sử dụng bởi tài khoản khác: " + newPhone);
             }
@@ -305,6 +321,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(updatedUser.getEmail())
                 .fullName(updatedUser.getFullName())
                 .phoneNumber(updatedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(updatedUser.getAuthProvider()) || updatedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(updatedUser.getPhoneVerifiedAt())
                 .organization(updatedUser.getOrganization())
                 .preferredArea(updatedUser.getPreferredArea())
                 .avatar(updatedUser.getAvatar())

@@ -34,6 +34,8 @@ import { hostApi } from '../../services/host.js';
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
 import RoomDetailModal from '../../components/RoomDetailModal.jsx';
 import RoomEditorModal from '../../components/RoomEditorModal.jsx';
+import RoomStatusModal from '../../components/RoomStatusModal.jsx';
+import RoomPublicationPage from '../../components/RoomPublicationPage.jsx';
 import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 import HostActionMenu from '../../components/HostActionMenu.jsx';
 import HostManagementShell, {
@@ -44,7 +46,6 @@ import HostManagementShell, {
   HostSegmentedToggle,
 } from '../../components/HostManagementShell.jsx';
 import { money } from '../../services/room-types.js';
-import { editRoom, roomPayload } from '../../services/rooms.js';
 import {
   ROOM_TABLE_PAGE_SIZE,
   compareFloorNames,
@@ -59,12 +60,13 @@ import {
 import '../../styles/host-rooms-page.css';
 import '../../styles/host-rooms-refinement.css';
 import '../../styles/host-management-saas.css';
+import '../../styles/room-bulk-status.css';
 
 export function RoomsNoProperty({ onRefresh, pendingCount = 0 }) {
   return <HostSetupRequired kind="rooms" onRefresh={onRefresh} pendingCount={pendingCount} />;
 }
 
-function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom }) {
+function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom, selectedIds, onToggleSelected, canManage }) {
   const reduce = useShouldReduceMotion();
   const { transition, blur } = useMotionTokens();
 
@@ -132,8 +134,9 @@ function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom }) {
               {group.rooms.map(room => {
                 const visual = getRoomVisualState(room);
                 return (
+                  <div key={room.roomId} className={`hm-room-selectable ${selectedIds.has(room.roomId)?'is-selected':''}`}>
+                  <label className="hm-room-checkbox"><input type="checkbox" aria-label={`Chọn phòng ${room.roomNumber}`} checked={selectedIds.has(room.roomId)} disabled={!canManage||selectedIds.size>=200&&!selectedIds.has(room.roomId)} onChange={()=>onToggleSelected(room.roomId)}/></label>
                   <MotionButton
-                    key={room.roomId}
                     type="button"
                     className={`hm-room-tile is-${visual.tone}`}
                     onClick={() => onSelectRoom(room)}
@@ -154,8 +157,10 @@ function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom }) {
                       </span>
                     </div>
                     <span className="hm-tile-status">{visual.shortLabel}</span>
+                    <span className="hm-tile-meta">{room.publicVisible ? 'Công khai' : 'Riêng tư'}</span>
                     <span className="hm-tile-meta">{room.roomType}</span>
                   </MotionButton>
+                  </div>
                 );
               })}
             </div>
@@ -186,6 +191,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
   const [deleting, setDeleting] = useState(null);
   const [failure, setFailure] = useState('');
   const [busy, setBusy] = useState(false);
+  const [selectedIds,setSelectedIds]=useState(()=>new Set());
+  const [statusChange,setStatusChange]=useState(null);
   const request = useRef();
 
   useEffect(() => () => request.current?.abort(), []);
@@ -264,6 +271,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
 
   useEffect(() => {
     setPage(1);
+    setSelectedIds(new Set());
   }, [search, typeFilter, floor, status, sort, property?.propertyId]);
 
   const detailRoom = useMemo(
@@ -280,6 +288,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
   }
 
   const canManage = property.status === 'ACTIVE';
+  const selectedRooms=filtered.filter(room=>selectedIds.has(room.roomId));
+  const toggleSelected=id=>setSelectedIds(previous=>{const next=new Set(previous);if(next.has(id))next.delete(id);else if(next.size<200)next.add(id);return next;});
   const vacant = rows.filter(room => room.status === 'VACANT').length;
   const occupied = rows.filter(room => room.status === 'OCCUPIED').length;
   const unconfirmed = rows.filter(room => !room.confirmedAt).length;
@@ -325,31 +335,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
 
   const quickToggleFromMenu = async (room, nextStatus) => {
     if (!canManage || request.current) return;
-    const controller = new AbortController();
-    request.current = controller;
-    setBusy(true);
-    setFailure('');
-    try {
-      const updated = await hostApi.saveRoom(
-        room.roomId,
-        roomPayload({ ...editRoom(room), status: nextStatus }),
-        controller.signal
-      );
-      if (!controller.signal.aborted) {
-        onSaved(updated);
-        notify?.(
-          `Đã cập nhật phòng ${updated.roomNumber}: ${nextStatus === 'VACANT' ? 'Còn trống' : 'Đang thuê'}.`,
-          'success'
-        );
-      }
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        notify?.(error.message || 'Không thể cập nhật trạng thái phòng.', 'error');
-      }
-    } finally {
-      if (request.current === controller) request.current = null;
-      if (!controller.signal.aborted) setBusy(false);
-    }
+    setStatusChange({rooms:[room],initialStatus:nextStatus});
   };
 
   const remove = async () => {
@@ -403,6 +389,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
 
   const headerActions = (
     <>
+      <Link className="hm-btn hm-btn-primary" to={`/host/rooms?propertyId=${property.propertyId}&publication=1`}><Eye size={16}/>Chọn phòng công khai</Link>
       <Link
         className="hm-btn hm-btn-subtle"
         to={`/host/room-types?propertyId=${property.propertyId}`}
@@ -626,6 +613,11 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
           <MotionButton type="button" className="hm-text-btn" onClick={resetFilters}>Xóa bộ lọc</MotionButton>
         </div>}
 
+        {rows.length>0&&<div className="hm-bulk-toolbar" aria-label="Chọn nhiều phòng">
+          <label><input type="checkbox" aria-label="Chọn tất cả phòng trong kết quả lọc" disabled={!canManage||!filtered.length||filtered.length>200} checked={filtered.length>0&&selectedRooms.length===filtered.length} ref={node=>{if(node)node.indeterminate=selectedRooms.length>0&&selectedRooms.length<filtered.length;}} onChange={()=>setSelectedIds(selectedRooms.length===filtered.length?new Set():new Set(filtered.map(room=>room.roomId)))}/>Chọn tất cả kết quả lọc ({filtered.length})</label>
+          <span role="status">Đã chọn {selectedRooms.length} phòng{filtered.length>200?' · Tối đa 200 phòng mỗi lần':''}</span>
+          <div><MotionButton type="button" className="hm-btn" disabled={!selectedRooms.length} onClick={()=>setSelectedIds(new Set())}>Bỏ chọn</MotionButton><MotionButton type="button" className="hm-btn hm-btn-primary" disabled={!canManage||!selectedRooms.length} onClick={()=>setStatusChange({rooms:selectedRooms,initialStatus:'OCCUPIED'})}>Đổi trạng thái ({selectedRooms.length})</MotionButton></div>
+        </div>}
         <HostResults revision={`${view}:${search}:${floor}:${typeFilter}:${status}:${sort}`}>
         {!types.length ? (
           <div className="hm-empty-box">
@@ -720,6 +712,9 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
                   expanded={!collapsedFloors.has(group.key)}
                   onToggle={toggleFloor}
                   onSelectRoom={room => setDetailId(room.roomId)}
+                  selectedIds={selectedIds}
+                  onToggleSelected={toggleSelected}
+                  canManage={canManage}
                 />
               ))}
             </div>
@@ -730,6 +725,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
               <table className="hm-table hm-sticky-table">
                 <thead>
                   <tr>
+                    <th scope="col">Chọn</th>
                     <th scope="col">
                       <UIButton
                         type="button"
@@ -779,6 +775,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
                     const visual = getRoomVisualState(room);
                     return (
                       <tr key={room.roomId}>
+                        <td><input type="checkbox" aria-label={`Chọn phòng ${room.roomNumber}`} checked={selectedIds.has(room.roomId)} disabled={!canManage||selectedIds.size>=200&&!selectedIds.has(room.roomId)} onChange={()=>toggleSelected(room.roomId)}/></td>
                         <td>
                           <UIButton
                             type="button"
@@ -889,10 +886,12 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
               setDeleting(room);
             }}
             onQuickSaved={handleQuickSaved}
+            onChangeStatus={(room,nextStatus)=>{setDetailId(null);setStatusChange({rooms:[room],initialStatus:nextStatus});}}
           />
         )}
       </AnimatePresence>
 
+      {statusChange&&<RoomStatusModal {...statusChange} propertyId={property.propertyId} onClose={()=>setStatusChange(null)} onSaved={updated=>{updated.forEach(onSaved);setSelectedIds(new Set());setStatusChange(null);notify?.(`Đã cập nhật trạng thái ${updated.length} phòng.`,'success');}}/>}
       <AnimatePresence>
         {deleting && (
           <Modal
@@ -971,6 +970,8 @@ export default function HostRoomsPage() {
             </MotionButton>
           </StateView>
         </HostManagementShell>
+      ) : params.get('publication')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
+        <RoomPublicationPage key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} rooms={state.data.rooms.filter(r=>String(r.propertyId)===propertyId)} onSaved={rooms=>setState(previous=>({...previous,data:{...previous.data,rooms:[...previous.data.rooms.filter(r=>String(r.propertyId)!==propertyId),...rooms]}}))}/>
       ) : (
         <RoomsContent
           key={`${user?.userId}-${propertyId || ''}-${roomTypeId || ''}`}

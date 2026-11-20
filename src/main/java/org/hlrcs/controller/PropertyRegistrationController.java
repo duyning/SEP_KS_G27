@@ -50,7 +50,7 @@ public class PropertyRegistrationController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PropertyRegistrationResponse> submit(@Valid @RequestPart PropertyRegistrationRequest details,
             @RequestPart List<MultipartFile> photos, @RequestPart MultipartFile ownership,
-            @RequestPart MultipartFile idCard, @RequestPart(required = false) MultipartFile fireSafety) throws IOException {
+            @RequestPart(required = false) MultipartFile idCard, @RequestPart(required = false) MultipartFile fireSafety) throws IOException {
         return ApiResponse.success(service.submit(details, photos, ownership, idCard, fireSafety));
     }
 }

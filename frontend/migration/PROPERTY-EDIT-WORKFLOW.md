@@ -1,5 +1,12 @@
 # Property editing and review
 
+Update 2026-11-11: critical changes now follow [N05–N08 reverification](../../docs/PROPERTY_REVERIFICATION.md).
+Address, coordinates, manager identity and ownership/identity evidence temporarily
+hide the property until a valid staff approval. Statements below about keeping
+the approved version public apply only to ordinary content changes. Rejection
+and supplement do not clear the hidden flag. The baseline remains available to
+authorized staff for comparison even after approval.
+
 ## Host permissions
 
 - Unsaved registration drafts stay editable in the browser.

@@ -1,4 +1,5 @@
 import UIField from './common/Field.jsx';
+import VndMoneyInput from './VndMoneyInput.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import { SlidingNumber } from '@animate-ui/react/primitives/texts/sliding-number';
@@ -18,7 +19,6 @@ import {
   ROOM_AMENITY_GROUPS,
   editRoomType,
   emptyRoomType,
-  money,
   roomTypePayload,
   validateRoomPhotos,
   validateRoomType,
@@ -205,10 +205,8 @@ export default function RoomTypeCreateModal({
       name,
       label,
       <div className="rt-input-unit">
-        <input
+        <VndMoneyInput
           {...input(name)}
-          type="text"
-          inputMode="numeric"
           placeholder={name === 'deposit' ? 'Theo giá thuê' : name === 'price' ? 'Nhập giá thuê' : 'Chưa nhập'}
           required={required}
         />
@@ -218,7 +216,7 @@ export default function RoomTypeCreateModal({
       hint
     );
 
-  const submit = async event => {
+  const submit = async (event, deferRooms = false) => {
     event.preventDefault();
     if (request.current) return;
 
@@ -231,12 +229,12 @@ export default function RoomTypeCreateModal({
       return;
     }
 
-    if (!type && step === 0) {
+    if (!type && step === 0 && !deferRooms) {
       goTo(1);
       return;
     }
 
-    if (!type) {
+    if (!type && !deferRooms) {
       setShowBatchValidation(true);
       if (reconciled.hasBlockingErrors) {
         shakeSubmitBtn();
@@ -250,8 +248,8 @@ export default function RoomTypeCreateModal({
     setBusy(true);
     try {
       const payload = roomTypePayload(data, property.propertyId);
-      const created = type
-        ? await hostApi.saveRoomType(type.roomTypeId, payload, data.photos, controller.signal)
+      const created = type || deferRooms
+        ? await hostApi.saveRoomType(type?.roomTypeId ?? null, payload, data.photos, controller.signal)
         : await hostApi.createRoomTypeWithRooms(payload, roomBatchPayload(reconciled.rows), data.photos, controller.signal);
       if (!controller.signal.aborted) onCreated(created);
     } catch (failure) {
@@ -393,7 +391,7 @@ export default function RoomTypeCreateModal({
                           'Giá thuê niêm yết',
                           'đ / tháng',
                           true,
-                          data.price && /^\d+$/.test(data.price) ? `≈ ${money(data.price)} / tháng` : null
+                          null
                         )}
                         {amount('deposit', 'Tiền đặt cọc', 'đ', false, 'Để trống: bằng 1 tháng tiền thuê')}
                       </div>
@@ -585,6 +583,7 @@ export default function RoomTypeCreateModal({
           <MotionButton type="button" className="p-button" disabled={busy} onClick={onClose}>
             Hủy
           </MotionButton>
+          {!type && step === 0 && <MotionButton type="button" className="p-button" disabled={busy} onClick={event=>submit(event,true)}>Lưu loại phòng, thiết lập phòng sau</MotionButton>}
           <span ref={submitBtnScope} className="rtc-submit-wrap">
             <MotionButton
               type="submit"

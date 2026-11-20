@@ -1,7 +1,8 @@
 import UIField from '../../components/common/Field.jsx';
 import UIButton from '../../components/common/Button.jsx';
+import MultiFloorRoomSetup from '../../components/MultiFloorRoomSetup.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Download,
   DoorOpen,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import HostAvailabilityConfirmation from '../../components/HostAvailabilityConfirmation.jsx';
 import { hostApi } from '../../services/host.js';
 import { Modal, StateView, useToast } from '../../components/PortalUI.jsx';
 import RoomTypeCreateModal from '../../components/RoomTypeCreateModal.jsx';
@@ -108,7 +110,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
             </select></UIField></>;
 }
 
-function RoomTypeCard({ type, onSelect, actions }) {
+function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
   const total = Number.isInteger(type.totalRooms) ? type.totalRooms : null;
   const vacant = Number.isInteger(type.vacantRooms) ? type.vacantRooms : null;
   const occupied = total != null && vacant != null ? Math.max(0, total - vacant) : null;
@@ -132,6 +134,7 @@ function RoomTypeCard({ type, onSelect, actions }) {
       <div className="is-vacant"><dt>Còn trống</dt><dd>{vacant ?? '—'}<House size={15} aria-hidden="true"/></dd></div>
       <div><dt>Đang thuê</dt><dd>{occupied ?? '—'}</dd></div>
     </dl>
+    <HostAvailabilityConfirmation type={type} onConfirmed={onConfirmed}/>
     <footer className="hm-rt-card-footer">
       <Link className="hm-rt-manage-link" to={roomLink}><DoorOpen size={15}/><span>Quản lý phòng</span></Link>
       {actions}
@@ -266,19 +269,20 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 
   const created = record => {
     const wasEditing = Boolean(editing);
-    onCreated(record);
+    onCreated(record, !wasEditing);
     setCreate(false);
     setEditing(null);
     notify?.(
       wasEditing
         ? 'Đã cập nhật loại phòng thành công.'
-        : `Đã tạo loại phòng và ${(record.rooms || []).length} phòng thành công.`,
+        : record.rooms?.length ? `Đã tạo loại phòng và ${record.rooms.length} phòng thành công.` : 'Đã lưu loại phòng. Bạn có thể thiết lập phòng nhiều tầng.',
       'success'
     );
   };
 
   const headerActions = (
     <>
+      <Link className="hm-btn hm-btn-primary" to={`/host/room-types?propertyId=${property.propertyId}&layout=1`}><Layers size={16}/>Thiết lập phòng nhiều tầng</Link>
       <MotionButton
         type="button"
         className="hm-btn hm-btn-subtle"
@@ -493,7 +497,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
           </div>
         ) : view === 'cards' ? (
           <div className="hm-rt-grid">
-            {shown.map(type => <RoomTypeCard key={type.roomTypeId} type={type} onSelect={setSelected} actions={renderTypeActions(type)} />)}
+            {shown.map(type => <RoomTypeCard key={type.roomTypeId} type={type} onSelect={setSelected} actions={renderTypeActions(type)} onConfirmed={onCreated} />)}
           </div>
         ) : (
           <div className="hm-table-wrap">
@@ -546,7 +550,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
                         <span className="hm-muted">Chưa có dữ liệu</span>
                       )}
                     </td>
-                    <td>{renderRoomTypeStatusBadge(type)}</td>
+                    <td>{renderRoomTypeStatusBadge(type)}<HostAvailabilityConfirmation type={type} onConfirmed={onCreated}/></td>
                     <td className="is-right">{renderTypeActions(type)}</td>
                   </tr>
                 ))}
@@ -658,6 +662,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 }
 
 export default function HostRoomTypesPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [params] = useSearchParams();
   const propertyId = params.get('propertyId');
@@ -695,13 +700,16 @@ export default function HostRoomTypesPage() {
             </MotionButton>
           </StateView>
         </HostManagementShell>
+      ) : params.get('layout')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
+        <MultiFloorRoomSetup key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId} onDone={()=>navigate(`/host/rooms?propertyId=${propertyId}&publication=1`)}/>
       ) : (
         <RoomTypesContent
           key={`${user?.userId}-${propertyId || ''}`}
           data={state.data}
           propertyId={propertyId}
           onRefresh={() => setRevision(value => value + 1)}
-          onCreated={record =>
+          onCreated={(record, created) => {
+            if(created&&record.rooms?.length) { navigate(`/host/rooms?propertyId=${record.propertyId}&publication=1`); return; }
             setState(previous => ({
               ...previous,
               data: {
@@ -711,8 +719,8 @@ export default function HostRoomTypesPage() {
                   ...previous.data.roomTypes.filter(type => type.roomTypeId !== record.roomTypeId),
                 ],
               },
-            }))
-          }
+            }));
+          }}
           onDeleted={id =>
             setState(previous => ({
               ...previous,

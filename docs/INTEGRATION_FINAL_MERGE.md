@@ -15,7 +15,7 @@ Main and the remote feature branches have not been modified.
 
 1. **origin/DuongND** (`3038405c`): merged with `--no-ff`; no merge conflicts. Community reporting and mobile moderation retained.
 2. **origin/DungDT** (`f7bd2f6c`): merged with `--no-ff`; 76 overlapping files reconciled.
-3. origin/NingDD (`4fac7f0c`): not merged yet; foundational availability, reverification, maps/onboarding/mobile work before the dependent AI/search branch.
+3. **origin/NingDD** (`4fac7f0c`): foundational availability, reverification, maps/onboarding/mobile integrated before the dependent AI/search branch.
 4. origin/MaiNTT (`9325b949`): not merged yet.
 5. origin/VietNV (`4aea39ea`): not merged yet.
 
@@ -134,3 +134,32 @@ Files that had conflicts in this merge:
 - `src/main/java/org/hlrcs/configuration/SecurityConfig.java`
 - `src/main/java/org/hlrcs/service/StaffService.java`
 
+
+
+## NingDD resolution checkpoint
+
+- Union StaffService constructor dependencies: service complaints and combined host onboarding; existing property-verification access retained.
+- PropertyAddressLookup adopts VIETMAP autocomplete/reverse and preserves Google-link/coordinate fallback, abort guards, accessible combobox and shared UI controls.
+- RoomEditorModal keeps shared fields and adds occupied lease-date controls. RoomTypeCreateModal imports both shared fields and VND money input. HostRoomTypesPage combines shared controls and multi-floor setup.
+- HostPropertyCreatePage combines new property type/description/photo guidance and identity reuse/onboarding rules with the existing shared fields and upload validation.
+- PublicNavbar combines avatar/banner, keyboard/mobile behavior and shared Button. DetailPrototypeShell retains notification/favorites/dashboard layout while adding host registration banner, avatar and host property shortcut. PortalLayout retains all service/report/admin navigation.
+- Staff verification detail combines onboarding identity/reverification data with shared controls. The queue uses the incoming inspection-first workflow: approval/rejection/supplement remain available in detail; stale quick-decision modal removed with its obsolete handlers. Adds the 48-hour waiting reminder.
+- Existing favorite/public-photo/availability test fixtures now explicitly publish their intended public rooms, and occupied-state requests include required lease dates. Publication and document privacy rules were not relaxed.
+- Frontend component-test loader bundles relative JSX dependencies; assertions reflect the current phone-verification/two-sided-identity form instead of removed legacy fields.
+- Mobile dependencies installed from its existing lockfile; added CSS module declarations for strict type checking.
+- Web: 245/245 tests, production build passed. Mobile: 88/88 tests, lint and typecheck passed. Live Gemini provider test is intentionally conditional on credentials; no external AI request is needed for integration validation.
+
+Conflicted files:
+
+- `frontend/src/components/PropertyAddressLookup.jsx`
+- `frontend/src/components/RoomEditorModal.jsx`
+- `frontend/src/components/RoomTypeCreateModal.jsx`
+- `frontend/src/components/detail/DetailPrototypeShell.jsx`
+- `frontend/src/components/layout/PublicNavbar.jsx`
+- `frontend/src/layouts/PortalLayout.jsx`
+- `frontend/src/pages/host/HostPropertyCreatePage.jsx`
+- `frontend/src/pages/host/HostRoomTypesPage.jsx`
+- `frontend/src/pages/staff/StaffPropertyVerificationDetailPage.jsx`
+- `frontend/src/pages/staff/StaffPropertyVerificationsPage.jsx`
+- `src/main/java/org/hlrcs/service/StaffService.java`
+- Backend suite: 246 tests discovered; after publication/lease fixture updates, only the final photo fixture remained failing in that run. Its corrected PropertyAssignmentSecurityTests rerun passed 17/17. Combined current result: 245 passing, 1 intentional live-provider skip, zero remaining failures. Conflict-marker scan clear.

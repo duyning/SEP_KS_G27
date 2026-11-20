@@ -2447,6 +2447,36 @@
 .hm-rt-inventory > .is-vacant { background: var(--hm-primary-soft); }
 .hm-rt-inventory .is-vacant :is(dt, dd) { color: var(--hm-primary); }
 .hm-rt-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 0; border: 0; }
+/* Share every content row across adjacent cards, including variable confirmation copy. */
+@supports (grid-template-rows: subgrid) {
+  .hm-rt-grid > .hm-rt-card {
+    display: grid;
+    grid-row: span 6;
+    grid-template-rows: subgrid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    column-gap: 16px;
+    row-gap: 12px;
+  }
+  .hm-rt-grid .hm-rt-card-hero,
+  .hm-rt-grid .hm-rt-card-info,
+  .hm-rt-grid .hm-rt-card-body { display: contents; }
+  .hm-rt-grid .hm-rt-thumb-trigger { grid-column: 1; grid-row: 1 / span 3; align-self: start; }
+  .hm-rt-grid .hm-rt-card-top { grid-column: 2; grid-row: 1; }
+  .hm-rt-grid .hm-rt-price-line { grid-column: 2; grid-row: 2; align-self: start; }
+  .hm-rt-grid .hm-rt-spec-line { grid-column: 2; grid-row: 3; align-self: start; }
+  .hm-rt-grid .hm-rt-inventory { grid-column: 1 / -1; grid-row: 4; margin: 4px 0 0; }
+  .hm-workspace .hm-rt-grid .host-availability-confirmation { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-column: 1 / -1; grid-row: 5; align-items: start; }
+  .hm-rt-grid .host-availability-confirmation > small,
+  .hm-rt-grid .host-availability-confirmation > [role=status]:not(:empty) { grid-column: 1 / -1; }
+  .hm-rt-grid .host-availability-button { align-self: center; }
+  .hm-rt-grid .host-availability-confirmation > [role=status]:empty { display: none; }
+  .hm-rt-grid .hm-rt-card-footer { grid-column: 1 / -1; grid-row: 6; }
+  @container host-management (max-width: 900px) {
+    .hm-rt-grid > .hm-rt-card { grid-template-columns: 80px minmax(0, 1fr); column-gap: 12px; }
+    .hm-workspace .hm-rt-grid .host-availability-confirmation { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto; }
+    .hm-rt-grid .host-availability-button { align-self: end; justify-self: start; }
+  }
+}
 .hm-rt-card-footer :is(.hm-btn, .hm-icon-btn) { height: 36px; min-height: 36px; }
 .hm-workspace .hm-rt-manage-link { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; color: var(--hm-primary); font-size: 12px; font-weight: 650; text-decoration: none; }
 .hm-rt-manage-link:hover { text-decoration: underline; text-underline-offset: 3px; }

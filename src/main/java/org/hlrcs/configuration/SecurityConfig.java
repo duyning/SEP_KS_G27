@@ -86,6 +86,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/profile/phone/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/properties/search", "/api/properties/location/nearby",
                                 "/api/properties/*/room-types/*", "/api/properties/*/room-types/*/details",
                                 "/api/properties/*/room-types/*/images/*").permitAll()

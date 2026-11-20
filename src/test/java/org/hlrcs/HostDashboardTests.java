@@ -18,10 +18,176 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties="app.maps.vietmap.enabled=false")
 @ActiveProfiles("test")
 @TestPropertySource("classpath:application-test.properties")
 class HostDashboardTests {
+    private HttpResponse<String> publishRooms(String jwt,Integer propertyId,java.util.List<Integer> ids) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host/rooms/publication")).header("Content-Type","application/json");
+        if(jwt!=null)request.header("Authorization","Bearer "+jwt);
+        return client.send(request.PUT(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(Map.of("propertyId",propertyId,"roomIds",ids)))).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    private HttpResponse<String> createMixedLayout(String jwt,Integer propertyId,java.util.List<Map<String,Object>> rows) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host/rooms/layout")).header("Content-Type","application/json");
+        if(jwt!=null)request.header("Authorization","Bearer "+jwt);
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(Map.of("propertyId",propertyId,"rooms",rows)))).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    private Map<String,Object> mixedRoom(Integer type,String number,String floor){return Map.of("roomTypeId",type,"roomNumber",number,"floor",floor);}
+    @Test void vietmapLocationEndpointsAreAuthenticatedRoleScopedAndFailClosedWithoutKey() throws Exception {
+        String path="/api/property-location";
+        assertEquals(401,client.send(HttpRequest.newBuilder(uri(path+"/status")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        var user=token(account(UserRole.USER));
+        var state=client.send(HttpRequest.newBuilder(uri(path+"/status")).header("Authorization","Bearer "+user).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(200,state.statusCode());assertFalse(json.readTree(state.body()).path("data").path("enabled").asBoolean());assertFalse(state.body().contains("api-key"));
+        assertEquals(403,client.send(HttpRequest.newBuilder(uri(path+"/status")).header("Authorization","Bearer "+token(account(UserRole.STAFF))).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        for(var test:java.util.List.of(Map.of("endpoint","/autocomplete","body",Map.of("text","Nhà trọ Tân Xã"),"status",503),Map.of("endpoint","/reverse","body",Map.of("latitude",21,"longitude",181),"status",400),Map.of("endpoint","/place","body",Map.of("refId","https://127.0.0.1/private"),"status",400))){
+            var response=client.send(HttpRequest.newBuilder(uri(path+test.get("endpoint"))).header("Authorization","Bearer "+user).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(test.get("body")))).build(),HttpResponse.BodyHandlers.ofString());
+            assertEquals(test.get("status"),response.statusCode(),response.body());
+        }
+    }
+    @Test void multiFloorLayoutCreatesMixedTypesAtomicallyPrivateAndRejectsForeignTypesAndRetries() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);String jwt=token(owner);
+        var registration=registrations.save(PropertyRegistration.builder().user(owner).name("Mixed layout").status(RegistrationStatus.APPROVED).registrationDetails(json.writeValueAsString(registrationDetails())).build());
+        var property=properties.save(Property.builder().owner(owner).registration(registration).name("Mixed layout").status("ACTIVE").build());
+        var a=roomTypes.save(RoomType.builder().property(property).roomType("Type A").price(new BigDecimal("2000000")).areaSqm(25F).build());
+        var b=roomTypes.save(RoomType.builder().property(property).roomType("Type B").price(new BigDecimal("2500000")).areaSqm(30F).build());
+        var other=properties.save(Property.builder().owner(account(UserRole.ROOM_HOST)).name("Other property").status("ACTIVE").build());
+        var foreign=roomTypes.save(RoomType.builder().property(other).roomType("Foreign type").price(new BigDecimal("1000000")).build());
+        var rows=java.util.List.of(mixedRoom(a.getRoomTypeId(),"101","Tầng 1"),mixedRoom(b.getRoomTypeId(),"102","Tầng 1"),mixedRoom(a.getRoomTypeId(),"103","Tầng 1"),mixedRoom(b.getRoomTypeId(),"201","Tầng 2"),mixedRoom(a.getRoomTypeId(),"202","Tầng 2"));
+        assertEquals(401,createMixedLayout(null,property.getPropertyId(),rows).statusCode());
+        assertEquals(403,createMixedLayout(token(account(UserRole.USER)),property.getPropertyId(),rows).statusCode());
+        assertEquals(404,createMixedLayout(token(account(UserRole.ROOM_HOST)),property.getPropertyId(),rows).statusCode());
+        var created=createMixedLayout(jwt,property.getPropertyId(),rows);assertEquals(200,created.statusCode(),created.body());
+        var result=json.readTree(created.body()).path("data");assertEquals(5,result.size());
+        for(int i=0;i<rows.size();i++){assertEquals(rows.get(i).get("roomTypeId"),result.get(i).path("roomTypeId").asInt());assertFalse(result.get(i).path("publicVisible").asBoolean());assertEquals("VACANT",result.get(i).path("status").asString());}
+        assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),rows).statusCode());assertEquals(5,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
+        assertEquals(404,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"301","Tầng 3"),mixedRoom(foreign.getRoomTypeId(),"302","Tầng 3"))).statusCode());
+        assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"p.301","Tầng 3"),mixedRoom(b.getRoomTypeId(),"P.301","Tầng 3"))).statusCode());
+        assertEquals(5,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
+        assertEquals(400,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of()).statusCode());
+        property.setStatus("INACTIVE");properties.save(property);
+        assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"401","Tầng 4"))).statusCode());
+    }
+    @Test void roomPublicationRequiresExplicitSelectionAndProtectsEveryPublicRead() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var jwt=token(owner);
+        var registration=registrations.save(PropertyRegistration.builder().user(owner).name("Publication fixture").status(RegistrationStatus.APPROVED).registrationDetails(json.writeValueAsString(registrationDetails())).build());
+        var property=properties.save(Property.builder().owner(owner).registration(registration).name("Publication fixture").status("ACTIVE").build());
+        var type=roomTypes.save(RoomType.builder().property(property).roomType("Selected type").price(new BigDecimal("2000000")).areaSqm(25F).capacity(2).build());
+        var other=roomTypes.save(RoomType.builder().property(property).roomType("Private type").price(new BigDecimal("1000000")).areaSqm(20F).capacity(2).build());
+        String path="/api/properties/"+property.getPropertyId()+"/room-types/"+type.getRoomTypeId();
+        assertEquals(404,publicRead(path).statusCode());
+        var chosen=physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("A101").floor("1").status("VACANT").build());
+        var privateRoom=physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("A102").floor("1").status("VACANT").build());
+        var otherRoom=physicalRooms.save(Room.builder().property(property).roomType(other).roomNumber("B101").floor("1").status("VACANT").build());
+        assertFalse(chosen.isPublicVisible());assertEquals(404,publicRead(path).statusCode());
+        assertEquals(401,publishRooms(null,property.getPropertyId(),java.util.List.of(chosen.getRoomId())).statusCode());
+        assertEquals(403,publishRooms(token(account(UserRole.USER)),property.getPropertyId(),java.util.List.of(chosen.getRoomId())).statusCode());
+        assertEquals(404,publishRooms(token(account(UserRole.ROOM_HOST)),property.getPropertyId(),java.util.List.of(chosen.getRoomId())).statusCode());
+        assertEquals(200,publishRooms(jwt,property.getPropertyId(),java.util.List.of(chosen.getRoomId())).statusCode());
+        assertTrue(physicalRooms.findById(chosen.getRoomId()).orElseThrow().isPublicVisible());assertFalse(physicalRooms.findById(privateRoom.getRoomId()).orElseThrow().isPublicVisible());
+        var publicDetail=publicRead(path);assertEquals(200,publicDetail.statusCode(),publicDetail.body());
+        assertEquals(1,json.readTree(publicDetail.body()).path("data").path("availableRooms").asInt());
+        assertEquals(404,publicRead("/api/properties/"+property.getPropertyId()+"/room-types/"+other.getRoomTypeId()).statusCode());
+        var list=json.readTree(publicRead("/api/public/properties").body()).path("data");
+        var listing=java.util.stream.StreamSupport.stream(list.spliterator(),false).filter(row->row.path("propertyId").asInt()==property.getPropertyId()).findFirst().orElseThrow();
+        assertEquals(1,listing.path("totalRooms").asInt());assertEquals(1,listing.path("vacantRooms").asInt());assertEquals(1,listing.path("roomTypes").size());assertEquals(2000000,listing.path("minPrice").asInt());
+        assertEquals(404,publishRooms(jwt,property.getPropertyId(),java.util.List.of(chosen.getRoomId(),Integer.MAX_VALUE)).statusCode());assertTrue(physicalRooms.findById(chosen.getRoomId()).orElseThrow().isPublicVisible());
+        assertEquals(400,publishRooms(jwt,property.getPropertyId(),java.util.List.of(chosen.getRoomId(),chosen.getRoomId())).statusCode());
+        assertEquals(200,publishRooms(jwt,property.getPropertyId(),java.util.List.of()).statusCode());assertEquals(404,publicRead(path).statusCode());
+        assertEquals(3,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
+    }
+    @Test void customPropertyTypeIsStoredReviewedAndRestoredWithoutBecomingOtherLabel() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);String host=token(owner),staff=token(account(UserRole.STAFF));
+        var fields=registrationDetails();fields.put("propertyType","Ký túc xá tư nhân");
+        var created=submitRegistration(host,fields,true,false);assertEquals(200,created.statusCode(),created.body());int id=json.readTree(created.body()).path("data").path("registrationId").asInt();
+        assignFixture(staff,id);assertEquals("Ký túc xá tư nhân",json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("submission").path("propertyType").asString());
+        assertEquals(200,staffReview(staff,id,"APPROVE","").statusCode());
+        assertEquals("Ký túc xá tư nhân",json.readTree(propertyEdit(host,id).body()).path("data").path("details").path("propertyType").asString());
+        fields.put("propertyType","a".repeat(101));assertEquals(400,submitRegistration(host,fields,true,false).statusCode());
+        var facts=Map.of("name","","propertyType","","amenities",java.util.List.of(),"rules",java.util.List.of());
+        var request=HttpRequest.newBuilder(uri("/api/property-writing/description")).header("Content-Type","application/json").header("Authorization","Bearer "+host).POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(facts))).build();
+        assertEquals(400,client.send(request,HttpResponse.BodyHandlers.ofString()).statusCode());
+    }
+    @Test void onboardingConcurrentSubmissionsCreateOneCombinedDossier() throws Exception {
+        var owner=applicant();String jwt=token(owner);
+        java.util.function.Supplier<Integer> call=()->{try{return onboardingSubmit(jwt,hostApplicationFields(),true).statusCode();}catch(Exception e){throw new RuntimeException(e);}};
+        var first=java.util.concurrent.CompletableFuture.supplyAsync(call);var second=java.util.concurrent.CompletableFuture.supplyAsync(call);
+        var statuses=new java.util.ArrayList<>(java.util.List.of(first.get(),second.get()));statuses.sort(Integer::compareTo);
+        assertEquals(java.util.List.of(200,409),statuses);assertEquals(1,registrations.findByUser_UserIdOrderByCreatedAtDesc(owner.getUserId()).size());
+    }
+    private HttpResponse<String> onboardingGet(String jwt,String path) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host-onboarding"+path));if(jwt!=null)request.header("Authorization","Bearer "+jwt);
+        return client.send(request.GET().build(),HttpResponse.BodyHandlers.ofString());
+    }
+    private HttpResponse<String> onboardingSubmit(String jwt,Map<String,Object> account,boolean validOwnership) throws Exception {
+        String boundary="onboarding-"+System.nanoTime();var out=new java.io.ByteArrayOutputStream();
+        for(var entry:Map.of("account",account,"details",registrationDetails()).entrySet()){
+            out.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+entry.getKey()+"\"\r\nContent-Type: application/json\r\n\r\n").getBytes());
+            out.writeBytes(json.writeValueAsBytes(entry.getValue()));out.writeBytes("\r\n".getBytes());
+        }
+        for(var name:java.util.List.of("photos","ownership","fireSafety")){
+            boolean photo=name.equals("photos");byte[] bytes=photo?java.util.Base64.getDecoder().decode(identitySample().split(",")[1]):("ownership".equals(name)&&!validOwnership?"invalid-file":"%PDF-test").getBytes();
+            out.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+name+"\"; filename=\"sample."+(photo?"png":"pdf")+"\"\r\nContent-Type: "+(photo?"image/png":"application/pdf")+"\r\n\r\n").getBytes());out.writeBytes(bytes);out.writeBytes("\r\n".getBytes());
+        }
+        out.writeBytes(("--"+boundary+"--\r\n").getBytes());var request=HttpRequest.newBuilder(uri("/api/host-onboarding")).header("Content-Type","multipart/form-data; boundary="+boundary);if(jwt!=null)request.header("Authorization","Bearer "+jwt);
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofByteArray(out.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void onboardingOneDecisionGrantsHostAndApprovesPropertyThenAllowsAdditionalProperties() throws Exception {
+        var owner=applicant();String jwt=token(owner),staff=token(account(UserRole.STAFF));
+        var created=onboardingSubmit(jwt,hostApplicationFields(),true);assertEquals(200,created.statusCode(),created.body());
+        int id=json.readTree(created.body()).path("data").path("registrationId").asInt();
+        assertTrue(registrations.findById(id).orElseThrow().isHostOnboarding());assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());
+        assertTrue(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).isEmpty());
+        var account=hostApplications.findByUser_UserId(owner.getUserId()).orElseThrow();assertEquals("MERGED",account.getStatus());
+        var queue=json.readTree(hostApplicationGet(staff,"?status=ALL").body()).path("data").path("content");
+        for(var row:queue)assertNotEquals(account.getId(),row.path("id").asInt());
+        assertEquals(409,onboardingSubmit(jwt,hostApplicationFields(),true).statusCode());
+        assertEquals(403,dashboard(jwt,"").statusCode());
+        assertEquals(404,onboardingGet(token(applicant()),"/"+id+"/edit").statusCode());
+        int photo=retainedPhotos(id).get(0);assertEquals(404,onboardingGet(token(applicant()),"/photos/"+photo).statusCode());
+        assertEquals(200,onboardingGet(jwt,"/photos/"+photo).statusCode());
+        assignFixture(staff,id);var detail=json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data");
+        assertTrue(detail.path("summary").path("hostOnboarding").asBoolean());assertEquals(4,detail.path("documents").size());
+        assertEquals(owner.getFullName(),detail.path("hostApplication").path("userName").asString());
+        assertEquals(owner.getEmail(),detail.path("hostApplication").path("email").asString());
+        assertEquals("USER",detail.path("hostApplication").path("currentRole").asString());
+        assertTrue(detail.path("hostApplication").path("agreementAccepted").asBoolean());
+        assertFalse(detail.path("hostApplication").has("identityImage"));
+        assertEquals(403,staffGet(jwt,"/verifications/"+id).statusCode());
+        assertEquals(200,staffReview(staff,id,"APPROVE","").statusCode());
+        assertEquals(UserRole.ROOM_HOST,users.findById(owner.getUserId()).orElseThrow().getRole());
+        assertEquals("APPROVED",hostApplications.findByUser_UserId(owner.getUserId()).orElseThrow().getStatus());
+        assertEquals("ROOM_HOST",json.readTree(staffGet(staff,"/verifications/"+id).body()).path("data").path("hostApplication").path("currentRole").asString());
+        assertEquals(1,properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).size());
+        assertEquals(409,staffReview(staff,id,"APPROVE","").statusCode());
+        var next=registrationDetails();next.put("name","Second property after combined approval");
+        String host=token(users.findById(owner.getUserId()).orElseThrow());assertEquals(200,submitRegistration(host,next,true,false).statusCode());
+        var edit=json.readTree(propertyEdit(host,id).body()).path("data");
+        var updated=registrationDetails();updated.put("description","Updated description after the initial combined property approval.");
+        var change=resubmit(host,id,edit.path("versionToken").asString(),updated,retainedPhotos(id),"idCard","%PDF-replacement after onboarding");
+        assertEquals(200,change.statusCode(),change.body());int proposal=json.readTree(change.body()).path("data").path("registrationId").asInt();
+        assertFalse(registrations.findById(proposal).orElseThrow().isHostOnboarding());
+        assertEquals(200,staffReview(staff,proposal,"APPROVE","").statusCode());
+        assertEquals(UserRole.ROOM_HOST,users.findById(owner.getUserId()).orElseThrow().getRole());
+    }
+    @Test void onboardingRollbackAndSupplementKeepOneDossierAndNoPrematureRoleGrant() throws Exception {
+        var owner=applicant();String jwt=token(owner),staff=token(account(UserRole.STAFF));
+        assertEquals(400,onboardingSubmit(jwt,hostApplicationFields(),false).statusCode());
+        assertTrue(hostApplications.findByUser_UserId(owner.getUserId()).isEmpty());assertTrue(registrations.findByUser_UserIdOrderByCreatedAtDesc(owner.getUserId()).isEmpty());
+        var invalid=hostApplicationFields();invalid.remove("identityBackImage");assertEquals(400,onboardingSubmit(jwt,invalid,true).statusCode());
+        var created=onboardingSubmit(jwt,hostApplicationFields(),true);assertEquals(200,created.statusCode(),created.body());int id=json.readTree(created.body()).path("data").path("registrationId").asInt();
+        assertEquals(200,staffReview(staff,id,"REQUEST_SUPPLEMENT","Please clarify the property description").statusCode());
+        assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());
+        var snapshot=onboardingGet(jwt,"/"+id+"/edit");assertEquals(200,snapshot.statusCode(),snapshot.body());String version=json.readTree(snapshot.body()).path("data").path("versionToken").asString();
+        var fields=registrationDetails();fields.put("description","Updated property description with complete details for staff approval.");
+        String boundary="combined-edit-"+System.nanoTime();String body="--"+boundary+"\r\nContent-Disposition: form-data; name=\"edit\"\r\nContent-Type: application/json\r\n\r\n"+json.writeValueAsString(Map.of("details",fields,"versionToken",version,"retainedPhotoIds",retainedPhotos(id)))+"\r\n--"+boundary+"--\r\n";
+        var result=client.send(HttpRequest.newBuilder(uri("/api/host-onboarding/"+id+"/resubmit")).header("Authorization","Bearer "+jwt).header("Content-Type","multipart/form-data; boundary="+boundary).POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(200,result.statusCode(),result.body());assertEquals(id,json.readTree(result.body()).path("data").path("registrationId").asInt());assertEquals(1,registrations.findByUser_UserIdOrderByCreatedAtDesc(owner.getUserId()).size());
+        assertEquals(200,staffReview(staff,id,"REJECT","The property documents are not acceptable").statusCode());
+        assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());assertTrue(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).isEmpty());
+        assertEquals("REJECTED",json.readTree(onboardingGet(jwt,"/current").body()).path("data").path("registration").path("status").asString());
+        assertEquals(401,onboardingGet(null,"/current").statusCode());
+    }
     @Autowired Environment environment;
     @Autowired ObjectMapper json;
     @Autowired UserRepository users;
@@ -96,13 +262,78 @@ class HostDashboardTests {
         assertTrue(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0).getDescription().contains("Mô tả đã bổ sung"));
     }
 
+    @Test void importantChangesHidePublicDataUntilReverificationAndPreserveRoomInventory() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
+        var fields=registrationDetails();String name="Reverification-"+System.nanoTime();fields.put("name",name);
+        int base=json.readTree(submitRegistration(host,fields,true,false).body()).path("data").path("registrationId").asInt();
+        assertEquals(200,staffReview(staff,base,"APPROVE","").statusCode());
+        var property=properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0);int propertyId=property.getPropertyId();
+        var type=roomTypes.save(RoomType.builder().property(property).roomType("Studio").price(new BigDecimal("2200000")).areaSqm(25F).build());
+        var room=physicalRooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("P101").floor("1").status("VACANT").build());
+        var image=typeImages.save(RoomTypeImage.builder().roomType(type).imageUrl("").fileContent(new byte[]{1,2,3}).contentType("image/png").fileName("test.png").build());
+        wishlists.save(Wishlist.builder().user(owner).roomType(type).build());
+        int photo=retainedPhotos(base).get(0);
+        String detail="/api/properties/"+propertyId+"/room-types/"+type.getRoomTypeId();
+        assertEquals(200,publicRead(detail).statusCode());
+        var edit=json.readTree(propertyEdit(host,base).body()).path("data");
+        fields.put("addressDetail","House 99, alley 4, village 2");
+        var result=resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),null,null);
+        assertEquals(200,result.statusCode(),result.body());int proposal=json.readTree(result.body()).path("data").path("registrationId").asInt();
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(404,publicRead(detail).statusCode());assertEquals(404,publicRead(detail+"/details").statusCode());
+        assertEquals(404,publicRead(detail+"/images/"+image.getImageId()).statusCode());
+        assertEquals(404,publicRead("/api/public/properties/photos/"+photo).statusCode());
+        assertEquals(404,publicRead("/api/public/properties/room-images/"+image.getImageId()).statusCode());
+        assertFalse(publicRead("/api/public/properties").body().contains(name));
+        assertEquals(0,json.readTree(publicRead("/api/properties/search?q="+name).body()).path("data").path("totalElements").asInt());
+        var favorites=client.send(HttpRequest.newBuilder(uri("/api/favorites")).header("Authorization","Bearer "+host).GET().build(),HttpResponse.BodyHandlers.ofString());
+        var favorite=json.readTree(favorites.body()).path("data").path("items").get(0);
+        assertFalse(favorite.path("available").asBoolean());assertTrue(favorite.path("accommodation").isNull());
+        var owned=json.readTree(propertyDetail(host,"").body()).path("data").path("records").get(0);
+        assertTrue(owned.path("reverificationRequired").asBoolean());assertFalse(owned.path("verified").asBoolean());
+        assertEquals(404,staffGet(staff,"/verifications/"+proposal).statusCode(),"New proposal needs its own valid assignment");
+        assertEquals(200,scopedSupplement(staff,proposal,java.util.List.of("description")).statusCode());
+        var staffDetail=json.readTree(staffGet(staff,"/verifications/"+proposal).body()).path("data");
+        assertTrue(staffDetail.path("summary").path("reverificationRequired").asBoolean());assertTrue(staffDetail.path("summary").path("publishedPropertyId").isNull());
+        assertTrue(staffDetail.path("summary").path("reverificationReasons").toString().contains("Địa chỉ"));
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(409,propertyEdit(host,base).statusCode(),"Old approved profile cannot bypass pending reverification");
+        edit=json.readTree(propertyEdit(host,proposal).body()).path("data");fields.put("description","Đã bổ sung mô tả đầy đủ theo yêu cầu xét duyệt lại nhà trọ.");
+        assertEquals(200,resubmit(host,proposal,edit.path("versionToken").asString(),fields,retainedPhotos(proposal),null,null).statusCode());
+        assertEquals(200,staffReview(staff,proposal,"REJECT","Vui lòng bổ sung nội dung chính xác hơn.").statusCode());
+        assertTrue(properties.findById(propertyId).orElseThrow().isReverificationRequired());assertEquals(404,publicRead(detail).statusCode());
+        edit=json.readTree(propertyEdit(host,proposal).body()).path("data");fields.put("description","Đã kiểm tra và hoàn thiện nội dung hồ sơ để xét duyệt lần tiếp theo.");
+        assertEquals(200,resubmit(host,proposal,edit.path("versionToken").asString(),fields,retainedPhotos(proposal),null,null).statusCode());
+        assertEquals(200,staffReview(staff,proposal,"APPROVE","").statusCode());
+        assertFalse(properties.findById(propertyId).orElseThrow().isReverificationRequired());
+        assertEquals(200,publicRead(detail).statusCode());assertTrue(publicRead("/api/public/properties").body().contains(name));
+        assertEquals(409,staffReview(staff,proposal,"APPROVE","").statusCode());
+        assertEquals("VACANT",physicalRooms.findById(room.getRoomId()).orElseThrow().getStatus());
+        assertEquals(1,properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).size());
+    }
+    private HttpResponse<String> publicRead(String path) throws Exception {
+        return client.send(HttpRequest.newBuilder(uri(path)).GET().build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void replacingIdentityEvidenceTriggersReverificationWithoutChangingAddress() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
+        var fields=registrationDetails();int base=json.readTree(submitRegistration(host,fields,true,false).body()).path("data").path("registrationId").asInt();
+        assertEquals(200,staffReview(staff,base,"APPROVE","").statusCode());
+        var edit=json.readTree(propertyEdit(host,base).body()).path("data");
+        assertEquals(400,resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),"idCard","invalid pdf").statusCode());
+        assertFalse(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0).isReverificationRequired(),"Rejected upload must roll back the hidden flag");
+        var result=resubmit(host,base,edit.path("versionToken").asString(),fields,retainedPhotos(base),"idCard","%PDF-1.7 new identity evidence");
+        assertEquals(200,result.statusCode(),result.body());
+        var property=properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0);
+        assertTrue(property.isReverificationRequired());assertTrue(property.getReverificationReasonsJson().contains("định danh"));
+    }
+
     @Test void approvedChangesKeepPublicVersionAndRoomsUntilStaffApprovesSameProperty() throws Exception {
         var owner=account(UserRole.ROOM_HOST);var host=token(owner);var staff=token(account(UserRole.STAFF));
         int base=json.readTree(submitRegistration(host,registrationDetails(),true,false).body()).path("data").path("registrationId").asInt();
         assertEquals(200,staffReview(staff,base,"APPROVE","").statusCode());
         var property=properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).get(0);var propertyId=property.getPropertyId();var oldName=property.getName();
         var type=roomTypes.save(RoomType.builder().property(property).roomType("Preserved studio").price(new BigDecimal("2000000")).build());
-        var room=physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("Keep101").floor("Tầng 1").status("VACANT").build());
+        var room=physicalRooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("Keep101").floor("Tầng 1").status("VACANT").build());
         var snapshot=json.readTree(propertyEdit(host,base).body()).path("data");var version=snapshot.path("versionToken").asString();
         var fields=registrationDetails();fields.put("name","Updated property title");
         var call=(java.util.function.Supplier<HttpResponse<String>>)()->{try{return resubmit(host,base,version,fields,retainedPhotos(base),null,null);}catch(Exception error){throw new RuntimeException(error);}};
@@ -139,8 +370,8 @@ class HostDashboardTests {
         var property=properties.save(Property.builder().owner(owner).registration(registration).name("Public approved test").address("Tân Xã")
             .status("ACTIVE").description("Description for public listing").build());
         var type=roomTypes.save(RoomType.builder().property(property).roomType("Public studio").price(new BigDecimal("2400000")).amenitiesJson("[\"wifi\"]").build());
-        physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("Public101").floor("Tầng 1").status("VACANT").customPrice(new BigDecimal("2100000")).build());
-        physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("Public102").floor("Tầng 1").status("OCCUPIED").build());
+        physicalRooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("Public101").floor("Tầng 1").status("VACANT").customPrice(new BigDecimal("2100000")).build());
+        physicalRooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("Public102").floor("Tầng 1").status("OCCUPIED").build());
         var photo=documents.save(PropertyDocument.builder().registration(registration).documentType("PHOTO_0").contentType("image/png").fileContent(new byte[]{1,2,3}).build());
         var privateDoc=documents.save(PropertyDocument.builder().registration(registration).documentType("ID_CARD").fileName("private-id.pdf").contentType("application/pdf").fileContent(new byte[]{4,5}).build());
         var pending=registrations.save(PropertyRegistration.builder().user(owner).name("Unapproved property").status(RegistrationStatus.PENDING).registrationDetails(json.writeValueAsString(registrationDetails())).build());
@@ -229,7 +460,7 @@ class HostDashboardTests {
         assertEquals(200, staffGet(token(account(UserRole.ADMIN)), "/dashboard").statusCode());
         assertEquals(404, staffGet(staffToken, "/verifications/2147483647").statusCode());
     }
-    @Test void approvingRegistrationPublishesPropertyAndRecordsAuditOnce() throws Exception {
+    @Test void approvingRegistrationKeepsPropertyPrivateUntilRoomsAreSelected() throws Exception {
         var owner = account(UserRole.ROOM_HOST);
         String hostToken = token(owner);
         int id = json.readTree(submitRegistration(hostToken, registrationDetails(), true, false).body()).path("data").path("registrationId").asInt();
@@ -245,7 +476,7 @@ class HostDashboardTests {
         assertEquals(java.util.List.of(200,409), codes);
         assertEquals(RegistrationStatus.APPROVED, registrations.findById(id).orElseThrow().getStatus());
         assertEquals(1, properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).size());
-        assertEquals("VISIBLE", json.readTree(propertyDetail(hostToken, "").body()).path("data").path("records").get(0).path("displayStatus").asString());
+        assertEquals("APPROVED", json.readTree(propertyDetail(hostToken, "").body()).path("data").path("records").get(0).path("displayStatus").asString());
         assertEquals(1, moderationLogs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).size());
         assertEquals(409, staffReview(staffToken, id, "REJECT", "Cannot process again").statusCode());
     }
@@ -341,7 +572,7 @@ class HostDashboardTests {
         assertEquals(404, privateDocument.statusCode());
         assertEquals(0, json.readTree(propertyDetail(otherToken, "?ownerId=" + host.getUserId()).body()).path("data").path("records").size());
     }
-    @Test void activeApprovedPropertyIsVisibleButPendingAndInactiveAreNot() throws Exception {
+    @Test void activeApprovedPropertyWithoutPublicRoomsRemainsPrivate() throws Exception {
         var host = account(UserRole.ROOM_HOST);
         String hostToken = token(host);
         var registration = registrations.save(PropertyRegistration.builder().user(host).name("Approved property")
@@ -349,7 +580,7 @@ class HostDashboardTests {
         var property = properties.save(Property.builder().owner(host).registration(registration).name("Approved property").status("ACTIVE").build());
         roomTypes.save(RoomType.builder().property(property).roomType("Actual type").price(new BigDecimal("2200000")).build());
         var record = json.readTree(propertyDetail(hostToken, "?id=" + property.getPropertyId()).body()).path("data").path("records").get(0);
-        assertEquals("VISIBLE", record.path("displayStatus").asString());
+        assertEquals("APPROVED", record.path("displayStatus").asString());
         assertTrue(record.path("verified").asBoolean());
         assertEquals(1, record.path("roomTypeCount").asInt());
         assertEquals(404, propertyDetail(token(account(UserRole.ROOM_HOST)), "?id=" + property.getPropertyId()).statusCode());
@@ -770,6 +1001,51 @@ class HostDashboardTests {
         if(auth!=null)request.header("Authorization","Bearer "+auth);
         return client.send(request.method(method,data==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(json.writeValueAsString(data))).build(),HttpResponse.BodyHandlers.ofString());
     }
+    private HttpResponse<String> bulkRooms(String token,Map<String,Object> data) throws Exception {
+        var request=HttpRequest.newBuilder(uri("/api/host/rooms/status")).header("Content-Type","application/json");
+        if(token!=null)request.header("Authorization","Bearer "+token);
+        return client.send(request.method("PATCH",HttpRequest.BodyPublishers.ofString(json.writeValueAsString(data))).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void bulkRoomStatusesPersistLeaseDatesClearVacancyAndInvalidateInventory() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var property=properties.save(Property.builder().owner(owner).name("Bulk rooms").status("ACTIVE").build());String auth=token(owner);
+        int typeId=json.readTree(createType(auth,typeDetails(property.getPropertyId())).body()).path("data").path("roomTypeId").asInt();
+        int first=json.readTree(roomWrite(auth,"POST",null,roomDetails(typeId,"P.101")).body()).path("data").path("roomId").asInt();
+        int second=json.readTree(roomWrite(auth,"POST",null,roomDetails(typeId,"P.102")).body()).path("data").path("roomId").asInt();
+        var type=roomTypes.findById(typeId).orElseThrow();type.setAvailabilityConfirmedAt(java.time.Instant.now());roomTypes.save(type);
+        var payload=new java.util.HashMap<String,Object>(Map.of("propertyId",property.getPropertyId(),"roomIds",java.util.List.of(first,second),"status","OCCUPIED","leaseStartDate","2026-11-14","leaseEndDate","2027-11-14"));
+        var response=bulkRooms(auth,payload);assertEquals(200,response.statusCode(),response.body());
+        var saved=json.readTree(response.body()).path("data");assertEquals(2,saved.size());
+        for(var id:java.util.List.of(first,second)){
+            var room=physicalRooms.findById(id).orElseThrow();assertEquals("OCCUPIED",room.getStatus());
+            assertEquals(java.time.LocalDate.of(2026,11,14),room.getLeaseStartDate());assertEquals(java.time.LocalDate.of(2027,11,14),room.getLeaseEndDate());
+        }
+        assertEquals("2026-11-14",saved.get(0).path("leaseStartDate").asString());
+        assertNull(roomTypes.findById(typeId).orElseThrow().getAvailabilityConfirmedAt());
+        assertEquals(0,physicalRooms.countByProperty_PropertyIdAndStatus(property.getPropertyId(),"VACANT"));
+        var reloaded=json.readTree(hostGet(auth,"/rooms?propertyId="+property.getPropertyId()).body()).path("data").path("rooms");
+        assertEquals("2027-11-14",reloaded.get(0).path("leaseEndDate").asString());
+        payload.put("status","VACANT");assertEquals(200,bulkRooms(auth,payload).statusCode());
+        assertEquals(2,physicalRooms.countByProperty_PropertyIdAndStatus(property.getPropertyId(),"VACANT"));
+        for(var id:java.util.List.of(first,second)){var room=physicalRooms.findById(id).orElseThrow();assertNull(room.getLeaseStartDate());assertNull(room.getLeaseEndDate());}
+    }
+    @Test void bulkRoomStatusesRejectForeignMissingOrInvalidTargetsWithoutPartialWrites() throws Exception {
+        var owner=account(UserRole.ROOM_HOST);var property=properties.save(Property.builder().owner(owner).name("Bulk authorization").status("ACTIVE").build());String auth=token(owner);
+        int typeId=json.readTree(createType(auth,typeDetails(property.getPropertyId())).body()).path("data").path("roomTypeId").asInt();
+        int id=json.readTree(roomWrite(auth,"POST",null,roomDetails(typeId,"P.101")).body()).path("data").path("roomId").asInt();
+        var payload=new java.util.HashMap<String,Object>(Map.of("propertyId",property.getPropertyId(),"roomIds",java.util.List.of(id),"status","OCCUPIED"));
+        assertEquals(401,bulkRooms(null,payload).statusCode());assertEquals(403,bulkRooms(token(account(UserRole.STAFF)),payload).statusCode());
+        assertEquals(404,bulkRooms(token(account(UserRole.ROOM_HOST)),payload).statusCode());
+        assertEquals(400,bulkRooms(auth,payload).statusCode());
+        payload.put("leaseStartDate","2026-11-14");payload.put("leaseEndDate","2026-11-13");assertEquals(400,bulkRooms(auth,payload).statusCode());
+        payload.put("leaseEndDate","2027-11-14");payload.put("roomIds",java.util.List.of(id,Integer.MAX_VALUE));assertEquals(404,bulkRooms(auth,payload).statusCode());
+        payload.put("roomIds",java.util.List.of(id,id));assertEquals(400,bulkRooms(auth,payload).statusCode());
+        payload.put("roomIds",java.util.List.of());assertEquals(400,bulkRooms(auth,payload).statusCode());
+        payload.put("roomIds",java.util.List.of(id));property.setStatus("INACTIVE");properties.save(property);assertEquals(409,bulkRooms(auth,payload).statusCode());
+        var untouched=physicalRooms.findById(id).orElseThrow();assertEquals("VACANT",untouched.getStatus());assertNull(untouched.getLeaseStartDate());
+        property.setStatus("ACTIVE");properties.save(property);
+        var invalidSingle=roomDetails(typeId,"P.101");invalidSingle.put("status","OCCUPIED");assertEquals(400,roomWrite(auth,"PUT",id,invalidSingle).statusCode());
+        assertEquals("VACANT",physicalRooms.findById(id).orElseThrow().getStatus());
+    }
     @Test void roomsUseExistingOwnedTypeAndInheritedValuesSurviveReload() throws Exception {
         var owner=account(UserRole.ROOM_HOST);var property=properties.save(Property.builder().owner(owner).name("Rooms property").status("ACTIVE").build());String auth=token(owner);
         int typeId=json.readTree(createType(auth,typeDetails(property.getPropertyId())).body()).path("data").path("roomTypeId").asInt();
@@ -785,7 +1061,7 @@ class HostDashboardTests {
         var typeData=json.readTree(hostGet(auth,"/room-types/"+typeId).body()).path("data");assertEquals(1,typeData.path("totalRooms").asInt());assertEquals(1,typeData.path("vacantRooms").asInt());assertEquals(id,typeData.path("rooms").get(0).path("roomId").asInt());
         var propertyData=json.readTree(propertyDetail(auth,"").body()).path("data").path("records").get(0);assertEquals(1,propertyData.path("totalRooms").asInt());assertEquals(1,propertyData.path("vacantRooms").asInt());
         assertEquals(1,json.readTree(dashboard(auth,"").body()).path("data").path("availableRoomCount").asInt());
-        var custom=roomDetails(typeId,"P.102");custom.put("customPrice",2800000);custom.put("status","OCCUPIED");
+        var custom=roomDetails(typeId,"P.102");custom.put("customPrice",2800000);custom.put("status","OCCUPIED");custom.put("leaseStartDate","2026-11-14");custom.put("leaseEndDate","2027-11-14");
         var second=roomWrite(auth,"POST",null,custom);assertEquals(200,second.statusCode());assertEquals(2800000,json.readTree(second.body()).path("data").path("price").asInt());
         assertEquals(2,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));assertEquals(1,physicalRooms.countByProperty_PropertyIdAndStatus(property.getPropertyId(),"VACANT"));
     }
@@ -816,7 +1092,7 @@ class HostDashboardTests {
         var owner=account(UserRole.ROOM_HOST);var property=properties.save(Property.builder().owner(owner).name("Room status").status("ACTIVE").build());String auth=token(owner);
         int typeId=json.readTree(createType(auth,typeDetails(property.getPropertyId())).body()).path("data").path("roomTypeId").asInt();
         int id=json.readTree(roomWrite(auth,"POST",null,roomDetails(typeId,"P.101")).body()).path("data").path("roomId").asInt();
-        var values=roomDetails(typeId,"P.101");values.put("status","OCCUPIED");assertEquals(200,roomWrite(auth,"PUT",id,values).statusCode());
+        var values=roomDetails(typeId,"P.101");values.put("status","OCCUPIED");values.put("leaseStartDate","2026-11-14");values.put("leaseEndDate","2027-11-14");assertEquals(200,roomWrite(auth,"PUT",id,values).statusCode());
         assertEquals(409,roomWrite(auth,"DELETE",id,null).statusCode());
         var other=token(account(UserRole.ROOM_HOST));assertEquals(404,roomWrite(other,"PUT",id,values).statusCode());assertEquals(404,roomWrite(other,"DELETE",id,null).statusCode());
         bookings.save(Booking.builder().renter(account(UserRole.USER)).roomType(roomTypes.findById(typeId).orElseThrow()).status(BookingStatus.PENDING).scheduledDate(LocalDateTime.now().plusDays(1)).build());
@@ -973,31 +1249,71 @@ class HostDashboardTests {
         return client.send(request.GET().build(),HttpResponse.BodyHandlers.ofString());
     }
     private User applicant(){var user=account(UserRole.USER);user.setPhoneNumber(String.format("09%08d",Math.floorMod(System.nanoTime(),100000000)));return users.save(user);}
-    private Map<String,Object> hostApplicationFields(){return new java.util.HashMap<>(Map.of("targetCommune","Tân Xã","expectedScale","5 - 15 phòng","introduction","Tôi muốn quản lý nhà trọ và cập nhật thông tin phòng cho sinh viên tại Hòa Lạc.","agreementAccepted",true,"applicantCapacity","OWNER","rentalExperience","FIRST_TIME"));}
+    private String identitySample(){try{var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(12,8,java.awt.image.BufferedImage.TYPE_INT_RGB),"png",out);return "data:image/png;base64,"+java.util.Base64.getEncoder().encodeToString(out.toByteArray());}catch(Exception ex){throw new RuntimeException(ex);}}
+    private HttpResponse<byte[]> identityImage(String jwt,int id)throws Exception{
+        var request=HttpRequest.newBuilder(uri("/api/host-applications/"+id+"/identity-image"));if(jwt!=null)request.header("Authorization","Bearer "+jwt);
+        return client.send(request.GET().build(),HttpResponse.BodyHandlers.ofByteArray());
+    }
+    @Test void hostApplicationIdentityIsAtomicPrivateAndNotInListResponses()throws Exception{
+        var owner=applicant();String jwt=token(owner);var fields=hostApplicationFields();fields.remove("introduction");
+        var response=hostApplicationPost(jwt,"",fields);assertEquals(200,response.statusCode(),response.body());
+        int id=json.readTree(response.body()).path("data").path("id").asInt();assertTrue(json.readTree(response.body()).path("data").path("hasIdentityImage").asBoolean());
+        assertFalse(response.body().contains("base64"));assertFalse(response.body().contains("identityImage\""));
+        var photo=identityImage(jwt,id);assertEquals(200,photo.statusCode());assertTrue(photo.headers().firstValue("Cache-Control").orElse("").contains("no-store"));assertEquals("image/png",photo.headers().firstValue("Content-Type").orElse(""));
+        assertArrayEquals(java.util.Base64.getDecoder().decode(identitySample().split(",")[1]),photo.body());
+        assertEquals(401,identityImage(null,id).statusCode());assertEquals(403,identityImage(token(applicant()),id).statusCode());assertEquals(403,identityImage(token(account(UserRole.ROOM_HOST)),id).statusCode());
+        String staff=token(account(UserRole.STAFF));assertEquals(200,identityImage(staff,id).statusCode());assertEquals(200,identityImage(token(account(UserRole.ADMIN)),id).statusCode());
+        var queue=hostApplicationGet(staff,"");assertFalse(queue.body().contains("data:image"));assertFalse(queue.body().contains("fileContent"));
+        long version=json.readTree(response.body()).path("data").path("version").asLong();
+        assertEquals(200,hostApplicationPost(staff,"/"+id+"/review",Map.of("decision","NEEDS_CHANGES","version",version,"note","Ảnh mờ, thay mặt trước.","requestedFields",java.util.List.of("identityImage"))).statusCode());
+        var current=json.readTree(hostApplicationGet(jwt,"/current").body()).path("data");fields.put("version",current.path("version").asLong());
+        var replaced=hostApplicationPost(jwt,"",fields);assertEquals(200,replaced.statusCode(),replaced.body());assertEquals(200,identityImage(staff,id).statusCode());
+        assertTrue(properties.findByOwner_UserIdOrderByPropertyIdAsc(owner.getUserId()).isEmpty());
+    }
+    @Test void hostApplicationLegacyDataRemainsReadableAndIsNotClearedOnResubmit()throws Exception{
+        var owner=applicant();var legacy=new HostApplication();legacy.setUser(owner);legacy.setStatus("NEEDS_CHANGES");legacy.setTargetCommune("Tân Xã");legacy.setExpectedScale("5 - 15 phòng");legacy.setApplicantCapacity("OWNER");legacy.setRentalExperience("FIRST_TIME");legacy.setIntroduction("Lời giới thiệu lịch sử");legacy.setAgreementAccepted(true);legacy.setSubmittedAt(LocalDateTime.now());hostApplications.saveAndFlush(legacy);
+        String jwt=token(owner),staff=token(account(UserRole.STAFF));assertEquals(404,identityImage(staff,legacy.getId()).statusCode());
+        var detail=hostApplicationGet(staff,"/"+legacy.getId());assertEquals(200,detail.statusCode());assertFalse(json.readTree(detail.body()).path("data").path("application").path("hasIdentityImage").asBoolean());
+        var fields=hostApplicationFields();fields.put("version",legacy.getVersion());assertEquals(200,hostApplicationPost(jwt,"",fields).statusCode());
+        var stored=hostApplications.findById(legacy.getId()).orElseThrow();assertEquals("Tân Xã",stored.getTargetCommune());assertEquals("OWNER",stored.getApplicantCapacity());
+    }
+    private Map<String,Object> hostApplicationFields(){return new java.util.HashMap<>(Map.of("introduction","","agreementAccepted",true,"identityImage",identitySample(),"identityBackImage",identitySample()));}
+    @Test void hostApplicationRequiresBothSidesAndBackImageRemainsPrivate()throws Exception{
+        var owner=applicant();String jwt=token(owner);var fields=hostApplicationFields();fields.remove("identityBackImage");
+        assertEquals(400,hostApplicationPost(jwt,"",fields).statusCode());assertTrue(hostApplications.findByUser_UserId(owner.getUserId()).isEmpty());
+        fields.put("identityBackImage","data:image/png;base64,bm90YW5pbWFnZQ==");assertEquals(400,hostApplicationPost(jwt,"",fields).statusCode());
+        fields.put("identityBackImage",identitySample());var response=hostApplicationPost(jwt,"",fields);assertEquals(200,response.statusCode(),response.body());
+        var data=json.readTree(response.body()).path("data");assertTrue(data.path("hasIdentityBackImage").asBoolean());int id=data.path("id").asInt();
+        var endpoint=uri("/api/host-applications/"+id+"/identity-image?side=back");
+        var image=client.send(HttpRequest.newBuilder(endpoint).header("Authorization","Bearer "+jwt).GET().build(),HttpResponse.BodyHandlers.ofByteArray());
+        assertEquals(200,image.statusCode());assertArrayEquals(java.util.Base64.getDecoder().decode(identitySample().split(",")[1]),image.body());
+        assertTrue(image.headers().firstValue("Cache-Control").orElse("").contains("no-store"));
+        assertEquals(401,client.send(HttpRequest.newBuilder(endpoint).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        assertEquals(403,client.send(HttpRequest.newBuilder(endpoint).header("Authorization","Bearer "+token(applicant())).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+        assertEquals(200,client.send(HttpRequest.newBuilder(endpoint).header("Authorization","Bearer "+token(account(UserRole.STAFF))).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode());
+    }
     @Test void hostApplicationIsOwnedPersistedValidatedAndNeverSelfGrantsRole() throws Exception {
         var owner=applicant();var jwt=token(owner);var other=token(applicant());
         assertEquals(401,hostApplicationGet(null,"/current").statusCode());
         assertTrue(json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").isNull());
         var invalid=hostApplicationFields();invalid.put("agreementAccepted",false);assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
-        invalid=hostApplicationFields();invalid.put("targetCommune","Invalid area");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
-        for(String key : java.util.List.of("applicantCapacity","rentalExperience")){
-            invalid=hostApplicationFields();invalid.remove(key);assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
-            invalid=hostApplicationFields();invalid.put(key,"UNSUPPORTED");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
-        }
+        invalid=hostApplicationFields();invalid.remove("identityImage");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        invalid=hostApplicationFields();invalid.put("identityImage","data:image/png;base64,bm90YW5pbWFnZQ==");assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
+        invalid=hostApplicationFields();invalid.put("introduction","x".repeat(1001));assertEquals(400,hostApplicationPost(jwt,"",invalid).statusCode());
         var response=hostApplicationPost(jwt,"",hostApplicationFields());assertEquals(200,response.statusCode(),response.body());
         assertEquals("PENDING_REVIEW",json.readTree(response.body()).path("data").path("status").asString());
         assertEquals(UserRole.USER,users.findById(owner.getUserId()).orElseThrow().getRole());
         assertEquals(409,hostApplicationPost(jwt,"",hostApplicationFields()).statusCode());
         assertEquals(403,hostApplicationGet(jwt,"").statusCode());
         assertTrue(json.readTree(hostApplicationGet(other,"/current?userId="+owner.getUserId()).body()).path("data").isNull());
-        assertEquals("Tân Xã",hostApplications.findByUser_UserId(owner.getUserId()).orElseThrow().getTargetCommune());
+        assertNull(hostApplications.findByUser_UserId(owner.getUserId()).orElseThrow().getTargetCommune());
         int id=json.readTree(response.body()).path("data").path("id").asInt();var staff=token(account(UserRole.STAFF));
         assertEquals(403,hostApplicationGet(other,"/"+id).statusCode());
         var detail=json.readTree(hostApplicationGet(staff,"/"+id).body()).path("data");assertEquals(owner.getUserId(),detail.path("application").path("userId").asInt());
         assertEquals(hostApplicationFields().get("introduction"),detail.path("application").path("introduction").asString());
-        assertEquals("OWNER",detail.path("application").path("applicantCapacity").asString());
-        assertEquals("FIRST_TIME",detail.path("application").path("rentalExperience").asString());
-        assertEquals("OWNER",json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("applicantCapacity").asString());
+        assertTrue(detail.path("application").path("hasIdentityImage").asBoolean());
+        assertTrue(detail.path("application").path("rentalExperience").isNull());
+        assertTrue(json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("applicantCapacity").isNull());
         var queue=json.readTree(hostApplicationGet(staff,"?search=HREG-"+id+"&size=1&sort=NAME_ASC").body()).path("data");
         assertEquals(1,queue.path("totalElements").asInt());assertEquals(id,queue.path("content").get(0).path("id").asInt());assertTrue(queue.path("stats").path("pending").asLong()>=1);
         assertEquals(400,hostApplicationGet(staff,"?status=INVALID").statusCode());
@@ -1013,7 +1329,7 @@ class HostDashboardTests {
         var current=json.readTree(hostApplicationGet(jwt,"/current").body()).path("data");fields.put("version",current.path("version").asLong());fields.put("applicantCapacity","AUTHORIZED_MANAGER");fields.put("rentalExperience","UNDER_TWO_YEARS");
         assertEquals("introduction",current.path("requestedFields").get(0).asString());
         var resubmitted=hostApplicationPost(jwt,"",fields);assertEquals(200,resubmitted.statusCode(),resubmitted.body());
-        var pending=json.readTree(resubmitted.body()).path("data");assertEquals(id,pending.path("id").asInt());assertEquals("AUTHORIZED_MANAGER",pending.path("applicantCapacity").asString());assertEquals("UNDER_TWO_YEARS",pending.path("rentalExperience").asString());
+        var pending=json.readTree(resubmitted.body()).path("data");assertEquals(id,pending.path("id").asInt());assertTrue(pending.path("applicantCapacity").isNull());assertTrue(pending.path("rentalExperience").isNull());
         assertEquals(200,hostApplicationPost(reviewer,"/"+id+"/review",Map.of("decision","REJECTED","note","Thông tin không hợp lệ.","allowResubmit",false,"version",pending.path("version").asLong())).statusCode());
         fields.put("version",json.readTree(hostApplicationGet(jwt,"/current").body()).path("data").path("version").asLong());assertEquals(409,hostApplicationPost(jwt,"",fields).statusCode());
     }

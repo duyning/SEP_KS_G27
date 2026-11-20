@@ -7,6 +7,7 @@ import { hostApi } from '../services/host.js';
 import { ROOM_AMENITIES, money } from '../services/room-types.js';
 import '../styles/room-modals.css';
 import { editRoom, emptyRoom, roomPayload, validateRoom } from '../services/rooms.js';
+import RoomLeaseFields from './RoomLeaseFields.jsx';
 
 export default function RoomEditorModal({types,defaultTypeId,room,onClose,onSaved}) {
   const [data,setData]=useState(()=>room?editRoom(room):emptyRoom(defaultTypeId));
@@ -36,6 +37,7 @@ export default function RoomEditorModal({types,defaultTypeId,room,onClose,onSave
       </section><section className="rm-section rm-inherited"><header><h3><Check size={15}/>Cấu hình từ loại phòng</h3></header>{type?<><dl className="rm-facts">{[['Giá niêm yết',`${money(type.price)} / tháng`],['Diện tích',type.areaSqm==null?'Chưa cập nhật':`${type.areaSqm} m²`],['Sức chứa',type.capacity==null?'Chưa cập nhật':`${type.capacity} người`],['Tiền đặt cọc',money(type.deposit)]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><details className="rm-amenity-details"><summary>{type.amenities?.length||0} tiện nghi từ loại phòng</summary><ul className="rm-amenities">{(type.amenities||[]).map(key=><li key={key}><Check size={14}/>{ROOM_AMENITIES.find(([value])=>value===key)?.[1]||key}</li>)}</ul>{!type.amenities?.length&&<p className="rm-muted">Chưa cập nhật tiện nghi.</p>}</details></>:<p className="rm-muted">Chọn loại phòng để xem cấu hình kế thừa.</p>}</section></div>
       <div className="rm-editor-grid"><section className="rm-section rm-status-section"><header><h3>Tình trạng thực tế</h3></header>
       <fieldset className="hr-status-field"><legend className="rm-sr-only">Tình trạng thực tế hiện tại</legend><div className="hr-status-options">{[['VACANT','Còn trống','Phòng sẵn sàng đón khách thuê vào ở ngay'],['OCCUPIED','Đã có người thuê','Đang có khách lưu trú ổn định']].map(([value,label,hint])=><UIField key={value} className={data.status===value?'selected':''}><input type="radio" name="room-status" checked={data.status===value} onChange={()=>update('status',value)}/><span><strong>{label}</strong><small>{hint}</small></span></UIField>)}</div>{error('status')}</fieldset>
+      {data.status==='OCCUPIED'&&<RoomLeaseFields data={data} onChange={update} errors={errors} prefix="editor"/>}
       </section><section className="rm-section"><header><h3><Wallet size={16}/>Giá thuê áp dụng</h3></header>
       <UIField className="hr-custom-toggle"><input type="checkbox" checked={data.overridePrice} onChange={event=>update('overridePrice',event.target.checked)}/><span><strong>Đặt giá riêng cho phòng</strong><small>Bỏ chọn để sử dụng giá của loại phòng.</small></span></UIField>
       {data.overridePrice&&<div className="hr-field"><UIField htmlFor="room-customPrice">Giá thuê riêng (đ/tháng) <b>*</b></UIField><input {...input('customPrice')} inputMode="numeric" maxLength={9} required placeholder="Nhập giá thuê riêng"/>{error('customPrice')}</div>}{!data.overridePrice&&error('customPrice')}

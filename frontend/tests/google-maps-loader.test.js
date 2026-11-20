@@ -38,3 +38,11 @@ test('temporary script load failure permits retry and shares a pending load',asy
  const maps={importLibrary:async()=>({})};globalThis.google={maps};globalThis.__hlrcsGoogleMapsReady();
  assert.equal(await retry,maps);
 });
+
+test('a preloaded Google SDK still reports late authorization failures',async()=>{
+ const {events}=browser();const {loadGoogleMaps}=await loader();
+ const maps={importLibrary:async()=>({})};globalThis.google={maps};
+ assert.equal(await loadGoogleMaps(),maps);
+ globalThis.gm_authFailure();assert.deepEqual(events,['hlrcs:google-maps-auth-error']);
+ await assert.rejects(loadGoogleMaps(),/Bản đồ chưa khả dụng/);
+});

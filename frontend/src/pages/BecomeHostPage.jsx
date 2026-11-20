@@ -1,27 +1,23 @@
 import { MotionButton, AnimatePresence } from '../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { landingFor, roleLabels } from '../routing/screens.js';
 import { Modal, useToast } from '../components/PortalUI.jsx';
-import { hostApplicationApi, applicantCapacities, rentalExperiences } from '../services/host-applications.js';
+import { hostApplicationApi } from '../services/host-applications.js';
+import { getToken } from '../services/auth.js';
 import BecomeHostPrototype from './BecomeHostPrototype.jsx';
+import HostPhoneVerificationModal from '../components/HostPhoneVerificationModal.jsx';
 import '../styles/home-prototype.css';
 import '../styles/home-prototype-integration.css';
 import '../styles/become-host-prototype.css';
 import '../styles/become-host-integration.css';
 import '../styles/become-host-refinement.css';
 import '../styles/become-host-mobile.css';
+let draft=null;
 
-const emptyForm = {
-  applicantCapacity: '',
-  rentalExperience: '',
-  targetCommune: '',
-  expectedScale: '',
-  introduction: '',
-  agreementAccepted: false
-};
+const emptyForm = {introduction:'',agreementAccepted:false};
 
 const ids = {
   applicantCapacity: 'applicantCapacity',
@@ -46,24 +42,33 @@ const formatDate = (value) => {
 export default function BecomeHostPage() {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [params]=useSearchParams();
+  const preview=import.meta.env.DEV&&params.get('formPreview')==='1';
+  const savedDraft=draft?.userId===user.userId&&draft?.session===getToken()?draft:null;
   const notify = useToast();
 
   const [application, setApplication] = useState(null);
-  const [values, setValues] = useState(emptyForm);
+  const [values, setValues] = useState(()=>savedDraft?.values||emptyForm);
+  const [identityImage,setIdentityImage]=useState(()=>savedDraft?.identityImage||'');
+  const [identityBackImage,setIdentityBackImage]=useState(()=>savedDraft?.identityBackImage||'');
+  const [readingImage,setReadingImage]=useState(false);
+  const submitLock=useRef(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [alert, setAlert] = useState('');
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(()=>savedDraft?.editing||false);
   const [modal, setModal] = useState(null);
+  const [phoneOpen,setPhoneOpen]=useState(false);
   const [revision, setRevision] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
 
   const refreshed = useRef(false);
-  const formDirty = Object.values(values).some(Boolean);
+  const formDirty = Object.values(values).some(Boolean)||!!identityImage||!!identityBackImage;
+  useEffect(()=>{draft=formDirty?{userId:user.userId,session:getToken(),values,identityImage,identityBackImage,editing}:null;},[values,identityImage,identityBackImage,editing,user.userId,formDirty]);
   const missingContact = !user?.fullName?.trim() || !/^(0|\+84)[35789]\d{8}$/.test(user?.phoneNumber || '');
 
   useEffect(() => {
@@ -176,27 +181,15 @@ export default function BecomeHostPage() {
 
   function validate() {
     const next = {};
-    if (!applicantCapacities.some(([key]) => key === values.applicantCapacity)) {
-      next.applicantCapacity = 'Vui lòng chọn tư cách cho thuê của bạn.';
-    }
-    if (!rentalExperiences.some(([key]) => key === values.rentalExperience)) {
-      next.rentalExperience = 'Vui lòng chọn kinh nghiệm quản lý của bạn.';
-    }
-    if (!values.targetCommune) {
-      next.targetCommune = 'Vui lòng chọn khu vực hoạt động chính của bạn.';
-    }
-    if (!values.expectedScale) {
-      next.expectedScale = 'Vui lòng chọn quy mô số lượng phòng dự kiến.';
-    }
-    if (values.introduction.trim().length < 20 || values.introduction.length > 1000) {
-      next.introduction = 'Lời giới thiệu cần từ 20 đến 1000 ký tự.';
-    }
+    if(!identityImage&&!application?.hasIdentityImage)next.identityImage='Vui lòng chọn ảnh mặt trước CCCD.';
+    if(!identityBackImage&&!application?.hasIdentityBackImage)next.identityBackImage='Vui lòng chọn ảnh mặt sau CCCD.';
+    if(values.introduction.length>1000)next.introduction='Ghi chú tối đa 1000 ký tự.';
     if (!values.agreementAccepted) {
       next.agreementAccepted = 'Bạn cần đồng ý với cam kết đối tác để gửi đơn đăng ký.';
     }
     setErrors(next);
     if (Object.keys(next).length) {
-      document.getElementById(ids[Object.keys(next)[0]])?.focus();
+      document.getElementById(Object.keys(next)[0]==='identityImage'?'btnChooseIdentity':Object.keys(next)[0]==='identityBackImage'?'btnChooseIdentityBack':ids[Object.keys(next)[0]])?.focus();
       return false;
     }
     if (missingContact) {
@@ -207,28 +200,44 @@ export default function BecomeHostPage() {
   }
 
   async function submit() {
-    if (busy || !validate()) return;
+    if (submitLock.current || busy || readingImage || !validate()) return;
+    if(preview){setModal(null);notify('Bản xem trước: không gửi hồ sơ thật.');return;}
+    submitLock.current=true;
     setBusy(true);
     setAlert('');
     try {
       const result = await hostApplicationApi.submit({
         ...values,
+        identityImage:identityImage||null,
+        identityBackImage:identityBackImage||null,
         introduction: values.introduction.trim(),
         version: application?.version ?? null
       });
       setApplication(result);
       setEditing(false);
-      setValues(emptyForm);
+      setValues(emptyForm);setIdentityImage('');setIdentityBackImage('');draft=null;
       setModal(null);
       notify('Đã gửi đăng ký làm chủ trọ. Hồ sơ đang chờ xét duyệt.');
       document.getElementById('bhMainContent')?.scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
       setModal(null);
       setAlert(error.message);
-      setErrors(error.fields || {});
+      setErrors(Object.keys(error.fields||{}).length?error.fields:(/ảnh|Ảnh/.test(error.message||'')?{identityImage:error.message}:{}));
     } finally {
-      setBusy(false);
+      setBusy(false);submitLock.current=false;
     }
+  }
+
+  async function onIdentityFile(file,side='front'){
+    const field=side==='back'?'identityBackImage':'identityImage';
+    if(!file||busy||readingImage)return;
+    if(!['image/jpeg','image/png'].includes(file.type)||file.size>5*1024*1024){setErrors(previous=>({...previous,[field]:'Chọn ảnh JPG hoặc PNG, tối đa 5 MB.'}));return;}
+    setReadingImage(true);setAlert('');
+    try{
+      const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Không thể đọc ảnh. Vui lòng chọn lại.'));reader.readAsDataURL(file);});
+      await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>image.naturalWidth*image.naturalHeight<=20000000?resolve():reject(Error('Ảnh tối đa 20 megapixel.'));image.onerror=()=>reject(Error('Không đọc được nội dung ảnh. Chọn ảnh JPG/PNG hợp lệ.'));image.src=url;});
+      (side==='back'?setIdentityBackImage:setIdentityImage)(url);setErrors(previous=>({...previous,[field]:undefined}));
+    }catch(error){setErrors(previous=>({...previous,[field]:error.message}));}finally{setReadingImage(false);}
   }
 
   function onChange(event) {
@@ -242,7 +251,7 @@ export default function BecomeHostPage() {
   function onSubmit(event) {
     if (event.target.id === 'becomeHostForm') {
       event.preventDefault();
-      if (!busy && validate()) setModal('submit');
+      if (!busy && !readingImage && validate()) setModal('submit');
     }
   }
 
@@ -295,8 +304,8 @@ export default function BecomeHostPage() {
         <span className="wishlist-count">0</span>
       </Link>
       {user.role !== 'USER' && (
-        <Link to={landingFor(user)} className="btn-primary-sm">
-          Bảng điều khiển
+        <Link to={user.role==='ROOM_HOST'?'/host/property':landingFor(user)} className="btn-primary-sm">
+          {user.role==='ROOM_HOST'?'Nhà trọ của tôi':'Bảng điều khiển'}
         </Link>
       )}
       <div className="user-nav-pill">
@@ -326,7 +335,8 @@ export default function BecomeHostPage() {
           values,
           errors,
           state,
-          busy,
+          busy:busy||readingImage,
+          identityImage,identityBackImage,onIdentityFile,onRemoveIdentity:(side='front')=>{(side==='back'?setIdentityBackImage:setIdentityImage)('');setErrors(previous=>({...previous,[side==='back'?'identityBackImage':'identityImage']:undefined}));},preview,onVerifyPhone:()=>setPhoneOpen(true),
           mobileOpen,
           announcementOpen,
           progressOpen,
@@ -344,6 +354,7 @@ export default function BecomeHostPage() {
         alert={loadError || alert || (user.role === 'STAFF' ? 'Tài khoản nhân viên không cần đăng ký quyền Chủ trọ.' : '')}
       />
       <AnimatePresence>
+        {phoneOpen&&<HostPhoneVerificationModal user={user} preview={preview} onClose={()=>setPhoneOpen(false)} onVerified={async()=>{await refreshUser();setPhoneOpen(false);notify('Đã xác minh số điện thoại. Bạn có thể tiếp tục hoàn thiện đơn chủ trọ.','success');}}/>}
         {modal && (
           <Modal
             className="bh-confirm-modal"

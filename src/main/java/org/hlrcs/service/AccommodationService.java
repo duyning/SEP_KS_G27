@@ -74,7 +74,7 @@ public class AccommodationService {
         if (availableOnly) filter = filter.and((root, query, cb) -> {
             var vacant = query.subquery(Integer.class);
             var room = vacant.from(org.hlrcs.entity.Room.class);
-            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"));
+            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("status"), "VACANT"), cb.isTrue(room.get("publicVisible")));
             return cb.exists(vacant);
         });
         if ("rating-desc".equals(sort)) filter = filter.and((root, query, cb) -> {
@@ -254,9 +254,10 @@ public class AccommodationService {
             var property = type.getProperty();
             String imageUrl = covers.get(type.getRoomTypeId());
             var coordinates = publishedCoordinates(property);
+            var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
                     property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
-                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1]);
+                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1],type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness));
         }).toList();
     }
 

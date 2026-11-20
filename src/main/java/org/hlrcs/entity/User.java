@@ -31,6 +31,8 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    private java.time.Instant phoneVerifiedAt;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
