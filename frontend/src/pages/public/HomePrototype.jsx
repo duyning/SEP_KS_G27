@@ -45,7 +45,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
         <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
           <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
+          <li><Link className="nav-item" to="/favorites">Phòng yêu thích (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
@@ -55,7 +55,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
 
 
         <div className="nav-actions">{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Nhà trọ đã lưu" style={{"textDecoration": "none"}} to="/favorites">
+          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Phòng yêu thích" style={{"textDecoration": "none"}} to="/favorites">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
             <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
           </Link>

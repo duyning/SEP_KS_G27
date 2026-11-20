@@ -5,10 +5,12 @@ import { accommodationApi } from '../services/accommodations.js';
 import { accommodationDetailUrl } from '../services/map-location.js';
 import AvailabilityNotice from './AvailabilityNotice.jsx';
 import { withSearchOrigin } from '../services/search-origin.js';
-import { searchAmenities, searchLocations } from '../services/search-prototype.js';
+import { searchAmenities, searchLocations, searchTypes } from '../services/search-prototype.js';
 import { detailMoney } from '../services/detail-prototype.js';
 import { ROOM_AMENITIES } from '../services/room-types.js';
 import { Modal } from './PortalUI.jsx';
+
+const scoreFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
 
 export default function AccommodationRecommendations({ origin, onClose }) {
   const { user, loading } = useAuth();
@@ -26,7 +28,7 @@ export default function AccommodationRecommendations({ origin, onClose }) {
   async function submit(event) {
     event.preventDefault();
     if (active.current || !description.trim() || (question && !answer.trim())) return;
-    const context = question ? [clarification, question, answer.trim()].filter(Boolean).join('\n') : '';
+    const context = question ? [clarification, question, answer.trim()].filter(Boolean).join('\n') : clarification;
     if (context.length > 1200) {
       setError('Hãy gộp các tiêu chí vào mô tả rồi tìm lại.');
       return;
@@ -58,7 +60,7 @@ export default function AccommodationRecommendations({ origin, onClose }) {
       <form className="location-search-form" onSubmit={submit}>
         <label htmlFor="ai-room-description">Nhu cầu thuê phòng</label>
         <textarea id="ai-room-description" required rows={3} maxLength={1200} disabled={busy}
-          placeholder="Ví dụ: phòng ở Tân Xã, tối đa 2,5 triệu/tháng, có điều hòa"
+          placeholder="Ví dụ: studio ở Tân Xã cho 2 người, tối đa 2,5 triệu/tháng, có điều hòa và ban công"
           value={description} onChange={event => {
             setDescription(event.target.value);
             setResult(null);
@@ -74,15 +76,19 @@ export default function AccommodationRecommendations({ origin, onClose }) {
         </button></div>
       </form>
       {busy && <p role="status">Đang đối chiếu nhu cầu với phòng công khai còn trống.</p>}
-      {!busy && result?.criteria && <p>{criteriaLabel(result.criteria)}</p>}
-      {!busy && result?.status === 'EMPTY' && <p role="status">Chưa có loại phòng công khai còn trống phù hợp với tiêu chí này.</p>}
+      {!busy && result?.status === 'EMPTY' && <p role="status">Chưa có loại phòng công khai còn trống khớp tiêu chí nào. Hãy thử sửa mô tả.</p>}
       {!busy && result?.status === 'RESULTS' && <ul className="accommodation-ai-results" aria-label="Phòng được gợi ý">
         {result.items.map(item => <li key={item.roomTypeId}>
-          <Link to={withSearchOrigin(accommodationDetailUrl(item), origin)}>{item.propertyName} — {item.roomTypeName}</Link>
+          <div className="accommodation-ai-heading">
+            <Link to={withSearchOrigin(accommodationDetailUrl(item), origin)}>{item.propertyName} — {item.roomTypeName}</Link>
+            <span className="accommodation-ai-score">{scoreFormat.format(item.match.score)}/10 phù hợp</span>
+          </div>
           <p>{detailMoney(item.price)}/tháng · Còn {item.availableRooms} phòng</p>
           <p>{item.address || 'Chưa cập nhật địa chỉ'}</p>
-          {item.amenities?.length > 0 && <p>{item.amenities.map(key => ROOM_AMENITIES.find(([id]) => id === key)?.[1]
-            || searchAmenities.find(([id]) => id === key)?.[1] || key).join(' · ')}</p>}
+          <p><strong>Khớp {item.match.matchedCriteria.length}/{item.match.matchedCriteria.length + item.match.unmatchedCriteria.length} tiêu chí:</strong>{' '}
+            {item.match.matchedCriteria.map(key => criterionLabel(key, result.criteria)).join(' · ')}</p>
+          {item.match.unmatchedCriteria.length > 0 && <p className="accommodation-ai-unmatched"><strong>Chưa khớp:</strong>{' '}
+            {item.match.unmatchedCriteria.map(key => criterionLabel(key, result.criteria)).join(' · ')}</p>}
           {item.availabilityStale === true && <AvailabilityNotice value={item} />}
         </li>)}
       </ul>}
@@ -90,9 +96,17 @@ export default function AccommodationRecommendations({ origin, onClose }) {
   </Modal>;
 }
 
-function criteriaLabel(criteria) {
-  const location = searchLocations.find(([id]) => id === criteria.location)?.[1] || 'Tất cả khu vực';
-  const range = [criteria.minBudget != null && `Từ ${detailMoney(criteria.minBudget)}`,
-    criteria.maxBudget != null && `Tối đa ${detailMoney(criteria.maxBudget)}`].filter(Boolean).join(' · ');
-  return [location, range || 'Mọi mức giá', ...criteria.amenities.map(key => searchAmenities.find(([id]) => id === key)?.[1] || key)].join(' · ');
+function criterionLabel(key, criteria) {
+  switch (key) {
+    case 'location': return searchLocations.find(([id]) => id === criteria.location)?.[1] || criteria.location;
+    case 'budget': {
+      if (criteria.minBudget == null) return `Tối đa ${detailMoney(criteria.maxBudget)}/tháng`;
+      if (criteria.maxBudget == null) return `Từ ${detailMoney(criteria.minBudget)}/tháng`;
+      return `${detailMoney(criteria.minBudget)} – ${detailMoney(criteria.maxBudget)}/tháng`;
+    }
+    case 'roomType': return searchTypes.find(([id]) => id === criteria.roomType)?.[1] || criteria.roomType;
+    case 'capacity': return `Ở được ít nhất ${criteria.minCapacity} người`;
+    case 'area': return `Diện tích từ ${scoreFormat.format(criteria.minAreaSqm)} m²`;
+    default: return searchAmenities.find(([id]) => id === key)?.[1] || ROOM_AMENITIES.find(([id]) => id === key)?.[1] || key;
+  }
 }

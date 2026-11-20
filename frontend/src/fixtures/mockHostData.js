@@ -48,9 +48,9 @@ export const MOCK_HOST_ROOM_TYPES = [
     "priceDisplay": "2.200.000 đ",
     "deposit": "2.200.000 đ",
     "capacity": "2 người",
-    "description": "Phòng Studio khép kín có ban công thoáng mát, view đón ánh sáng tự nhiên. Đã trang bị điều hòa Inverter, bình nóng lạnh, kệ bếp nấu ăn riêng.",
+    "description": "Phòng Studio khép kín có ban công thoáng mát, view đón ánh sáng tự nhiên. Đã trang bị điều hòa, bình nóng lạnh, kệ bếp nấu ăn riêng.",
     "amenities": [
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Ban công",
       "Kệ bếp",

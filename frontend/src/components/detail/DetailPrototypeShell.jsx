@@ -9,7 +9,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
  const favorites=useFavorites(),savedCount=favorites?.total??providedSavedCount;
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
- const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
+ const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Phòng yêu thích"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm">Bảng điều khiển</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
  return <div className={`prototype-home ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
     <div className="top-announcement">
       <div className="container top-announcement-inner">
@@ -48,7 +48,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
         <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/search">Tìm phòng</NavLink></li>
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
+          <li><Link className="nav-item" to="/favorites">Phòng yêu thích (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
@@ -58,7 +58,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
 
 
         <div className="nav-actions">{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Nhà trọ đã lưu" style={{"textDecoration": "none"}} to="/favorites">
+          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Phòng yêu thích" style={{"textDecoration": "none"}} to="/favorites">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
             <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
           </Link>

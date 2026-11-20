@@ -23,7 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,9 @@ public class AccommodationService {
             "tan-xa", "Tân Xã", "thach-hoa", "Thạch Hòa", "binh-yen", "Bình Yên", "cnc", "công nghệ cao");
     private static final Map<String, String> TYPES = Map.of(
             "khep-kin", "khép kín", "gac-lung", "gác", "chung-cu-mini", "chung cư mini");
+    private static final Set<String> COMMON_AMENITIES = Set.of("elevator", "fingerprint", "camera",
+            "flexibleHours", "fireSafety", "separateOwner");
+    private static final int RECOMMENDATION_BATCH_SIZE = 100;
 
     public AccommodationPage list(int page, int size, String q, String location, String price, String sort, String type,
                                   String amenities, boolean availableOnly, SearchOrigin origin, Double radiusKm) {
@@ -98,12 +103,92 @@ public class AccommodationService {
                 result.getTotalElements(), result.getTotalPages());
     }
 
-    List<AccommodationSummary> recommendationCandidates(String location, BigDecimal minimum, BigDecimal maximum,
-                                                         String amenities, int limit) {
-        var filter = searchFilters("", location, "all", "all", amenities, true);
-        if (minimum != null) filter = filter.and((root, query, cb) -> cb.ge(root.get("price"), minimum));
-        if (maximum != null) filter = filter.and((root, query, cb) -> cb.le(root.get("price"), maximum));
-        return summaries(roomTypes.findAll(filter, PageRequest.of(0, limit, Sort.by("price", "roomTypeId"))).getContent());
+    public List<AccommodationRecommendationService.Item> recommendationMatches(AccommodationRecommendationService.Criteria criteria) {
+        var eligible = searchFilters("", "all", "all", "all", "", true);
+        var page = PageRequest.of(0, RECOMMENDATION_BATCH_SIZE, Sort.by("roomTypeId"));
+        var profiles = new HashMap<Integer, RecommendationProperty>();
+        boolean needsProfile = criteria.hasLocation() || criteria.amenities().stream().anyMatch(AccommodationService::sharedAmenity);
+        var now = java.time.Instant.now();
+        var order = Comparator.comparingInt((RankedRoom room) -> room.match().matchedCriteria().size()).reversed()
+                .thenComparing(room -> !"CURRENT".equals(AvailabilityFreshness.status(room.type().getAvailabilityConfirmedAt(), now)))
+                .thenComparing(room -> room.type().getPrice()).thenComparing(room -> room.type().getRoomTypeId());
+        var best = new ArrayList<RankedRoom>();
+        int previousId = 0;
+        while (true) {
+            int cursor = previousId;
+            var batch = roomTypes.findAll(eligible.and((root, query, cb) -> cb.gt(root.get("roomTypeId"), cursor)), page).getContent();
+            for (var type : batch) {
+                var property = type.getProperty();
+                var profile = needsProfile ? profiles.computeIfAbsent(property.getPropertyId(), id -> {
+                    var approved = publishedProfile(property.getRegistration().getRegistrationDetails());
+                    var commune = approved == null ? null : approved.commune();
+                    return new RecommendationProperty(
+                            normalized(commune == null || commune.isBlank() ? property.getAddress() : commune),
+                            approved == null || approved.amenities() == null ? List.of() : approved.amenities());
+                }) : null;
+                var match = recommendationMatch(type, criteria, profile);
+                if (!match.matchedCriteria().isEmpty()) best.add(new RankedRoom(type, match));
+            }
+            best.sort(order);
+            if (best.size() > AccommodationRecommendationService.MAX_RESULTS) {
+                best.subList(AccommodationRecommendationService.MAX_RESULTS, best.size()).clear();
+            }
+            if (batch.size() < RECOMMENDATION_BATCH_SIZE) break;
+            previousId = batch.get(batch.size() - 1).getRoomTypeId();
+        }
+        var matches = best.stream().collect(Collectors.toMap(room -> room.type().getRoomTypeId(), RankedRoom::match));
+        return summaries(best.stream().map(RankedRoom::type).toList()).stream()
+                .filter(room -> room.availableRooms() > 0)
+                .map(room -> new AccommodationRecommendationService.Item(room, matches.get(room.roomTypeId()))).toList();
+    }
+
+    private record RankedRoom(RoomType type, AccommodationRecommendationService.Match match) {}
+    private record RecommendationProperty(String area, List<String> amenities) {}
+
+    private AccommodationRecommendationService.Match recommendationMatch(RoomType type,
+            AccommodationRecommendationService.Criteria criteria, RecommendationProperty profile) {
+        var checks = new LinkedHashMap<String, Boolean>();
+        if (criteria.hasLocation()) checks.put("location", profile.area().contains(normalized(LOCATIONS.get(criteria.location()))));
+        if (criteria.hasBudget()) checks.put("budget", (criteria.minBudget() == null || type.getPrice().compareTo(criteria.minBudget()) >= 0)
+                && (criteria.maxBudget() == null || type.getPrice().compareTo(criteria.maxBudget()) <= 0));
+        var roomAmenities = criteria.amenities().isEmpty() && !criteria.hasRoomType() ? List.<String>of() : roomAmenities(type);
+        if (criteria.hasRoomType()) {
+            var name = normalized(type.getRoomType());
+            checks.put("roomType", switch (criteria.roomType()) {
+                case "gac-lung" -> (" " + name + " ").contains(" gac ") || roomAmenities.contains("loft");
+                case "chung-cu-mini" -> name.contains("chung cu mini") || name.contains("studio");
+                default -> name.contains("khep kin") || roomAmenities.contains("privateBathroom");
+            });
+        }
+        if (criteria.minCapacity() != null) checks.put("capacity", type.getCapacity() != null && type.getCapacity() >= criteria.minCapacity());
+        if (criteria.minAreaSqm() != null) checks.put("area", Float.isFinite(type.getAreaSqm())
+                && new BigDecimal(type.getAreaSqm().toString()).compareTo(criteria.minAreaSqm()) >= 0);
+        for (String key : criteria.amenities()) {
+            checks.put(key, roomAmenities.contains(key) || sharedAmenity(key)
+                    && profile.amenities().contains("washingMachine".equals(key) ? "laundry" : key));
+        }
+        var matched = checks.keySet().stream().filter(checks::get).toList();
+        var unmatched = checks.keySet().stream().filter(key -> !checks.get(key)).toList();
+        var score = BigDecimal.valueOf(10L * matched.size()).divide(BigDecimal.valueOf(checks.size()), 1, RoundingMode.HALF_UP);
+        return new AccommodationRecommendationService.Match(score, matched, unmatched);
+    }
+
+    private static String normalized(String value) {
+        return Normalizer.normalize(Objects.toString(value, ""), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT).replace('đ', 'd');
+    }
+
+    private static boolean sharedAmenity(String key) {
+        return COMMON_AMENITIES.contains(key) || "washingMachine".equals(key);
+    }
+
+    private PropertyRegistrationRequest publishedProfile(String details) {
+        if (details == null) return null;
+        try {
+            return json.readValue(details, PropertyRegistrationRequest.class);
+        } catch (tools.jackson.core.JacksonException ignored) {
+            return null;
+        }
     }
 
     private Specification<RoomType> searchFilters(String q, String location, String price, String type,
@@ -145,26 +230,26 @@ public class AccommodationService {
 
     private List<String> roomAmenities(RoomType type) {
         if (type.getAmenitiesJson() == null) return List.of();
-        try { return Arrays.asList(json.readValue(type.getAmenitiesJson(), String[].class)); }
+        try {
+            var amenities = json.readValue(type.getAmenitiesJson(), String[].class);
+            return amenities == null ? List.of() : Arrays.asList(amenities);
+        }
         catch (tools.jackson.core.JacksonException ignored) { return List.of(); }
     }
 
     private Specification<RoomType> amenityFilter(String value) {
         Set<String> roomKeys = Set.of("airConditioner","waterHeater","washingMachine","balcony","refrigerator","kitchen");
-        Set<String> commonKeys = Set.of("elevator","fingerprint","camera","flexibleHours","fireSafety","separateOwner");
+        var commonKeys = COMMON_AMENITIES;
         var keys = value.isBlank() ? List.<String>of() : Arrays.asList(value.split(",",-1));
         if(keys.size()>12 || keys.stream().anyMatch(key -> !roomKeys.contains(key) && !commonKeys.contains(key)))
             throw new BadRequestException("Tiện nghi tìm kiếm không hợp lệ.");
         var commonMatches = new HashMap<String,List<Integer>>();
-        if(keys.stream().anyMatch(key -> commonKeys.contains(key) || "washingMachine".equals(key))) {
+        if(keys.stream().anyMatch(AccommodationService::sharedAmenity)) {
             for(var profile:properties.findPublicProfiles()) {
-                if(profile.getDetails()==null) continue;
-                try {
-                    var form=json.readValue(profile.getDetails(),PropertyRegistrationRequest.class);
-                    var declared=form.amenities()==null?List.<String>of():form.amenities();
-                    for(var key:keys) if(declared.contains("washingMachine".equals(key)?"laundry":key))
-                        commonMatches.computeIfAbsent(key,ignored -> new ArrayList<>()).add(profile.getPropertyId());
-                } catch (tools.jackson.core.JacksonException ignored) { /* No invented amenities for legacy records. */ }
+                var approved = publishedProfile(profile.getDetails());
+                var declared = approved == null || approved.amenities() == null ? List.<String>of() : approved.amenities();
+                for(var key:keys) if(declared.contains("washingMachine".equals(key)?"laundry":key))
+                    commonMatches.computeIfAbsent(key,ignored -> new ArrayList<>()).add(profile.getPropertyId());
             }
         }
         return (root,query,cb) -> {

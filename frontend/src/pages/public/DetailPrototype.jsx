@@ -30,7 +30,7 @@ export default function DetailPrototype({room,item,origin,isWishlisted,onSave,on
      <div className="rtd-upfront"><span>Tiền phòng + tiền cọc</span><strong>{room.estimateDisplay}</strong><small>Chưa gồm điện, nước và các phí khác.</small></div>
      <div className="rtd-contact-person"><span className="rtd-person-icon"><House size={19}/></span><div><strong>{room.hostInfo.name}</strong><span>{room.hostInfo.role}</span><small>{room.hostInfo.joined}</small></div></div>
      <div className="rtd-contact" id="host-contact"><MotionButton className="rtd-primary" id="btnOpenScheduleModal" onClick={onSchedule} disabled={scheduleDisabled}><CalendarDays size={18}/>{scheduleLabel}</MotionButton>{room.hostInfo.phone?<a href={`tel:${room.hostInfo.phone}`}><Phone size={18}/>Gọi chủ trọ: {room.hostInfo.phone}</a>:<p className="rtd-muted">Chưa cập nhật số điện thoại công khai.</p>}{room.hostInfo.zalo?<a href={`https://zalo.me/${room.hostInfo.zalo}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/>Nhắn Zalo</a>:<p className="rtd-muted">Chưa cập nhật Zalo.</p>}</div>
-     <MotionButton type="button" className="rtd-save-room" onClick={onSave} aria-pressed={isWishlisted} disabled={saveBusy} aria-busy={saveBusy}><Heart size={18} fill={isWishlisted?'currentColor':'none'}/>{saveBusy?'Đang xử lý...':isWishlisted?'Bỏ lưu phòng':'Lưu phòng'}</MotionButton>
+     <MotionButton type="button" className="rtd-save-room" onClick={onSave} aria-pressed={isWishlisted} disabled={saveBusy} aria-busy={saveBusy}><Heart size={18} fill={isWishlisted?'currentColor':'none'}/>{saveBusy?'Đang xử lý...':'Phòng yêu thích'}</MotionButton>
     </aside>
 </div><div className="rtd-primary-content">
    <div className="rtd-hero" id="room-type-details">

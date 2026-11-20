@@ -21,6 +21,24 @@ export const validAccommodation = item => item && [item.propertyId, item.roomTyp
   && (item.address == null || typeof item.address === 'string') && (item.imageUrl == null || typeof item.imageUrl === 'string')
   && (item.distanceKm == null || Number.isFinite(item.distanceKm) && item.distanceKm >= 0)
   && (item.availabilityStale == null || typeof item.availabilityStale === 'boolean');
+
+function validRecommendation(item, criteria) {
+  if (!validAccommodation(item) || item.availableRooms < 1) return false;
+  const match = item.match;
+  if (!Array.isArray(match?.matchedCriteria) || !Array.isArray(match.unmatchedCriteria) || !match.matchedCriteria.length) return false;
+  const expected = [
+    criteria.location !== 'all' && 'location',
+    (criteria.minBudget != null || criteria.maxBudget != null) && 'budget',
+    criteria.roomType !== 'all' && 'roomType',
+    criteria.minCapacity != null && 'capacity',
+    criteria.minAreaSqm != null && 'area',
+    ...criteria.amenities,
+  ].filter(Boolean);
+  const keys = new Set([...match.matchedCriteria, ...match.unmatchedCriteria]);
+  return match.matchedCriteria.length + match.unmatchedCriteria.length === expected.length
+    && keys.size === expected.length && expected.every(key => keys.has(key))
+    && match.score === Math.round(100 * match.matchedCriteria.length / expected.length) / 10;
+}
 export const accommodationApi = {
   async list(query, signal) {
     const data = await publicRequest(`/search?${query}`, signal);
@@ -49,15 +67,18 @@ export const accommodationApi = {
   async recommend(description, clarification, signal) {
     const data = await request('/recommendations', { basePath: '/api/properties', method: 'POST',
       body: { description, clarification }, signal });
-    const validItems = Array.isArray(data?.items) && data.items.length <= 6 && data.items.every(item =>
-      validAccommodation(item) && item.availableRooms > 0);
     const criteria = data?.criteria;
-    const validCriteria = criteria && typeof criteria.location === 'string' && Array.isArray(criteria.amenities)
+    const validCriteria = criteria && typeof criteria.location === 'string' && typeof criteria.roomType === 'string'
+      && Array.isArray(criteria.amenities)
       && criteria.amenities.every(key => typeof key === 'string')
+      && (criteria.minCapacity == null || Number.isInteger(criteria.minCapacity) && criteria.minCapacity > 0)
+      && (criteria.minAreaSqm == null || Number.isFinite(criteria.minAreaSqm) && criteria.minAreaSqm > 0)
       && [criteria.minBudget, criteria.maxBudget].every(value => value == null || Number.isFinite(value) && value >= 0);
-    if (!validItems || !(data.status === 'CLARIFY' && typeof data.question === 'string' && data.question.trim() && !data.items.length
+    if (!Array.isArray(data?.items) || data.items.length > 6
+        || !(data.status === 'CLARIFY' && typeof data.question === 'string' && data.question.trim() && !data.items.length
         || data.status === 'EMPTY' && validCriteria && !data.items.length
-        || data.status === 'RESULTS' && validCriteria && data.items.length)) {
+        || data.status === 'RESULTS' && validCriteria && data.items.length
+          && data.items.every(item => validRecommendation(item, criteria)))) {
       throw new ApiError('Dữ liệu gợi ý phòng không hợp lệ. Vui lòng thử lại.', 502);
     }
     return data;

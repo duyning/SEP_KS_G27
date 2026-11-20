@@ -10,7 +10,8 @@ const room = {
   distanceKm: 0.72, availabilityStale: true, availabilityConfirmationStatus: 'STALE',
   availabilityConfirmedAt: '2026-10-01T00:00:00Z', amenities: ['airConditioner'],
 };
-const criteria = { location: 'tan-xa', minBudget: null, maxBudget: 2500000, amenities: ['airConditioner'] };
+const criteria = { location: 'tan-xa', roomType: 'all', minBudget: null, maxBudget: 2500000,
+  amenities: ['airConditioner', 'balcony'] };
 const base = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
 
 async function check() {
@@ -41,7 +42,9 @@ async function check() {
         if (aiMode === 'error') return route.fulfill({ status: 504, json: { success: false, message: 'AI phản hồi quá chậm. Vui lòng thử lại.' } });
         if (aiMode === 'empty') return respond({ status: 'EMPTY', criteria, items: [] });
         assert.match(body.clarification, /2,5 triệu/);
-        return respond({ status: 'RESULTS', criteria, items: [room] });
+        return respond({ status: 'RESULTS', criteria, items: [{ ...room, match: {
+          score: 7.5, matchedCriteria: ['location', 'budget', 'airConditioner'], unmatchedCriteria: ['balcony'],
+        } }] });
       }
       if (url.pathname.endsWith('/details')) {
         lastDetail = url.searchParams;
@@ -123,6 +126,16 @@ async function check() {
     aiMode = 'results';
     await ai.getByRole('button', { name: 'Thử lại' }).click();
     await ai.getByRole('link', { name: 'Nhà trọ DEMO — Studio' }).waitFor();
+    await ai.getByText('7,5/10 phù hợp', { exact: true }).waitFor();
+    await ai.getByText('Khớp 3/4 tiêu chí:', { exact: true }).waitFor();
+    await ai.getByText(/Chưa khớp:.*Ban công/).waitFor();
+    for (const width of [375, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(await ai.evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth + 1), `AI dialog overflow at ${width}px`);
+    }
+    await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
+    assert.ok(await ai.getByText('7,5/10 phù hợp', { exact: true }).isVisible());
+    await page.evaluate(() => { document.documentElement.style.zoom = ''; });
     await ai.getByText(/Quá 7 ngày chưa xác nhận/).waitFor();
     aiMode = 'empty';
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã dưới 100 nghìn');

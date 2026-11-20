@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.hlrcs.service.GeminiAccommodationClient;
@@ -33,7 +34,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "spring.datasource.url=jdbc:h2:mem:hlrcs-favorites-isolated;MODE=MySQL;DB_CLOSE_DELAY=-1",
+        "spring.datasource.url=jdbc:h2:mem:hlrcs-accommodation-isolated;MODE=MySQL;DB_CLOSE_DELAY=-1",
         "spring.datasource.username=sa", "spring.datasource.password=", "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.hibernate.ddl-auto=create-drop"})
 @ActiveProfiles("test")
@@ -137,33 +138,71 @@ class AccommodationTests {
         return type;
     }
 
-    @Test void recommendationsClarifyAndReturnOnlyCurrentEligibleRooms() throws Exception {
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    void recommendationsClarifyAndReturnOnlyCurrentEligibleRooms() throws Exception {
         var eligible = located("21.01354");
+        var partialProperty = property("ACTIVE", RegistrationStatus.APPROVED);
+        partialProperty.setAddress("Đường Tân Xã, Thạch Hòa");
+        properties.save(partialProperty);
+        var partialRegistration = partialProperty.getRegistration();
+        partialRegistration.setRegistrationDetails("{\"commune\":\"Thạch Hòa\"}");
+        registrations.save(partialRegistration);
+        var partial = type(partialProperty, 2000000);
+        room(partial, "partial", "VACANT");
         var closed = type(property("ACTIVE", RegistrationStatus.APPROVED), 2345678);
         room(closed, "occupied", "OCCUPIED");
         var hidden = type(property("HIDDEN", RegistrationStatus.APPROVED), 2345678);
         room(hidden, "hidden", "VACANT");
         eligible.setPrice(BigDecimal.valueOf(2345678));
+        eligible.setCapacity(2);
+        eligible.setAmenitiesJson("[\"airConditioner\"]");
         eligible.setAvailabilityConfirmedAt(Instant.now().minus(8, ChronoUnit.DAYS));
         types.save(eligible);
+        var registration = eligible.getProperty().getRegistration();
+        registration.setRegistrationDetails("{\"amenities\":[\"laundry\"]}");
+        registrations.save(registration);
         var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).get(0);
+        var partialUnit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(partial.getRoomTypeId()).get(0);
         var member = users.save(User.builder().email(prefix + "-ai@test.local").passwordHash("unused")
                 .role(UserRole.USER).status(UserStatus.ACTIVE).build());
         var token = jwt.generateTokenFromUser(member);
         assertEquals(401, recommend(null).statusCode());
         when(gemini.generate(anyString(), any(), any())).thenReturn(json.readTree("{\"question\":\"Bạn có ngân sách bao nhiêu?\"}"));
         assertEquals("CLARIFY", json.readTree(recommend(token).body()).path("data").path("status").asText());
-        var criteria = json.readTree("{\"question\":\"\",\"minBudget\":2345678,\"maxBudget\":2345678,\"location\":\"tan-xa\",\"amenities\":[]}");
-        when(gemini.generate(anyString(), any(), any())).thenReturn(criteria,
-                json.readTree(json.writeValueAsString(Map.of("ids", List.of(hidden.getRoomTypeId(), closed.getRoomTypeId(), eligible.getRoomTypeId(), eligible.getRoomTypeId())))));
+        var criteria = json.readTree("""
+                {"question":"","minBudget":null,"maxBudget":2345678,"location":"tan-xa","roomType":"chung-cu-mini",
+                 "minCapacity":2,"minAreaSqm":25,"amenities":["airConditioner","washingMachine"]}
+                """);
+        when(gemini.generate(anyString(), any(), any())).thenReturn(criteria);
         var response = recommend(token);
         assertEquals(200, response.statusCode(), response.body());
         var items = json.readTree(response.body()).path("data").path("items");
-        assertEquals(1, items.size());
+        assertEquals(2, items.size());
         assertEquals(eligible.getRoomTypeId(), items.get(0).path("roomTypeId").asInt());
         assertTrue(items.get(0).path("availabilityStale").asBoolean());
+        var exactMatch = items.get(0).path("match");
+        assertEquals(10.0, exactMatch.path("score").asDouble());
+        assertEquals(7, exactMatch.path("matchedCriteria").size());
+        assertEquals(0, exactMatch.path("unmatchedCriteria").size());
+        assertEquals(partial.getRoomTypeId(), items.get(1).path("roomTypeId").asInt());
+        var partialMatch = items.get(1).path("match");
+        assertEquals(4.3, partialMatch.path("score").asDouble());
+        assertEquals(json.readTree("[\"budget\",\"roomType\",\"area\"]"), partialMatch.path("matchedCriteria"));
+        assertEquals(json.readTree("[\"location\",\"capacity\",\"airConditioner\",\"washingMachine\"]"),
+                partialMatch.path("unmatchedCriteria"));
+        when(gemini.generate(anyString(), any(), any())).thenReturn(json.readTree("""
+                {"question":"","minBudget":null,"maxBudget":null,"location":"all","roomType":"all",
+                 "minCapacity":null,"minAreaSqm":null,"amenities":["washingMachine"]}
+                """));
+        var amenityOnly = json.readTree(recommend(token).body()).path("data").path("items");
+        assertEquals(1, amenityOnly.size());
+        assertEquals(eligible.getRoomTypeId(), amenityOnly.get(0).path("roomTypeId").asInt());
+        assertEquals(10.0, amenityOnly.get(0).path("match").path("score").asDouble());
         unit.setStatus("OCCUPIED");
         rooms.save(unit);
+        partialUnit.setStatus("OCCUPIED");
+        rooms.save(partialUnit);
         when(gemini.generate(anyString(), any(), any())).thenReturn(criteria);
         assertEquals("EMPTY", json.readTree(recommend(token).body()).path("data").path("status").asText());
         when(gemini.generate(anyString(), any(), any())).thenThrow(new AppException("AI phản hồi quá chậm. Vui lòng thử lại.", HttpStatus.GATEWAY_TIMEOUT));

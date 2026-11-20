@@ -57,7 +57,9 @@ Ví dụ JSON cho một kết quả ở điểm gốc:
 
 ## Gợi ý phòng
 
-`POST /api/properties/recommendations` yêu cầu đăng nhập. Body gồm `description` và `clarification` tùy chọn, mỗi trường tối đa 1.200 ký tự. API trả `CLARIFY` kèm `question`, `EMPTY` hoặc `RESULTS`. AI chuẩn hóa ngân sách/tháng, khu vực và tiện nghi rồi xếp hạng tối đa 24 loại phòng đủ điều kiện do server cung cấp. Server kiểm tra ID, kiểm tra lại điều kiện công khai/còn trống và trả tối đa 6 loại phòng. Khi dịch vụ phản hồi quá chậm, API trả 504 để UI hiện thao tác thử lại.
+`POST /api/properties/recommendations` yêu cầu đăng nhập. Body gồm `description` và `clarification` tùy chọn, mỗi trường tối đa 1.200 ký tự. Gemini đọc mô tả và chuẩn hóa các tiêu chí người thuê đã nêu, gồm ngân sách/tháng, khu vực, loại phòng, sức chứa tối thiểu, diện tích tối thiểu và tiện nghi. API trả `CLARIFY` kèm `question`, `EMPTY` hoặc `RESULTS`. Nếu mô tả đã có tiêu chí có thể đối chiếu, người thuê có thể tìm ngay.
+
+Server đối chiếu tiêu chí với dữ liệu các loại phòng công khai còn chỗ. Mỗi tiêu chí có trọng số bằng nhau. Điểm bằng số tiêu chí khớp chia cho tổng số tiêu chí, nhân 10 và làm tròn một chữ số thập phân. Ví dụ, phòng khớp 3/4 tiêu chí đạt 7,5/10. API trả tối đa 6 loại phòng khớp ít nhất một tiêu chí, ưu tiên điểm cao, xác nhận còn trống gần đây, giá thuê thấp hơn và ID nhỏ hơn khi các điều kiện trước bằng nhau. Mỗi kết quả có thêm `match.score`, `match.matchedCriteria` và `match.unmatchedCriteria`. Khi Gemini phản hồi quá chậm, API trả 504 để UI hiện thao tác thử lại.
 
 Đặt `GEMINI_API_KEY` ở môi trường backend. Có thể đổi model bằng `ACCOMMODATION_AI_MODEL`. Giao diện gọi Gemini qua Spring Boot.
 

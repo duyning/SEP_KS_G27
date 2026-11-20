@@ -371,7 +371,7 @@ export default function BecomeHostPrototype({
               </li>
               <li>
                 <Link className="nav-item" to="/favorites">
-                  Đã lưu (<span className="menu-fav-count">0</span>)
+                  Phòng yêu thích (<span className="menu-fav-count">0</span>)
                 </Link>
               </li>
               <li>
@@ -1178,7 +1178,7 @@ export default function BecomeHostPrototype({
                 <Link to="/profile">Hồ sơ cá nhân</Link>
               </li>
               <li>
-                <Link to="/favorites">Nhà trọ đã lưu</Link>
+                <Link to="/favorites">Phòng yêu thích</Link>
               </li>
               <li>
                 <Link to="/search">Tìm kiếm phòng trọ</Link>

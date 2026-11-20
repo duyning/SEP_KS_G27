@@ -2,7 +2,7 @@ import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
 import {ChevronDown,X,UserRound} from 'lucide-react';
-const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Nhà trọ đã lưu',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
+const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Phòng yêu thích',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
 export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,accountMenuOpen,announcementOpen,account,onClick,onSubmit,onChange,alert}) {
 return <div className="prototype-home prototype-profile profile-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 
@@ -45,7 +45,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
         <ul id="navMenu" className={`nav-menu ${mobileOpen ? "show" : ""}`}>
           <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">0</span>)</Link></li>
+          <li><Link className="nav-item" to="/favorites">Phòng yêu thích (<span className="menu-fav-count">0</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
           <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
@@ -97,13 +97,13 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
 
         <div className="profile-header-stats">
-          <Link className="profile-stat-box" title="Xem danh sách nhà trọ đã lưu" to="/favorites">
+          <Link className="profile-stat-box" title="Xem danh sách phòng yêu thích" to="/favorites">
             <div className="profile-stat-icon fav">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
             </div>
             <div>
               <div className="profile-stat-num" id="headerFavCount">0</div>
-              <div className="profile-stat-label">Nhà trọ đã lưu</div>
+              <div className="profile-stat-label">Phòng yêu thích</div>
             </div>
           </Link>
 
@@ -159,7 +159,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <MotionButton type="button" data-tab="favorites" id="navBtnFavorites" className={`profile-nav-btn ${tab === "favorites" ? "active" : ""}`} aria-selected={tab === "favorites"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-                  <span>Nhà trọ đã lưu</span>
+                  <span>Phòng yêu thích</span>
                 </span>
                 <span className="profile-nav-badge" id="sidebarFavBadge">0</span>
               </MotionButton>
@@ -332,7 +332,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
             <div className="profile-card">
               <div className="profile-card-header">
                 <div className="profile-card-title-group">
-                  <h2>Nhà trọ đã lưu của bạn</h2>
+                  <h2>Phòng yêu thích của bạn</h2>
                   <p id="profileFavSummaryText">Xem lại và quản lý các phòng trọ bạn đã đánh dấu yêu thích.</p>
                 </div>
                 <Link className="btn-secondary" style={{"textDecoration": "none"}} to="/favorites">
@@ -532,7 +532,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
         <h4 className="footer-col-title">Tiện ích hệ thống</h4>
         <ul className="footer-links">
           <li><Link to="/profile">Hồ sơ cá nhân</Link></li>
-          <li><Link to="/favorites">Nhà trọ đã lưu</Link></li>
+          <li><Link to="/favorites">Phòng yêu thích</Link></li>
           <li><Link to="/search">Tìm kiếm phòng trọ</Link></li>
           <li><a href="index.html#host-section">Hợp tác cho thuê nhà trọ</a></li>
           <li><a href="index.html#features">Quy trình xác minh chính chủ</a></li>
