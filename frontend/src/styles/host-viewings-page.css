@@ -6,8 +6,6 @@
 .host-viewings-register { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding: 10px 24px; border-radius: 10px; color: white; background: #10b981; font-size: 14px; line-height: 1.5; font-weight: 700; text-decoration: none; }
 .host-viewings-register:hover { background: #059669; }
 .host-viewings-register:focus-visible { outline: 3px solid #0f766e; outline-offset: 4px; }
-.host-viewings-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
-.host-viewings-filters select, .host-viewings-filters input { border: 1px solid #dce4ef; background: #fff; border-radius: 6px; padding: 10px 12px; font: inherit; min-width: 0; max-width: 100%; color: #334155; }
 .host-viewings-route > .host-footer { margin-left: var(--p-sidebar-width); }
 @media (min-width: 1600px) {
   .host-viewings-state { max-width: 650px; margin-top: 64px; padding: 75px 30px; }
@@ -21,12 +19,9 @@
   .host-viewings-state { margin: 24px auto; padding: 40px 20px; border-radius: 14px; }
   .host-viewings-page .host-viewings-state h2 { font-size: 22px; }
   .host-viewings-register { width: 100%; }
-  .host-viewings-filters > select, .host-viewings-filters > input { flex: 1 1 140px; }
   .host-viewings-route > .host-footer { padding: 18px 16px; font-size: 11px; }
 }
 
-.host-viewings-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.host-viewings-group { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; min-width: 0; }
 .host-viewings-table-scroll { overflow-x: auto; }
 .host-viewings-table { width: 100%; min-width: 520px; border-collapse: collapse; text-align: start; }
 .host-viewings-table :is(th, td) { padding: 8px 12px; text-align: start; border-top: 1px solid #e2e8f0; overflow-wrap: anywhere; }
@@ -44,35 +39,88 @@
   .host-viewings-table :is(th, td):last-child { position: sticky; right: 0; background: #fff; }
   .host-viewings-table th:last-child { background: #f8fafc; }
 }
-.host-viewings-pending-count {
-  background: #fffbeb;
-  color: #854d0e;
-  border: 1px solid #fde68a;
-  border-radius: 20px;
-  padding: 3px 9px;
-  font-size: .75rem;
+.host-calendar-layout { display: grid; gap: 16px; min-width: 0; }
+.host-calendar-panel {
+  min-width: 0;
+  padding: clamp(12px, 2vw, 20px);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px #0f172a08;
 }
-
-.host-viewings-portfolio .hp-portfolio-heading h2 {
-  margin: 0 0 6px;
+.host-calendar-heading, .host-calendar-month, .host-calendar-legend,
+.host-calendar-filters, .host-calendar-batch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.host-calendar-heading { margin-bottom: 12px; }
+.host-calendar-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.125rem; }
+.host-calendar-heading h2 svg { color: #0f766e; flex-shrink: 0; }
+.host-calendar-month { margin-inline-start: auto; }
+.host-calendar-legend { padding: 0; margin: 0 0 12px; list-style: none; font-size: .8125rem; color: #334155; }
+.host-calendar-legend li { display: flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.host-calendar-dot { display: inline-block; inline-size: 7px; block-size: 7px; border-radius: 50%; flex-shrink: 0; }
+.host-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  background: #e2e8f0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.host-calendar-weekday { text-align: center; padding: 8px 2px; background: #ecfdf5; color: #134e4a; font-size: .8125rem; font-weight: 700; }
+.host-calendar-weekday abbr { display: none; text-decoration: none; }
+.host-calendar-grid button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 0;
+  background: #fff;
   color: #0f172a;
-  font-size: clamp(1.5rem, 3vw, 1.75rem);
-  font-weight: 800;
-  overflow-wrap: anywhere;
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
 }
-.host-viewings-portfolio .hp-portfolio-heading p { margin: 0; }
-.host-viewings-portfolio .hp-portfolio-heading .hp-button,
-.host-viewings-portfolio .hp-card-actions .hp-button { min-height: 44px; }
-.host-viewings-portfolio .hp-property-card h3 {
-  font-size: 1rem;
-  font-weight: 750;
-  margin: 0 0 7px;
+.host-calendar-grid button.outside { color: #64748b; background: #f8fafc; }
+.host-calendar-grid button[aria-current="date"] { font-weight: 800; text-decoration: underline; }
+.host-calendar-grid button:hover, .host-calendar-grid button[aria-pressed="true"] { background: #f0fdfa; }
+.host-calendar-grid button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #0f766e; border-radius: 5px; color: #134e4a; font-weight: 750; }
+.host-calendar-grid button:focus-visible { outline: 2px solid #0f766e; outline-offset: -3px; }
+.host-calendar-markers { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.host-calendar-date { padding: 5px 10px; border-radius: 999px; background: #ccfbf1; color: #115e59; font-size: .8125rem; }
+.host-calendar-heading > .p-button { margin-inline-start: auto; }
+.host-calendar-filters, .host-calendar-batch { align-items: end; margin-block: 12px; }
+.host-calendar-filters label, .host-calendar-batch label { display: grid; gap: 4px; min-width: 0; font-size: .875rem; color: #334155; }
+.host-calendar-search { flex: 1 1 200px; }
+.host-calendar-search > span { display: flex; align-items: center; gap: 6px; }
+.host-calendar-search input { width: 100%; }
+.host-calendar-panel :is(select, input[type="search"], input[type="time"]) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
 }
-.host-viewings-portfolio .hp-portfolio-toolbar input[type="date"] { max-width: 100%; }
-.host-viewings-portfolio .hp-portfolio-toolbar select { min-height: 42px; }
-.host-viewings-portfolio .host-viewings-empty { margin-bottom: 12px; }
-.host-viewings-property-toolbar > .hp-portfolio-search { flex: 1 1 240px; }
-.host-viewings-property-toolbar > select { width: auto; flex: 0 1 225px; }
+.host-calendar-batch { padding: 10px; background: #f8fafc; border-radius: 8px; }
+.host-calendar-review-list { max-height: 12rem; overflow-y: auto; padding-inline-start: 1.5rem; }
+.host-calendar-panel .host-viewings-table { min-width: 650px; }
+.host-calendar-panel .host-viewings-table th { background: #ecfdf5; }
+.host-calendar-panel input[type="checkbox"] { inline-size: 18px; block-size: 18px; accent-color: #0f766e; }
 @media (max-width: 600px) {
-  .host-viewings-property-toolbar > select { flex: 1 1 160px; }
+  .host-calendar-month { margin-inline-start: 0; }
+  .host-calendar-weekday > span { display: none; }
+  .host-calendar-weekday abbr { display: inline; }
+  .host-calendar-grid button { flex-direction: column; justify-content: center; padding: 4px 2px; font-size: .8125rem; }
+  .host-calendar-dot { inline-size: 5px; block-size: 5px; }
+  .host-calendar-markers { justify-content: center; gap: 2px; }
 }

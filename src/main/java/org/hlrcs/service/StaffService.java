@@ -17,6 +17,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class StaffService {
+    private final NoticeService notices;
     private final AuthService auth;
     private final UserRepository users;
     private final PropertyRegistrationRepository registrations;
@@ -153,6 +154,8 @@ public class StaffService {
         registration.setReviewedAt(LocalDateTime.now());
         registration.setReasonNote(reason.isBlank() ? "Hồ sơ đã được phê duyệt." : reason);
         registrations.saveAndFlush(registration);
+        String noticeTarget = registration.isHostOnboarding() ? "/become-host" : "/host/property/edit?registrationId="+id;
+        notices.send(registration.getUser(),"APPLICATION",registration.getStatus().name(),registration.getName(),registration.getReasonNote(),null,noticeTarget,id,null,null);
         logs.saveAndFlush(ModerationLog.builder().staff(reviewer).targetType("PROPERTY_REGISTRATION").targetId(id)
                 .action(supplement ? "REQUESTED_SUPPLEMENT" : approve ? "APPROVED" : "REJECTED").note(registration.getReasonNote()).build());
         return detail(id);

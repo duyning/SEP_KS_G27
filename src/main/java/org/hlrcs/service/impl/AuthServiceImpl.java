@@ -15,6 +15,7 @@ import org.hlrcs.entity.enums.UserRole;
 import org.hlrcs.entity.enums.UserStatus;
 import org.hlrcs.exception.AppException;
 import org.hlrcs.exception.BadRequestException;
+import org.hlrcs.exception.FieldValidationException;
 import org.hlrcs.exception.ResourceNotFoundException;
 import org.hlrcs.repository.UserCapabilityRepository;
 import org.hlrcs.repository.UserRepository;
@@ -23,6 +24,8 @@ import org.hlrcs.security.GoogleTokenVerifier;
 import org.hlrcs.security.GoogleUserInfo;
 import org.hlrcs.security.JwtTokenProvider;
 import org.hlrcs.service.AuthService;
+import org.hlrcs.service.RegistrationContact;
+import org.hlrcs.service.RegistrationOtpService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +36,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -48,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider tokenProvider;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final org.hlrcs.service.PhoneVerificationService phoneVerification;
+    private final RegistrationOtpService registrationOtp;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
@@ -55,7 +60,8 @@ public class AuthServiceImpl implements AuthService {
                            AuthenticationManager authenticationManager,
                            JwtTokenProvider tokenProvider,
                            GoogleTokenVerifier googleTokenVerifier,
-                           org.hlrcs.service.PhoneVerificationService phoneVerification) {
+                           org.hlrcs.service.PhoneVerificationService phoneVerification,
+                           RegistrationOtpService registrationOtp) {
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
@@ -63,38 +69,42 @@ public class AuthServiceImpl implements AuthService {
         this.tokenProvider = tokenProvider;
         this.googleTokenVerifier = googleTokenVerifier;
         this.phoneVerification = phoneVerification;
+        this.registrationOtp = registrationOtp;
     }
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email đã được sử dụng: " + request.getEmail());
+        boolean hasEmail = request.getEmail() != null && !request.getEmail().isBlank();
+        boolean hasPhone = request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank();
+        if (hasEmail == hasPhone) {
+            throw new FieldValidationException("identifier", "Vui lòng cung cấp một email hoặc một số điện thoại.");
         }
-
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-                throw new BadRequestException("Số điện thoại đã được sử dụng: " + request.getPhoneNumber());
-            }
+        RegistrationContact contact = RegistrationContact.parse(hasPhone ? request.getPhoneNumber() : request.getEmail());
+        if (contact.phone() != hasPhone) {
+            throw new FieldValidationException("identifier", "Email hoặc số điện thoại không hợp lệ.");
         }
-
-        // Mặc định role là USER nếu không chỉ định, chỉ cho phép tự đăng ký USER hoặc ROOM_HOST
-        UserRole assignedRole = request.getRole() != null ? request.getRole() : UserRole.USER;
-        if (assignedRole == UserRole.ADMIN || assignedRole == UserRole.STAFF) {
-            assignedRole = UserRole.USER;
+        if (request.getPassword().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new FieldValidationException("password", "Mật khẩu vượt quá 72 byte.");
         }
+        registrationOtp.consume(contact, request.getVerificationToken());
 
         User user = User.builder()
-                .email(request.getEmail().trim().toLowerCase())
+                .email(contact.accountEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
-                .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
-                .role(assignedRole)
+                .phoneNumber(contact.phone() ? contact.identifier() : null)
+                .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .authProvider("LOCAL")
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser;
+        try {
+            savedUser = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new AppException("Email hoặc số điện thoại đã được sử dụng.", HttpStatus.CONFLICT);
+        }
 
         String token = tokenProvider.generateTokenFromUser(savedUser);
 
@@ -296,7 +306,7 @@ public class AuthServiceImpl implements AuthService {
             } else if (!newPhone.equals(org.hlrcs.service.PhoneVerificationService.normalize(user.getPhoneNumber()))) {
                 user.setPhoneVerifiedAt(null);
             }
-            if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumber(newPhone)) {
+            if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberInAndUserIdNot(RegistrationContact.parse(newPhone).phoneVariants(),user.getUserId())) {
                 throw new BadRequestException("Số điện thoại này đã được sử dụng bởi tài khoản khác: " + newPhone);
             }
             user.setPhoneNumber(newPhone);

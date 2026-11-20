@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 @Service @RequiredArgsConstructor
 public class HostApplicationService {
+ private final NoticeService notices;
  private final AuthService auth;
  private final UserRepository users;
  private final HostApplicationRepository applications;
@@ -109,6 +110,7 @@ public class HostApplicationService {
   a.setStatus(input.decision());a.setReviewerNote(input.note()==null?null:input.note().strip());a.setReviewedBy(reviewer);a.setReviewedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setAllowResubmit(!input.decision().equals("APPROVED")&&!Boolean.FALSE.equals(input.allowResubmit()));
   if(input.decision().equals("APPROVED")){owner.setRole(UserRole.ROOM_HOST);users.save(owner);}
   logs.save(ModerationLog.builder().staff(reviewer).targetType("HOST_APPLICATION").targetId(id).action(input.decision()).note(a.getReviewerNote()).build());
+  notices.send(a.getUser(),"APPLICATION",a.getStatus().equals("NEEDS_CHANGES")?"NEEDS_SUPPLEMENT":a.getStatus(),"Đăng ký chủ trọ",a.getReviewerNote(),null,"/become-host",id,null,null);
   return view(applications.saveAndFlush(a));
  }
 }

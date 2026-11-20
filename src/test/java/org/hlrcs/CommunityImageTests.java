@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {"spring.datasource.url=jdbc:h2:mem:community-image-test;MODE=MySQL;DB_CLOSE_DELAY=-1", "spring.jpa.show-sql=false"})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CommunityImageTests {
+class CommunityImageTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired PostRepository posts;
@@ -48,8 +48,9 @@ class CommunityImageTests {
     }
 
     private String register() throws Exception {
-        return call("POST", "/api/auth/register", Map.of("email", "image-" + UUID.randomUUID() + "@hlrcs.test",
-                "password", "Password@123", "fullName", "Image Author"), null, 201).path("accessToken").asString();
+        String email = "image-" + UUID.randomUUID() + "@hlrcs.test";
+        return call("POST", "/api/auth/register", Map.of("email", email,
+                "password", "Password@123", "fullName", "Image Author", "verificationToken", verifyContact(email)), null, 201).path("accessToken").asString();
     }
 
     private Map<String, Object> details() {

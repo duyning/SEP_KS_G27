@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:community-report-test;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CommunityReportTests {
+class CommunityReportTests extends RegistrationOtpTestSupport {
     private static final String PUBLIC = "/api/community/posts";
     private static final String ADMIN = "/api/admin/community/reports";
     private static final String MINE = "/api/community/reports/mine";
@@ -240,7 +240,8 @@ class CommunityReportTests {
     }
 
     private String register() throws Exception {
-        return api("POST", "/api/auth/register", null, Map.of("email", "report-" + UUID.randomUUID() + "@hlrcs.test",
+        String email="report-" + UUID.randomUUID() + "@hlrcs.test";
+        return api("POST", "/api/auth/register", null, Map.of("email",email,"verificationToken",verifyContact(email),
                 "password", "Password@123", "fullName", "Community Member"), 201).path("accessToken").asString();
     }
 

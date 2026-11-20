@@ -1,8 +1,30 @@
-# Final integration checkpoint — 2026-11-20
+# Final integration report — 2026-11-20
 
 Branch: `integration/final-merge`, created from `origin/main` (`7e6ad876`).
 Approved feature branches: DuongND, DungDT, NingDD, MaiNTT, VietNV.
 Main and the remote feature branches have not been modified.
+
+
+## Final validation
+
+All five approved remote snapshots are integrated in the approved order using --no-ff on integration/final-merge. Main remains 7e6ad876; no force, no push, no stash pop.
+
+| Merge order | Remote tip | Conflicted files |
+| --- | --- | ---: |
+| DuongND | 3038405c | 0 |
+| DungDT | f7bd2f6c | 76 |
+| NingDD | 4fac7f0c | 11 |
+| MaiNTT | 9325b949 | 37 |
+| VietNV | 4aea39ea | 13 |
+
+Final checks:
+
+- Frontend: 260/260 tests passed; Vite production build passed. No frontend lint script configured. Existing bundle-size warning remains.
+- Backend: full suite 265 tests, 264 passed, zero failures/errors, 1 intentional PropertyDescriptionLiveTests skip requiring an external AI key. Maven package succeeded and produced target/HL-RCS-0.0.1-SNAPSHOT.jar.
+- Mobile: 88/88 tests passed; lint and strict TypeScript typecheck passed. No native/device release build performed.
+- Python scraper: 7/7 offline tests passed. No Facebook browser/session used for validation.
+- Actual conflict-marker scan and git diff --check clear; every conflicted file and semantic resolution is recorded below.
+- No live MySQL migration or external SMTP/Zalo/Google/AI-provider smoke test performed. Backend tests use isolated H2.
 
 ## Safety backups
 
@@ -17,7 +39,7 @@ Main and the remote feature branches have not been modified.
 2. **origin/DungDT** (`f7bd2f6c`): merged with `--no-ff`; 76 overlapping files reconciled.
 3. **origin/NingDD** (`4fac7f0c`): foundational availability, reverification, maps/onboarding/mobile integrated before the dependent AI/search branch.
 4. **origin/MaiNTT** (`9325b949`): AI recommendations, assistant, origin/distance search integrated with prior inventory/onboarding.
-5. origin/VietNV (`4aea39ea`): not merged yet.
+5. **origin/VietNV** (`4aea39ea`): realtime viewing deadlines/calendar/batch decisions, notification center, collected posts and registration OTP integrated.
 
 `origin/DuongND-service-ui` is already an ancestor of origin/main and does not need a separate merge.
 
@@ -41,7 +63,7 @@ Main and the remote feature branches have not been modified.
 
 ## Resume
 
-Backend integration tests with local loopback access are authorized. Continue the remaining branches in order. Inspect overlapping files and resolve both sides' business logic at each merge; regenerate conflicting lockfiles from the combined package.json. Run build/tests/conflict scan after each branch and record results here. No force push, no merge into main, and no automatic publication of this integration branch.
+Backend integration tests with local loopback access are authorized. This report records the individual merge checkpoints below. No force push, no merge into main, and no automatic publication of this integration branch.
 
 ## Validation and conflict resolution after DungDT
 
@@ -217,3 +239,31 @@ Conflicted files:
 - `src/test/java/org/hlrcs/AvailabilityConfirmationTests.java`
 - `src/test/java/org/hlrcs/HostDashboardTests.java`
 - Validation: web 247/247 tests and production build passed. Backend full run: 248 discovered, 1 conditional live-provider skip; final AI fixture selected an occupied seed instead of its vacant unit. After correcting that selector, all 14 AccommodationTests passed. Combined current suite: 247 passing / 1 intentional skip, zero remaining failures. Shared UI imports and conflict-marker scan clear.
+
+
+## VietNV conflict resolution
+
+- AuthServiceImpl keeps both authenticated phone verification and anonymous registration OTP services, normalizes phone numbers and rejects equivalent phone variants owned by another account. Google new-account role remains USER. SecurityConfig preserves authenticated phone endpoints before auth wildcards and adds only the public collected-post GET.
+- Navigation combines reporting/admin/service complaints with public/staff collected posts. PageTitleContext, combined-onboarding redirect, host shortcuts, avatar and banner retained. NotificationBell replaces the static bell with realtime unread counts.
+- AuthPage combines the OTP form/state/expiry/accessibility flow with shared labels and existing motion. Public booking and notification pages adopt the newer complete workflows with shared Button/Field controls. Host calendar keeps free-time filters, atomic batch decisions, deadline validation, inventory checks and realtime subscription.
+- AccommodationDetailPage preserves origin-aware back/navigation plus realtime pending updates and modal schedule snapshots. HostPropertyEditForm retains api/onboarding props while exporting Editor for inline notification supplementation.
+- StaffService notification target is /become-host for combined onboarding while role is still USER; other property supplements use the existing host editor. Added an integration regression asserting supplement notice target and unchanged USER role.
+- Community report test registrations now verify OTP using the same offline sender support as other community tests. Newly added viewing fixtures explicitly publish the vacant room required for approval; no production validation relaxed.
+- application.properties combines existing phone/map/AI configuration with registration SMTP/Zalo settings; local config imports stay disabled for the test profile. Ignore rules combined.
+- Web: 260/260 tests and production build passed. Scraper: 7/7 offline tests passed without opening Facebook. Final full H2 validation recorded below.
+
+Conflicted files:
+
+- `.gitignore`
+- `frontend/src/components/detail/DetailPrototypeShell.jsx`
+- `frontend/src/layouts/PortalLayout.jsx`
+- `frontend/src/pages/AuthPage.jsx`
+- `frontend/src/pages/PortalScreens.jsx`
+- `frontend/src/pages/host/HostPropertyEditForm.jsx`
+- `frontend/src/pages/host/HostViewingRequestsPage.jsx`
+- `frontend/src/pages/public/AccommodationDetailPage.jsx`
+- `frontend/src/pages/public/BookingsPage.jsx`
+- `frontend/src/pages/public/NotificationsPage.jsx`
+- `src/main/java/org/hlrcs/configuration/SecurityConfig.java`
+- `src/main/java/org/hlrcs/service/impl/AuthServiceImpl.java`
+- `src/main/resources/application.properties`

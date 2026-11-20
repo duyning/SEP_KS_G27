@@ -1,5 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import CollectedPostsPage from './public/CollectedPostsPage.jsx';
+import StaffCollectedPostsPage from './staff/StaffCollectedPostsPage.jsx';
 
 // Public Pages
 import HomePage from './public/HomePage.jsx';
@@ -46,6 +48,8 @@ export default function PortalScreens({ screen }) {
   }
 
   switch (screen.path) {
+    case '/collected-posts': return <CollectedPostsPage />;
+    case '/staff/collected-posts': return <StaffCollectedPostsPage />;
     case '/staff/host-registrations': return <Navigate to="/staff/verifications" replace />;
     case '/staff/host-registrations/detail': return <StaffHostRegistrationDetailPage />;
     // Public & Member Routes

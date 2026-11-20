@@ -14,6 +14,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class ServiceReviewService {
+    private final NoticeService notices;
     private final AuthService auth;
     private final UserRepository users;
     private final ServiceRegistrationRepository registrations;
@@ -128,6 +129,7 @@ public class ServiceReviewService {
         files.forEach(f -> f.setVerificationStatus(approveCapability ? "APPROVED" : "REJECTED"));
         registrations.saveAndFlush(row);
         audit(row, approveCapability ? "APPROVED" : "REJECTED", "Capability: " + capabilityDecision + "; Listing: " + listingDecision + ". " + note);
+        notices.send(row.getUser(),"APPLICATION",row.getStatus().name(),row.getServiceName(),note,null,"/services",id,null,null);
         return detail(id);
     }
 
@@ -145,6 +147,7 @@ public class ServiceReviewService {
         row.setReviewedAt(LocalDateTime.now()); row.setReasonNote(note); row.setRevision(row.getRevision() + 1);
         registrations.saveAndFlush(row);
         audit(row, "REQUESTED_SUPPLEMENT", "Revision " + row.getRevision() + ": " + note);
+        notices.send(row.getUser(),"APPLICATION","NEEDS_SUPPLEMENT",row.getServiceName(),note,null,"/services",id,null,null);
         return detail(id);
     }
 }

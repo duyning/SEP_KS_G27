@@ -55,7 +55,10 @@ frontend/.vite/
 node_modules/
 frontend/migration/design-system-check/
 frontend/migration/service-request-check/
-
 # Intermediate diagram generation files
 docs/class-diagram-demo/*.xml
 docs/class-diagram-demo/manifest.json
+scraper-python/.venv/
+scraper-python/__pycache__/
+scraper-python/data/
+scraper-python/.env

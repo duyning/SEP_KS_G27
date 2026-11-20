@@ -50,6 +50,7 @@ export default function PublicNavbar({ savedCount = 0 }) {
             <li><NavLink to="/bookings" className="nav-item" onClick={() => setMobileOpen(false)}>Lịch xem phòng</NavLink></li>
             <li><NavLink to="/services" className="nav-item" onClick={() => setMobileOpen(false)}>Dịch vụ</NavLink></li>
             <li><NavLink to="/community" className="nav-item" onClick={() => setMobileOpen(false)}>Cộng đồng</NavLink></li>
+            <li><NavLink to="/collected-posts" className="nav-item" onClick={() => setMobileOpen(false)}>Bài tổng hợp</NavLink></li>
             {user && (
               <li><NavLink to="/profile" className="nav-item" onClick={() => setMobileOpen(false)}>Hồ sơ cá nhân</NavLink></li>
             )}

@@ -18,7 +18,7 @@ import '../styles/host-header.css';
 
 const hostFooterTitles = { '/host/property': 'Quản lý nhà trọ', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
-const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Phòng yêu thích', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare]];
+const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Đã lưu', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare], ['Bài tổng hợp', '/collected-posts', Globe]];
 const menus = {
   host: [
     ['TỔNG QUAN', [['Bảng điều khiển', '/host', LayoutDashboard]]],
@@ -37,12 +37,12 @@ const menus = {
       ['Xem trang khách thuê', '/', Globe]
     ]]
   ],
-  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
+  staff: [['TỔNG QUAN', [['Bảng điều khiển', '/staff', LayoutDashboard]]], ['XÁC MINH & KIỂM DUYỆT', [['Xác minh đăng ký chủ trọ', '/staff/host-registrations', UserRound], ['Xác minh nhà trọ', '/staff/verifications', House], ['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag], ['Kiểm duyệt tin đăng', '/staff?view=content-moderation', Flag], ['Kiểm duyệt cộng đồng', '/staff/community', Users], ['Bài đăng tổng hợp', '/staff/collected-posts', Globe], ['Xác minh đánh giá', '/staff?view=feedback-verification', Star], ['Yêu cầu hỗ trợ', '/staff/assistance', MessagesSquare]]], ['HỆ THỐNG & NHẬT KÝ', [['Lịch sử kiểm duyệt', '/staff?view=history', History]]]],
   admin: [
     ['TỔNG QUAN', [adminDashboardViews.overview, adminDashboardViews.accounts]],
     ['ĐIỀU PHỐI', [adminDashboardViews.assignment, adminReportsLink]],
     ['HỆ THỐNG', [adminDashboardViews.activity]],
-    ['CỔNG NHÂN VIÊN', [['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag]]],
+    ['CỔNG NHÂN VIÊN', [['Bài đăng tổng hợp', '/staff/collected-posts', Globe],['Hồ sơ dịch vụ', '/staff/service-applications', Wrench], ['Báo cáo dịch vụ', '/staff/service-complaints', Flag]]],
   ],
 };
 const adminLinks = menus.admin.flatMap(([, links]) => links).filter(([, to]) => to.startsWith('/admin'));
@@ -264,7 +264,7 @@ export default function PortalLayout({ screen, children }) {
     </MotionButton>
   );
 
-  if (portal === 'public' && ['/', '/favorites', '/favorites/compare', '/profile', '/become-host', '/properties/detail', '/search', '/bookings', '/map', '/community', '/services', '/services/detail'].includes(location.pathname)) return <PageTitleContext.Provider value={setPageTitle}>{children}</PageTitleContext.Provider>;
+  if (portal === 'public' && ['/', '/notifications', '/collected-posts', '/favorites', '/favorites/compare', '/profile', '/become-host', '/properties/detail', '/search', '/bookings', '/map', '/community', '/services', '/services/detail'].includes(location.pathname)) return <PageTitleContext.Provider value={setPageTitle}>{children}</PageTitleContext.Provider>;
 
   return (
     <div className={`portal-app ${portal}-portal ${portal === 'host' && ['/host', '/host/property', '/host/property/new', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'host-workspace' : ''} ${location.pathname==='/'?'home-route':''} ${screen.path === '/host' ? 'host-dashboard-route' : ''} ${screen.path === '/host/property' ? 'host-property-route' : ''} ${screen.path === '/host/room-types' ? 'host-room-types-route' : ''} ${screen.path === '/host/rooms' ? 'host-rooms-route' : ''} ${screen.path === '/host/viewings' ? 'host-viewings-route' : ''} ${screen.path === '/host/property/new' ? 'host-property-create-route' : ''}`}>

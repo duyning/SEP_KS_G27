@@ -8,6 +8,10 @@ import org.hlrcs.dto.response.ApiResponse;
 import org.hlrcs.dto.response.ViewingResponses.*;
 import org.hlrcs.entity.enums.BookingStatus;
 import org.hlrcs.service.ViewingService;
+import org.hlrcs.service.ViewingUpdates;
+import org.hlrcs.service.AuthService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +20,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ViewingController {
     private final ViewingService service;
+    private final ViewingUpdates updates;
+    private final AuthService auth;
+
+    @GetMapping(value = "/updates", produces = "text/event-stream")
+    public SseEmitter updates(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Accel-Buffering", "no");
+        return updates.subscribe(auth.getCurrentUser().getUserId());
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ROOM_HOST')")
@@ -26,8 +39,10 @@ public class ViewingController {
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ROOM_HOST')")
     public ApiResponse<ViewingPage> list(@RequestParam(required = false) BookingStatus status,
-                                         @RequestParam(defaultValue = "0") int page) {
-        return ApiResponse.success(service.list(status, page));
+                                         @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "") String q,
+                                         @RequestParam(defaultValue = "newest") String sort) {
+        return ApiResponse.success(service.list(status, page, q, sort));
     }
 
     @GetMapping("/pending")
