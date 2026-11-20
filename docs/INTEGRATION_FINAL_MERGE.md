@@ -27,8 +27,8 @@ Main and the remote feature branches have not been modified.
 - Frontend tests: **212 passed / 212**.
 - Frontend Vite production build: **passed**; existing large-chunk warning remains.
 - No frontend lint script is configured in package.json.
-- Backend main/test source compilation succeeded. Full backend tests could not complete successfully inside the sandbox: PropertyLocationService's Java HTTP client initialization requires a loopback connection and fails with `Permission denied: connect`. Request to execute backend tests outside the sandbox was declined. The in-sandbox test run was stopped after confirming the repeated environment failure.
-- Remaining merges are deliberately paused because the requested workflow requires resolving errors before the next branch.
+- Backend: **179 passed / 179**, no skipped tests, after the user authorized execution outside the sandbox. H2 only; the earlier loopback restriction is resolved for validation.
+- First checkpoint now satisfies build/test/conflict checks. Continuing the remaining approved branches.
 
 ## Compatibility fixes made before the next merge
 
@@ -41,4 +41,4 @@ Main and the remote feature branches have not been modified.
 
 ## Resume
 
-Obtain authorization for backend integration tests with local loopback access, rerun the full backend tests on this checkpoint, fix any real failures, then continue the remaining branches in order. Inspect overlapping files and resolve both sides' business logic at each merge; regenerate conflicting lockfiles from the combined package.json. Run build/tests/conflict scan after each branch and record results here. No force push, no merge into main, and no automatic publication of this integration branch.
+Backend integration tests with local loopback access are authorized. Continue the remaining branches in order. Inspect overlapping files and resolve both sides' business logic at each merge; regenerate conflicting lockfiles from the combined package.json. Run build/tests/conflict scan after each branch and record results here. No force push, no merge into main, and no automatic publication of this integration branch.
