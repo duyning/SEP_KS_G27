@@ -1149,17 +1149,17 @@ export default function BecomeHostPrototype({
               hành nhà trọ tại Đô thị vệ tinh Hòa Lạc.
             </p>
             <div className="footer-socials">
-              <a href="#" className="social-btn" aria-label="Facebook">
+              <span role="link" aria-disabled="true" className="social-btn" aria-label="Facebook">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                 </svg>
-              </a>
-              <a href="#" className="social-btn" aria-label="YouTube">
+              </span>
+              <span role="link" aria-disabled="true" className="social-btn" aria-label="YouTube">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" />
                   <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#0f172a" />
                 </svg>
-              </a>
+              </span>
             </div>
           </div>
 
@@ -1225,11 +1225,11 @@ export default function BecomeHostPrototype({
           <div className="container footer-bottom-inner">
             <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
             <div className="bottom-links">
-              <a href="#">Điều khoản sử dụng</a>
+              <span role="link" aria-disabled="true">Điều khoản sử dụng</span>
               <span className="dot">•</span>
-              <a href="#">Chính sách bảo mật</a>
+              <span role="link" aria-disabled="true">Chính sách bảo mật</span>
               <span className="dot">•</span>
-              <a href="#">Quy chế hoạt động</a>
+              <span role="link" aria-disabled="true">Quy chế hoạt động</span>
             </div>
           </div>
         </div>

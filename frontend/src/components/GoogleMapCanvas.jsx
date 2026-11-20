@@ -66,7 +66,12 @@ export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarker
       item.marker.position={lat:data.point[0],lng:data.point[1]};
       item.content.className=`nh-google-pin${data.price?' nh-google-price':''}${data.id===selectedKey?' is-selected':''}`;
       if(data.price)item.content.textContent=data.price;
-      else item.content.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-8h6v8"/></svg>';
+      else {
+        const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        for(const [key,value] of Object.entries({viewBox:'0 0 24 24',width:'20',height:'20',fill:'none',stroke:'currentColor','stroke-width':'2','aria-hidden':'true'}))icon.setAttribute(key,value);
+        for(const d of ['m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z','M9 21v-8h6v8']){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);icon.append(path);}
+        item.content.replaceChildren(icon);
+      }
     }
   },[ready,failed,markers,selectedKey,onSelect]);
   useEffect(()=>{const r=runtime.current,p=latest.current.focusPoint;if(r&&focusRequest&&p){r.info?.close();r.map.setCenter({lat:p[0],lng:p[1]});r.map.setZoom(Math.max(15,r.map.getZoom()));}},[focusRequest,ready]);
