@@ -1,3 +1,4 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import ServiceRatings from './ServiceRatings.jsx';
 import ServiceComplaints, { ServiceReportForm } from './ServiceComplaints.jsx';
 import ServicePrice from './ServicePrice.jsx';
@@ -66,6 +67,7 @@ export default function ServicesCatalog({ detail = false }) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [detail, id, revision]);
+  useServiceLive(signal => detail ? api.detail(id, signal) : api.list(signal), data => { detail ? setRow(data) : setRows(data); setError(''); }, { identity: String(detail) + id, onError: err => { if (detail && err.status === 404) { setRow(null); setError(err.message); } } });
   const selectedCategory = String(categories.find(option => option.name === categoryAliases[category])?.categoryId || category);
   const areas = serviceAreaOptions(rows);
   const filteredRows = filterPublicServices(rows, { category: selectedCategory, area, query });

@@ -1,3 +1,4 @@
+import AdminServiceSummary from '../../components/AdminServiceSummary.jsx';
 import UIButton from '../../components/common/Button.jsx';
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -238,6 +239,7 @@ export default function AdminDashboardPage() {
         </UIButton>
       </div>
 
+      <AdminServiceSummary />
       {/* Navigation View Tabs */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', borderBottom: '1px solid #e2e8f0', paddingBottom: 'var(--space-3)', marginBottom: '20px' }}>
         {[

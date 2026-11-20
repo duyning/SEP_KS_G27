@@ -25,7 +25,7 @@ export default function ServiceCancellation({ application, onChanged, disabled =
       <p>Bạn muốn hủy hồ sơ <strong>{application.serviceName}</strong>? Hồ sơ sẽ ngừng chờ xét duyệt và được giữ trong lịch sử với trạng thái “Đã hủy”.</p>
       <p>{application.targetServiceId ? 'Dịch vụ đang công khai không thay đổi. Bạn có thể gửi yêu cầu mới sau khi hủy.' : 'Bạn có thể gửi hồ sơ mới sau khi hủy.'}</p>
       {error && <p role="alert" className="service-error">{error}</p>}
-      <div className="svc-actions"><UIButton type="button" className="svc-btn" disabled={busy} onClick={close}>{stale ? 'Tải lại hồ sơ' : 'Quay lại'}</UIButton><UIButton type="button" className="svc-btn svc-btn-danger" disabled={busy || stale} onClick={cancel}>{busy ? 'Đang hủy...' : 'Xác nhận hủy hồ sơ'}</UIButton></div>
+      <div className="svc-actions"><UIButton type="button" className="svc-btn" disabled={busy} onClick={close}>{stale ? 'Đóng' : 'Quay lại'}</UIButton><UIButton type="button" className="svc-btn svc-btn-danger" disabled={busy || stale} onClick={cancel}>{busy ? 'Đang hủy...' : 'Xác nhận hủy hồ sơ'}</UIButton></div>
     </Modal>}
   </>;
 }

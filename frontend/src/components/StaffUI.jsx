@@ -1,3 +1,4 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import UIButton from './common/Button.jsx';
 import StatusBadge from './common/StatusBadge.jsx';
 import { useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ export function useStaffLoad(type, id) {
       .catch(error => { if (!controller.signal.aborted) setState({ loading: false, data: null, error: error.message }); });
     return () => controller.abort();
   }, [type, id, revision, user?.userId]);
+  useServiceLive(signal => staffApi.dashboard(signal), data => setState(previous => ({ ...previous, data: { ...previous.data, queue: [...(previous.data?.queue || []).filter(item => !item.key?.startsWith('SERVICE-')), ...data.queue.filter(item => item.key?.startsWith('SERVICE-'))] } })), { enabled: type === 'dashboard' && !!state.data, identity: user?.userId });
   return { ...state, reload: () => setRevision(value => value + 1), replace: data => setState({ loading: false, error: '', data }) };
 }
 export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={state.error}><UIButton className="p-button" onClick={state.reload}>Thử lại</UIButton></StateView>; }

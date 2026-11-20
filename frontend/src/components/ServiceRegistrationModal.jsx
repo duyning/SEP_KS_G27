@@ -1,3 +1,4 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import ServicePrice from './ServicePrice.jsx';
 import ServiceCancellation from './ServiceCancellation.jsx';
 import { PRICE_UNITS, normalizePriceUnit, suggestedPriceUnit } from '../services/service-price.js';
@@ -9,7 +10,7 @@ import UIButton from './common/Button.jsx';
 import { serviceFileName } from '../services/service-form.js';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock3, Download, FileText, RefreshCw, X } from 'lucide-react';
+import { Clock3, Download, FileText, X } from 'lucide-react';
 import Modal from './common/Modal.jsx';
 import ServiceGallery from './ServiceGallery.jsx';
 import ServiceFormSelect from './ServiceFormSelect.jsx';
@@ -79,6 +80,18 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [user, reload, applicationId, createNew, editService]);
+  useServiceLive(signal => applicationId ? api.mine(signal).then(rows => ({ canRegister: false, reason: 'IN_REVIEW', registration: rows.find(row => row.registrationId === applicationId) })) : api.current(signal), fresh => {
+    if (fresh.registration?.status === 'NEEDS_SUPPLEMENT' && state?.registration?.status !== 'NEEDS_SUPPLEMENT') { setReload(v => v + 1); return; }
+    setState(fresh); setError('');
+  }, { enabled: !busy && !loading && !createNew && !editService && !!state?.registration && !supplement, identity: applicationId || user?.userId });
+  useEffect(() => {
+    if (loading || busy) return;
+    const timer = setTimeout(() => {
+      const errors = validateServiceRegistrationFields(form, [], { customUnit, image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories });
+      setFieldErrors(previous => Object.fromEntries(Object.entries(errors).filter(([key]) => previous[key] || (key === 'image' ? image.length : key === 'note' ? note.length : String(form[key] ?? '').length))));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [form, image, note, customUnit, loading, busy, supplement, editService, categories]);
   const close = () => { if (!busy) onClose(); };
   const update = e => {
     const { name, value } = e.target;
@@ -161,7 +174,7 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
         </UIButton>)}</div></div>}
         {row.status === 'PENDING' && <div className="svc-application-notice" role="status"><Clock3 size={18} aria-hidden="true" /><p>Hồ sơ đã được gửi và đang chờ xét duyệt. Bạn có thể theo dõi kết quả tại đây.</p></div>}
       </section>}
-      {row && <div className="svc-application-actions"><UIButton className="svc-btn" type="button" disabled={busy} onClick={() => setReload(value => value + 1)}><RefreshCw size={16} aria-hidden="true" />Cập nhật kết quả hồ sơ</UIButton><ServiceCancellation application={row} disabled={busy} onChanged={() => { setSubmitted(false); setReload(value => value + 1); }} /></div>}
+      {row && <div className="svc-application-actions"><ServiceCancellation application={row} disabled={busy} onChanged={() => { setSubmitted(false); setReload(value => value + 1); }} /></div>}
       {state && !state.canRegister && !supplement && row?.status !== 'PENDING' && <p className="svc-field-hint">{reasons[state.reason]}</p>}
       {(state?.canRegister || supplement) && <form noValidate aria-busy={busy} onBlur={event => validateField(event.target.name)} onSubmit={submit} style={{ display: 'grid', gap: 14 }}>
         {!supplement && <p style={{ margin: 0 }}>Gửi thông tin dịch vụ để đăng ký cung cấp dịch vụ. Hồ sơ sẽ được nhân viên xét duyệt.</p>}

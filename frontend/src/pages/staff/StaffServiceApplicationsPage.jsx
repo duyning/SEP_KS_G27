@@ -1,3 +1,4 @@
+import useServiceLive from '../../hooks/useServiceLive.js';
 import { StaffListPanel, StaffListFilters, StaffListStatus, StaffListOpen, StaffListTag } from '../../components/StaffServiceListUI.jsx';
 import ServicePrice from '../../components/ServicePrice.jsx';
 import Modal from '../../components/common/Modal.jsx';
@@ -13,7 +14,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { serviceReviewApi as api, validateServiceReview } from '../../services/service-review.js';
 import '../../styles/service-applications.css';
 import ServiceGallery from '../../components/ServiceGallery.jsx';
-import { Download, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle, RefreshCw } from 'lucide-react';
+import { Download, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle } from 'lucide-react';
 
 const status = { PENDING: 'Chờ xét duyệt', APPROVED: 'Đã xét duyệt', REJECTED: 'Đã từ chối', NEEDS_SUPPLEMENT: 'Cần bổ sung', CANCELLED: 'Đã hủy' };
 const statusFilters = ['ALL', 'APPROVED', 'PENDING', 'NEEDS_SUPPLEMENT', 'REJECTED', 'CANCELLED'];
@@ -88,6 +89,7 @@ export default function StaffServiceApplicationsPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [selected, user.userId, revision]);
+  useServiceLive(signal => selected ? api.detail(selected, signal) : api.list(signal), fresh => { selected ? setDetail(fresh) : setRows(fresh); setError(''); setLoading(false); }, { enabled: !busy, identity: selected || 'list' });
   const visibleRows = activeStatus === 'ALL' ? rows : rows.filter(item => item.status === activeStatus);
   const listUrl = '/staff/service-applications' + (activeStatus === 'ALL' ? '' : `?status=${activeStatus}`);
   const row = detail?.application;
@@ -114,7 +116,7 @@ export default function StaffServiceApplicationsPage() {
     mutate(() => decision === 'SUPPLEMENT' ? api.supplement(selected, reason.trim(), row.revision) : api.review(selected, decision, decision, decision === 'APPROVE' ? '' : reason.trim(), row.revision));
   }
   return <main className={selected ? "service-applications" : "service-applications staff-service-list-page"}>
-    <div className="service-applications-heading"><h1 ref={pageTop} tabIndex={-1}>{selected ? `Hồ sơ dịch vụ #${selected}` : 'Xét duyệt hồ sơ cung cấp dịch vụ'}</h1>{selected && <UIButton className="service-app-action service-reload-icon" title="Tải lại hồ sơ" aria-label="Tải lại hồ sơ" disabled={busy || loading} onClick={() => setRevision(v => v + 1)}><RefreshCw size={18} aria-hidden="true" /></UIButton>}</div>
+    <div className="service-applications-heading"><h1 ref={pageTop} tabIndex={-1}>{selected ? `Hồ sơ dịch vụ #${selected}` : 'Xét duyệt hồ sơ cung cấp dịch vụ'}</h1></div>
     <p>Nhân viên và quản trị viên đều có thể xem tài liệu và xét duyệt các hồ sơ chờ xử lý.</p>
     {!selected ? <StaffListPanel title="Hồ sơ dịch vụ" description="Theo dõi và xét duyệt hồ sơ của nhà cung cấp" loading={loading || busy} onReload={() => setRevision(v => v + 1)}>
       <StaffListFilters label="Lọc hồ sơ theo trạng thái" value={activeStatus} options={statusFilters.map(value => ({ value, label: value === 'ALL' ? 'Tất cả' : status[value], tone: ({ ALL: 'all', APPROVED: 'completed', PENDING: 'review', NEEDS_SUPPLEMENT: 'supplement', REJECTED: 'removed', CANCELLED: 'neutral' })[value], count: loading || error ? '—' : value === 'ALL' ? rows.length : rows.filter(item => item.status === value).length }))} onChange={value => setParams(previous => {
@@ -149,7 +151,7 @@ export default function StaffServiceApplicationsPage() {
         </fieldset>
         {fieldErrors.decision && <p id="service-decision-error" className="service-review-error" role="alert">{fieldErrors.decision}</p>}
         {decision && <>
-          {decision !== 'APPROVE' && <UIField className="service-review-reason"><span>{reasonLabel} <span className="service-required">*</span></span><textarea ref={reasonInput} required minLength={10} maxLength={2000} rows={4} value={reason} aria-invalid={!!fieldErrors.reason} aria-describedby="service-reason-hint" placeholder={decision === 'SUPPLEMENT' ? 'Ví dụ: Bổ sung giấy phép kinh doanh rõ nét và cập nhật khu vực phục vụ cụ thể.' : decision === 'REJECT' ? 'Nêu rõ thông tin hoặc tài liệu không đáp ứng và lý do hồ sơ bị từ chối.' : 'Ghi nhận nội dung và tài liệu đã kiểm tra, căn cứ chấp nhận hồ sơ.'} onChange={e => { setReason(e.target.value); setFieldErrors(previous => ({ ...previous, reason: undefined })); }} /><small id="service-reason-hint" className={fieldErrors.reason ? 'service-review-error' : 'service-review-hint'} role={fieldErrors.reason ? 'alert' : undefined}>{fieldErrors.reason || `${decision === 'SUPPLEMENT' ? 'Nêu rõ phần thông tin cần sửa, tài liệu cần bổ sung. ' : ''}Từ 10 đến 2000 ký tự · Đã nhập: ${reason.trim().length}/2000`}</small></UIField>}
+          {decision !== 'APPROVE' && <UIField className="service-review-reason"><span>{reasonLabel} <span className="service-required">*</span></span><textarea ref={reasonInput} required minLength={10} maxLength={2000} rows={4} value={reason} aria-invalid={!!fieldErrors.reason} aria-describedby="service-reason-hint" placeholder={decision === 'SUPPLEMENT' ? 'Ví dụ: Bổ sung giấy phép kinh doanh rõ nét và cập nhật khu vực phục vụ cụ thể.' : decision === 'REJECT' ? 'Nêu rõ thông tin hoặc tài liệu không đáp ứng và lý do hồ sơ bị từ chối.' : 'Ghi nhận nội dung và tài liệu đã kiểm tra, căn cứ chấp nhận hồ sơ.'} onChange={e => { setReason(e.target.value); setFieldErrors(previous => ({ ...previous, reason: validateServiceReview(decision, e.target.value).reason })); }} /><small id="service-reason-hint" className={fieldErrors.reason ? 'service-review-error' : 'service-review-hint'} role={fieldErrors.reason ? 'alert' : undefined}>{fieldErrors.reason || `${decision === 'SUPPLEMENT' ? 'Nêu rõ phần thông tin cần sửa, tài liệu cần bổ sung. ' : ''}Từ 10 đến 2000 ký tự · Đã nhập: ${reason.trim().length}/2000`}</small></UIField>}
           <p className="service-review-effect">{decision === 'SUPPLEMENT' ? 'Hồ sơ chuyển sang “Cần bổ sung”. Người đăng ký có thể chỉnh sửa và nộp lại trên cùng hồ sơ.' : decision === 'REJECT' ? 'Hồ sơ bị từ chối và người đăng ký sẽ nhận được lý do bên trên. Các dịch vụ đang công khai được giữ nguyên.' : row.operation === 'DELETE' ? 'Duyệt sẽ ngừng công khai dịch vụ này. Các dịch vụ khác được giữ nguyên.' : row.operation === 'UPDATE' ? 'Thông tin mới sẽ thay thế bản dịch vụ đang công khai sau khi duyệt.' : 'Duyệt sẽ cấp quyền cung cấp dịch vụ và công khai dịch vụ đủ điều kiện.'}</p>
         </>}
         <div className="service-review-actions"><UIButton className={`service-review-submit${decision === 'REJECT' ? ' is-reject' : ''}`} type="submit" disabled={busy || Object.keys(validateServiceReview(decision, reason)).length > 0} aria-busy={busy}>{busy && <LoaderCircle className="service-review-spinner" size={16} aria-hidden="true" />}{busy ? 'Đang lưu...' : submitLabel}</UIButton></div>

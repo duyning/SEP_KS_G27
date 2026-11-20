@@ -1,5 +1,6 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import { useToast } from './PortalUI.jsx';
-import { CalendarDays, Inbox, LoaderCircle, RefreshCw } from 'lucide-react';
+import { CalendarDays, Inbox, LoaderCircle } from 'lucide-react';
 import StatusBadge from './common/StatusBadge.jsx';
 import UIField from './common/Field.jsx';
 import UIButton from './common/Button.jsx';
@@ -50,15 +51,15 @@ export function ServiceRequestForm({ service, onBusyChange, onDirtyChange, onSuc
   const [hour = '', minute = ''] = time.split(':');
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-  const validate = () => {
+  const validate = (value = form) => {
     const errors = {};
-    if (!form.contactName.trim()) errors.contactName = 'Vui lòng nhập người liên hệ.';
-    if (!/^(0|\+84)[35789][0-9]{8}$/.test(form.contactPhone.trim())) errors.contactPhone = 'Vui lòng nhập số điện thoại Việt Nam hợp lệ.';
-    if (form.description.trim().length < 10) errors.description = 'Vui lòng mô tả yêu cầu ít nhất 10 ký tự.';
-    try { vietnamSchedule(form.scheduledAt); } catch (err) { errors.scheduledAt = err.message; }
+    if (!value.contactName.trim()) errors.contactName = 'Vui lòng nhập người liên hệ.';
+    if (!/^(0|\+84)[35789][0-9]{8}$/.test(value.contactPhone.trim())) errors.contactPhone = 'Vui lòng nhập số điện thoại Việt Nam hợp lệ.';
+    if (value.description.trim().length < 10) errors.description = 'Vui lòng mô tả yêu cầu ít nhất 10 ký tự.';
+    try { vietnamSchedule(value.scheduledAt); } catch (err) { errors.scheduledAt = err.message; }
     return errors;
   };
-  const update = (name, value) => { editedFields.current.add(name); const next = { ...form, [name]: value }; setForm(next); onDirtyChange?.(Object.keys(next).some(key => next[key] !== initialForm.current[key])); setFieldErrors(previous => ({ ...previous, [name]: undefined })); };
+  const update = (name, value) => { editedFields.current.add(name); const next = { ...form, [name]: value }; setForm(next); onDirtyChange?.(Object.keys(next).some(key => next[key] !== initialForm.current[key])); setFieldErrors(previous => ({ ...previous, [name]: validate(next)[name] })); };
   const blur = name => setFieldErrors(previous => ({ ...previous, [name]: validate()[name] }));
   const setSchedule = (day, hh, mm) => update('scheduledAt', day + 'T' + hh + ':' + mm);
   if (!user) return <p><Link to="/login">Đăng nhập</Link> để gửi yêu cầu sử dụng dịch vụ.</p>;
@@ -109,6 +110,7 @@ export default function ServiceRequests({ onClose }) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [mode, revision]);
+  useServiceLive(signal => api[mode](signal), data => { setRows(data); setError(''); setLoading(false); }, { enabled: !busy, identity: mode });
   async function respond(event) {
     event.preventDefault(); if (lock.current || !choice) return;
     lock.current = true; setBusy(true); setError('');
@@ -123,7 +125,7 @@ export default function ServiceRequests({ onClose }) {
       <div className="service-request-toolbar"><div className="svc-actions service-request-tabs" role="group" aria-label="Loại yêu cầu">
         <UIButton className="svc-btn" aria-pressed={mode === 'mine'} disabled={busy} onClick={() => setMode('mine')}>Tôi đã gửi</UIButton>
         <UIButton className="svc-btn" aria-pressed={mode === 'incoming'} disabled={busy} onClick={() => setMode('incoming')}>Khách gửi cho tôi</UIButton>
-        </div><UIButton type="button" variant="ghost" className="service-request-refresh" title="Tải lại yêu cầu" aria-label="Tải lại yêu cầu" disabled={busy || loading} onClick={() => setRevision(v => v + 1)}><RefreshCw size={18} aria-hidden="true" /></UIButton>
+        </div>
       </div>
 
       {error && <p role="alert" className="service-error">{error} Hãy tải lại để kiểm tra trạng thái mới nhất.</p>}

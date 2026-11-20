@@ -1,3 +1,6 @@
+import ServiceFormSelect from './ServiceFormSelect.jsx';
+import '../styles/service-registration-form.css';
+import useServiceLive from '../hooks/useServiceLive.js';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -57,6 +60,7 @@ function ComplaintDetail({ id, onChanged }) {
       .catch(err => { if (!controller.signal.aborted) setError(err.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [id, reload]);
+  useServiceLive(signal => api.complaint(id, signal), fresh => { setData(fresh); setLoading(false); }, { enabled: !busy, identity: id });
   async function send(e) {
     e.preventDefault(); if (busy) return; setBusy(true); setError(''); setSuccess('');
     try {
@@ -66,7 +70,7 @@ function ComplaintDetail({ id, onChanged }) {
   }
   const c = data?.complaint;
   const shortContent = (touched || content.length > 0) && content.trim().length < 10;
-  return <div className="svc-complaint-detail report-detail-ui"><style>{detailStyles}</style><header className="report-detail-title"><div className="report-detail-title-copy"><h2>Báo cáo #{id}{c && ` · ${c.serviceName}`}</h2>{c && <span className={`svc-complaint-status status-${c.status.toLowerCase()}`}><span aria-hidden="true" />{complaintLabels[c.status]}</span>}</div><UIButton className="report-detail-reload" disabled={busy} onClick={() => setReload(n => n + 1)}><span className={loading ? 'report-detail-spinner' : undefined}><DetailIcon type="refresh" /></span>Tải lại</UIButton></header>
+  return <div className="svc-complaint-detail report-detail-ui"><style>{detailStyles}</style><header className="report-detail-title"><div className="report-detail-title-copy"><h2>Báo cáo #{id}{c && ` · ${c.serviceName}`}</h2>{c && <span className={`svc-complaint-status status-${c.status.toLowerCase()}`}><span aria-hidden="true" />{complaintLabels[c.status]}</span>}</div></header>
     {loading && <p role="status">Đang tải báo cáo…</p>}{error && <p role="alert" className="service-error">{error}</p>}{success && <p role="status" className="svc-feedback-success">{success}</p>}
     {data && <>
       <dl className="report-detail-meta"><div><dt><DetailIcon type="provider" />Nhà cung cấp</dt><dd>{c.providerName}</dd></div>{data.reporterName && <div><dt><DetailIcon type="user" />Người báo cáo</dt><dd>{data.reporterName}</dd></div>}<div><dt><DetailIcon type="clock" />Thời gian gửi</dt><dd><time dateTime={c.createdAt}>{new Date(c.createdAt).toLocaleString('vi-VN')}</time></dd></div></dl>
@@ -102,12 +106,13 @@ export default function ServiceComplaints({ scope = 'mine', renderList }) {
       .catch(err => { if (!controller.signal.aborted) setError(err.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [scope, reload]);
+  useServiceLive(signal => api.complaints(scope, signal), fresh => { setRows(fresh); setError(''); setLoading(false); }, { identity: scope });
   const refresh = () => setReload(n => n + 1);
   if (selected) return <ComplaintDetail key={selected} id={selected} onChanged={refresh} />;
   const filtered = rows.filter(row => !filter || row.status === filter);
   if (renderList) return renderList({ rows, filtered, filter, setFilter, loading, error, refresh, onSelect: setSelected });
-  return <section className="svc-complaints"><div className="svc-feedback-heading"><h3>{scope === 'staff' ? 'Báo cáo dịch vụ' : scope === 'incoming' ? 'Báo cáo và yêu cầu giải trình' : 'Báo cáo của tôi'}</h3><UIButton onClick={refresh} disabled={loading}>Tải lại</UIButton></div>
-    <UIField label="Lọc theo trạng thái"><select value={filter} onChange={e => setFilter(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(complaintLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></UIField>
+  return <section className="svc-complaints"><div className="svc-feedback-heading"><h3>{scope === 'staff' ? 'Báo cáo dịch vụ' : scope === 'incoming' ? 'Báo cáo và yêu cầu giải trình' : 'Báo cáo của tôi'}</h3></div>
+    <div className="svc-report-status-select"><ServiceFormSelect label="Lọc theo trạng thái" name="report-status" value={filter} onChange={event => setFilter(event.target.value)} options={[{ value: '', label: 'Tất cả trạng thái' }, ...Object.entries(complaintLabels).map(([value, label]) => ({ value, label }))]} /></div>
     {error && <p role="alert" className="service-error">{error}</p>}{loading ? <p role="status">Đang tải báo cáo…</p> : !error && <>
       {!filtered.length && <p>Chưa có báo cáo ở trạng thái này.</p>}
       {filtered.map(row => <article className="svc-complaint-row" key={row.complaintId}><div><strong>#{row.complaintId} · {row.serviceName}</strong><span className={`svc-complaint-status status-${row.status.toLowerCase()}`}>{complaintLabels[row.status]}</span><p>{row.content.length > 160 ? row.content.slice(0, 160) + '…' : row.content}</p><small>{new Date(row.createdAt).toLocaleString('vi-VN')}</small></div><UIButton onClick={() => setSelected(row.complaintId)}>{scope === 'incoming' && row.status === 'NEEDS_EXPLANATION' ? 'Gửi giải trình' : 'Xem báo cáo'}</UIButton></article>)}

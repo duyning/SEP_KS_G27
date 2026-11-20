@@ -41,3 +41,6 @@
 .svc-report-action svg{flex:none}
 @media(prefers-reduced-motion:reduce){.svc-detail-info .ui-button.svc-report-action{transition:none}}
 @media(max-width:600px){.svc-feedback,.svc-complaints,.svc-complaint-detail{padding:16px}.svc-complaint-row{align-items:flex-start;flex-direction:column}.svc-rating-options label{padding:9px}.svc-feedback-heading{gap:10px}}
+/* Match the public catalog dropdown inside the report modal. */
+.svc-report-status-select{margin:16px 0 20px;position:relative;z-index:2}
+.svc-report-status-select .svc-select-menu{max-height:320px;overflow-y:auto}

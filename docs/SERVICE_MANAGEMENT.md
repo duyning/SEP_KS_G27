@@ -98,3 +98,7 @@ Form gửi mới/nộp bổ sung bỏ mục tài liệu xác minh; API cho phép
 ## Đánh giá và báo cáo dịch vụ (2026-11-18)
 
 Đã nối đánh giá 0–5 sao, ảnh và phản hồi chủ dịch vụ; báo cáo riêng tư, giải trình và staff gỡ công khai qua moderationHidden. Chi tiết API, phân quyền, trạng thái và migration: [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
+
+## Cập nhật nền giao diện dịch vụ (2026-11-20)
+
+Các màn dịch vụ tự đọc lại dữ liệu mỗi 5 giây khi tab hiển thị, khi quay lại tab, kết nối mạng trở lại và sau thao tác dịch vụ thành công, kể cả từ tab khác. Cơ chế dùng polling. Bỏ nút tải lại ở nhánh dịch vụ. Đọc nền giữ nội dung form đang nhập. Form hồ sơ kiểm tra dữ liệu khi nhập; dashboard admin có khối hồ sơ/báo cáo dịch vụ dùng API thực tế.

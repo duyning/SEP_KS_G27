@@ -15,7 +15,7 @@ export function StaffListFilters({ options, value, onChange, label = 'Lọc theo
   return <div className="staff-report-filters" role="group" aria-label={label}>{options.map(option => <UIButton type="button" key={option.value} className={`staff-status-filter filter-${option.tone || "neutral"}`} aria-pressed={value === option.value} onClick={() => onChange(option.value)}>{option.label}<span className="staff-report-count">{option.count}</span></UIButton>)}</div>;
 }
 export function StaffListPanel({ title, description, loading, onReload, children }) {
-  return <div className="staff-report-list"><div className="staff-report-toolbar"><div><h2>{title}</h2><p>{description}</p></div><UIButton type="button" onClick={onReload} disabled={loading}><span className={loading ? 'staff-list-reloading' : ''}><StaffListIcon type="refresh" /></span>Tải lại</UIButton></div>{children}</div>;
+  return <div className="staff-report-list"><div className="staff-report-toolbar"><div><h2>{title}</h2><p>{description}</p></div></div>{children}</div>;
 }
 export function StaffListOpen({ to, onClick, children }) {
   const content = <>{children}<StaffListIcon type="arrow" /></>;

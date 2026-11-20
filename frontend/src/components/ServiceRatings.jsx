@@ -1,3 +1,4 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -70,6 +71,7 @@ export default function ServiceRatings({ service }) {
       .catch(err => { if (!c.signal.aborted) setError(err.message); }).finally(() => { if (!c.signal.aborted) setLoading(false); });
     return () => c.abort();
   }, [service.serviceId, user?.userId, stars, page, reload]);
+  useServiceLive(signal => api.ratings(service.serviceId, stars, page, signal), result => { setData(result); setError(''); setLoading(false); }, { enabled: !busy, identity: [service.serviceId, user?.userId, stars, page].join(':') });
   async function submit(e) {
     e.preventDefault(); if (busy) return; setBusy(true); setSubmitError('');
     try { await api.rate(service.serviceId, Number(score), content.trim(), images); setContent(''); setImages([]); setSuccess('Đã gửi đánh giá của bạn.'); setPage(0); setStars(''); setReload(n => n + 1); }

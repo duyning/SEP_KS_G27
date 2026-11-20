@@ -1,3 +1,4 @@
+import useServiceLive from '../hooks/useServiceLive.js';
 import ServiceComplaints from './ServiceComplaints.jsx';
 import { Link } from 'react-router-dom';
 import StatusBadge from './common/StatusBadge.jsx';
@@ -25,6 +26,7 @@ export default function ServiceManagement({ onClose }) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [revision]);
+  useServiceLive(signal => Promise.all([api.mine(signal), api.services(signal)]), ([data, listings]) => { setRows(data); setServices(listings); setError(''); setLoading(false); }, { enabled: !busy && !loading && !editor && !deletion });
   const canAdd = !rows.length || rows.some(row => row.capabilityActive) || !rows.some(row => ['PENDING', 'NEEDS_SUPPLEMENT', 'APPROVED'].includes(row.status));
   const pending = serviceId => rows.some(row => row.targetServiceId === serviceId && ['PENDING', 'NEEDS_SUPPLEMENT'].includes(row.status));
   const finish = () => { setLoading(true); setEditor(null); setDeletion(null); setRevision(v => v + 1); };
