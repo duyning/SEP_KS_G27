@@ -2,9 +2,11 @@ import { Component, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Focus, Map, Satellite } from 'lucide-react';
 import { MotionButton } from './motion/MotionUI.jsx';
+import GoogleRoomMap from './GoogleRoomMap.jsx';
 import { loadGoogleMaps, GOOGLE_MAPS_KEY, GOOGLE_MAPS_MAP_ID } from '../services/google-maps.js';
+import { MAP_PROVIDER } from '../services/map-provider.js';
 
-export const googleMapsEnabled = Boolean(GOOGLE_MAPS_KEY) && import.meta.env.VITE_MAP_PROVIDER !== 'osm';
+export const googleMapsEnabled = MAP_PROVIDER === 'google';
 
 function MapFallback({children}){
   return <><p className="accommodation-map-status" role="status">Google Maps chưa khả dụng. Đang dùng OpenStreetMap; thông tin bạn nhập được giữ nguyên.</p>{children}</>;
@@ -16,7 +18,11 @@ class MapErrorBoundary extends Component {
   render(){return this.state.failed?<MapFallback>{this.props.fallback}</MapFallback>:this.props.children;}
 }
 export default function GoogleMapCanvas(props){
-  return <MapErrorBoundary fallback={props.fallback}><GoogleMapRuntime {...props}/></MapErrorBoundary>;
+  return <MapErrorBoundary fallback={props.fallback}>
+    {props.browse || props.onSelect
+      ? <GoogleRoomMap {...props} fallback={<MapFallback>{props.fallback}</MapFallback>}/>
+      : <GoogleMapRuntime {...props}/>}
+  </MapErrorBoundary>;
 }
 // Google's cleanup can also throw after authorization failure. Attempt every release.
 const release=action=>{try{action();}catch{/* A rejected SDK must not break unmount/fallback. */}};
