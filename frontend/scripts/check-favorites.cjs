@@ -19,6 +19,8 @@ async function mocked(browser){
   const ok=data=>route.fulfill({json:{success:true,data}});
   if(p==='/api/auth/me')return ok({userId:41,fullName:'Thành viên kiểm thử',email:'member@example.test',role:'USER',status:'ACTIVE',capabilities:[]});
   if(p==='/api/properties/search')return ok({items:[summary(34),summary(35)],page:0,size:6,totalElements:2,totalPages:1});
+  if(p==='/api/properties/12/room-types/34/details')return ok({summary:summary(34),gallery:[],amenities:['airConditioner'],
+   propertyAmenities:[],selectedRules:[],similar:[],reviews:{totalReviews:0,ratingCounts:[0,0,0,0,0],latest:[]}});
   if(p==='/api/favorites/state')return ok({items:[...saved.values()].filter(item=>(url.searchParams.get('roomTypeIds')||'').split(',').includes(String(item.roomTypeId))).map(({favoriteId,roomTypeId})=>({favoriteId,roomTypeId})),total:saved.size});
   if(p==='/api/favorites'&&request.method()==='GET'){
    if(delayList)await new Promise(resolve=>{releaseList=resolve});
@@ -36,6 +38,18 @@ async function mocked(browser){
   }
   return route.fulfill({status:404,json:{success:false,message:'Unexpected test endpoint'}});
  });
+ const detailUrl=`${base}/properties/detail?propertyId=12&roomTypeId=34`;
+ const detailFavorite=page.getByRole('button',{name:'Phòng yêu thích',exact:true});
+ const favoriteMenu=page.locator('#navMenu').getByRole('link',{name:/^Phòng yêu thích/});
+ await page.goto(detailUrl,{waitUntil:'domcontentloaded'});
+ await detailFavorite.waitFor();
+ await page.getByText('Điều hòa',{exact:true}).waitFor();
+ assert.equal(await detailFavorite.getAttribute('aria-pressed'),'false');
+ assert.match(await favoriteMenu.textContent(),/Phòng yêu thích\s*\(0\)/);
+ for(const width of [375,720,768,1024,1440]){
+  await page.setViewportSize({width,height:1000});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Detail overflow at ${width}px`);
+ }
  await page.goto(`${base}/search`,{waitUntil:'domcontentloaded'});
  const heart=page.locator('[data-id="34"] .btn-card-wishlist');await heart.waitFor();await page.waitForFunction(()=>!document.querySelector('[data-id="34"] .btn-card-wishlist')?.disabled);
  await heart.focus();await page.keyboard.press('Space');await page.waitForFunction(()=>document.querySelector('[data-id="34"] .btn-card-wishlist')?.disabled);
@@ -43,10 +57,14 @@ async function mocked(browser){
  releaseSave();await page.waitForFunction(()=>document.querySelector('[data-id="34"] .btn-card-wishlist')?.getAttribute('aria-pressed')==='true');
  assert.equal(await page.locator('[data-id="35"] .btn-card-wishlist').getAttribute('aria-pressed'),'false');
  await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('[data-id="34"] .btn-card-wishlist')?.getAttribute('aria-pressed')==='true');
+ await page.goto(detailUrl,{waitUntil:'domcontentloaded'});
+ await detailFavorite.and(page.locator('[aria-pressed="true"]')).waitFor();
+ assert.match(await favoriteMenu.textContent(),/Phòng yêu thích\s*\(1\)/);
  await page.goto(`${base}/favorites`,{waitUntil:'domcontentloaded'});await page.locator('.favorites-grid .room-card').waitFor();
+ await page.getByRole('heading',{name:'Phòng yêu thích (1)',exact:true}).waitFor();
  failRemove=true;await page.locator('.favorites-grid .btn-card-wishlist').click();await page.getByRole('alert').filter({hasText:'Chưa thể bỏ lưu'}).waitFor();await page.locator('.favorites-grid .room-card').waitFor();assert.equal(saved.size,1);
- failRemove=false;await page.locator('.favorites-grid .btn-card-wishlist').click();await page.getByRole('heading',{name:'Bạn chưa lưu loại phòng nào'}).waitFor();assert.equal(saved.size,0);
- failList=true;await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'Không thể tải danh sách yêu thích'}).waitFor();failList=false;await page.getByRole('button',{name:'Thử lại',exact:true}).click();await page.getByRole('heading',{name:'Bạn chưa lưu loại phòng nào'}).waitFor();
+ failRemove=false;await page.locator('.favorites-grid .btn-card-wishlist').click();await page.getByRole('heading',{name:'Bạn chưa có phòng yêu thích'}).waitFor();assert.equal(saved.size,0);
+ failList=true;await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'Không thể tải danh sách yêu thích'}).waitFor();failList=false;await page.getByRole('button',{name:'Thử lại',exact:true}).click();await page.getByRole('heading',{name:'Bạn chưa có phòng yêu thích'}).waitFor();
  saved=new Map([[34,entry(34,false)]]);delayList=true;await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('status').filter({hasText:'Đang tải danh sách yêu thích'}).waitFor();delayList=false;releaseList();await page.getByRole('heading',{name:'Loại phòng không còn khả dụng'}).waitFor();assert.equal(await page.locator('.favorites-page').getByText('Nhà trọ công khai').count(),0);await page.screenshot({path:path.join(output,'unavailable.png'),fullPage:true});
  saved=new Map(Array.from({length:7},(_,i)=>[34+i,entry(34+i)]));await page.reload({waitUntil:'domcontentloaded'});await page.locator('.favorites-grid .room-card').first().waitFor();assert.equal(await page.locator('.favorites-grid .room-card').count(),6);
  // 720 CSS px also checks the layout space of a 1440 px display at 200% zoom.

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { availabilityWarning, formatDistance, withSearchOrigin } from '../services/search-origin.js';
+import '../styles/location-search.css';
 import L from 'leaflet';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { MapPin, ArrowUpRight, Building2, Check, Navigation, Expand, Minimize, Focus, Map as MapIcon, Satellite, Plus, Minus, Tags } from 'lucide-react';
@@ -52,14 +54,14 @@ function Viewport({ points }) {
   return null;
 }
 
-export function LocationMarker({ point, onSelect }) {
+export function LocationMarker({ point, onSelect, title = 'Vị trí nhà trọ', hint = 'Kéo ghim để điều chỉnh vị trí nhà trọ.' }) {
   useMapEvents({ click(event) {
     const value = event.latlng.wrap();
     onSelect(value.lat, value.lng);
   } });
-  return point && <Marker position={point} icon={icon} draggable title="Vị trí nhà trọ" alt="Ghim vị trí nhà trọ"
+  return point && <Marker position={point} icon={icon} draggable title={title} alt={title}
     eventHandlers={{ dragend(event) { const value = event.target.getLatLng().wrap(); onSelect(value.lat, value.lng); } }}>
-    <Popup>Kéo ghim để điều chỉnh vị trí nhà trọ.</Popup>
+    <Popup>{hint}</Popup>
   </Marker>;
 }
 
@@ -150,13 +152,13 @@ function RoomMapPhoto({room}) {
   return <img src={room.imageUrl} alt="" loading="lazy" onError={()=>setFailed(true)}/>;
 }
 
-function SelectedRoomSummary({room}) {
+function SelectedRoomSummary({room,origin}) {
   const {spring,transition,shift,blur}=useMotionTokens();
   const reduce=useShouldReduceMotion(),present=useIsPresent();
-  return <motion.div className="nh-map-selection" inert={!present||undefined} aria-hidden={!present||undefined} initial={{opacity:0,y:reduce?0:shift.step,filter:blur.surface}} animate={{opacity:1,y:0,filter:'blur(0px)',transition:spring.pop}} exit={{opacity:0,y:reduce?0:shift.handoff,filter:blur.surface,transition:transition.dismiss}}><span className="nh-map-selection-icon"><MapPin size={20}/></span><div><small>ĐANG XEM VỊ TRÍ</small><strong>{room.propertyName} – {room.roomTypeName}</strong></div><Link to={accommodationDetailUrl(room)}>Chi tiết phòng<ArrowUpRight size={17}/></Link></motion.div>;
+  return <motion.div className="nh-map-selection" inert={!present||undefined} aria-hidden={!present||undefined} initial={{opacity:0,y:reduce?0:shift.step,filter:blur.surface}} animate={{opacity:1,y:0,filter:'blur(0px)',transition:spring.pop}} exit={{opacity:0,y:reduce?0:shift.handoff,filter:blur.surface,transition:transition.dismiss}}><span className="nh-map-selection-icon"><MapPin size={20}/></span><div><small>ĐANG XEM VỊ TRÍ</small><strong>{room.propertyName} – {room.roomTypeName}</strong></div><Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Chi tiết phòng<ArrowUpRight size={17}/></Link></motion.div>;
 }
 
-export default function RoomsMap({ rooms }) {
+export default function RoomsMap({ rooms, origin }) {
   const [selectedId,setSelectedId]=useState(null);
   const [focusRequest,setFocusRequest]=useState(0);
   const {spring,shift,stagger,scale,blur}=useMotionTokens();
@@ -174,23 +176,23 @@ export default function RoomsMap({ rooms }) {
           {located.map(room=><article key={room.roomTypeId} className={`nh-map-room-card${selectedId===room.roomTypeId?' selected':''}`}>
             <MotionButton type="button" className="nh-map-room-choice" tapScale={scale.choice} aria-pressed={selectedId===room.roomTypeId} aria-label={`Xem vị trí ${room.propertyName} – ${room.roomTypeName}`} onClick={()=>{setSelectedId(room.roomTypeId);setFocusRequest(value=>value+1);}}>
               <span className="nh-map-room-photo"><RoomMapPhoto room={room}/>{selectedId===room.roomTypeId&&<span className="nh-map-chosen"><Check size={13}/></span>}</span>
-              <span className="nh-map-room-copy"><span className="nh-map-card-title">{room.propertyName}</span><span className="nh-map-card-type">{room.roomTypeName}</span><span className="nh-map-card-address"><MapPin size={12}/>{room.address||'Chưa cập nhật địa chỉ'}</span><span className="nh-map-card-price">{money(room.price)} đ <small>/tháng</small></span></span>
+              <span className="nh-map-room-copy"><span className="nh-map-card-title">{room.propertyName}</span><span className="nh-map-card-type">{room.roomTypeName}</span><span className="nh-map-card-address"><MapPin size={12}/>{room.address||'Chưa cập nhật địa chỉ'}</span>{origin&&<span>Khoảng cách: {formatDistance(room.distanceKm)}</span>}{room.availabilityStale===true&&<span className="accommodation-freshness">{availabilityWarning}</span>}<span className="nh-map-card-price">{money(room.price)} đ <small>/tháng</small></span></span>
             </MotionButton>
           </article>)}
         </Effects></div>
         <footer className="nh-map-panel-footer"><span className="nh-map-legend-pin"/>{located.length}/{rooms.length} loại phòng có tọa độ trên trang này</footer>
       </aside>
       <div className="nh-map-explorer-canvas"><MapCanvas points={[...groups.values()].map(group=>roomCoordinates(group[0]))} nearbyPoint={selected?roomCoordinates(selected):undefined}
- markers={[...groups.entries()].map(([id,group])=>({id,point:roomCoordinates(group[0]),title:group[0].propertyName,price:new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(Math.min(...group.map(r=>r.price))/1000000)+' tr/tháng',popup:<div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}><strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p><Link to={accommodationDetailUrl(room)}>Xem chi tiết phòng</Link></article>)}</div>}))}
+ markers={[...groups.entries()].map(([id,group])=>({id,point:roomCoordinates(group[0]),title:group[0].propertyName,price:new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(Math.min(...group.map(r=>r.price))/1000000)+' tr/tháng',popup:<div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}><strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link></article>)}</div>}))}
  selectedKey={selected?roomCoordinates(selected).join(','):null} onMarkerSelect={id=>setSelectedId(groups.get(id)[0].roomTypeId)} focusRequest={focusRequest} focusPoint={selected?roomCoordinates(selected):null}>
         <SelectedRoomFocus room={selected} request={focusRequest}/>
         {[...groups.entries()].map(([key,group])=><Marker key={key} position={roomCoordinates(group[0])} icon={priceIcon(group,group.some(room=>room.roomTypeId===selectedId))} title={group[0].propertyName} eventHandlers={{click:()=>setSelectedId(group[0].roomTypeId)}}>
           <Popup maxHeight={190}><div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}>
-            {room.imageUrl&&<img src={room.imageUrl} alt="" loading="lazy" onError={event=>{event.currentTarget.hidden=true;}}/>}<strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p><Link to={accommodationDetailUrl(room)}>Xem chi tiết phòng</Link>
+            {room.imageUrl&&<img src={room.imageUrl} alt="" loading="lazy" onError={event=>{event.currentTarget.hidden=true;}}/>}<strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link>
           </article>)}</div></Popup>
         </Marker>)}
       </MapCanvas></div>
     </div>
-    <div className="nh-map-selection-slot" aria-live="polite"><AnimatePresence initial={false} mode="wait">{selected?<SelectedRoomSummary key={selected.roomTypeId} room={selected}/>:<div className="nh-map-selection-empty"><Focus size={18}/><span>Chọn một thẻ phòng hoặc ghim giá để bắt đầu khám phá.</span></div>}</AnimatePresence></div>
+    <div className="nh-map-selection-slot" aria-live="polite"><AnimatePresence initial={false} mode="wait">{selected?<SelectedRoomSummary key={selected.roomTypeId} room={selected} origin={origin}/>:<div className="nh-map-selection-empty"><Focus size={18}/><span>Chọn một thẻ phòng hoặc ghim giá để bắt đầu khám phá.</span></div>}</AnimatePresence></div>
   </section>;
 }

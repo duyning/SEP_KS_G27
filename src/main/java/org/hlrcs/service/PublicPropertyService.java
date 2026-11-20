@@ -20,7 +20,6 @@ public class PublicPropertyService {
     // Campus center from OpenStreetMap way 800878327 (FPT University, Hòa Lạc).
     private static final double FPT_LATITUDE = 21.01354;
     private static final double FPT_LONGITUDE = 105.52522;
-    private static final double EARTH_RADIUS_METERS = 6_371_000;
 
     private final PropertyRepository properties;
     private final PropertyDocumentRepository documents;
@@ -82,12 +81,7 @@ public class PublicPropertyService {
             if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
                     || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
 
-            double latitudeDelta = Math.toRadians(latitude - FPT_LATITUDE);
-            double longitudeDelta = Math.toRadians(longitude - FPT_LONGITUDE);
-            double haversine = Math.pow(Math.sin(latitudeDelta / 2), 2)
-                    + Math.cos(Math.toRadians(latitude)) * Math.cos(Math.toRadians(FPT_LATITUDE))
-                    * Math.pow(Math.sin(longitudeDelta / 2), 2);
-            return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, haversine)));
+            return new SearchOrigin(FPT_LATITUDE, FPT_LONGITUDE).distanceKm(latitude, longitude) * 1000;
         } catch (NumberFormatException ignored) {
             return null;
         }

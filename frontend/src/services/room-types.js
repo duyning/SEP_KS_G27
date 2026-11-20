@@ -1,5 +1,5 @@
 export const ROOM_AMENITIES = [
-  ['airConditioner','Điều hòa Inverter'], ['waterHeater','Bình nóng lạnh'], ['balcony','Ban công riêng'],
+  ['airConditioner','Điều hòa'], ['waterHeater','Bình nóng lạnh'], ['balcony','Ban công riêng'],
   ['kitchen','Kệ bếp nấu ăn'], ['loft','Gác lửng ngủ'], ['refrigerator','Tủ lạnh riêng'],
   ['washingMachine','Máy giặt riêng'], ['bed','Giường & Đệm'], ['wardrobe','Tủ quần áo'],
   ['desk','Bàn ghế làm việc'], ['wifi','Wifi tốc độ cao'], ['privateBathroom','Vệ sinh khép kín'],

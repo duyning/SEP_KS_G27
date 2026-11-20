@@ -16,7 +16,7 @@ Main and the remote feature branches have not been modified.
 1. **origin/DuongND** (`3038405c`): merged with `--no-ff`; no merge conflicts. Community reporting and mobile moderation retained.
 2. **origin/DungDT** (`f7bd2f6c`): merged with `--no-ff`; 76 overlapping files reconciled.
 3. **origin/NingDD** (`4fac7f0c`): foundational availability, reverification, maps/onboarding/mobile integrated before the dependent AI/search branch.
-4. origin/MaiNTT (`9325b949`): not merged yet.
+4. **origin/MaiNTT** (`9325b949`): AI recommendations, assistant, origin/distance search integrated with prior inventory/onboarding.
 5. origin/VietNV (`4aea39ea`): not merged yet.
 
 `origin/DuongND-service-ui` is already an ancestor of origin/main and does not need a separate merge.
@@ -163,3 +163,57 @@ Conflicted files:
 - `frontend/src/pages/staff/StaffPropertyVerificationsPage.jsx`
 - `src/main/java/org/hlrcs/service/StaffService.java`
 - Backend suite: 246 tests discovered; after publication/lease fixture updates, only the final photo fixture remained failing in that run. Its corrected PropertyAssignmentSecurityTests rerun passed 17/17. Combined current result: 245 passing, 1 intentional live-provider skip, zero remaining failures. Conflict-marker scan clear.
+
+
+## MaiNTT conflict resolution
+
+- AccommodationSummary includes distanceKm plus freshness fields. AccommodationService combines distance/radius/nearest and AI recommendations with public-only vacancy counts, batched covers used by host views, approved-coordinate parsing and the stricter publication policy.
+- HostRoomsResponse/RoomMapping retain lease dates and publicVisible; StaffResponse/StaffService retain hostOnboarding and reverification fields; HostPropertyService only marks selected public inventory visible.
+- HostRoomsService retains batch/multi-floor, lease and publication actions. PublicPropertyService keeps fail-closed reverification/publication checks.
+- Independent reverification additions deduplicated in PropertyRegistration; duplicate AvailabilityNotice imports and repeated badges removed from cards/detail.
+- Maps combine SDK error fallback/cleanup with safe SVG icon creation. Search/favorites/detail links preserve search origin, nearby-radius filtering and shared UI controls.
+- Current host onboarding/identity reuse, phone OTP, description/photo guidance, dynamic banners, avatar, notification button and active booking navigation retained. Valid social/contact links from MaiNTT adopted.
+- Availability and reverification UI retain the fuller responsive/accessibility behavior from NingDD; inspection-first staff queue and its reminder retained, with additional reverification tags. Approval/rejection/supplement remain in detail. Attachment sorting retained.
+- Test isolation retained in Maven and application.properties: local MySQL import is only in the !test document; AI/map/phone provider property groups combined. No local credential file copied.
+- package.json reconciled first (no dependency removed), package-lock regenerated with npm install --package-lock-only. Routing/logout tests combine inventory and authorization coverage; publication/lease fixtures retained.
+
+Conflicted files:
+
+- `docs/PROJECT_CONTEXT.md`
+- `frontend/package-lock.json`
+- `frontend/scripts/check-availability-confirmation.cjs`
+- `frontend/scripts/check-property-reverification.cjs`
+- `frontend/src/components/GoogleMapCanvas.jsx`
+- `frontend/src/components/HostAvailabilityConfirmation.jsx`
+- `frontend/src/components/ReverificationNotice.jsx`
+- `frontend/src/components/detail/DetailPrototypeParts.jsx`
+- `frontend/src/components/detail/DetailPrototypeShell.jsx`
+- `frontend/src/pages/BecomeHostPrototype.jsx`
+- `frontend/src/pages/ProfilePrototype.jsx`
+- `frontend/src/pages/host/HostPropertyEditForm.jsx`
+- `frontend/src/pages/public/FavoritesPage.jsx`
+- `frontend/src/pages/public/HomeLandingPage.jsx`
+- `frontend/src/pages/public/HomePrototype.jsx`
+- `frontend/src/pages/public/SearchPage.jsx`
+- `frontend/src/pages/staff/StaffPropertyVerificationDetailPage.jsx`
+- `frontend/src/pages/staff/StaffPropertyVerificationsPage.jsx`
+- `frontend/src/services/staff-verifications.js`
+- `frontend/src/services/verification-detail.js`
+- `frontend/src/styles/availability.css`
+- `frontend/src/styles/reverification.css`
+- `frontend/tests/host-logout.test.js`
+- `frontend/tests/property-reverification.test.js`
+- `frontend/tests/routing.test.js`
+- `src/main/java/org/hlrcs/dto/response/AccommodationSummary.java`
+- `src/main/java/org/hlrcs/dto/response/HostRoomsResponse.java`
+- `src/main/java/org/hlrcs/dto/response/StaffResponse.java`
+- `src/main/java/org/hlrcs/service/AccommodationService.java`
+- `src/main/java/org/hlrcs/service/HostPropertyService.java`
+- `src/main/java/org/hlrcs/service/HostRoomsService.java`
+- `src/main/java/org/hlrcs/service/PublicPropertyService.java`
+- `src/main/java/org/hlrcs/service/RoomMapping.java`
+- `src/main/java/org/hlrcs/service/StaffService.java`
+- `src/main/resources/application.properties`
+- `src/test/java/org/hlrcs/AvailabilityConfirmationTests.java`
+- `src/test/java/org/hlrcs/HostDashboardTests.java`
+- Validation: web 247/247 tests and production build passed. Backend full run: 248 discovered, 1 conditional live-provider skip; final AI fixture selected an occupied seed instead of its vacant unit. After correcting that selector, all 14 AccommodationTests passed. Combined current suite: 247 passing / 1 intentional skip, zero remaining failures. Shared UI imports and conflict-marker scan clear.

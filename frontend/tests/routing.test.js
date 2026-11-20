@@ -42,6 +42,13 @@ test('actor landing routes and unsupported modules are explicit', () => {
   for (const item of screens) assert.ok(['blocked', 'partial', 'connected', 'merged'].includes(item.integration), item.path);
   for (const path of ['/host/support', '/staff/assistance', '/staff/assistance/detail']) assert.equal(screens.find(item => item.path === path).integration, 'blocked', path);
   assert.equal(screens.find(item => item.path === '/staff/service-applications').integration, 'connected');
+  for (const path of ['/host/support', '/staff/assistance', '/staff/assistance/detail']) {
+    assert.equal(screens.find(item => item.path === path).integration, 'blocked', path);
+  }
+  for (const path of ['/favorites', '/become-host', '/staff/host-registrations',
+    '/staff/host-registrations/detail', '/staff/service-applications', '/admin']) {
+    assert.equal(screens.find(item => item.path === path).integration, 'connected', path);
+  }
 });
 test('active source contains no prototype storage identities or unsafe HTML', () => {
   const root = new URL('../src/', import.meta.url);

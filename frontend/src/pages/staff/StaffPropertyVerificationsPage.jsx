@@ -82,7 +82,8 @@ function VerificationQueueRow({ item, now, reflowSpring, fadeTransition, reduce 
               {meta.isResubmitted && <Sparkles size={11} />}
               {meta.submissionLabel}
             </span>
-
+            {item.reverificationRequired && <span className="sv-kind-chip tone-orange">Tái xác minh</span>}
+            {item.propertyType && <span className="sv-type-chip">{item.propertyType}</span>}
           </div>
           <Link className="sv-property-title" to={`/staff/verifications/detail?id=${item.registrationId}`}>
             {item.name || 'Nhà trọ chưa đặt tên'}

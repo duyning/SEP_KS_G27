@@ -24,7 +24,7 @@ try{
  await page.route('https://maps.googleapis.com/**',route=>route.abort());
  for(const width of [375,768,1024,1440]){
   await page.setViewportSize({width,height:1000});role='ROOM_HOST';status='PENDING';
-  await page.goto(base+'/host/property?id=12');const notice=page.getByRole('region',{name:'Tái xác minh nhà trọ'}).first();await notice.waitFor();assert.equal(await page.locator('.hp-detail .reverification-notice').count(),1);assert.equal(await page.locator('.hp-review-feedback').count(),0);
+  await page.goto(base+'/host/property?propertyId=12');const notice=page.getByRole('region',{name:'Tái xác minh nhà trọ'}).first();await notice.waitFor();assert.equal(await page.locator('.hp-detail .reverification-notice').count(),1);assert.equal(await page.locator('.hp-review-feedback').count(),0);
   assert.match(await notice.innerText(),/tạm ẩn/);assert.match(await notice.innerText(),/Địa chỉ nhà trọ/);
   assert.equal(await notice.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true);
   await page.screenshot({path:path.join(output,`host-pending-${width}.png`),fullPage:true});
@@ -33,7 +33,7 @@ try{
   assert.equal(await staffNotice.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true);
   await page.screenshot({path:path.join(output,`staff-detail-${width}.png`),fullPage:true});
  }
- role='ROOM_HOST';status='NEEDS_SUPPLEMENT';await page.goto(base+'/host/property?id=12');
+ role='ROOM_HOST';status='NEEDS_SUPPLEMENT';await page.goto(base+'/host/property?propertyId=12');
  await page.getByRole('link',{name:'Chỉnh sửa / bổ sung hồ sơ tái xác minh'}).first().waitFor();
  assert.equal(await page.getByRole('link',{name:'Chỉnh sửa / bổ sung hồ sơ tái xác minh'}).first().getAttribute('href'),'/host/property/edit?registrationId=13');
  status='REJECTED';await page.reload();await page.getByText('Nhà trọ tạm ẩn — cần tái xác minh').first().waitFor();

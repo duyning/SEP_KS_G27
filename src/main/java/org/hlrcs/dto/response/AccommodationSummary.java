@@ -8,5 +8,6 @@ public record AccommodationSummary(
         String address, String imageUrl, BigDecimal price, Float areaSqm,
         String verificationStatus, long availableRooms, Integer capacity, java.util.List<String> amenities,
         BigDecimal electricityPrice, BigDecimal waterPrice, BigDecimal latitude, BigDecimal longitude,
-        java.time.Instant availabilityConfirmedAt, String availabilityConfirmationStatus, boolean availabilityStale) {
+        java.time.Instant availabilityConfirmedAt, String availabilityConfirmationStatus, boolean availabilityStale,
+        Double distanceKm) {
 }

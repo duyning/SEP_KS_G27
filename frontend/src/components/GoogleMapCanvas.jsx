@@ -21,6 +21,21 @@ export default function GoogleMapCanvas(props){
 // Google's cleanup can also throw after authorization failure. Attempt every release.
 const release=action=>{try{action();}catch{/* A rejected SDK must not break unmount/fallback. */}};
 const disposeMarker=item=>{item.listeners.forEach(listener=>release(()=>listener.remove()));release(()=>{item.marker.map=null;});};
+function createHouseIcon() {
+  const namespace = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(namespace, 'svg');
+  const attributes = {
+    viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none',
+    stroke: 'currentColor', 'stroke-width': '2', 'aria-hidden': 'true',
+  };
+  for (const [name, value] of Object.entries(attributes)) icon.setAttribute(name, value);
+  for (const shape of ['m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z', 'M9 21v-8h6v8']) {
+    const path = document.createElementNS(namespace, 'path');
+    path.setAttribute('d', shape);
+    icon.append(path);
+  }
+  return icon;
+}
 
 // React owns the surrounding UI; Google alone owns the canvas and marker transforms.
 function GoogleMapRuntime({ points=[], markers=[], onSelect, onMarkerSelect, selectedKey, focusRequest, focusPoint, label, fallback }) {
@@ -96,12 +111,7 @@ function GoogleMapRuntime({ points=[], markers=[], onSelect, onMarkerSelect, sel
       item.marker.position={lat:data.point[0],lng:data.point[1]};
       item.content.className=`nh-google-pin${data.price?' nh-google-price':''}${data.id===selectedKey?' is-selected':''}`;
       if(data.price)item.content.textContent=data.price;
-      else {
-        const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        for(const [key,value] of Object.entries({viewBox:'0 0 24 24',width:'20',height:'20',fill:'none',stroke:'currentColor','stroke-width':'2','aria-hidden':'true'}))icon.setAttribute(key,value);
-        for(const d of ['m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z','M9 21v-8h6v8']){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);icon.append(path);}
-        item.content.replaceChildren(icon);
-      }
+      else if (!item.content.firstElementChild) item.content.replaceChildren(createHouseIcon());
     }
     });
   },[ready,failed,markers,selectedKey,onSelect]);

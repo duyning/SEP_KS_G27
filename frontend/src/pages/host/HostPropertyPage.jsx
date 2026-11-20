@@ -944,6 +944,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                   </Link>
 
                   <div className="hm-prop-body">
+                    <ReverificationNotice required={record.reverificationRequired} reasons={record.reverificationReasons} status={record.changeRequest?.status} note={record.changeRequest?.reasonNote} registrationId={record.changeRequest?.registrationId}/>
                     <div className="hm-prop-head">
                       <h2 className="hm-prop-name">
                         <Link to={detailLink(record)} title={record.name} onClick={() => rememberProperty(record)}>

@@ -4,8 +4,11 @@ import {Heart,MapPin,Phone,Check} from 'lucide-react';
 import {DetailImage} from './detail/DetailPrototypeParts.jsx';
 import {ROOM_AMENITIES} from '../services/room-types.js';
 import {detailMoney} from '../services/detail-prototype.js';
-export default function SearchPrototypeCard({item,saved,onSave,saveBusy=false,comparisonControl}){
- const url=`/properties/detail?${new URLSearchParams({propertyId:item.propertyId,roomTypeId:item.roomTypeId})}`;
+import {formatDistance,withSearchOrigin} from '../services/search-origin.js';
+import {accommodationDetailUrl} from '../services/map-location.js';
+
+export default function SearchPrototypeCard({item,saved,onSave,saveBusy=false,comparisonControl,origin}){
+ const url=withSearchOrigin(accommodationDetailUrl(item),origin);
  const amenities=(item.amenities||[]).map(key=>ROOM_AMENITIES.find(([id])=>id===key)?.[1]||key);
  return <article className="room-card" data-id={item.roomTypeId}>
   <div className="room-thumb-wrap"><Link to={url} className="room-thumb-link" aria-label={`Xem ${item.propertyName} — ${item.roomTypeName}`}><DetailImage src={item.imageUrl} alt={`${item.propertyName} — ${item.roomTypeName}`} className="room-img" loading="lazy"/></Link>
@@ -13,6 +16,7 @@ export default function SearchPrototypeCard({item,saved,onSave,saveBusy=false,co
    <button type="button" className={`btn-card-wishlist${saved?' active':''}`} aria-label={`${saved?'Bỏ lưu':'Lưu'} ${item.propertyName} — ${item.roomTypeName}`} aria-pressed={saved} title={saved?'Bỏ lưu loại phòng':'Lưu loại phòng'} disabled={saveBusy} aria-busy={saveBusy} onClick={()=>onSave(item.roomTypeId)}><Heart size={18}/></button>
   </div>
   <div className="room-body"><div className="room-location"><MapPin size={14}/><span>{item.address||'Chưa cập nhật địa chỉ'}</span></div>
+   {origin&&<p>Khoảng cách: {formatDistance(item.distanceKm)}</p>}
    <h3 className="room-title" title={`${item.propertyName} — ${item.roomTypeName}`}><Link to={url}>{item.propertyName} — {item.roomTypeName}</Link></h3>
    <div className="room-amenities"><span className="amenity-pill">📐 {item.areaSqm} m²</span>{amenities.slice(0,3).map((text,index)=><span className="amenity-pill" key={index}>{text}</span>)}{amenities.length>3&&<span className="amenity-pill">+{amenities.length-3}</span>}</div>
    <AvailabilityNotice value={item}/>

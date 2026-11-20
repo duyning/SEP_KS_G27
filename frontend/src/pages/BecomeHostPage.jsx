@@ -299,7 +299,7 @@ export default function BecomeHostPage() {
 
   const account = (
     <>
-      <Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu">
+      <Link to="/favorites" className="btn-wishlist-top" aria-label="Phòng yêu thích">
         <Heart size={18} />
         <span className="wishlist-count">0</span>
       </Link>
