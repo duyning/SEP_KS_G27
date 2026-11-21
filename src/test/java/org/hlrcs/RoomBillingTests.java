@@ -89,48 +89,45 @@ class RoomBillingTests {
         newLease.addOccupant("Duy Ninh", "0902222222", LocalDate.of(2026, 11, 15), true);
         newLease = tenancies.save(newLease);
 
-        // Partial (non-final) utility reading on newLease (readOn = 2026-11-20 != 2026-11-30) -> must report hasPartialUtilityReading = true & utilities = null!
-        var partialReading = new RoomUtilityReading();
-        partialReading.setTenancyId(newLease.getId());
-        partialReading.setRoomId(room.getRoomId());
-        partialReading.setOwnerId(owner.getUserId());
-        partialReading.setBillingMonth(LocalDate.of(2026, 11, 1));
-        partialReading.setPeriodStart(LocalDate.of(2026, 11, 15));
-        partialReading.setReadOn(LocalDate.of(2026, 11, 20));
-        partialReading.setElectricityStart(BigDecimal.valueOf(100));
-        partialReading.setElectricityEnd(BigDecimal.valueOf(120));
-        partialReading.setElectricityRate(BigDecimal.valueOf(3500));
-        partialReading.setElectricityAmount(BigDecimal.valueOf(70000));
-        partialReading.setWaterMode(RoomUtilityReading.WaterMode.METER);
-        partialReading.setWaterStart(BigDecimal.valueOf(10));
-        partialReading.setWaterEnd(BigDecimal.valueOf(12));
-        partialReading.setWaterRate(BigDecimal.valueOf(15000));
-        partialReading.setWaterAmount(BigDecimal.valueOf(30000));
-        readings.save(partialReading);
+        // A reading saved before month-end is final for its tenancy's billing period.
+        var savedReading = new RoomUtilityReading();
+        savedReading.setTenancyId(newLease.getId());
+        savedReading.setRoomId(room.getRoomId());
+        savedReading.setOwnerId(owner.getUserId());
+        savedReading.setBillingMonth(LocalDate.of(2026, 11, 1));
+        savedReading.setPeriodStart(LocalDate.of(2026, 11, 15));
+        savedReading.setReadOn(LocalDate.of(2026, 11, 20));
+        savedReading.setElectricityStart(BigDecimal.valueOf(100));
+        savedReading.setElectricityEnd(BigDecimal.valueOf(120));
+        savedReading.setElectricityRate(BigDecimal.valueOf(3500));
+        savedReading.setElectricityAmount(BigDecimal.valueOf(70000));
+        savedReading.setWaterMode(RoomUtilityReading.WaterMode.METER);
+        savedReading.setWaterStart(BigDecimal.valueOf(10));
+        savedReading.setWaterEnd(BigDecimal.valueOf(12));
+        savedReading.setWaterRate(BigDecimal.valueOf(15000));
+        savedReading.setWaterAmount(BigDecimal.valueOf(30000));
+        readings.save(savedReading);
 
-        // 1. Check list returns both tenancies separately and marks newLease hasPartialUtilityReading = true
+        // The previous tenant must not inherit the new tenant's reading.
         var listRes = call(token, "GET", "/api/host/room-billing?propertyId=" + prop.getPropertyId() + "&month=2026-11", null);
         assertEquals(200, listRes.statusCode(), listRes.body());
         var candidates = json.readTree(listRes.body()).path("data").path("candidates");
         assertEquals(2, candidates.size());
+        assertEquals("Khách Cũ", candidates.get(0).path("tenantName").asText());
+        assertTrue(candidates.get(0).path("utilities").isNull());
         var newCand = candidates.get(1);
         assertEquals("Duy Ninh", newCand.path("tenantName").asText());
-        assertTrue(newCand.path("utilities").isNull());
-        assertTrue(newCand.path("hasPartialUtilityReading").asBoolean());
+        assertEquals("2026-11-20", newCand.path("utilities").path("readOn").asText());
 
         // 2. Schedule setup for newLease (dueDay 31 tests month-end rule)
         var period = Map.of("propertyId", prop.getPropertyId(), "roomId", room.getRoomId(), "tenancyKey", "t-" + newLease.getId(), "month", "2026-11");
         var schedRes = call(token, "PUT", "/api/host/room-billing/schedule", Map.of("period", period, "cycleMonths", 1, "dueDay", 31, "firstDueDate", "2026-11-21"));
         assertEquals(200, schedRes.statusCode(), schedRes.body());
 
-        // 3. Cannot include partial (unfinalized) utilities in draft!
-        var badDraft = Map.of("period", period, "kind", "MAIN", "dueDate", "2026-11-21", "rentAmount", 2200000, "includeUtilities", true, "charges", List.of());
-        assertEquals(400, call(token, "PUT", "/api/host/room-billing/draft", badDraft).statusCode());
-
-        // 4. Save valid draft (2.200.000 + 100.000 + 50.000 = 2.350.000)
+        // Save the draft with the reading and additional charges.
         var draftBody = Map.of(
                 "period", period, "kind", "MAIN", "dueDate", "2026-11-21",
-                "rentAmount", 2200000, "includeUtilities", false,
+                "rentAmount", 2200000, "includeUtilities", true,
                 "charges", List.of(Map.of("label", "Internet", "amount", 100000), Map.of("label", "Phí dịch vụ", "amount", 50000)));
         var draftRes = call(token, "PUT", "/api/host/room-billing/draft", draftBody);
         assertEquals(200, draftRes.statusCode(), draftRes.body());
@@ -138,7 +135,9 @@ class RoomBillingTests {
         long billId = billNode.path("id").asLong();
         long rev = billNode.path("revision").asLong();
         assertEquals("DRAFT", billNode.path("status").asText());
-        assertEquals("2350000", billNode.path("totalAmount").asText());
+        assertEquals("70000", billNode.path("electricityAmount").asText());
+        assertEquals("30000", billNode.path("waterAmount").asText());
+        assertEquals("2450000", billNode.path("totalAmount").asText());
 
         // 5. Issue bill -> UNPAID; cannot re-draft issued bill (409)
         var issueRes = call(token, "POST", "/api/host/room-billing/" + billId + "/issue", Map.of("revision", rev));
@@ -154,7 +153,7 @@ class RoomBillingTests {
         var payData1 = json.readTree(payRes1.body()).path("data");
         assertEquals("PARTIAL", payData1.path("bill").path("status").asText());
         assertEquals("200000", payData1.path("bill").path("paidAmount").asText());
-        assertEquals("2150000", payData1.path("bill").path("outstanding").asText());
+        assertEquals("2250000", payData1.path("bill").path("outstanding").asText());
         assertEquals(1, payData1.path("payments").size());
 
         // Retry with same requestKey -> idempotent, NO duplicate payment!
@@ -163,12 +162,12 @@ class RoomBillingTests {
         assertEquals("200000", json.readTree(payRetry.body()).path("data").path("bill").path("paidAmount").asText());
         assertEquals(1, json.readTree(payRetry.body()).path("data").path("payments").size());
 
-        // Overpayment rejected (2.200.000 > 2.150.000)
-        var overPay = Map.of("requestKey", UUID.randomUUID().toString(), "amount", 2200000, "paidOn", "2026-11-21", "method", "CASH", "note", "");
+        // Overpayment rejected (2.300.000 > 2.250.000)
+        var overPay = Map.of("requestKey", UUID.randomUUID().toString(), "amount", 2300000, "paidOn", "2026-11-21", "method", "CASH", "note", "");
         assertEquals(400, call(token, "POST", "/api/host/room-billing/" + billId + "/payments", overPay).statusCode());
 
-        // Second payment completes balance (2.150.000) -> PAID with 2 distinct payment rows
-        var pay2 = Map.of("requestKey", UUID.randomUUID().toString(), "amount", 2150000, "paidOn", "2026-11-21", "method", "CASH", "note", "Thu đủ");
+        // Second payment completes balance -> PAID with 2 distinct payment rows
+        var pay2 = Map.of("requestKey", UUID.randomUUID().toString(), "amount", 2250000, "paidOn", "2026-11-21", "method", "CASH", "note", "Thu đủ");
         var payRes2 = call(token, "POST", "/api/host/room-billing/" + billId + "/payments", pay2);
         assertEquals(200, payRes2.statusCode(), payRes2.body());
         var payData2 = json.readTree(payRes2.body()).path("data");

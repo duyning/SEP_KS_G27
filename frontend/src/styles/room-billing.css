@@ -951,12 +951,6 @@
   border: 1px solid var(--hb-success-border);
 }
 
-.hb-util-tag.is-partial {
-  background: var(--hb-warning-bg);
-  color: var(--hb-warning-text);
-  border: 1px solid var(--hb-warning-border);
-}
-
 .hb-util-tag.is-missing {
   background: #f1f5f9;
   color: #475569;

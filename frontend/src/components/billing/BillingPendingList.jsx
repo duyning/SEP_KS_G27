@@ -140,10 +140,6 @@ export default function BillingPendingList({
                           <span className="hb-util-tag is-ready">
                             Đã chốt · {money(utilityTotal)}
                           </span>
-                        ) : candidate.hasPartialUtilityReading ? (
-                          <span className="hb-util-tag is-partial">
-                            Mới tạm ghi (chưa cộng vào phiếu)
-                          </span>
                         ) : (
                           <span className="hb-util-tag is-missing">
                             Chưa chốt chỉ số

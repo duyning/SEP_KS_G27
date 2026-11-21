@@ -324,7 +324,7 @@ export default function BillingDraftDrawer({
               />
               <span>
                 <strong>Cộng tiền điện nước đã chốt</strong>
-                <small>Chỉ cho phép cộng khi chỉ số đã chốt đến cuối kỳ hoặc ngày bàn giao.</small>
+                <small>Dùng số liệu đã chốt trong kỳ này.</small>
               </span>
             </label>
 
@@ -389,11 +389,7 @@ export default function BillingDraftDrawer({
             ) : (
               <div className="hb-util-missing-box">
                 <div>
-                  <span className={`hb-util-tag ${candidate.hasPartialUtilityReading ? 'is-partial' : 'is-missing'}`}>
-                    {candidate.hasPartialUtilityReading
-                      ? 'Mới tạm ghi — chưa chốt đến cuối kỳ'
-                      : 'Chưa có chỉ số điện nước đã chốt'}
-                  </span>
+                  <span className="hb-util-tag is-missing">Chưa có chỉ số điện nước đã chốt</span>
                   <p>Không tự động cộng vào phiếu. Bạn có thể chốt chỉ số trước hoặc lập phiếu điện nước bổ sung sau.</p>
                 </div>
                 <Link

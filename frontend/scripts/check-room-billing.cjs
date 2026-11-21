@@ -43,7 +43,7 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
             startDate: '2026-10-01', ended: false, issue: null,
             schedule: { cycleMonths: 1, dueDay: 21, firstDueDate: '2026-10-21' }, scheduleLocked: true,
             rent: { from: '2026-11-01', through: '2026-11-30', amount: '2200000' },
-            dueDate: '2026-11-21', utilityDueDate: '2026-12-05', utilities: null, hasPartialUtilityReading: false,
+            dueDate: '2026-11-21', utilityDueDate: '2026-12-05', utilities: null,
             suggestedCharges: [{ label: 'Internet', amount: 100000 }, { label: 'Phí dịch vụ', amount: 50000 }],
             mainBillId: 1, mainIssued: true, utilityBillId: null, utilitiesAlreadyBilled: false,
           },
@@ -52,7 +52,8 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
             startDate: '2026-11-01', ended: false, issue: null,
             schedule: { cycleMonths: 1, dueDay: 5, firstDueDate: '2026-11-05' }, scheduleLocked: false,
             rent: { from: '2026-11-01', through: '2026-11-30', amount: '2200000' },
-            dueDate: '2026-11-25', utilityDueDate: '2026-12-05', utilities: null, hasPartialUtilityReading: true,
+            dueDate: '2026-11-25', utilityDueDate: '2026-12-05',
+            utilities: { readOn: '2026-11-20', electricityAmount: '70000', waterAmount: '30000' },
             suggestedCharges: [{ label: 'Internet', amount: 100000 }],
             mainBillId: null, mainIssued: false, utilityBillId: null, utilitiesAlreadyBilled: false,
           },
@@ -67,7 +68,7 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
               electricityStart: 200, electricityEnd: 240, electricityRate: 3500,
               waterMode: 'METER', waterStart: 10, waterEnd: 13, waterRate: 15000, occupantCount: null,
             },
-            hasPartialUtilityReading: false, suggestedCharges: [],
+            suggestedCharges: [],
             mainBillId: null, mainIssued: false, utilityBillId: null, utilitiesAlreadyBilled: false,
           },
         ],
@@ -224,11 +225,11 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
       await drawer.locator('.hm-drawer-footer').getByRole('button', { name: 'Đóng', exact: true }).click();
       await drawer.waitFor({ state: 'detached' });
 
-      // Switch to Tab 2 (Đợt thuê cần lập phiếu): verify P.102 is hidden, P.103 shows "Mới tạm ghi", P.104 shows "Đã trả phòng" + finalized utilities
+      // Verify that the saved reading appears for the pending tenancy before month-end.
       await page.getByRole('tab', { name: /Đợt thuê cần lập phiếu/ }).click();
       assert.equal(await page.locator('[data-tenancy-key="t-102"]').count(), 0, 'Already-billed P.102 must not appear in pending list');
       const card103 = page.locator('[data-tenancy-key="t-103"]');
-      await card103.getByText('Mới tạm ghi (chưa cộng vào phiếu)').waitFor();
+      await card103.getByText('Đã chốt · 100.000 đ').waitFor();
       const card104 = page.locator('[data-tenancy-key="t-104-old"]');
       await card104.getByText('Đã trả phòng').waitFor();
       if (width === 1440) {
@@ -243,14 +244,15 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
       await schedDrawer.getByRole('button', { name: 'Lưu chu kỳ', exact: true }).click();
       await schedDrawer.waitFor({ state: 'detached' });
 
-      // Open Create Invoice Drawer on P.103 -> verify partial utilities NOT checked, add extra charge, save draft
+      // Verify that the saved utilities are included in the draft total.
       await card103.getByRole('button', { name: 'Lập phiếu', exact: true }).click();
       const draftDrawer = page.getByRole('dialog');
-      await draftDrawer.getByText('Mới tạm ghi — chưa chốt đến cuối kỳ').waitFor();
+      await draftDrawer.getByText('Đã chốt ngày 20/11/2026').waitFor();
+      assert.equal(await draftDrawer.getByRole('checkbox', { name: /Cộng tiền điện nước đã chốt/ }).isChecked(), true);
       await draftDrawer.getByRole('button', { name: 'Thêm khoản phí', exact: true }).click();
       await draftDrawer.locator('.hb-charge-row').last().locator('input[type="text"]').first().fill('Gửi xe');
       await draftDrawer.locator('.hb-charge-row').last().locator('input[inputmode="numeric"]').fill('80000');
-      await draftDrawer.locator('.hb-summary-box').getByText('2.380.000 đ').waitFor();
+      await draftDrawer.locator('.hb-summary-box').getByText('2.480.000 đ').waitFor();
       await draftDrawer.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
       await draftDrawer.getByRole('heading', { name: 'Bản nháp', exact: true }).waitFor();
       await draftDrawer.locator('.hm-drawer-footer').getByRole('button', { name: 'Đóng', exact: true }).click();
@@ -259,7 +261,7 @@ const base = process.env.ROOM_BULK_TEST_URL || 'http://127.0.0.1:5198';
 
     assert.ok(requests.payment.every(p => /^[0-9a-f-]{36}$/i.test(p.requestKey)));
     assert.deepEqual(errors, [], `Console/page errors found: ${errors.join('; ')}`);
-    console.log('PASS redesigned Billing & Debt module: KPIs excluding drafts, tabs with pending counts, modern data table + progress bars, right-side detail drawer + multi-payment & live debt preview, schedule drawer with 29/30/31 rule, 3-group create draft drawer with partial-utility guard, 5 widths (375..1920), zero errors.');
+    console.log('PASS Billing & Debt: bill details, payments, schedules, and saved utilities included before month-end at 5 widths (375–1920).');
   } catch (error) {
     const p = browser.contexts()[0]?.pages()[0];
     if (p) {
