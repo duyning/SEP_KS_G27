@@ -61,7 +61,10 @@ export default function RoomTypeCreateModal({
   type = null,
   existingRoomNumbers = [],
   initialDraft = null,
+  onSaveDraft,
+  missingPhotos = 0,
 }) {
+  const draftMode = Boolean(onSaveDraft);
   const reduce = useShouldReduceMotion();
   const stepLeave = useTempoTransition(transition.panelOut);
   const stepEnter = useTempoTransition(transition.panelIn);
@@ -228,6 +231,15 @@ export default function RoomTypeCreateModal({
       return;
     }
 
+    if (draftMode) {
+      const nameError = onSaveDraft(data);
+      if (nameError) {
+        setErrors({ roomType: nameError });
+        requestAnimationFrame(() => form.current?.querySelector('#rt-roomType')?.focus());
+      }
+      return;
+    }
+
     if (!type && step === 0 && !deferRooms) {
       goTo(1);
       return;
@@ -288,14 +300,14 @@ export default function RoomTypeCreateModal({
   return (
     <Modal
       className="rt-create-modal rtc-dialog"
-      title={type ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới'}
+      title={draftMode && initialDraft ? 'Chỉnh sửa loại phòng trong bản nháp' : type ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới'}
       onClose={() => { if (!busy) onClose(); }}
     >
       <p className="rt-modal-subtitle">
-        {type ? 'Cập nhật cấu hình nhóm phòng' : 'Thiết lập cấu hình loại phòng và danh sách phòng'} cho “{property.name}”
+        {draftMode ? 'Khai báo loại phòng cho đợt thiết lập' : type ? 'Cập nhật cấu hình nhóm phòng' : 'Thiết lập cấu hình loại phòng và danh sách phòng'} cho “{property.name}”
       </p>
 
-      {!type && (
+      {!type && !draftMode && (
         <nav className="rt-wizard-steps" aria-label="Các bước thêm loại phòng">
           {['Thông tin loại phòng', 'Thiết lập danh sách phòng'].map((label, index) => (
             <MotionButton
@@ -433,6 +445,9 @@ export default function RoomTypeCreateModal({
                         <small id="rt-photo-hint">
                           <Upload size={12} /> Chọn nhiều ảnh từ máy · Tối đa 10 ảnh, 5 MB/ảnh · Ảnh đầu tiên là ảnh đại diện.
                         </small>
+                        {missingPhotos > 0 && <p role="status">
+                          Chọn lại {missingPhotos} ảnh từ lần trước, hoặc lưu bản nháp với số ảnh hiện tại.
+                        </p>}
                         {!data.photos.length && !data.retainedImages.length && (
                           <div className="rtc-photo-empty">
                             <Upload size={28} />
@@ -582,7 +597,7 @@ export default function RoomTypeCreateModal({
           <MotionButton type="button" className="p-button" disabled={busy} onClick={onClose}>
             Hủy
           </MotionButton>
-          {!type && step === 0 && <MotionButton type="button" className="p-button" disabled={busy} onClick={event=>submit(event,true)}>Lưu loại phòng, thiết lập phòng sau</MotionButton>}
+          {!type && !draftMode && step === 0 && <MotionButton type="button" className="p-button" disabled={busy} onClick={event=>submit(event,true)}>Lưu loại phòng, thiết lập phòng sau</MotionButton>}
           <span ref={submitBtnScope} className="rtc-submit-wrap">
             <MotionButton
               type="submit"
@@ -595,6 +610,8 @@ export default function RoomTypeCreateModal({
                   <LoaderCircle className="spin" size={16} />
                   Đang lưu...
                 </>
+              ) : draftMode ? (
+                initialDraft ? 'Cập nhật bản nháp' : 'Thêm vào bản nháp'
               ) : type ? (
                 'Lưu thay đổi'
               ) : step === 0 ? (

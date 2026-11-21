@@ -25,6 +25,7 @@ export const screens = [
   screen('notifications.html', '/notifications', 'member', 'Thông báo của bạn', 'notifications'),
   screen('become-host.html', '/become-host', 'member', 'Đăng ký làm chủ trọ', 'becomeHost', { integration: 'connected' }),
   screen('profile.html', '/profile', 'member', 'Hồ sơ cá nhân', 'profile', { integration: 'partial' }),
+  screen(null, '/contracts/sign', 'member', 'Ký hợp đồng', 'contractSigning', { integration: 'connected' }),
   screen('host-dashboard.html', '/host', 'host', 'Bảng điều khiển', 'dashboard', { metrics: ['Nhà trọ của tôi', 'Loại phòng', 'Phòng còn trống', 'Yêu cầu xem phòng'], sections: ['Tình trạng nhà trọ', 'Yêu cầu xem phòng gần đây', 'Thông báo vận hành'] }),
   screen('host-property.html', '/host/property', 'host', 'Nhà trọ của tôi', 'detail', { sections: ['Thông tin nhà trọ', 'Hồ sơ xác minh', 'Loại phòng & giá thuê', 'Vị trí & liên hệ'], links: [['Đăng ký nhà trọ', '/host/property/new'], ['Cập nhật thông tin', '/host/property/edit']] }),
   screen('host-property-create.html', '/host/property/new', 'host', 'Đăng ký nhà trọ', 'propertyForm'),

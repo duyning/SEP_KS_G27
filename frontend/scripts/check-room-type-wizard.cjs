@@ -1,63 +1,156 @@
-const assert=require('node:assert/strict');
-const fs=require('node:fs');const path=require('node:path');
-const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
-async function main(){
- const browser=await chromium.launch({channel:'msedge',headless:true});
- const base=process.env.FRONTEND_URL||'http://127.0.0.1:5198';
- const output=path.resolve(__dirname,'../migration/room-type-wizard-check');fs.mkdirSync(output,{recursive:true});
- try{
-  const page=await browser.newPage({viewport:{width:1536,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.addInitScript(()=>sessionStorage.setItem('hlrcs_access_token','browser-only'));
-  const property={propertyId:12,name:'Nhà trọ kiểm tra trong trình duyệt',address:'Hòa Lạc',status:'ACTIVE'};
-  let types=[],writes=0,fail=true;
-  await page.route('**/api/**',async route=>{
-   const req=route.request(),url=new URL(req.url()).pathname;let data;
-   if(url==='/api/auth/me')data={userId:1,fullName:'Browser host',role:'ROOM_HOST'};
-   else if(url==='/api/favorites/state')data={items:[],total:0};
-   else if(url==='/api/host/property-registrations/eligibility')data={canRegister:false,reason:'HAS_PROPERTY'};
-   else if(url==='/api/host/rooms'&&req.method()==='GET')data={properties:[property],pendingRegistrationCount:0,roomTypes:types,rooms:types.flatMap(type=>type.rooms.map(room=>({...room,roomType:type.roomType,amenities:[],publicVisible:false})))};
-   else if(url==='/api/host/room-types'&&req.method()==='GET')data={properties:[property],pendingRegistrationCount:0,roomTypes:types};
-   else if(url==='/api/host/room-types'&&req.method()==='POST'){
-    const form=await new Response(req.postDataBuffer(),{headers:{'Content-Type':req.headers()['content-type']}}).formData(),details=JSON.parse(await form.get('details').text());
-    assert.equal(details.roomType,'Loại phòng lưu trước');data={...details,roomTypeId:35,images:[],rooms:[],totalRooms:0,vacantRooms:0};types.push(data);
-   }
-   else if(url==='/api/host/room-types/with-rooms'&&req.method()==='POST'){
-    writes++;const form=await new Response(req.postDataBuffer(),{headers:{'Content-Type':req.headers()['content-type']}}).formData();
-    const details=JSON.parse(await form.get('details').text()),layout=JSON.parse(await form.get('layout').text());
-    assert.equal(details.propertyId,12);assert.equal(details.roomType,'Loại phòng mới');assert.equal(form.getAll('photos').length,1);
-    assert.equal(layout.rooms.length,4);assert.equal(new Set(layout.rooms.map(room=>room.roomNumber)).size,4);
-    if(fail)return route.fulfill({status:409,json:{success:false,message:'Xung đột kiểm thử, dữ liệu chưa lưu'}});
-    data={...details,roomTypeId:34,deposit:details.price,images:[],totalRooms:4,vacantRooms:4,rooms:layout.rooms.map((room,index)=>({...room,roomId:index+1,roomTypeId:34,propertyId:12,status:'VACANT',price:details.price}))};types.push(data);
-   }else throw new Error(`Unexpected API ${req.method()} ${url}`);
-   return route.fulfill({json:{success:true,data}});
-  });
-  await page.goto(base+'/host/room-types');await page.getByRole('heading',{name:'Nhà trọ chưa có loại phòng nào',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Thêm loại phòng đầu tiên',exact:true}).first().click();
-  const dialog=page.getByRole('dialog',{name:'Thêm loại phòng mới',exact:true});
-  await page.getByRole('button',{name:'Tiếp theo: Thiết lập danh sách phòng',exact:true}).click();assert.equal(writes,0);assert.ok(await page.getByRole('alert').count()>0);
-  await page.getByLabel('Tên loại phòng',{exact:false}).fill('Loại phòng mới');await page.getByLabel('Diện tích (m²)',{exact:false}).fill('25');const price=page.getByLabel('Giá thuê niêm yết',{exact:false});
-  await price.fill('');await price.pressSequentially('2200000');assert.equal(await price.inputValue(),'2.200.000');
-  await price.fill('2.200.000');assert.equal(await price.inputValue(),'2.200.000');
-  await price.evaluate(el=>el.setSelectionRange(2,2));await price.press('Backspace');assert.equal(await price.inputValue(),'200.000');
-  await price.evaluate(el=>el.setSelectionRange(3,3));await price.press('Delete');assert.equal(await price.inputValue(),'20.000');
-  await price.fill('2200000');await price.evaluate(el=>el.setSelectionRange(3,3));await price.press('9');assert.equal(await price.inputValue(),'22.900.000');assert.equal(await price.evaluate(el=>el.selectionStart),4);
-  const deposit=page.getByLabel('Tiền đặt cọc',{exact:false});await deposit.fill('1500000');assert.equal(await deposit.inputValue(),'1.500.000');await deposit.fill('');assert.equal(await deposit.inputValue(),'');
-  await price.fill('2400000');assert.equal(await price.inputValue(),'2.400.000');
-  await page.getByRole('checkbox',{name:'Wifi tốc độ cao',exact:true}).check();
-  await page.locator('#rt-photos').setInputFiles({name:'room.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jz2kAAAAASUVORK5CYII=','base64')});
-  for(const width of [1536,768,390]){await page.setViewportSize({width,height:1000});await dialog.evaluate(e=>e.scrollTop=0);assert.ok(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1));await page.screenshot({path:path.join(output,`step-1-${width}.png`)});}
-  await page.getByRole('button',{name:'Tiếp theo: Thiết lập danh sách phòng',exact:true}).click();assert.equal(writes,0);
-  await page.getByLabel('Tầng nhóm 1',{exact:true}).fill('3');await page.getByLabel('Phòng bắt đầu nhóm 1',{exact:true}).fill('01');await page.getByLabel('Số lượng phòng nhóm 1',{exact:true}).fill('4');
-  const create=page.getByRole('button',{name:'Tạo loại phòng và 4 phòng',exact:true});await create.waitFor();
-  await create.click();await page.getByText('Xung đột kiểm thử, dữ liệu chưa lưu',{exact:true}).waitFor();assert.equal(types.length,0);
-  fail=false;await create.click();await page.waitForURL('**/host/rooms?propertyId=12&publication=1');
-  await page.getByRole('heading',{name:'Chọn phòng công khai',exact:true}).waitFor();await page.reload();await page.getByRole('heading',{name:'Chọn phòng công khai',exact:true}).waitFor();
-  assert.equal(await page.locator('.rp-room input:checked').count(),0);assert.equal(await page.locator('.rp-room').count(),4);assert.equal(types.length,1);assert.equal(types[0].rooms.length,4);assert.equal(writes,2);assert.deepEqual(errors,[]);
-  await page.goto(base+'/host/room-types?propertyId=12');await page.getByRole('button',{name:'Thêm loại phòng',exact:true}).click();
-  await page.getByLabel('Tên loại phòng',{exact:false}).fill('Loại phòng lưu trước');await page.getByLabel('Diện tích (m²)',{exact:false}).fill('25');await page.getByLabel('Giá thuê niêm yết',{exact:false}).fill('2300000');
-  assert.equal(await page.getByText('≈',{exact:false}).count(),0);
-  await page.getByRole('button',{name:'Lưu loại phòng, thiết lập phòng sau',exact:true}).click();await page.getByRole('dialog').waitFor({state:'detached'});assert.equal(types.length,2);assert.equal(types[1].rooms.length,0);assert.ok(new URL(page.url()).pathname.endsWith('/host/room-types'));assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({passed:true,viewportChecks:6,interceptedWrites:writes,mysqlMutations:0,pageErrors:errors}));
- }finally{await browser.close();}
-}
-main().catch(error=>{console.error(error);process.exitCode=1;});
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+
+(async () => {
+  const browser = await chromium.launch({channel: 'msedge', headless: true});
+  const base = process.env.FRONTEND_URL || 'http://127.0.0.1:5198';
+  try {
+    const output = path.resolve(__dirname, '../../target/room-setup-ui');
+    fs.mkdirSync(output, {recursive: true});
+    const page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
+    page.setDefaultTimeout(20000);
+    const writes = [], errors = [], types = [];
+    const property = {propertyId: 12, name: 'Nhà trọ kiểm thử', status: 'ACTIVE'};
+    const photo = {name: 'studio.png', mimeType: 'image/png', buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jz2kAAAAASUVORK5CYII=', 'base64')};
+    let rooms = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => sessionStorage.setItem('hlrcs_access_token', 'room-setup-fixture'));
+    await page.route('https://**/*', route => route.abort());
+    await page.route(base + '/api/**', async route => {
+      const request = route.request();
+      const url = new URL(request.url()).pathname;
+      const ok = data => route.fulfill({json: {success: true, data}});
+      if (url === '/api/auth/me') return ok({userId: 1, fullName: 'Chủ trọ', role: 'ROOM_HOST'});
+      if (url === '/api/host/room-types' || url === '/api/host/rooms') {
+        assert.equal(request.method(), 'GET');
+        return ok({properties: [property], pendingRegistrationCount: 0, roomTypes: types, rooms});
+      }
+      if (url === '/api/host/rooms/setup') {
+        const form = await new Response(request.postDataBuffer(), {headers: {'Content-Type': request.headers()['content-type']}}).formData();
+        const setup = JSON.parse(await form.get('setup').text());
+        const photos = form.getAll('photos').map(file => file.name);
+        writes.push({setup, photos});
+        if (writes.length === 1) {
+          return route.fulfill({status: 409, json: {success: false, message: 'Xung đột kiểm thử. Chưa lưu dữ liệu.'}});
+        }
+        const createdTypes = {};
+        for (const draft of setup.types) {
+          const roomTypeId = 30 + types.length;
+          createdTypes[draft.localId] = roomTypeId;
+          types.push({...draft.details, roomTypeId, images: [], rooms: [], totalRooms: 0, vacantRooms: 0});
+        }
+        const createdRooms = setup.rooms.map((draft, index) => {
+          const roomTypeId = createdTypes[draft.roomTypeId] || draft.roomTypeId;
+          const type = types.find(item => item.roomTypeId === roomTypeId);
+          const room = {...draft, roomTypeId, roomType: type.roomType, roomId: rooms.length + index + 1,
+            propertyId: 12, status: 'VACANT', price: type.price, publicVisible: false, amenities: []};
+          type.rooms.push(room);
+          type.totalRooms++;
+          type.vacantRooms++;
+          return room;
+        });
+        rooms = [...rooms, ...createdRooms];
+        return ok({createdTypes, rooms: createdRooms});
+      }
+      assert.equal(request.method(), 'GET', 'No unrelated writes');
+      return ok({items: [], total: 0, canRegister: false, reason: 'HAS_PROPERTY'});
+    });
+
+    const btn = name => page.getByRole('button', {name, exact: true});
+    const text = name => page.getByText(name, {exact: true});
+    const nameField = page.locator('#rt-roomType');
+    const price = page.locator('#rt-price');
+    const storageKey = 'hlrcs:room-layout:1:12';
+    const review = () => btn('Kiểm tra trước khi lưu').click();
+    const open = async () => {
+      await page.goto(base + '/host/room-types?propertyId=12', {waitUntil: 'domcontentloaded', timeout: 45000});
+      await btn('Tạo loại phòng và phòng').first().click();
+      await page.getByRole('heading', {name: 'Thiết lập phòng nhiều tầng'}).waitFor();
+    };
+    const typeDraft = async (name, amount, file) => {
+      await btn('Thêm loại phòng').click();
+      await nameField.fill(name);
+      await page.locator('#rt-areaSqm').fill('25');
+      await price.pressSequentially(String(amount));
+      assert.equal(await price.inputValue(), Number(amount).toLocaleString('vi-VN'));
+      if (file) await page.locator('#rt-photos').setInputFiles(file);
+      await btn('Thêm vào bản nháp').click();
+      await page.getByRole('dialog').waitFor({state: 'detached'});
+    };
+
+    await open();
+    assert.equal(await btn('Làm lại từ đầu').count(), 0);
+    await text('0 phòng chuẩn bị tạo').waitFor();
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), storageKey), null);
+    assert.equal(writes.length, 0);
+
+    await typeDraft('Studio A', 2200000, photo);
+    await typeDraft('Studio B', 2300000);
+    await btn('Thêm loại phòng').click();
+    await nameField.fill('studio a');
+    await page.locator('#rt-areaSqm').fill('30');
+    await price.fill('1800000');
+    await btn('Thêm vào bản nháp').click();
+    await text('Tên loại phòng đã có trong nhà trọ hoặc trong bản nháp.').waitFor();
+    await btn('Hủy').click();
+
+    await btn('Tiếp tục tạo theo tầng').click();
+    await page.getByLabel('Số phòng mỗi tầng', {exact: true}).fill('2');
+    await btn('Thêm vào danh sách').click();
+    await page.getByLabel('Loại phòng 101', {exact: true}).selectOption({label: 'Studio A · Mới'});
+    await page.getByLabel('Loại phòng 102', {exact: true}).selectOption({label: 'Studio B · Mới'});
+    await page.reload();
+    await review();
+    await page.getByText('Mở loại phòng để chọn lại ảnh sau khi tải lại trang.', {exact: true}).waitFor();
+    assert.equal(await btn('Tạo 2 loại phòng và 2 phòng').isDisabled(), true);
+    await page.getByRole('dialog').getByRole('button', {name: 'Sửa Studio A', exact: true}).click();
+    await page.locator('#rt-photos').setInputFiles(photo);
+    await btn('Cập nhật bản nháp').click();
+    await page.getByRole('dialog').waitFor({state: 'detached'});
+    await page.getByRole('navigation', {name: 'Các bước thiết lập phòng'}).getByRole('button', {name: /^Gán loại phòng/}).click();
+    assert.equal(await page.getByLabel('Loại phòng 101', {exact: true}).inputValue(), '-1');
+
+    for (const width of [375, 768, 1024, 1440]) {
+      await page.setViewportSize({width, height: 1000});
+      assert.ok(await page.locator('.ml-page').evaluate(el => el.scrollWidth <= el.clientWidth + 2));
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({path: path.join(output, 'setup-' + width + '.png'), fullPage: true});
+    }
+    await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
+    assert.ok(await page.locator('.ml-page').evaluate(el => el.scrollWidth <= el.clientWidth + 2));
+    await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+
+    assert.equal(writes.length, 0);
+    await page.setViewportSize({width: 375, height: 850});
+    await review();
+    assert.ok(await page.getByRole('dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 2));
+    await btn('Tạo 2 loại phòng và 2 phòng').click();
+    await text('Xung đột kiểm thử. Chưa lưu dữ liệu.').waitFor();
+    assert.equal(types.length, 0);
+    await btn('Tạo 2 loại phòng và 2 phòng').click();
+    await page.waitForURL('**/host/rooms?propertyId=12&publication=1');
+    await page.getByRole('heading', {name: 'Chọn phòng công khai', exact: true}).waitFor();
+    assert.equal(await page.locator('.rp-room').count(), 2);
+    assert.deepEqual(writes[0], writes[1]);
+    assert.deepEqual(writes[1].setup.types.map(type => [type.details.roomType, type.photoCount]), [['Studio A', 1], ['Studio B', 0]]);
+    assert.deepEqual(writes[1].photos, ['studio.png']);
+    assert.deepEqual(rooms.map(room => room.roomType), ['Studio A', 'Studio B']);
+
+    await open();
+    await typeDraft('Studio lưu trước', 2000000);
+    await review();
+    await btn('Tạo 1 loại phòng').click();
+    await page.waitForURL(url => url.pathname === '/host/room-types' && url.search === '?propertyId=12');
+    await page.locator('.ml-page').waitFor({state: 'detached'});
+    await text('Studio lưu trước').first().waitFor();
+    assert.equal(types.length, 3);
+    assert.equal(rooms.length, 2);
+    assert.deepEqual(errors, []);
+    console.log('PASS unified entry, draft persistence, multiple drafts, duplicate guard, photos/reload, mobile save, atomic retry, publication and type-only refresh.');
+  } finally {
+    await browser.close();
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });

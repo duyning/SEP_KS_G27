@@ -3,6 +3,7 @@ import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.RoomRequest;
 import org.hlrcs.dto.request.RoomLayoutRequest;
 import org.hlrcs.dto.request.RoomSetupRequest;
+import org.hlrcs.dto.request.RoomTenancyRequest;
 import org.hlrcs.dto.response.HostRoomsResponse;
 import org.hlrcs.entity.Room;
 import org.hlrcs.entity.enums.RegistrationStatus;
@@ -28,8 +29,64 @@ public class HostRoomsService {
     private final HostRoomTypeService typeService;
     private final RoomMapping mapper;
     private final RentalContractService rentalContracts;
+    private final RoomTenancyService tenancies;
 
     public record SetupResult(Map<Integer, Integer> createdTypes, List<HostRoomsResponse.RoomSummary> rooms) { }
+    public record TenancyResult(HostRoomsResponse.RoomSummary room, RoomTenancyService.Profile profile) { }
+
+    @Transactional(readOnly = true)
+    public RoomTenancyService.Profile tenancyProfile(Integer id) {
+        return tenancies.profile(owned(id));
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public TenancyResult startTenancy(Integer id, RoomTenancyRequest request) {
+        var room = ownedForTenancyUpdate(id);
+        applyLease(room, "OCCUPIED", request.startDate(), request.endDate(), true);
+        tenancies.start(room, request);
+        if (!"OCCUPIED".equals(room.getStatus())) invalidate(room.getRoomType());
+        room.setStatus("OCCUPIED");
+        room.setConfirmedAt(LocalDateTime.now());
+        return new TenancyResult(mapper.summary(room), tenancies.profile(room));
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public RoomTenancyService.Profile addOccupant(Integer id, String key, RoomTenancyRequest.Occupant request) {
+        var room = ownedForTenancyUpdate(id);
+        tenancies.addOccupant(room, key, request);
+        return tenancies.profile(room);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public RoomTenancyService.Profile markOccupantLeft(Integer id, String key, Long occupantId, RoomTenancyRequest.Dated request) {
+        var room = ownedForTenancyUpdate(id);
+        tenancies.markLeft(room, key, occupantId, request.date());
+        return tenancies.profile(room);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public TenancyResult closeTenancy(Integer id, String key, RoomTenancyRequest.Dated request) {
+        var room = ownedForTenancyUpdate(id);
+        tenancies.checkClose(room, key, request.date());
+        finishLease(room, request.date());
+        invalidate(room.getRoomType());
+        applyLease(room, "VACANT", null, null, false);
+        room.setStatus("VACANT");
+        room.setConfirmedAt(LocalDateTime.now());
+        return new TenancyResult(mapper.summary(room), tenancies.profile(room));
+    }
+
+    private Room ownedForTenancyUpdate(Integer id) {
+        users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow();
+        var room = owned(id);
+        active(room.getProperty());
+        return room;
+    }
+
+    private void finishLease(Room room, java.time.LocalDate date) {
+        tenancies.close(room, date);
+        rentalContracts.close(room);
+    }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public SetupResult createSetup(RoomSetupRequest request, List<MultipartFile> photos) {
@@ -101,9 +158,15 @@ public class HostRoomsService {
             invalidate(type);
             if (oldType != null && !oldType.getRoomTypeId().equals(type.getRoomTypeId())) invalidate(oldType);
         }
-        if(id!=null){rentalContracts.validateDates(room,value.status(),value.leaseStartDate(),value.leaseEndDate());if("VACANT".equals(value.status()))rentalContracts.close(room);}
+        if(id!=null){
+            rentalContracts.validateDates(room,value.status(),value.leaseStartDate(),value.leaseEndDate());
+            if("VACANT".equals(value.status()))finishLease(room, RoomTenancyService.today());
+        }
         room.setConfirmedAt(LocalDateTime.now());
         applyLease(room,value.status(),value.leaseStartDate(),value.leaseEndDate(),false);
+        if (id != null && "OCCUPIED".equals(value.status()) && room.getLeaseStartDate() != null && room.getLeaseEndDate() != null) {
+            tenancies.syncDates(room);
+        }
         room.setRoomType(type);room.setRoomNumber(number);room.setFloor(floor);room.setStatus(value.status());room.setCustomPrice(value.customPrice());
         try{rooms.saveAndFlush(room);}catch(org.springframework.dao.DataIntegrityViolationException error){throw new AppException("Số phòng đã tồn tại. Vui lòng tải lại và chọn ký hiệu khác.",HttpStatus.CONFLICT);}return mapper.summary(room);
     }
@@ -145,10 +208,13 @@ public class HostRoomsService {
         var confirmed=LocalDateTime.now();
         for(var room:selected){
             if(!java.util.Objects.equals(room.getStatus(),value.status()))invalidate(room.getRoomType());
+            if ("VACANT".equals(value.status())) finishLease(room, RoomTenancyService.today());
             applyLease(room,value.status(),value.leaseStartDate(),value.leaseEndDate(),true);
             room.setStatus(value.status());room.setConfirmedAt(confirmed);
-            if("VACANT".equals(value.status()))rentalContracts.close(room);
-            else if(drafts.containsKey(room.getRoomId()))rentalContracts.record(room,drafts.get(room.getRoomId()));
+            if ("OCCUPIED".equals(value.status())) {
+                tenancies.syncDates(room);
+                if(drafts.containsKey(room.getRoomId()))rentalContracts.record(room,drafts.get(room.getRoomId()));
+            }
         }
         rooms.saveAllAndFlush(selected);
         return selected.stream().map(mapper::summary).toList();

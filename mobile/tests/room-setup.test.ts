@@ -294,3 +294,114 @@ test('response validators and reconciliation protect against false success and d
   assert.equal(reconciled.allAlreadyCreated, true);
   assert.ok(reconciled.conflictSummary);
 });
+
+test('groupPreviewByFloor sorts floors numerically and counts distinct used saved types accurately', () => {
+  const rows = [
+    { rowId: 'a', batchId: 'b1', floor: 'Tầng 2', roomNumber: '201', roomTypeId: 10 },
+    { rowId: 'b', batchId: 'b1', floor: 'Tầng 1', roomNumber: '101', roomTypeId: 10 },
+    { rowId: 'c', batchId: 'b1', floor: 'Tầng 1', roomNumber: '102', roomTypeId: -1 },
+    { rowId: 'd', batchId: 'b1', floor: 'Tầng 10', roomNumber: '1001', roomTypeId: 20 },
+  ];
+  const groups = setup.groupPreviewByFloor(rows);
+  assert.equal(groups.map(g => g.floor).join(','), 'Tầng 1,Tầng 2,Tầng 10');
+  assert.equal(groups[0].rooms.length, 2);
+
+  const usedSaved = setup.countUsedSavedTypes(rows, [
+    { roomTypeId: 10 },
+    { roomTypeId: 20 },
+    { roomTypeId: 30 },
+  ]);
+  assert.equal(usedSaved, 2);
+});
+
+test('grouped amenities cover every backend room amenity key cleanly without duplicates', () => {
+  const groupedKeys = setup.ROOM_AMENITY_GROUPS.flatMap(g => [...g.keys]);
+  const backendKeys = Object.keys(roomTypesHelper.ROOM_AMENITY_LABELS);
+  assert.equal(new Set(groupedKeys).size, groupedKeys.length);
+  assert.equal(groupedKeys.length, backendKeys.length);
+  for (const key of backendKeys) {
+    assert.ok(groupedKeys.includes(key));
+  }
+});
+
+test('draft serialization and restoration preserve state, stable negative IDs and drop stale local photos safely', () => {
+  const raw = setup.serializeRoomSetupDraft({
+    propertyId: 7,
+    step: 3,
+    selectedSavedTypeIds: [11, 12],
+    draftTypes: [
+      {
+        localId: -2,
+        form: {
+          ...setup.EMPTY_ROOM_TYPE_FORM,
+          roomType: 'Duplex Nháp',
+          areaSqm: '32',
+          capacity: '3',
+          price: '4500000',
+          photos: [
+            { id: 'p-ok', uri: 'file:///exists.jpg', mimeType: 'image/jpeg', fileSize: 1024 },
+            { id: 'p-gone', uri: 'file:///missing.jpg', mimeType: 'image/jpeg', fileSize: 2048 },
+          ],
+        },
+        details: {
+          propertyId: 7,
+          roomType: 'Duplex Nháp',
+          areaSqm: 32,
+          capacity: 3,
+          price: 4500000,
+          deposit: null,
+          electricityPrice: 0,
+          waterPrice: 25000,
+          internetPrice: null,
+          servicePrice: null,
+          description: '',
+          imageUrl: null,
+          amenities: ['wifi', 'airConditioner'],
+          retainedImageIds: [],
+        },
+      },
+    ],
+    batches: [{ batchId: 'b1', mode: 'RANGE', label: 'Tầng 1–2', createdAt: 1000 }],
+    draftRooms: [
+      { rowId: 'r1', batchId: 'b1', floor: 'Tầng 1', roomNumber: '101', roomTypeId: -2 },
+      { rowId: 'r2', batchId: 'b1', floor: 'Tầng 1', roomNumber: '102', roomTypeId: null },
+    ],
+    savedAt: '2026-11-21T14:00:00.000Z',
+  });
+
+  // Wrong propertyId is rejected
+  const wrongProp = setup.parseRoomSetupDraft(raw, 99);
+  assert.equal(wrongProp.draft, null);
+
+  // Matching propertyId restores cleanly and drops missing photo URI
+  const restored = setup.parseRoomSetupDraft(raw, 7, uri => uri === 'file:///exists.jpg');
+  assert.ok(restored.draft);
+  assert.equal(restored.draft?.step, 3);
+  assert.equal(restored.draft?.selectedSavedTypeIds.join(','), '11,12');
+  assert.equal(restored.draft?.draftTypes.length, 1);
+  assert.equal(restored.draft?.draftTypes[0].form.photos.length, 1);
+  assert.equal(restored.droppedPhotoCount, 1);
+  assert.equal(restored.nextLocalTypeId, -3);
+  assert.equal(restored.draft?.draftRooms[0].roomTypeId, -2);
+  assert.equal(restored.draft?.draftRooms[1].roomTypeId, null);
+});
+
+test('unassigning and re-assigning rooms work cleanly with undo', () => {
+  const rows = [
+    { rowId: 'r1', batchId: 'b1', floor: 'Tầng 1', roomNumber: '101', roomTypeId: 10 },
+  ];
+  const cleared = setup.applyScopedTypeAssignment(rows, new Set(['r1']), null, 'Bỏ gán 101');
+  assert.equal(cleared.affectedCount, 1);
+  assert.equal(cleared.nextRooms[0].roomTypeId, null);
+
+  const reassigned = setup.applyScopedTypeAssignment(
+    cleared.nextRooms,
+    new Set(['r1']),
+    -1,
+    'Gán lại 101'
+  );
+  assert.equal(reassigned.nextRooms[0].roomTypeId, -1);
+
+  const undone = setup.undoTypeAssignment(reassigned.nextRooms, reassigned.snapshot!);
+  assert.equal(undone[0].roomTypeId, null);
+});

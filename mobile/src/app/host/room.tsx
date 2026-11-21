@@ -377,7 +377,15 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
           onRetryContracts={() => {
             void loadContracts();
           }}
-          onOpenContractReader={() => setContractReaderOpen(true)}
+          onOpenContractReader={() =>
+            router.push({
+              pathname: '/host/contract',
+              params: {
+                roomId: String(room.roomId),
+                ...(displayContract ? { contractId: String(displayContract.id) } : {}),
+              },
+            })
+          }
           amenitiesOpen={amenitiesOpen}
           onToggleAmenities={() => setAmenitiesOpen(v => !v)}
           statusNotice={statusNotice}

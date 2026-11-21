@@ -1,0 +1,278 @@
+.ht-lease-nav,
+.ht-lease-panel {
+  --ht-primary: var(--hm-primary, #0f766e);
+  --ht-ink: var(--hm-text, #172b3b);
+  --ht-muted: var(--hm-text-secondary, #475569);
+  --ht-line: var(--hm-border, #dbe5eb);
+  --ht-panel: var(--hm-surface, #fff);
+  --ht-soft: var(--hm-primary-soft, #ecf8f5);
+  --ht-error: var(--hm-danger, #991b1b);
+}
+
+.ht-lease-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  border-bottom: 1px solid var(--ht-line);
+  margin-bottom: 14px;
+}
+
+.ht-lease-nav button {
+  min-height: 44px;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--ht-muted);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ht-lease-nav button[aria-pressed="true"] {
+  border-color: var(--ht-primary);
+  color: var(--ht-primary);
+}
+
+.ht-lease-nav button:focus-visible,
+.ht-lease-panel :is(button, input, summary, a):focus-visible {
+  outline: 2px solid var(--ht-primary);
+  outline-offset: 2px;
+}
+
+.ht-lease-panel {
+  color: var(--ht-ink);
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ht-lease-card {
+  padding: clamp(12px, 2.6vw, 16px);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  background: var(--ht-panel);
+  border: 1px solid var(--ht-line);
+  border-radius: 12px;
+}
+
+.ht-lease-current {
+  border-inline-start: 3px solid var(--ht-primary);
+}
+
+.ht-lease-card h3,
+.ht-lease-card p {
+  margin: 0;
+}
+
+.ht-lease-card h3,
+.ht-lease-loading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ht-lease-card h3 {
+  font-size: 1rem;
+}
+
+.ht-lease-card h3 svg {
+  flex: 0 0 auto;
+  color: var(--ht-primary);
+}
+
+.ht-lease-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.ht-lease-facts dt,
+.ht-lease-card p,
+.ht-lease-person small,
+.ht-lease-history summary span,
+.ht-lease-loading {
+  color: var(--ht-muted);
+}
+
+.ht-lease-facts dt,
+.ht-lease-person small,
+.ht-lease-history summary span {
+  font-size: .82rem;
+}
+
+.ht-lease-facts dd {
+  margin: 3px 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ht-lease-line,
+.ht-lease-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+}
+
+.ht-lease-actions {
+  justify-content: flex-end;
+}
+
+.ht-lease-panel .hm-btn {
+  min-height: 40px;
+  white-space: normal;
+}
+
+.ht-lease-people {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ht-lease-people li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.ht-lease-people li + li,
+.ht-lease-history details {
+  border-top: 1px solid var(--ht-line);
+}
+
+.ht-lease-avatar {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  background: var(--ht-soft);
+  color: var(--ht-primary);
+  border-radius: 50%;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.ht-lease-person {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.ht-lease-person > div,
+.ht-lease-person small {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+}
+
+.ht-lease-person a {
+  color: var(--ht-primary);
+}
+
+.ht-lease-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--ht-soft);
+  color: var(--ht-primary);
+  font-size: .75rem;
+  font-weight: 650;
+}
+
+.ht-lease-line > div > .ht-lease-tag {
+  margin-top: 4px;
+}
+.ht-lease-tag[data-pending="true"] {
+  color: var(--hm-amber-text, #92400e);
+  background: var(--hm-amber-bg, #fffbeb);
+}
+
+.ht-lease-history summary,
+.ht-lease-former summary {
+  padding: 8px 0;
+  min-height: 42px;
+  cursor: pointer;
+}
+
+.ht-lease-history summary span {
+  margin-inline-start: 8px;
+}
+
+.ht-lease-former {
+  border-top: 1px solid var(--ht-line);
+}
+
+.ht-lease-fields {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.ht-lease-fields label {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  font-weight: 650;
+}
+
+.ht-lease-fields input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 9px;
+  border: 1px solid var(--ht-line);
+  border-radius: 8px;
+  color: var(--ht-ink);
+  background: var(--ht-panel);
+  font: inherit;
+  font-weight: 400;
+}
+
+.ht-lease-empty {
+  justify-items: start;
+}
+
+.ht-lease-notice {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--ht-primary);
+  background: var(--ht-soft);
+}
+
+.ht-lease-panel .ht-lease-error {
+  color: var(--ht-error);
+}
+
+@media (max-width: 480px) {
+  .ht-lease-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ht-lease-nav {
+    gap: 0 12px;
+  }
+}
+
+@media (pointer: coarse) {
+  .ht-lease-panel .hm-btn {
+    min-height: 44px;
+  }
+
+  .ht-lease-fields input {
+    font-size: 16px;
+  }
+}

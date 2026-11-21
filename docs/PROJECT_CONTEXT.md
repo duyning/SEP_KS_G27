@@ -1,5 +1,11 @@
 # HL-RCS — context và kiến trúc hiện tại
 
+Cập nhật 2026-11-18: [Hợp đồng thuê phòng](RENTAL_CONTRACTS.md) bổ sung tạo hợp
+đồng tùy chọn khi chuyển phòng sang Đang thuê: hai mẫu hệ thống hoặc đọc JPG/PNG/PDF
+bằng Gemini, chủ trọ kiểm tra trước khi lưu. Hợp đồng riêng cho mỗi phòng, lưu cùng
+transaction đổi trạng thái, giữ lịch sử khi trả phòng, API chỉ cho chủ sở hữu.
+Không đưa người thuê/CCCD/điều khoản vào DTO công khai; không tự xác nhận chữ ký.
+
 Ngày đối chiếu: **2026-11-05**. Commit làm mốc: `350dc13`.
 Phạm vi: mã nguồn, JPA mappings, cấu hình, API, frontend và test trong repository;
 không truy vấn database đang chạy và không xác minh triển khai thực tế.

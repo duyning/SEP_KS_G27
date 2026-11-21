@@ -13,5 +13,9 @@ CREATE TABLE IF NOT EXISTS rental_contracts (
     details_json MEDIUMTEXT NOT NULL,
     created_at DATETIME(6),
     closed_at DATETIME(6),
+    signing_token_hash VARCHAR(64) UNIQUE,
+    signing_link_expires_at DATETIME(6),
+    owner_signature_json MEDIUMTEXT,
+    tenant_signature_json MEDIUMTEXT,
     INDEX ix_rental_contract_room_owner (room_id,owner_id)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

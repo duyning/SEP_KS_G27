@@ -141,6 +141,7 @@ function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
 }
 
 export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDeleted }) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const notify = useToast();
   const memory = getHostWorkspaceMemory(user?.userId);
@@ -257,6 +258,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
   }
 
   const canCreate = property.status === 'ACTIVE';
+  const openSetup = () => navigate('/host/room-types?propertyId=' + property.propertyId + '&layout=1');
   const hasRoomCounts = types.length > 0 && types.every(item => item.totalRooms != null);
   const totals = hasRoomCounts ? types.reduce((sum, item) => sum + item.totalRooms, 0) : 0;
   const vacancies =
@@ -280,7 +282,6 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 
   const headerActions = (
     <>
-      <Link className="hm-btn hm-btn-primary" to={`/host/room-types?propertyId=${property.propertyId}&layout=1`}><Layers size={16}/>Thiết lập phòng nhiều tầng</Link>
       <MotionButton
         type="button"
         className="hm-btn hm-btn-subtle"
@@ -305,11 +306,11 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
         type="button"
         className="hm-btn hm-btn-primary"
         disabled={!canCreate}
-        title={canCreate ? 'Thêm loại phòng mới' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
-        onClick={() => setCreate(true)}
+        title={canCreate ? 'Tạo loại phòng và thiết lập phòng' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
+        onClick={openSetup}
       >
         <Plus size={16} />
-        <span>Thêm loại phòng</span>
+        <span>Tạo loại phòng và phòng</span>
       </MotionButton>
     </>
   );
@@ -478,10 +479,10 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
               type="button"
               className="hm-btn hm-btn-primary"
               disabled={!canCreate}
-              onClick={() => setCreate(true)}
+              onClick={openSetup}
             >
               <Plus size={16} />
-              <span>Thêm loại phòng đầu tiên</span>
+              <span>Tạo loại phòng và phòng</span>
             </MotionButton>
           </div>
         ) : !shown.length ? (
@@ -699,7 +700,15 @@ export default function HostRoomTypesPage() {
           </StateView>
         </HostManagementShell>
       ) : params.get('layout')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
-        <MultiFloorRoomSetup key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId} onDone={()=>navigate(`/host/rooms?propertyId=${propertyId}&publication=1`)}/>
+        <MultiFloorRoomSetup key={user.userId + ':' + propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)}
+          types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId}
+          onDone={roomCount => {
+            if (roomCount) navigate(`/host/rooms?propertyId=${propertyId}&publication=1`);
+            else {
+              setRevision(value => value + 1);
+              navigate(`/host/room-types?propertyId=${propertyId}`);
+            }
+          }}/>
       ) : (
         <RoomTypesContent
           key={`${user?.userId}-${propertyId || ''}`}

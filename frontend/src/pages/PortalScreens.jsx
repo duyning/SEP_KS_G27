@@ -1,42 +1,41 @@
-import React from 'react';
+import { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 
-// Public Pages
-import HomePage from './public/HomePage.jsx';
-import SearchPage from './public/SearchPage.jsx';
-import MapSearchPage from './public/MapSearchPage.jsx';
-import DetailPage from './public/DetailPage.jsx';
-import FavoritesPage from './public/FavoritesPage.jsx';
-import RoomComparisonPage from './public/RoomComparisonPage.jsx';
-import BookingsPage from './public/BookingsPage.jsx';
-import CommunityPage from './public/CommunityPage.jsx';
-import ServicesPage from './public/ServicesPage.jsx';
-import ServiceDetailPage from './public/ServiceDetailPage.jsx';
-import NotificationsPage from './public/NotificationsPage.jsx';
+// Public Pages (lazy-loaded per route)
+const HomePage = lazy(() => import('./public/HomePage.jsx'));
+const SearchPage = lazy(() => import('./public/SearchPage.jsx'));
+const MapSearchPage = lazy(() => import('./public/MapSearchPage.jsx'));
+const DetailPage = lazy(() => import('./public/DetailPage.jsx'));
+const FavoritesPage = lazy(() => import('./public/FavoritesPage.jsx'));
+const RoomComparisonPage = lazy(() => import('./public/RoomComparisonPage.jsx'));
+const BookingsPage = lazy(() => import('./public/BookingsPage.jsx'));
+const CommunityPage = lazy(() => import('./public/CommunityPage.jsx'));
+const ServicesPage = lazy(() => import('./public/ServicesPage.jsx'));
+const ServiceDetailPage = lazy(() => import('./public/ServiceDetailPage.jsx'));
+const NotificationsPage = lazy(() => import('./public/NotificationsPage.jsx'));
 
-// Host Pages
-import HostDashboardPage from './host/HostDashboardPage.jsx';
-import HostManagementWorkspace from './host/HostManagementWorkspace.jsx';
-import HostPropertyCreatePage from './host/HostPropertyCreatePage.jsx';
-import HostPropertyEditPage from './host/HostPropertyEditPage.jsx';
-import HostViewingRequestsPage from './host/HostViewingRequestsPage.jsx';
-import HostSupportPage from './host/HostSupportPage.jsx';
-import HostNotificationsPage from './host/HostNotificationsPage.jsx';
+// Host Pages (lazy-loaded per route)
+const HostDashboardPage = lazy(() => import('./host/HostDashboardPage.jsx'));
+const HostManagementWorkspace = lazy(() => import('./host/HostManagementWorkspace.jsx'));
+const HostPropertyCreatePage = lazy(() => import('./host/HostPropertyCreatePage.jsx'));
+const HostPropertyEditPage = lazy(() => import('./host/HostPropertyEditPage.jsx'));
+const HostViewingRequestsPage = lazy(() => import('./host/HostViewingRequestsPage.jsx'));
+const HostSupportPage = lazy(() => import('./host/HostSupportPage.jsx'));
+const HostNotificationsPage = lazy(() => import('./host/HostNotificationsPage.jsx'));
 
-// Staff Pages
-import StaffDashboardPage from './staff/StaffDashboardPage.jsx';
-import StaffServiceApplicationsPage from './staff/StaffServiceApplicationsPage.jsx';
-import StaffPropertyVerificationsPage from './staff/StaffPropertyVerificationsPage.jsx';
-import StaffPropertyVerificationDetailPage from './staff/StaffPropertyVerificationDetailPage.jsx';
-import StaffCommunityModerationPage from './staff/StaffCommunityModerationPage.jsx';
-import StaffCommunityModerationDetailPage from './staff/StaffCommunityModerationDetailPage.jsx';
-import StaffAssistanceRequestsPage from './staff/StaffAssistanceRequestsPage.jsx';
-import StaffAssistanceRequestDetailPage from './staff/StaffAssistanceRequestDetailPage.jsx';
+// Staff Pages (lazy-loaded per route)
+const StaffDashboardPage = lazy(() => import('./staff/StaffDashboardPage.jsx'));
+const StaffServiceApplicationsPage = lazy(() => import('./staff/StaffServiceApplicationsPage.jsx'));
+const StaffPropertyVerificationsPage = lazy(() => import('./staff/StaffPropertyVerificationsPage.jsx'));
+const StaffPropertyVerificationDetailPage = lazy(() => import('./staff/StaffPropertyVerificationDetailPage.jsx'));
+const StaffCommunityModerationPage = lazy(() => import('./staff/StaffCommunityModerationPage.jsx'));
+const StaffCommunityModerationDetailPage = lazy(() => import('./staff/StaffCommunityModerationDetailPage.jsx'));
+const StaffAssistanceRequestsPage = lazy(() => import('./staff/StaffAssistanceRequestsPage.jsx'));
+const StaffAssistanceRequestDetailPage = lazy(() => import('./staff/StaffAssistanceRequestDetailPage.jsx'));
+const StaffHostRegistrationDetailPage = lazy(() => import('./staff/StaffHostRegistrationDetailPage.jsx'));
 
-import StaffHostRegistrationDetailPage from './staff/StaffHostRegistrationDetailPage.jsx';
-
-// Admin Pages
-import AdminDashboardPage from './admin/AdminDashboardPage.jsx';
+// Admin Pages (lazy-loaded per route)
+const AdminDashboardPage = lazy(() => import('./admin/AdminDashboardPage.jsx'));
 
 export default function PortalScreens({ screen }) {
   if (['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path)) {
@@ -55,7 +54,8 @@ export default function PortalScreens({ screen }) {
       return <MapSearchPage />;
     case '/properties/detail':
       return <DetailPage />;
-    case '/favorites/compare': return <RoomComparisonPage />;
+    case '/favorites/compare':
+      return <RoomComparisonPage />;
     case '/favorites':
       return <FavoritesPage />;
     case '/bookings':

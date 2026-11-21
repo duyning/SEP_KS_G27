@@ -21,6 +21,8 @@ public interface RoomRepository extends JpaRepository<Room,Integer> {
     java.util.Optional<Room> findByRoomIdAndProperty_Owner_UserId(Integer roomId, Integer ownerId);
     @EntityGraph(attributePaths={"property","roomType"})
     List<Room> findByProperty_Owner_UserIdOrderByRoomNumberAsc(Integer ownerId);
+    @EntityGraph(attributePaths = {"property", "roomType"})
+    List<Room> findByProperty_PropertyIdAndProperty_Owner_UserIdOrderByRoomNumberAsc(Integer propertyId, Integer ownerId);
     @EntityGraph(attributePaths={"roomType"})
     List<Room> findByRoomType_RoomTypeIdOrderByRoomNumberAsc(Integer typeId);
     boolean existsByRoomType_RoomTypeId(Integer typeId);

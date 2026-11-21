@@ -406,14 +406,14 @@ function RoomsContent({
           Danh sách phòng
         </Text>
         <View style={s.headerActions}>
-          {canAddRoom && (
+          {canManage && propertyId != null && (
             <AnimatedPressable
               scaleTo={0.97}
-              accessibilityLabel="Thêm phòng mới"
+              accessibilityLabel="Thiết lập phòng và loại phòng mới"
               style={s.addBtn}
               onPress={() =>
                 router.push({
-                  pathname: '/host/room',
+                  pathname: '/host/room-setup',
                   params: { propertyId: String(propertyId) },
                 })
               }

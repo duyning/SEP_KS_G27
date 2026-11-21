@@ -5,7 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.*;
 
-/** Owner-only snapshot; deliberately excluded from all public room DTOs. */
+/** Private snapshot shared with the owner and the verified renter. */
 @Entity @Table(name="rental_contracts",indexes=@Index(name="ix_rental_contract_room_owner",columnList="room_id,owner_id"))
 @Getter @Setter @NoArgsConstructor
 public class RentalContract {
@@ -21,4 +21,8 @@ public class RentalContract {
     @Column(nullable=false,columnDefinition="MEDIUMTEXT") private String detailsJson;
     @CreationTimestamp private LocalDateTime createdAt;
     private LocalDateTime closedAt;
+    @Column(length=64, unique=true) private String signingTokenHash;
+    private Instant signingLinkExpiresAt;
+    @Column(columnDefinition="MEDIUMTEXT") private String ownerSignatureJson;
+    @Column(columnDefinition="MEDIUMTEXT") private String tenantSignatureJson;
 }

@@ -3,11 +3,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0d9488" />
+    <meta name="theme-color" content="#087F72" />
     <title>HL_RCS | Kết nối phòng trọ Hòa Lạc</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; padding: 0; background-color: #FAFAF6; }
+      .gl-boot { min-height: 100vh; min-height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 24px 20px; box-sizing: border-box; background-color: #FAFAF6; color: #142D29; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .gl-boot-card { display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; }
+      .gl-boot-orbit { position: relative; width: 96px; height: 96px; display: grid; place-items: center; }
+      .gl-boot-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .gl-boot-track { fill: none; stroke: rgba(8, 127, 114, 0.14); stroke-width: 3.5; }
+      .gl-boot-arc { fill: none; stroke: #087F72; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 76 196; transform-origin: 48px 48px; animation: gl-boot-spin 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      .gl-boot-emblem { position: relative; z-index: 1; width: 56px; height: 56px; border-radius: 18px; background: linear-gradient(135deg, #087F72 0%, #066057 100%); color: #ffffff; display: grid; place-items: center; box-shadow: 0 8px 20px -4px rgba(8, 127, 114, 0.28), 0 2px 6px rgba(6, 96, 87, 0.16); animation: gl-boot-breathe 2.2s ease-in-out infinite; }
+      .gl-boot-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .gl-boot-brand { margin: 0; font-size: 20px; font-weight: 800; color: #142D29; letter-spacing: -0.02em; }
+      .gl-boot-text { margin: 0; font-size: 15px; font-weight: 600; color: #526A65; letter-spacing: -0.01em; }
+      .gl-boot-dots { display: inline-flex; gap: 7px; margin-top: 6px; }
+      .gl-boot-dots i { display: block; width: 6px; height: 6px; border-radius: 9999px; background-color: #087F72; opacity: 0.3; animation: gl-boot-dot 1.2s ease-in-out infinite; }
+      .gl-boot-dots i:nth-child(2) { animation-delay: 180ms; }
+      .gl-boot-dots i:nth-child(3) { animation-delay: 360ms; }
+      @keyframes gl-boot-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes gl-boot-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+      @keyframes gl-boot-dot { 0%, 100% { opacity: 0.28; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
+      @media (max-width: 640px) { .gl-boot-orbit { width: 82px; height: 82px; } .gl-boot-emblem { width: 48px; height: 48px; border-radius: 15px; } .gl-boot-brand { font-size: 18px; } .gl-boot-text { font-size: 14px; } }
+      @media (prefers-reduced-motion: reduce) { .gl-boot-arc { animation: none; stroke-dasharray: 200 72; opacity: 0.85; } .gl-boot-emblem { animation: none; } .gl-boot-dots i { animation: none; opacity: 0.65; } }
+    </style>
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+  <body>
+    <div id="root">
+      <div class="gl-boot" role="status" aria-live="polite" aria-busy="true" data-testid="bootstrap-loading">
+        <div class="gl-boot-card">
+          <div class="gl-boot-orbit" aria-hidden="true">
+            <svg class="gl-boot-ring" viewBox="0 0 96 96" focusable="false">
+              <circle class="gl-boot-track" cx="48" cy="48" r="43" />
+              <circle class="gl-boot-arc" cx="48" cy="48" r="43" />
+            </svg>
+            <span class="gl-boot-emblem">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+                <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              </svg>
+            </span>
+          </div>
+          <div class="gl-boot-copy">
+            <p class="gl-boot-brand">HL_RCS</p>
+            <p class="gl-boot-text">Đang chuẩn bị không gian của bạn...</p>
+            <span class="gl-boot-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import { AuthInput } from '@/components/auth/auth-input';
@@ -22,6 +22,7 @@ import { ROOM_AMENITY_LABELS, roomAmenityLabel } from '@/services/host-room-type
 import { checkRegistrationAsset } from '@/services/registration-upload';
 import {
   EMPTY_ROOM_TYPE_FORM,
+  ROOM_AMENITY_GROUPS,
   SETUP_LIMITS,
   formatOptionalFeePreview,
   sanitizeDecimalInput,
@@ -56,18 +57,26 @@ export function RoomSetupTypeModal({
   onClose: () => void;
   onSaveDraft: (form: RoomTypeFormDraft, payload: RoomTypeRequestPayload, editingLocalId?: number) => void;
 }) {
+  const reduced = useReducedMotionPreference();
   if (!visible) return null;
   return (
-    <RoomSetupTypeModalContent
-      key={editing ? `edit-${editing.localId}` : 'create-new'}
-      propertyId={propertyId}
-      propertyName={propertyName}
-      savedTypes={savedTypes}
-      draftTypes={draftTypes}
-      editing={editing}
-      onClose={onClose}
-      onSaveDraft={onSaveDraft}
-    />
+    <Modal
+      visible
+      animationType={reduced ? 'none' : 'slide'}
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
+      <RoomSetupTypeModalContent
+        key={editing ? `edit-${editing.localId}` : 'create-new'}
+        propertyId={propertyId}
+        propertyName={propertyName}
+        savedTypes={savedTypes}
+        draftTypes={draftTypes}
+        editing={editing}
+        onClose={onClose}
+        onSaveDraft={onSaveDraft}
+      />
+    </Modal>
   );
 }
 
@@ -88,7 +97,6 @@ function RoomSetupTypeModalContent({
   onClose: () => void;
   onSaveDraft: (form: RoomTypeFormDraft, payload: RoomTypeRequestPayload, editingLocalId?: number) => void;
 }) {
-  const reduced = useReducedMotionPreference();
   const [form, setForm] = useState<RoomTypeFormDraft>(() =>
     editing
       ? {
@@ -300,16 +308,12 @@ function RoomSetupTypeModalContent({
       : null;
 
   return (
-    <Modal
-      visible
-      animationType={reduced ? 'none' : 'slide'}
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
-    >
+    <SafeAreaProvider>
       <SafeAreaView style={s.screen} edges={['top', 'bottom', 'left', 'right']}>
         {/* Header */}
         <View style={s.header}>
           <AnimatedPressable
+            accessibilityRole="button"
             accessibilityLabel="Đóng biểu mẫu thêm loại phòng"
             style={s.backBtn}
             onPress={onClose}
@@ -568,54 +572,74 @@ function RoomSetupTypeModalContent({
               />
             </ExpandableSection>
 
-            {/* Collapsible 4: Amenities */}
+            {/* Collapsible 4: Grouped Amenities + "Xem tất cả" */}
             <ExpandableSection
               icon="check-square"
               title="Tiện nghi trong phòng"
               subtitle={
                 form.amenities.length > 0
-                  ? `Đã chọn ${form.amenities.length} tiện nghi`
-                  : 'Tùy chọn · Điều hòa, nóng lạnh, gác lửng…'
+                  ? `Đã chọn ${form.amenities.length}/${AMENITY_ITEMS.length} tiện nghi`
+                  : 'Tùy chọn · Chọn nhanh theo nhóm hoặc xem tất cả'
               }
               expanded={amenitiesOpen}
               onToggle={() => setAmenitiesOpen(prev => !prev)}
             >
+              <View style={{ gap: 12 }}>
+                {ROOM_AMENITY_GROUPS.map(group => {
+                  const previewKeys = group.keys.slice(0, 4);
+                  return (
+                    <View key={group.id} style={{ gap: 7 }}>
+                      <Text style={s.amenityGroupTitle}>{group.title}</Text>
+                      <View style={s.amenityChipsWrap}>
+                        {previewKeys.map(key => {
+                          const active = form.amenities.includes(key);
+                          return (
+                            <AnimatedPressable
+                              key={key}
+                              scaleTo={0.97}
+                              accessibilityRole="checkbox"
+                              accessibilityState={{ checked: active }}
+                              style={[s.amenityQuickChip, active && s.amenityQuickChipActive]}
+                              onPress={() => {
+                                updateField(
+                                  'amenities',
+                                  active
+                                    ? form.amenities.filter(item => item !== key)
+                                    : [...form.amenities, key]
+                                );
+                              }}
+                            >
+                              {active && <Feather name="check" size={12} color={c.primaryDark} />}
+                              <Text
+                                style={[
+                                  s.amenityQuickChipText,
+                                  active && s.amenityQuickChipTextActive,
+                                ]}
+                              >
+                                {roomAmenityLabel(key)}
+                              </Text>
+                            </AnimatedPressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
               <AnimatedPressable
                 scaleTo={0.98}
                 style={s.amenityPickerBtn}
-                accessibilityLabel="Chọn danh sách tiện nghi phòng"
+                accessibilityLabel={`Xem tất cả ${AMENITY_ITEMS.length} tiện nghi phòng`}
                 onPress={() => setAmenitySheetOpen(true)}
               >
                 <Feather name="sliders" size={16} color={c.primary} />
                 <Text style={s.amenityPickerText}>
-                  {form.amenities.length > 0
-                    ? `Chỉnh sửa tiện nghi (${form.amenities.length})`
-                    : 'Chọn tiện nghi trong phòng'}
+                  Xem tất cả ({AMENITY_ITEMS.length} tiện nghi)
+                  {form.amenities.length > 0 ? ` · Đã chọn ${form.amenities.length}` : ''}
                 </Text>
                 <Feather name="chevron-right" size={16} color={c.textMuted} />
               </AnimatedPressable>
-
-              {form.amenities.length > 0 && (
-                <View style={s.amenityChipsWrap}>
-                  {form.amenities.map(key => (
-                    <View key={key} style={s.amenityChip}>
-                      <Text style={s.amenityChipText}>{roomAmenityLabel(key)}</Text>
-                      <AnimatedPressable
-                        accessibilityLabel={`Bỏ ${roomAmenityLabel(key)}`}
-                        onPress={() =>
-                          updateField(
-                            'amenities',
-                            form.amenities.filter(item => item !== key)
-                          )
-                        }
-                        style={s.chipRemove}
-                      >
-                        <Feather name="x" size={12} color={c.primary} />
-                      </AnimatedPressable>
-                    </View>
-                  ))}
-                </View>
-              )}
             </ExpandableSection>
           </ScrollView>
 
@@ -645,7 +669,7 @@ function RoomSetupTypeModalContent({
           onClose={() => setAmenitySheetOpen(false)}
         />
       </SafeAreaView>
-    </Modal>
+    </SafeAreaProvider>
   );
 }
 
@@ -717,10 +741,16 @@ function FeeInputRow({
   const isEmpty = value.trim().length === 0;
   return (
     <View style={{ gap: 6 }}>
-      <View style={s.feeHeaderRow}>
-        <Text style={s.feeLabel}>
-          {label} <Text style={s.feeUnit}>({unit})</Text>
-        </Text>
+      <AuthInput
+        label={`${label} (${unit})`}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        keyboardType="number-pad"
+        maxLength={9}
+        error={error}
+      />
+      <View style={s.feeStatusLine}>
         <View
           style={[
             s.feeStatePill,
@@ -739,15 +769,6 @@ function FeeInputRow({
           </Text>
         </View>
       </View>
-      <AuthInput
-        label={`${label} (${unit})`}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        keyboardType="number-pad"
-        maxLength={9}
-        error={error}
-      />
     </View>
   );
 }
@@ -768,9 +789,9 @@ const s = StyleSheet.create({
     borderBottomColor: c.border,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: c.surface,
     borderWidth: 1,
     borderColor: c.border,
@@ -976,6 +997,41 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: c.forestInk,
+  },
+  feeStatusLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: -2,
+  },
+  amenityGroupTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: c.textSecondary,
+  },
+  amenityQuickChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: authRadius.round,
+    backgroundColor: c.background,
+    borderWidth: 1,
+    borderColor: c.border,
+  },
+  amenityQuickChipActive: {
+    backgroundColor: c.softMint,
+    borderColor: c.primary,
+  },
+  amenityQuickChipText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: c.forestInk,
+  },
+  amenityQuickChipTextActive: {
+    color: c.primaryDark,
+    fontWeight: '700',
   },
   amenityChipsWrap: {
     flexDirection: 'row',

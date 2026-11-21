@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { AuthInput } from '@/components/auth/auth-input';
 import { PrimaryButton } from '@/components/auth/primary-button';
 import { authColors as c, authRadius, authSpacing } from '@/components/auth/tokens';
@@ -22,13 +23,16 @@ import {
   AddSingleDraftRoomSheet,
   BulkAssignTypeSheet,
   DraftRoomEditSheet,
+  QuickTypePickSheet,
   SetupReviewModal,
 } from '@/components/host/room-setup-sheets';
 import { RoomSetupTypeModal } from '@/components/host/room-setup-type-modal';
 import { useReducedMotionPreference } from '@/constants/motion';
+import { useAuth } from '@/context/auth-context';
 import { useHost } from '@/context/host-context';
+import { getApiBase, resolveImageUrl } from '@/services/accommodations';
 import { tokenStore } from '@/services/auth';
-import { HostError } from '@/services/host';
+import { HostError, type HostRoomType } from '@/services/host';
 import { formatMoneyVnd } from '@/services/host-room-types';
 import {
   SETUP_LIMITS,
@@ -36,14 +40,18 @@ import {
   buildSetupRequest,
   collectNumericFloors,
   combineSelectableRoomTypes,
+  countUsedSavedTypes,
   extractDraftFloorLabels,
   formatBatchPreview,
   formatFloorDisplay,
   generateExistingFloorBatch,
   generateFloorRangeBatch,
+  groupPreviewByFloor,
+  parseRoomSetupDraft,
   reconcileDraftAgainstServer,
   roomKey,
   sanitizeDigitsInput,
+  serializeRoomSetupDraft,
   undoTypeAssignment,
   validateDraftRooms,
   type AssignmentSnapshot,
@@ -55,6 +63,12 @@ import {
   type RoomTypeRequestPayload,
 } from '@/services/room-setup';
 import {
+  clearRoomSetupDraft,
+  isLocalFileAvailable,
+  readRoomSetupDraft,
+  writeRoomSetupDraft,
+} from '@/services/room-setup-draft';
+import {
   fetchLatestHostInventory,
   submitRoomLayoutJson,
   submitRoomSetupMultipart,
@@ -63,37 +77,71 @@ import {
 type SetupStep = 1 | 2 | 3;
 type FloorGenMode = 'RANGE' | 'EXISTING';
 
-const STEP_META: Record<SetupStep, { label: string; title: string }> = {
-  1: { label: 'Loại phòng', title: 'Chuẩn bị loại phòng' },
-  2: { label: 'Tạo theo tầng', title: 'Tạo phòng theo tầng' },
-  3: { label: 'Gán loại phòng', title: 'Gán loại và kiểm tra' },
-};
+const STEP_ITEMS: readonly { step: SetupStep; label: string }[] = [
+  { step: 1, label: 'Loại phòng' },
+  { step: 2, label: 'Tạo theo tầng' },
+  { step: 3, label: 'Gán loại phòng' },
+];
+
+function savedTypeThumbSource(item: HostRoomType, imageToken: string | null) {
+  const firstImg = item.images?.[0];
+  if (firstImg?.imageId) {
+    return {
+      uri: `${getApiBase()}/api/host/room-types/${item.roomTypeId}/images/${firstImg.imageId}`,
+      headers: imageToken ? { Authorization: `Bearer ${imageToken}` } : undefined,
+    };
+  }
+  const url = resolveImageUrl(item.imageUrl);
+  if (url) return { uri: url };
+  return null;
+}
+
+function formatSavedTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
 
 export default function MultiFloorRoomSetupScreen() {
   const params = useLocalSearchParams<{ propertyId?: string }>();
+  const { user } = useAuth();
   const host = useHost();
   const reducedMotion = useReducedMotionPreference();
   const { property } = useManagedProperty(params.propertyId);
   const propertyId = property?.propertyId ?? null;
   const propertyName = property?.name || 'Nhà trọ đang quản lý';
+  const userId = user?.userId ?? null;
+
+  const allStoreRoomTypes = host.data.roomTypes?.roomTypes;
+  const allStoreRooms = host.data.rooms?.rooms;
 
   const savedTypes = useMemo(() => {
     if (propertyId == null) return [];
-    return (host.data.roomTypes?.roomTypes || []).filter(t => t.propertyId === propertyId);
-  }, [host.data.roomTypes?.roomTypes, propertyId]);
+    return (allStoreRoomTypes || []).filter(t => t.propertyId === propertyId);
+  }, [allStoreRoomTypes, propertyId]);
 
   const savedRooms = useMemo(() => {
     if (propertyId == null) return [];
-    return (host.data.rooms?.rooms || []).filter(r => r.propertyId === propertyId);
-  }, [host.data.rooms?.rooms, propertyId]);
+    return (allStoreRooms || []).filter(r => r.propertyId === propertyId);
+  }, [allStoreRooms, propertyId]);
 
-  // Persistent 3-step draft state (never discarded when switching steps)
+  // Persistent 3-step draft state
   const [step, setStep] = useState<SetupStep>(1);
+  // null means "not customized yet -> default all saved types selected"
+  const [selectedSavedIdsOverride, setSelectedSavedIdsOverride] = useState<number[] | null>(null);
   const [draftTypes, setDraftTypes] = useState<DraftNewRoomType[]>([]);
   const [draftRooms, setDraftRooms] = useState<DraftRoomRow[]>([]);
   const [batches, setBatches] = useState<DraftBatchSummary[]>([]);
   const nextLocalTypeIdRef = useRef(-1);
   const nextBatchIndexRef = useRef(1);
+
+  // Local draft storage status (never claims saved unless writeRoomSetupDraft succeeded)
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [lastPersistedAt, setLastPersistedAt] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [draftStorageBanner, setDraftStorageBanner] = useState<string | null>(null);
+  const [draftStorageError, setDraftStorageError] = useState<string | null>(null);
+  const restoredForKeyRef = useRef<string | null>(null);
 
   // Step 1 modal state
   const [typeModalOpen, setTypeModalOpen] = useState(false);
@@ -101,16 +149,17 @@ export default function MultiFloorRoomSetupScreen() {
 
   // Step 2 generator form state
   const [genMode, setGenMode] = useState<FloorGenMode>('RANGE');
+  const [fromFloorInput, setFromFloorInput] = useState('1');
   const [floorCountInput, setFloorCountInput] = useState('3');
   const [roomsPerFloorInput, setRoomsPerFloorInput] = useState('4');
+  const [startSeqInput, setStartSeqInput] = useState(''); // empty = default 01 / auto-continue existing
   const [selectedExistingFloor, setSelectedExistingFloor] = useState<string>('');
   const [extraRoomsInput, setExtraRoomsInput] = useState('2');
   const [groupRoomTypeId, setGroupRoomTypeId] = useState<number | null>(null);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [numberingAccordionOpen, setNumberingAccordionOpen] = useState(false);
   const [prefixInput, setPrefixInput] = useState('');
-  const [fromFloorInput, setFromFloorInput] = useState('1');
-  const [manualStartSeqInput, setManualStartSeqInput] = useState('');
   const [numberingStyle, setNumberingStyle] = useState<RoomNumberingStyle>('ALL');
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [step2Notice, setStep2Notice] = useState<string | null>(null);
 
   // Step 3 assign & filter state
@@ -122,13 +171,14 @@ export default function MultiFloorRoomSetupScreen() {
   const [undoStack, setUndoStack] = useState<AssignmentSnapshot[]>([]);
   const [step3Banner, setStep3Banner] = useState<string | null>(null);
 
-  // Step 3 sheets & review modal
+  // Modals & sheets
+  const [quickPickRow, setQuickPickRow] = useState<DraftRoomRow | null>(null);
   const [editingRow, setEditingRow] = useState<DraftRoomRow | null>(null);
   const [addSingleOpen, setAddSingleOpen] = useState(false);
   const [bulkModalMode, setBulkModalMode] = useState<'SELECTED' | 'SCOPE' | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
 
-  // Submission & reconciliation state
+  // Final submit & reconciliation state
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [ambiguousAttempt, setAmbiguousAttempt] = useState(false);
@@ -149,15 +199,78 @@ export default function MultiFloorRoomSetupScreen() {
     };
   }, []);
 
-  const selectableTypes = useMemo(
-    () => combineSelectableRoomTypes(savedTypes, draftTypes),
-    [savedTypes, draftTypes]
+  // Restore saved local draft on mount for (userId, propertyId)
+  useEffect(() => {
+    if (userId == null || propertyId == null) return;
+    const restoreKey = `${userId}:${propertyId}`;
+    if (restoredForKeyRef.current === restoreKey) return;
+    restoredForKeyRef.current = restoreKey;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const raw = await readRoomSetupDraft(userId, propertyId);
+        if (cancelled || !raw) return;
+        const { draft, droppedPhotoCount, nextLocalTypeId } = parseRoomSetupDraft(
+          raw,
+          propertyId,
+          isLocalFileAvailable
+        );
+        if (!draft) return;
+
+        nextLocalTypeIdRef.current = nextLocalTypeId;
+        setStep(draft.step);
+        setSelectedSavedIdsOverride(draft.selectedSavedTypeIds);
+        setDraftTypes(draft.draftTypes);
+        setBatches(draft.batches);
+        setDraftRooms(draft.draftRooms);
+        setLastPersistedAt(draft.savedAt);
+        setHasUnsavedChanges(false);
+
+        const timeLabel = formatSavedTime(draft.savedAt);
+        setDraftStorageBanner(
+          droppedPhotoCount > 0
+            ? `Đã khôi phục bản nháp${timeLabel ? ` lúc ${timeLabel}` : ''} (${droppedPhotoCount} ảnh tạm không còn trên máy, hãy chọn lại nếu cần).`
+            : `Đã khôi phục bản nháp đã lưu${timeLabel ? ` lúc ${timeLabel}` : ''}.`
+        );
+      } catch {
+        // Silently ignore corrupted storage without crashing the flow
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [propertyId, userId]);
+
+  // Effective selected saved types
+  const selectedSavedTypeIds = useMemo(() => {
+    const validSavedIds = new Set(savedTypes.map(t => t.roomTypeId));
+    if (selectedSavedIdsOverride === null) {
+      return savedTypes.map(t => t.roomTypeId);
+    }
+    return selectedSavedIdsOverride.filter(id => validSavedIds.has(id));
+  }, [savedTypes, selectedSavedIdsOverride]);
+
+  const selectedSavedSet = useMemo(
+    () => new Set(selectedSavedTypeIds),
+    [selectedSavedTypeIds]
   );
 
-  const typeById = useMemo(() => {
-    const map = new Map(selectableTypes.map(item => [item.id, item]));
-    return map;
-  }, [selectableTypes]);
+  const selectedSavedTypes = useMemo(
+    () => savedTypes.filter(t => selectedSavedSet.has(t.roomTypeId)),
+    [savedTypes, selectedSavedSet]
+  );
+
+  const selectableTypes = useMemo(
+    () => combineSelectableRoomTypes(selectedSavedTypes, draftTypes),
+    [selectedSavedTypes, draftTypes]
+  );
+
+  const typeById = useMemo(
+    () => new Map(selectableTypes.map(item => [item.id, item])),
+    [selectableTypes]
+  );
 
   const existingAndDraftRooms = useMemo(
     () => [
@@ -183,6 +296,13 @@ export default function MultiFloorRoomSetupScreen() {
     [draftRooms, selectableTypes, savedRooms]
   );
 
+  const usedSavedTypesCount = useMemo(
+    () => countUsedSavedTypes(draftRooms, savedTypes),
+    [draftRooms, savedTypes]
+  );
+
+  const assignedRoomsCount = draftRooms.length - validation.unassignedCount;
+
   const draftFloorLabels = useMemo(
     () => extractDraftFloorLabels(draftRooms),
     [draftRooms]
@@ -203,10 +323,9 @@ export default function MultiFloorRoomSetupScreen() {
     });
   }, [draftRooms, effectiveActiveFloor, onlyNeedsAttention, searchCode, validation.issueByRowId]);
 
-  // Step 2 live batch preview
+  // Step 2 live preview + floor-grouped chips
   const batchPreview = useMemo(() => {
-    const manualSeq = manualStartSeqInput.trim() ? Number(manualStartSeqInput.trim()) : null;
-    const batchId = `preview`;
+    const manualSeq = startSeqInput.trim() ? Number(startSeqInput.trim()) : null;
     if (genMode === 'RANGE') {
       return generateFloorRangeBatch({
         fromFloor: Number(fromFloorInput || '1'),
@@ -217,7 +336,7 @@ export default function MultiFloorRoomSetupScreen() {
         numbering: numberingStyle,
         roomTypeId: groupRoomTypeId,
         existingAndDraftRooms,
-        batchId,
+        batchId: 'preview',
       });
     }
     return generateExistingFloorBatch({
@@ -228,7 +347,7 @@ export default function MultiFloorRoomSetupScreen() {
       numbering: numberingStyle,
       roomTypeId: groupRoomTypeId,
       existingAndDraftRooms,
-      batchId,
+      batchId: 'preview',
     });
   }, [
     effectiveExistingFloor,
@@ -238,11 +357,16 @@ export default function MultiFloorRoomSetupScreen() {
     fromFloorInput,
     genMode,
     groupRoomTypeId,
-    manualStartSeqInput,
     numberingStyle,
     prefixInput,
     roomsPerFloorInput,
+    startSeqInput,
   ]);
+
+  const previewFloorGroups = useMemo(
+    () => groupPreviewByFloor(batchPreview.rows),
+    [batchPreview.rows]
+  );
 
   const previewCollisionCount = useMemo(() => {
     if (!batchPreview.rows.length) return 0;
@@ -250,7 +374,78 @@ export default function MultiFloorRoomSetupScreen() {
     return batchPreview.rows.filter(r => existingKeys.has(roomKey(r.roomNumber))).length;
   }, [batchPreview.rows, existingAndDraftRooms]);
 
-  const hasDraftWork = draftTypes.length > 0 || draftRooms.length > 0;
+  const markDirty = () => {
+    setHasUnsavedChanges(true);
+    setDraftStorageError(null);
+  };
+
+  /* ---- Local Draft Save / Clear ---- */
+  const handleSaveLocalDraft = async () => {
+    if (userId == null || propertyId == null || savingDraft) return;
+    setSavingDraft(true);
+    setDraftStorageError(null);
+    try {
+      const savedAt = new Date().toISOString();
+      const serialized = serializeRoomSetupDraft({
+        propertyId,
+        step,
+        selectedSavedTypeIds,
+        draftTypes,
+        batches,
+        draftRooms,
+        savedAt,
+      });
+      await writeRoomSetupDraft(userId, propertyId, serialized);
+      if (!mountedRef.current) return;
+      setLastPersistedAt(savedAt);
+      setHasUnsavedChanges(false);
+      setDraftStorageBanner(`Đã lưu bản nháp vào máy lúc ${formatSavedTime(savedAt)}.`);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setDraftStorageError(
+        err instanceof Error ? err.message : 'Không thể lưu bản nháp cục bộ. Vui lòng thử lại.'
+      );
+    } finally {
+      if (mountedRef.current) setSavingDraft(false);
+    }
+  };
+
+  const handleClearSavedDraft = () => {
+    Alert.alert(
+      'Xóa bản nháp đã lưu?',
+      'Thao tác này xóa toàn bộ loại phòng nháp và danh sách phòng nháp đang làm cho nhà trọ này.',
+      [
+        { text: 'Giữ lại', style: 'cancel' },
+        {
+          text: 'Xóa nháp',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              if (userId != null && propertyId != null) {
+                try {
+                  await clearRoomSetupDraft(userId, propertyId);
+                } catch {
+                  /* Best effort */
+                }
+              }
+              if (!mountedRef.current) return;
+              setStep(1);
+              setSelectedSavedIdsOverride(null);
+              setDraftTypes([]);
+              setDraftRooms([]);
+              setBatches([]);
+              setUndoStack([]);
+              setLastPersistedAt(null);
+              setHasUnsavedChanges(false);
+              setDraftStorageBanner(null);
+              setStep2Notice(null);
+              setStep3Banner(null);
+            })();
+          },
+        },
+      ]
+    );
+  };
 
   const handleBack = () => {
     if (step > 1) {
@@ -259,13 +454,26 @@ export default function MultiFloorRoomSetupScreen() {
       setSelectedRowIds(new Set());
       return;
     }
-    if (hasDraftWork && !completedSummary) {
+    if (hasUnsavedChanges && (draftTypes.length > 0 || draftRooms.length > 0) && !completedSummary) {
       Alert.alert(
-        'Rời khỏi thiết lập phòng?',
-        'Bản nháp loại phòng và danh sách phòng chưa lưu sẽ không được giữ lại sau khi thoát.',
+        'Có thay đổi chưa lưu nháp',
+        'Bạn có muốn lưu bản nháp vào máy trước khi thoát để tiếp tục sau không?',
         [
           { text: 'Ở lại', style: 'cancel' },
-          { text: 'Thoát', style: 'destructive', onPress: () => router.back() },
+          {
+            text: 'Thoát không lưu',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
+          {
+            text: 'Lưu nháp & thoát',
+            onPress: () => {
+              void (async () => {
+                await handleSaveLocalDraft();
+                if (mountedRef.current) router.back();
+              })();
+            },
+          },
         ]
       );
       return;
@@ -274,6 +482,40 @@ export default function MultiFloorRoomSetupScreen() {
   };
 
   /* ---- Step 1 handlers ---- */
+  const toggleSavedType = (item: HostRoomType) => {
+    const currentlySelected = selectedSavedSet.has(item.roomTypeId);
+    if (!currentlySelected) {
+      setSelectedSavedIdsOverride([...selectedSavedTypeIds, item.roomTypeId]);
+      markDirty();
+      return;
+    }
+
+    const linkedCount = draftRooms.filter(r => r.roomTypeId === item.roomTypeId).length;
+    const applyDeselect = () => {
+      setSelectedSavedIdsOverride(selectedSavedTypeIds.filter(id => id !== item.roomTypeId));
+      if (groupRoomTypeId === item.roomTypeId) setGroupRoomTypeId(null);
+      if (linkedCount > 0) {
+        setDraftRooms(prev =>
+          prev.map(r => (r.roomTypeId === item.roomTypeId ? { ...r, roomTypeId: null } : r))
+        );
+      }
+      markDirty();
+    };
+
+    if (linkedCount > 0) {
+      Alert.alert(
+        'Bỏ chọn loại phòng đã gán?',
+        `Loại "${item.roomType}" đang được gán cho ${linkedCount} phòng trong bản nháp. Nếu bỏ chọn, các phòng đó sẽ chuyển về Chưa gán loại.`,
+        [
+          { text: 'Hủy', style: 'cancel' },
+          { text: 'Bỏ chọn & gỡ gán', style: 'destructive', onPress: applyDeselect },
+        ]
+      );
+      return;
+    }
+    applyDeselect();
+  };
+
   const handleSaveDraftType = (
     form: RoomTypeFormDraft,
     payload: RoomTypeRequestPayload,
@@ -290,19 +532,36 @@ export default function MultiFloorRoomSetupScreen() {
       nextLocalTypeIdRef.current -= 1;
       setDraftTypes(prev => [{ localId, form, details: payload }, ...prev]);
     }
+    markDirty();
     setTypeModalOpen(false);
     setEditingDraftType(null);
   };
 
   const handleDeleteDraftType = (target: DraftNewRoomType) => {
-    const affectedCount = draftRooms.filter(r => r.roomTypeId === target.localId).length;
-    setDraftTypes(prev => prev.filter(item => item.localId !== target.localId));
-    if (groupRoomTypeId === target.localId) setGroupRoomTypeId(null);
-    if (affectedCount > 0) {
-      setDraftRooms(prev =>
-        prev.map(r => (r.roomTypeId === target.localId ? { ...r, roomTypeId: null } : r))
+    const linkedCount = draftRooms.filter(r => r.roomTypeId === target.localId).length;
+    const applyDelete = () => {
+      setDraftTypes(prev => prev.filter(item => item.localId !== target.localId));
+      if (groupRoomTypeId === target.localId) setGroupRoomTypeId(null);
+      if (linkedCount > 0) {
+        setDraftRooms(prev =>
+          prev.map(r => (r.roomTypeId === target.localId ? { ...r, roomTypeId: null } : r))
+        );
+      }
+      markDirty();
+    };
+
+    if (linkedCount > 0) {
+      Alert.alert(
+        'Xóa loại phòng đang được gán?',
+        `Loại "${target.details.roomType}" đang được gán cho ${linkedCount} phòng trong bản nháp. Xóa loại này sẽ chuyển các phòng liên quan về trạng thái Chưa gán loại.`,
+        [
+          { text: 'Giữ lại', style: 'cancel' },
+          { text: 'Xóa loại phòng', style: 'destructive', onPress: applyDelete },
+        ]
       );
+      return;
     }
+    applyDelete();
   };
 
   /* ---- Step 2 handlers ---- */
@@ -349,21 +608,39 @@ export default function MultiFloorRoomSetupScreen() {
       },
       ...prev,
     ]);
+    markDirty();
     setStep2Notice(
       `Đã thêm ${committedRows.length} phòng vào bản nháp (${formatBatchPreview(committedRows)}).`
     );
-    // Clear manual override after adding so subsequent batches auto-continue cleanly
-    if (manualStartSeqInput.trim()) {
-      setManualStartSeqInput('');
+    if (startSeqInput.trim()) {
+      setStartSeqInput('');
     }
   };
 
   const handleRemoveBatch = (batchId: string) => {
     setDraftRooms(prev => prev.filter(r => r.batchId !== batchId));
     setBatches(prev => prev.filter(b => b.batchId !== batchId));
+    markDirty();
   };
 
   /* ---- Step 3 handlers ---- */
+  const handleQuickAssignSingle = (rowId: string, nextTypeId: number | null) => {
+    const target = draftRooms.find(r => r.rowId === rowId);
+    if (!target || target.roomTypeId === nextTypeId) return;
+    const typeName = nextTypeId != null ? typeById.get(nextTypeId)?.roomType : null;
+    const snapshot: AssignmentSnapshot = {
+      label: typeName
+        ? `Gán ${target.roomNumber} → ${typeName}`
+        : `Bỏ gán loại phòng ${target.roomNumber}`,
+      previousTypes: { [rowId]: target.roomTypeId },
+    };
+    setDraftRooms(prev =>
+      prev.map(row => (row.rowId === rowId ? { ...row, roomTypeId: nextTypeId } : row))
+    );
+    setUndoStack(prev => [snapshot, ...prev].slice(0, 12));
+    markDirty();
+  };
+
   const handleEditSingleRow = (
     rowId: string,
     next: { roomNumber: string; floor: string; roomTypeId: number | null }
@@ -371,6 +648,7 @@ export default function MultiFloorRoomSetupScreen() {
     setDraftRooms(prev =>
       prev.map(row => (row.rowId === rowId ? { ...row, ...next } : row))
     );
+    markDirty();
   };
 
   const handleDeleteSingleRow = (rowId: string) => {
@@ -381,6 +659,7 @@ export default function MultiFloorRoomSetupScreen() {
       next.delete(rowId);
       return next;
     });
+    markDirty();
   };
 
   const handleAddSingleRoom = (next: {
@@ -401,7 +680,10 @@ export default function MultiFloorRoomSetupScreen() {
       roomTypeId: next.roomTypeId,
     };
     setDraftRooms(prev => [...prev, newRow]);
-    setStep3Banner(`Đã thêm phòng lẻ ${next.roomNumber} (${formatFloorDisplay(next.floor)}) vào bản nháp.`);
+    markDirty();
+    const msg = `Đã thêm phòng lẻ ${next.roomNumber} (${formatFloorDisplay(next.floor)}) vào bản nháp.`;
+    if (step === 2) setStep2Notice(msg);
+    else setStep3Banner(msg);
   };
 
   const handleApplyScopedAssign = (
@@ -415,8 +697,9 @@ export default function MultiFloorRoomSetupScreen() {
       return;
     }
     setDraftRooms(result.nextRooms);
-    setUndoStack(prev => [result.snapshot!, ...prev].slice(0, 10));
+    setUndoStack(prev => [result.snapshot!, ...prev].slice(0, 12));
     setStep3Banner(`Đã cập nhật ${result.affectedCount} phòng (${scopeLabel}).`);
+    markDirty();
     if (selectionMode) {
       setSelectionMode(false);
       setSelectedRowIds(new Set());
@@ -429,6 +712,22 @@ export default function MultiFloorRoomSetupScreen() {
     setDraftRooms(prev => undoTypeAssignment(prev, latest));
     setUndoStack(rest);
     setStep3Banner(`Đã hoàn tác: ${latest.label}.`);
+    markDirty();
+  };
+
+  const handleJumpToFirstIssue = () => {
+    const firstIssue = validation.issues[0];
+    if (!firstIssue) return;
+    const targetRow = draftRooms.find(r => r.rowId === firstIssue.rowId);
+    if (!targetRow) return;
+    setActiveFloorFilter(targetRow.floor);
+    setSearchCode('');
+    setOnlyNeedsAttention(true);
+    if (firstIssue.code === 'MISSING_TYPE') {
+      setQuickPickRow(targetRow);
+    } else {
+      setEditingRow(targetRow);
+    }
   };
 
   const toggleSelectRow = (rowId: string) => {
@@ -460,7 +759,12 @@ export default function MultiFloorRoomSetupScreen() {
     setOnlyNeedsAttention(false);
     setSelectionMode(false);
     setSelectedRowIds(new Set());
-    setEditingRow(row);
+    const rowIssue = validation.issueByRowId[row.rowId];
+    if (rowIssue?.code === 'MISSING_TYPE') {
+      setQuickPickRow(row);
+    } else {
+      setEditingRow(row);
+    }
   };
 
   /* ---- Server Reconciliation & Final Confirmation ---- */
@@ -533,14 +837,13 @@ export default function MultiFloorRoomSetupScreen() {
       const token = await tokenStore.get();
       if (!token) throw new HostError('Phiên đăng nhập đã hết hạn.', 401);
 
-      // 1. Pre-submit live re-validation against latest server state
+      // 1. Pre-submit live re-validation against latest DB state
       const latest = await fetchLatestHostInventory(token, controller.signal);
       if (!mountedRef.current) return;
 
       const latestPropTypes = latest.roomTypes.filter(t => t.propertyId === propertyId);
       const latestPropRooms = latest.rooms.filter(r => r.propertyId === propertyId);
 
-      // Check duplicate type names against latest server types
       const latestTypeNameSet = new Set(
         latestPropTypes.map(t => t.roomType.trim().toLowerCase())
       );
@@ -555,7 +858,6 @@ export default function MultiFloorRoomSetupScreen() {
         );
       }
 
-      // Check draft rooms against latest server rooms & saved types
       const liveSelectableTypes = combineSelectableRoomTypes(latestPropTypes, draftTypes);
       const liveValidation = validateDraftRooms(
         draftRooms,
@@ -571,7 +873,7 @@ export default function MultiFloorRoomSetupScreen() {
         );
       }
 
-      // 2. Build & send real API request
+      // 2. Single atomic transactional backend API call
       const req = buildSetupRequest(propertyId, draftTypes, draftRooms);
       if (req.mode === 'SETUP_MULTIPART' && req.setupPayload) {
         await submitRoomSetupMultipart(req.setupPayload, req.photos, token, controller.signal);
@@ -584,12 +886,21 @@ export default function MultiFloorRoomSetupScreen() {
       const createdTypeCount = draftTypes.length;
       const createdRoomCount = draftRooms.length;
 
-      // Refresh host store so Rooms & Room Types screens reflect newly created entities immediately
+      // Clear persisted local draft ONLY after backend confirmed creation
+      if (userId != null) {
+        try {
+          await clearRoomSetupDraft(userId, propertyId);
+        } catch {
+          /* Non-blocking cleanup */
+        }
+      }
+
       await host.store.refresh();
       if (!mountedRef.current) return;
 
       setReviewOpen(false);
       setAmbiguousAttempt(false);
+      setHasUnsavedChanges(false);
       setCompletedSummary({ createdTypeCount, createdRoomCount });
     } catch (err) {
       if (!mountedRef.current) return;
@@ -627,15 +938,17 @@ export default function MultiFloorRoomSetupScreen() {
           <Text style={s.successDesc}>
             Đã tạo thành công{' '}
             {completedSummary.createdTypeCount > 0
-              ? `${completedSummary.createdTypeCount} loại phòng mới và `
+              ? `${completedSummary.createdTypeCount} loại phòng mới${completedSummary.createdRoomCount > 0 ? ' và ' : ''}`
               : ''}
-            {completedSummary.createdRoomCount} phòng cho{' '}
-            <Text style={{ fontWeight: '700', color: c.forestInk }}>{propertyName}</Text>.
+            {completedSummary.createdRoomCount > 0
+              ? `${completedSummary.createdRoomCount} phòng`
+              : ''}{' '}
+            cho <Text style={{ fontWeight: '700', color: c.forestInk }}>{propertyName}</Text>.
           </Text>
           <View style={s.successHintBox}>
             <Feather name="eye-off" size={15} color={c.primary} style={{ marginTop: 1 }} />
             <Text style={s.successHintText}>
-              Các phòng mới tạo mặc định ở chế độ Riêng tư. Bạn có thể vào menu ⋯ → Chọn phòng công khai trong Danh sách phòng khi sẵn sàng mở cho thuê.
+              Các phòng mới tạo mặc định ở chế độ Riêng tư. Bạn có thể chọn công khai trong Danh sách phòng khi sẵn sàng mở cho thuê.
             </Text>
           </View>
           <View style={{ width: '100%', gap: 10, marginTop: 8 }}>
@@ -667,14 +980,14 @@ export default function MultiFloorRoomSetupScreen() {
             <Feather name="arrow-left" size={20} color={c.forestInk} />
           </AnimatedPressable>
           <View style={{ flex: 1 }}>
-            <Text style={s.headerTitle}>Thiết lập phòng nhiều tầng</Text>
+            <Text style={s.headerTitle}>Thiết lập phòng</Text>
           </View>
         </View>
         <View style={s.emptyGuard}>
           <Feather name="home" size={28} color={c.primary} />
           <Text style={s.emptyGuardTitle}>Chưa chọn được nhà trọ đang hoạt động</Text>
           <Text style={s.emptyGuardDesc}>
-            Chỉ nhà trọ đã được duyệt và đang hoạt động mới có thể thiết lập phòng nhiều tầng.
+            Chỉ nhà trọ đã được duyệt và đang hoạt động mới có thể thiết lập loại phòng và danh sách phòng.
           </Text>
           <AnimatedPressable style={s.secondaryBtn} onPress={() => router.back()}>
             <Text style={s.secondaryBtnText}>Quay lại</Text>
@@ -687,12 +1000,12 @@ export default function MultiFloorRoomSetupScreen() {
   const canProceedStep1 = selectableTypes.length > 0;
   const canProceedStep2 = draftRooms.length > 0 || draftTypes.length > 0;
 
-  const primaryFooterLabel =
+  const primaryFooterTitle =
     step === 1
       ? 'Tiếp tục: Tạo theo tầng'
       : step === 2
       ? 'Tiếp tục: Gán loại phòng'
-      : 'Kiểm tra trước khi lưu';
+      : 'Kiểm tra & lưu';
 
   const primaryFooterDisabled =
     step === 1 ? !canProceedStep1 : step === 2 ? !canProceedStep2 : !canProceedStep2;
@@ -710,9 +1023,16 @@ export default function MultiFloorRoomSetupScreen() {
     }
   };
 
+  const canSaveDraftNow =
+    !savingDraft &&
+    userId != null &&
+    propertyId != null &&
+    (hasUnsavedChanges || !lastPersistedAt) &&
+    (draftTypes.length > 0 || draftRooms.length > 0 || selectedSavedIdsOverride !== null);
+
   return (
     <SafeAreaView style={s.screen} edges={['top', 'bottom', 'left', 'right']}>
-      {/* Compact Header with Property Name + Bước N/3 */}
+      {/* Unified Header: Back | Thiết lập phòng + Property | Lưu nháp */}
       <View style={s.header}>
         <AnimatedPressable
           accessibilityLabel={step > 1 ? 'Quay lại bước trước' : 'Thoát thiết lập phòng'}
@@ -723,58 +1043,99 @@ export default function MultiFloorRoomSetupScreen() {
         </AnimatedPressable>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.headerTitle} numberOfLines={1}>
-            Thiết lập phòng nhiều tầng
+            Thiết lập phòng
           </Text>
           <Text style={s.headerProperty} numberOfLines={1}>
             {propertyName}
           </Text>
         </View>
-        <View style={s.stepBadge}>
-          <Text style={s.stepBadgeText}>Bước {step}/3</Text>
-        </View>
+        <AnimatedPressable
+          scaleTo={0.96}
+          disabled={!canSaveDraftNow}
+          accessibilityLabel="Lưu bản nháp vào thiết bị"
+          style={[
+            s.saveDraftBtn,
+            lastPersistedAt && !hasUnsavedChanges && s.saveDraftBtnSaved,
+            !canSaveDraftNow && !lastPersistedAt && { opacity: 0.45 },
+          ]}
+          onPress={() => {
+            void handleSaveLocalDraft();
+          }}
+        >
+          <Feather
+            name={lastPersistedAt && !hasUnsavedChanges ? 'check' : 'bookmark'}
+            size={14}
+            color={c.primaryDark}
+          />
+          <Text style={s.saveDraftText}>
+            {savingDraft
+              ? 'Đang lưu…'
+              : lastPersistedAt && !hasUnsavedChanges
+              ? 'Đã lưu nháp'
+              : 'Lưu nháp'}
+          </Text>
+        </AnimatedPressable>
       </View>
 
-      {/* Low Step Progress Bar */}
-      <View style={s.progressStrip}>
-        <View style={s.progressMetaRow}>
-          <Text style={s.progressStepTitle}>{STEP_META[step].title}</Text>
-          <View style={s.stepPillsRow}>
-            {([1, 2, 3] as SetupStep[]).map(n => {
-              const active = step === n;
-              const reachable =
-                n === 1 ||
-                (n === 2 && canProceedStep1) ||
-                (n === 3 && canProceedStep1 && canProceedStep2);
-              return (
-                <AnimatedPressable
-                  key={n}
-                  disabled={!reachable}
-                  scaleTo={0.96}
-                  accessibilityLabel={`Chuyển đến bước ${n}: ${STEP_META[n].label}`}
+      {/* Compact Horizontal 3-Step Stepper */}
+      <View style={s.stepperWrap}>
+        {STEP_ITEMS.map((item, idx) => {
+          const active = step === item.step;
+          const completed = step > item.step;
+          const reachable =
+            item.step === 1 ||
+            (item.step === 2 && canProceedStep1) ||
+            (item.step === 3 && canProceedStep1 && canProceedStep2);
+          return (
+            <View key={item.step} style={s.stepperItemOuter}>
+              <AnimatedPressable
+                scaleTo={0.97}
+                disabled={!reachable}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active, disabled: !reachable }}
+                style={[
+                  s.stepperTab,
+                  active && s.stepperTabActive,
+                  !reachable && { opacity: 0.45 },
+                ]}
+                onPress={() => {
+                  if (!reachable) return;
+                  setStep(item.step);
+                  setSelectionMode(false);
+                  setSelectedRowIds(new Set());
+                }}
+              >
+                <View
                   style={[
-                    s.stepMiniPill,
-                    active && s.stepMiniPillActive,
-                    !reachable && { opacity: 0.4 },
+                    s.stepperDot,
+                    active && s.stepperDotActive,
+                    completed && s.stepperDotDone,
                   ]}
-                  onPress={() => {
-                    if (reachable) {
-                      setStep(n);
-                      setSelectionMode(false);
-                      setSelectedRowIds(new Set());
-                    }
-                  }}
                 >
-                  <Text style={[s.stepMiniPillText, active && s.stepMiniPillTextActive]}>
-                    {n}
-                  </Text>
-                </AnimatedPressable>
-              );
-            })}
-          </View>
-        </View>
-        <View style={s.progressTrack}>
-          <View style={[s.progressFill, { width: `${(step / 3) * 100}%` }]} />
-        </View>
+                  {completed ? (
+                    <Feather name="check" size={11} color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      style={[
+                        s.stepperDotText,
+                        (active || completed) && { color: '#FFFFFF' },
+                      ]}
+                    >
+                      {item.step}
+                    </Text>
+                  )}
+                </View>
+                <Text
+                  style={[s.stepperLabel, active && s.stepperLabelActive]}
+                  numberOfLines={1}
+                >
+                  {item.label}
+                </Text>
+              </AnimatedPressable>
+              {idx < STEP_ITEMS.length - 1 && <View style={s.stepperDivider} />}
+            </View>
+          );
+        })}
       </View>
 
       <KeyboardAvoidingView
@@ -790,116 +1151,187 @@ export default function MultiFloorRoomSetupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Persisted Draft Feedback / Error Banner */}
+          {draftStorageBanner && (
+            <View style={s.draftStatusBanner}>
+              <Feather name="bookmark" size={14} color={c.primary} />
+              <Text style={s.draftStatusText}>{draftStorageBanner}</Text>
+              {lastPersistedAt && (
+                <AnimatedPressable onPress={handleClearSavedDraft}>
+                  <Text style={s.draftClearLink}>Xóa nháp</Text>
+                </AnimatedPressable>
+              )}
+              <AnimatedPressable
+                accessibilityLabel="Đóng thông báo bản nháp"
+                onPress={() => setDraftStorageBanner(null)}
+              >
+                <Feather name="x" size={14} color={c.textSecondary} />
+              </AnimatedPressable>
+            </View>
+          )}
+          {draftStorageError && (
+            <View style={s.draftErrorBanner}>
+              <Feather name="alert-circle" size={14} color={c.error} />
+              <Text style={s.draftErrorText}>{draftStorageError}</Text>
+            </View>
+          )}
+
           {/* ============================================================== */}
           {/* STEP 1: Chuẩn bị loại phòng                                    */}
           {/* ============================================================== */}
           {step === 1 && (
             <Animated.View
-              entering={reducedMotion ? undefined : FadeInDown.duration(220)}
+              entering={reducedMotion ? undefined : FadeInDown.duration(200)}
               style={{ gap: 14 }}
             >
-              {/* Saved Room Types */}
-              <View style={s.card}>
-                <View style={s.cardHeaderRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.cardTitle}>
-                      Loại phòng đã lưu ({savedTypes.length})
-                    </Text>
-                    <Text style={s.cardSub}>
-                      {savedTypes.length > 0
-                        ? 'Đã có loại phòng phù hợp — bạn có thể bấm Tiếp tục ngay mà không cần tạo mới.'
-                        : 'Nhà trọ chưa có loại phòng. Hãy thêm ít nhất 1 loại phòng vào bản nháp.'}
-                    </Text>
-                  </View>
-                </View>
-
-                {savedTypes.length > 0 && (
-                  <View style={s.compactList}>
-                    {savedTypes.map((item, idx) => (
-                      <View
-                        key={item.roomTypeId}
-                        style={[
-                          s.compactTypeRow,
-                          idx === savedTypes.length - 1 && { borderBottomWidth: 0 },
-                        ]}
-                      >
-                        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                          <Text style={s.compactTypeName} numberOfLines={1}>
-                            {item.roomType}
-                          </Text>
-                          <Text style={s.compactTypeMeta}>
-                            {item.areaSqm != null ? `${item.areaSqm} m²` : 'Chưa rõ m²'} ·{' '}
-                            {item.capacity} người
-                          </Text>
-                        </View>
-                        <Text style={s.compactTypePrice}>
-                          {formatMoneyVnd(item.price)}/tháng
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+              <View style={s.stepIntro}>
+                <Text style={s.stepHeading}>Chuẩn bị loại phòng</Text>
+                <Text style={s.stepSubtitle}>
+                  Chọn loại phòng đã có hoặc tạo loại phòng mới.
+                </Text>
               </View>
 
-              {/* Draft New Room Types */}
-              <View style={s.card}>
-                <View style={s.cardHeaderRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.cardTitle}>
-                      Loại phòng mới trong bản nháp ({draftTypes.length})
-                    </Text>
-                    <Text style={s.cardSub}>
-                      Chưa lưu lên hệ thống cho đến khi bạn xác nhận ở Bước 3.
+              {/* Saved Room Types (Compact Cards with Thumbnail & Đã chọn / Sử dụng Toggle) */}
+              {savedTypes.length > 0 && (
+                <View style={s.sectionBlock}>
+                  <View style={s.sectionLabelRow}>
+                    <Text style={s.sectionLabel}>
+                      Loại phòng đã lưu ({selectedSavedTypeIds.length}/{savedTypes.length})
                     </Text>
                   </View>
+
+                  <View style={{ gap: 10 }}>
+                    {savedTypes.map(item => {
+                      const selected = selectedSavedSet.has(item.roomTypeId);
+                      const thumb = savedTypeThumbSource(item, host.imageToken);
+                      return (
+                        <AnimatedPressable
+                          key={item.roomTypeId}
+                          scaleTo={0.99}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: selected }}
+                          style={[s.savedTypeCard, selected && s.savedTypeCardSelected]}
+                          onPress={() => toggleSavedType(item)}
+                        >
+                          {thumb ? (
+                            <Image
+                              source={thumb}
+                              style={s.typeThumb}
+                              contentFit="cover"
+                              transition={150}
+                            />
+                          ) : (
+                            <View style={s.typeThumbFallback}>
+                              <Feather name="home" size={20} color={c.primary} />
+                            </View>
+                          )}
+
+                          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                            <Text style={s.typeCardName} numberOfLines={1}>
+                              {item.roomType}
+                            </Text>
+                            <Text style={s.typeCardPrice}>
+                              {formatMoneyVnd(item.price)}/tháng
+                            </Text>
+                            <Text style={s.typeCardSpecs}>
+                              {item.areaSqm != null ? `${item.areaSqm} m²` : 'Chưa rõ m²'} ·{' '}
+                              {item.capacity} người
+                            </Text>
+                          </View>
+
+                          <View
+                            style={[
+                              s.selectPill,
+                              selected ? s.selectPillActive : s.selectPillIdle,
+                            ]}
+                          >
+                            {selected && <Feather name="check" size={12} color="#FFFFFF" />}
+                            <Text
+                              style={[
+                                s.selectPillText,
+                                selected && s.selectPillTextActive,
+                              ]}
+                            >
+                              {selected ? 'Đã chọn' : 'Sử dụng'}
+                            </Text>
+                          </View>
+                        </AnimatedPressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Draft New Room Types */}
+              <View style={s.sectionBlock}>
+                <View style={s.sectionLabelRow}>
+                  <Text style={s.sectionLabel}>
+                    Loại phòng mới trong bản nháp ({draftTypes.length})
+                  </Text>
                 </View>
 
                 {draftTypes.length > 0 && (
-                  <View style={s.compactList}>
-                    {draftTypes.map((item, idx) => (
-                      <View
-                        key={item.localId}
-                        style={[
-                          s.draftTypeRow,
-                          idx === draftTypes.length - 1 && { borderBottomWidth: 0 },
-                        ]}
-                      >
-                        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={s.compactTypeName} numberOfLines={1}>
-                              {item.details.roomType}
-                            </Text>
-                            <View style={s.draftPill}>
-                              <Text style={s.draftPillText}>Bản nháp</Text>
+                  <View style={{ gap: 10 }}>
+                    {draftTypes.map(item => {
+                      const coverUri = item.form.photos[0]?.uri || resolveImageUrl(item.form.imageUrl);
+                      const linkedRoomsCount = draftRooms.filter(
+                        r => r.roomTypeId === item.localId
+                      ).length;
+                      return (
+                        <View key={item.localId} style={s.draftTypeCard}>
+                          {coverUri ? (
+                            <Image
+                              source={{ uri: coverUri }}
+                              style={s.typeThumb}
+                              contentFit="cover"
+                            />
+                          ) : (
+                            <View style={s.typeThumbFallback}>
+                              <Feather name="layers" size={20} color={c.primary} />
                             </View>
+                          )}
+
+                          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={s.typeCardName} numberOfLines={1}>
+                                {item.details.roomType}
+                              </Text>
+                              <View style={s.draftPill}>
+                                <Text style={s.draftPillText}>Nháp</Text>
+                              </View>
+                            </View>
+                            <Text style={s.typeCardPrice}>
+                              {formatMoneyVnd(item.details.price)}/tháng
+                            </Text>
+                            <Text style={s.typeCardSpecs}>
+                              {item.details.areaSqm} m² · {item.details.capacity} người
+                              {item.form.photos.length > 0 ? ` · ${item.form.photos.length} ảnh` : ''}
+                              {linkedRoomsCount > 0 ? ` · ${linkedRoomsCount} phòng` : ''}
+                            </Text>
                           </View>
-                          <Text style={s.compactTypeMeta}>
-                            {formatMoneyVnd(item.details.price)}/tháng · {item.details.areaSqm} m² ·{' '}
-                            {item.details.capacity} người
-                            {item.form.photos.length > 0 ? ` · ${item.form.photos.length} ảnh` : ''}
-                          </Text>
+
+                          <View style={s.rowActions}>
+                            <AnimatedPressable
+                              accessibilityLabel={`Sửa loại phòng nháp ${item.details.roomType}`}
+                              style={s.iconBtn}
+                              onPress={() => {
+                                setEditingDraftType(item);
+                                setTypeModalOpen(true);
+                              }}
+                            >
+                              <Feather name="edit-2" size={15} color={c.primary} />
+                            </AnimatedPressable>
+                            <AnimatedPressable
+                              accessibilityLabel={`Xóa loại phòng nháp ${item.details.roomType}`}
+                              style={s.iconBtnDanger}
+                              onPress={() => handleDeleteDraftType(item)}
+                            >
+                              <Feather name="trash-2" size={15} color={c.error} />
+                            </AnimatedPressable>
+                          </View>
                         </View>
-                        <View style={s.rowActions}>
-                          <AnimatedPressable
-                            accessibilityLabel={`Sửa loại phòng nháp ${item.details.roomType}`}
-                            style={s.iconBtn}
-                            onPress={() => {
-                              setEditingDraftType(item);
-                              setTypeModalOpen(true);
-                            }}
-                          >
-                            <Feather name="edit-2" size={15} color={c.primary} />
-                          </AnimatedPressable>
-                          <AnimatedPressable
-                            accessibilityLabel={`Xóa loại phòng nháp ${item.details.roomType}`}
-                            style={s.iconBtnDanger}
-                            onPress={() => handleDeleteDraftType(item)}
-                          >
-                            <Feather name="trash-2" size={15} color={c.error} />
-                          </AnimatedPressable>
-                        </View>
-                      </View>
-                    ))}
+                      );
+                    })}
                   </View>
                 )}
 
@@ -910,25 +1342,25 @@ export default function MultiFloorRoomSetupScreen() {
                     s.addTypeOutlineBtn,
                     draftTypes.length >= SETUP_LIMITS.maxNewTypes && { opacity: 0.45 },
                   ]}
-                  accessibilityLabel="Thêm loại phòng vào bản nháp"
+                  accessibilityLabel="Thêm loại phòng mới vào bản nháp"
                   onPress={() => {
                     setEditingDraftType(null);
                     setTypeModalOpen(true);
                   }}
                 >
-                  <Feather name="plus-circle" size={18} color={c.primary} />
-                  <Text style={s.addTypeOutlineText}>Thêm loại phòng</Text>
+                  <Feather name="plus" size={18} color={c.primary} />
+                  <Text style={s.addTypeOutlineText}>Thêm loại phòng mới</Text>
                 </AnimatedPressable>
               </View>
             </Animated.View>
           )}
 
           {/* ============================================================== */}
-          {/* STEP 2: Tạo phòng theo tầng                                    */}
+          {/* STEP 2: Tạo theo tầng                                          */}
           {/* ============================================================== */}
           {step === 2 && (
             <Animated.View
-              entering={reducedMotion ? undefined : FadeInDown.duration(220)}
+              entering={reducedMotion ? undefined : FadeInDown.duration(200)}
               style={{ gap: 14 }}
             >
               {/* Mode Switcher */}
@@ -963,12 +1395,24 @@ export default function MultiFloorRoomSetupScreen() {
                 </AnimatedPressable>
               </View>
 
-              {/* Generator Form Card */}
+              {/* Short Generator Form */}
               <View style={s.card}>
                 {genMode === 'RANGE' ? (
                   <>
-                    <Text style={s.cardTitle}>Thông số dãy tầng</Text>
                     <View style={s.twoCol}>
+                      <View style={{ flex: 1 }}>
+                        <AuthInput
+                          label="Tầng bắt đầu *"
+                          value={fromFloorInput}
+                          onChangeText={v => {
+                            setFromFloorInput(sanitizeDigitsInput(v));
+                            setStep2Notice(null);
+                          }}
+                          placeholder="1"
+                          keyboardType="number-pad"
+                          maxLength={3}
+                        />
+                      </View>
                       <View style={{ flex: 1 }}>
                         <AuthInput
                           label="Số tầng *"
@@ -977,11 +1421,14 @@ export default function MultiFloorRoomSetupScreen() {
                             setFloorCountInput(sanitizeDigitsInput(v));
                             setStep2Notice(null);
                           }}
-                          placeholder="VD: 3"
+                          placeholder="3"
                           keyboardType="number-pad"
                           maxLength={3}
                         />
                       </View>
+                    </View>
+
+                    <View style={s.twoCol}>
                       <View style={{ flex: 1 }}>
                         <AuthInput
                           label="Số phòng mỗi tầng *"
@@ -990,19 +1437,28 @@ export default function MultiFloorRoomSetupScreen() {
                             setRoomsPerFloorInput(sanitizeDigitsInput(v));
                             setStep2Notice(null);
                           }}
-                          placeholder="VD: 5"
+                          placeholder="4"
                           keyboardType="number-pad"
                           maxLength={3}
                         />
                       </View>
+                      <View style={{ flex: 1 }}>
+                        <AuthInput
+                          label="Phòng bắt đầu"
+                          value={startSeqInput}
+                          onChangeText={v => {
+                            setStartSeqInput(sanitizeDigitsInput(v));
+                            setStep2Notice(null);
+                          }}
+                          placeholder="01 (tự nối tiếp)"
+                          keyboardType="number-pad"
+                          maxLength={4}
+                        />
+                      </View>
                     </View>
-                    <Text style={s.helperNote}>
-                      Tầng trống tự bắt đầu từ 01 (VD: 101). Tầng đã có phòng (đã lưu hoặc trong bản nháp) tự đánh tiếp nối tiếp theo.
-                    </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={s.cardTitle}>Chọn tầng cần thêm phòng</Text>
                     {availableNumericFloors.length > 0 && (
                       <ScrollView
                         horizontal
@@ -1044,7 +1500,7 @@ export default function MultiFloorRoomSetupScreen() {
                             setSelectedExistingFloor(sanitizeDigitsInput(v));
                             setStep2Notice(null);
                           }}
-                          placeholder="VD: 2"
+                          placeholder="2"
                           keyboardType="number-pad"
                           maxLength={3}
                         />
@@ -1057,7 +1513,7 @@ export default function MultiFloorRoomSetupScreen() {
                             setExtraRoomsInput(sanitizeDigitsInput(v));
                             setStep2Notice(null);
                           }}
-                          placeholder="VD: 3"
+                          placeholder="2"
                           keyboardType="number-pad"
                           maxLength={3}
                         />
@@ -1066,9 +1522,9 @@ export default function MultiFloorRoomSetupScreen() {
                   </>
                 )}
 
-                {/* Optional Group Room Type Picker */}
+                {/* Optional Group Type */}
                 <View style={{ gap: 8 }}>
-                  <Text style={s.fieldSubLabel}>Loại phòng cho đợt này (tùy chọn)</Text>
+                  <Text style={s.fieldSubLabel}>Loại chung cho nhóm (tùy chọn)</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -1107,57 +1563,32 @@ export default function MultiFloorRoomSetupScreen() {
                   </ScrollView>
                 </View>
 
-                {/* Collapsible Advanced Numbering Options */}
+                {/* Accordion: Tùy chỉnh cách đánh số */}
                 <View style={s.advancedBox}>
                   <AnimatedPressable
                     scaleTo={0.99}
                     accessibilityRole="button"
-                    accessibilityState={{ expanded: advancedOpen }}
+                    accessibilityState={{ expanded: numberingAccordionOpen }}
                     style={s.advancedHeader}
-                    onPress={() => setAdvancedOpen(prev => !prev)}
+                    onPress={() => setNumberingAccordionOpen(prev => !prev)}
                   >
                     <Feather name="sliders" size={15} color={c.primary} />
-                    <Text style={s.advancedTitle}>Tùy chọn nâng cao (tiền tố, tầng bắt đầu, chẵn/lẻ)</Text>
+                    <Text style={s.advancedTitle}>Tùy chỉnh cách đánh số (tiền tố, chẵn/lẻ)</Text>
                     <Feather
-                      name={advancedOpen ? 'chevron-up' : 'chevron-down'}
+                      name={numberingAccordionOpen ? 'chevron-up' : 'chevron-down'}
                       size={16}
                       color={c.textSecondary}
                     />
                   </AnimatedPressable>
 
-                  {advancedOpen && (
+                  {numberingAccordionOpen && (
                     <View style={s.advancedBody}>
-                      <View style={s.twoCol}>
-                        <View style={{ flex: 1 }}>
-                          <AuthInput
-                            label="Tiền tố mã phòng"
-                            value={prefixInput}
-                            onChangeText={setPrefixInput}
-                            placeholder="VD: P. hoặc A-"
-                            maxLength={SETUP_LIMITS.maxPrefixLength}
-                          />
-                        </View>
-                        {genMode === 'RANGE' && (
-                          <View style={{ flex: 1 }}>
-                            <AuthInput
-                              label="Tầng bắt đầu"
-                              value={fromFloorInput}
-                              onChangeText={v => setFromFloorInput(sanitizeDigitsInput(v))}
-                              placeholder="1"
-                              keyboardType="number-pad"
-                              maxLength={3}
-                            />
-                          </View>
-                        )}
-                      </View>
-
                       <AuthInput
-                        label="Số thứ tự bắt đầu (để trống để tự đánh tiếp)"
-                        value={manualStartSeqInput}
-                        onChangeText={v => setManualStartSeqInput(sanitizeDigitsInput(v))}
-                        placeholder="Tự động (01 hoặc tiếp nối phòng đã có)"
-                        keyboardType="number-pad"
-                        maxLength={4}
+                        label="Tiền tố mã phòng (không bắt buộc)"
+                        value={prefixInput}
+                        onChangeText={setPrefixInput}
+                        placeholder="VD: P. hoặc A-"
+                        maxLength={SETUP_LIMITS.maxPrefixLength}
                       />
 
                       <View style={{ gap: 8 }}>
@@ -1190,20 +1621,70 @@ export default function MultiFloorRoomSetupScreen() {
                   )}
                 </View>
 
-                {/* Compact Live Preview */}
+                {/* Floor-Grouped Chip Preview */}
                 <View style={s.previewBox}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Feather name="eye" size={15} color={c.primary} />
-                    <Text style={s.previewLabel}>Xem trước đợt này</Text>
+                  <View style={s.previewTopRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="eye" size={14} color={c.primary} />
+                      <Text style={s.previewLabel}>
+                        Xem trước ({batchPreview.rows.length} phòng)
+                      </Text>
+                    </View>
+                    {(previewFloorGroups.length > 2 || batchPreview.rows.length > 10) && (
+                      <AnimatedPressable onPress={() => setPreviewExpanded(prev => !prev)}>
+                        <Text style={s.previewToggleLink}>
+                          {previewExpanded ? 'Thu gọn' : 'Xem tất cả'}
+                        </Text>
+                      </AnimatedPressable>
+                    )}
                   </View>
+
                   {batchPreview.error ? (
                     <Text style={s.previewError}>{batchPreview.error}</Text>
                   ) : (
-                    <Text style={s.previewValue}>{formatBatchPreview(batchPreview.rows)}</Text>
+                    <View style={{ gap: 10, marginTop: 4 }}>
+                      {(previewExpanded
+                        ? previewFloorGroups
+                        : previewFloorGroups.slice(0, 2)
+                      ).map(group => {
+                        const visibleChips = previewExpanded
+                          ? group.rooms
+                          : group.rooms.slice(0, 6);
+                        const hiddenCount = group.rooms.length - visibleChips.length;
+                        return (
+                          <View key={group.floor} style={{ gap: 6 }}>
+                            <Text style={s.previewFloorTitle}>
+                              {group.displayFloor} · {group.rooms.length} phòng
+                            </Text>
+                            <View style={s.previewChipsWrap}>
+                              {visibleChips.map(r => (
+                                <View key={r.rowId} style={s.previewCodeChip}>
+                                  <Text style={s.previewCodeChipText}>{r.roomNumber}</Text>
+                                </View>
+                              ))}
+                              {hiddenCount > 0 && (
+                                <AnimatedPressable
+                                  style={s.previewMoreChip}
+                                  onPress={() => setPreviewExpanded(true)}
+                                >
+                                  <Text style={s.previewMoreChipText}>+{hiddenCount}</Text>
+                                </AnimatedPressable>
+                              )}
+                            </View>
+                          </View>
+                        );
+                      })}
+                      {!previewExpanded && previewFloorGroups.length > 2 && (
+                        <Text style={s.previewMoreFloorsNote}>
+                          …và còn {previewFloorGroups.length - 2} tầng nữa
+                        </Text>
+                      )}
+                    </View>
                   )}
+
                   {previewCollisionCount > 0 && (
                     <Text style={s.previewWarn}>
-                      Lưu ý: Có {previewCollisionCount} mã phòng trùng với phòng đã lưu hoặc bản nháp (bạn có thể đổi mã ở Bước 3 hoặc để trống số bắt đầu để tự nối tiếp).
+                      Lưu ý: Có {previewCollisionCount} mã phòng trùng với phòng đã lưu hoặc bản nháp. Hãy để trống “Phòng bắt đầu” để tự nối tiếp không trùng.
                     </Text>
                   )}
                 </View>
@@ -1215,81 +1696,104 @@ export default function MultiFloorRoomSetupScreen() {
                   </View>
                 )}
 
-                <AnimatedPressable
-                  scaleTo={0.98}
-                  disabled={Boolean(batchPreview.error) || batchPreview.rows.length === 0}
-                  style={[
-                    s.addBatchBtn,
-                    (Boolean(batchPreview.error) || batchPreview.rows.length === 0) && {
-                      opacity: 0.45,
-                    },
-                  ]}
-                  onPress={handleAddBatchToDraft}
-                >
-                  <Feather name="plus" size={17} color="#FFFFFF" />
-                  <Text style={s.addBatchBtnText}>Thêm vào bản nháp</Text>
-                </AnimatedPressable>
+                {/* Actions: Thêm dãy vào bản nháp + Thêm phòng lẻ */}
+                <View style={{ gap: 8 }}>
+                  <AnimatedPressable
+                    scaleTo={0.98}
+                    disabled={Boolean(batchPreview.error) || batchPreview.rows.length === 0}
+                    style={[
+                      s.addBatchBtn,
+                      (Boolean(batchPreview.error) || batchPreview.rows.length === 0) && {
+                        opacity: 0.45,
+                      },
+                    ]}
+                    onPress={handleAddBatchToDraft}
+                  >
+                    <Feather name="plus" size={17} color="#FFFFFF" />
+                    <Text style={s.addBatchBtnText}>Thêm dãy vào bản nháp</Text>
+                  </AnimatedPressable>
+
+                  <AnimatedPressable
+                    scaleTo={0.98}
+                    style={s.addSingleOutlineBtn}
+                    accessibilityLabel="Thêm một phòng lẻ vào bản nháp"
+                    onPress={() => setAddSingleOpen(true)}
+                  >
+                    <Feather name="plus-circle" size={16} color={c.primary} />
+                    <Text style={s.addSingleOutlineText}>Thêm phòng lẻ</Text>
+                  </AnimatedPressable>
+                </View>
               </View>
 
-              {/* Added Draft Batches List (Compact) */}
-              <View style={s.card}>
-                <View style={s.cardHeaderRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.cardTitle}>
-                      Phòng đã thêm vào bản nháp ({draftRooms.length})
-                    </Text>
-                    <Text style={s.cardSub}>
-                      Bạn có thể thêm nhiều đợt nếu các tầng có số phòng khác nhau.
-                    </Text>
-                  </View>
-                </View>
+              {/* Added Floor Groups in Draft */}
+              <View style={s.sectionBlock}>
+                <Text style={s.sectionLabel}>
+                  Nhóm tầng trong bản nháp ({draftRooms.length} phòng)
+                </Text>
 
                 {draftRooms.length === 0 ? (
-                  <Text style={s.emptyInlineText}>
-                    Chưa có phòng nào trong bản nháp. Nhấn “Thêm vào bản nháp” ở trên để bắt đầu.
-                  </Text>
+                  <View style={s.emptyInlineCard}>
+                    <Text style={s.emptyInlineText}>
+                      Chưa có phòng nào trong bản nháp. Bấm “Thêm dãy vào bản nháp” hoặc “+ Thêm phòng lẻ” ở trên.
+                    </Text>
+                  </View>
                 ) : (
-                  <View style={s.compactList}>
-                    {batches.map((batch, idx) => {
+                  <View style={{ gap: 8 }}>
+                    {batches.map(batch => {
                       const batchRows = draftRooms.filter(r => r.batchId === batch.batchId);
                       if (batchRows.length === 0) return null;
                       return (
-                        <View
-                          key={batch.batchId}
-                          style={[
-                            s.batchRow,
-                            idx === batches.length - 1 && { borderBottomWidth: 0 },
-                          ]}
-                        >
-                          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                        <View key={batch.batchId} style={s.batchCard}>
+                          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
                             <Text style={s.batchTitle}>{batch.label}</Text>
                             <Text style={s.batchPreviewText} numberOfLines={1}>
                               {formatBatchPreview(batchRows)}
                             </Text>
                           </View>
-                          <AnimatedPressable
-                            accessibilityLabel={`Xóa đợt ${batch.label} khỏi bản nháp`}
-                            style={s.iconBtnDanger}
-                            onPress={() => handleRemoveBatch(batch.batchId)}
-                          >
-                            <Feather name="trash-2" size={15} color={c.error} />
-                          </AnimatedPressable>
+                          <View style={s.rowActions}>
+                            <AnimatedPressable
+                              accessibilityLabel={`Xem và sửa nhóm ${batch.label}`}
+                              style={s.iconBtn}
+                              onPress={() => {
+                                setActiveFloorFilter(batchRows[0]?.floor || 'ALL');
+                                setStep(3);
+                              }}
+                            >
+                              <Feather name="edit-2" size={14} color={c.primary} />
+                            </AnimatedPressable>
+                            <AnimatedPressable
+                              accessibilityLabel={`Xóa nhóm ${batch.label}`}
+                              style={s.iconBtnDanger}
+                              onPress={() => handleRemoveBatch(batch.batchId)}
+                            >
+                              <Feather name="trash-2" size={14} color={c.error} />
+                            </AnimatedPressable>
+                          </View>
                         </View>
                       );
                     })}
-                    {/* Rooms added via + Phòng lẻ in Step 3 */}
                     {(() => {
                       const batchIdSet = new Set(batches.map(b => b.batchId));
                       const singleRows = draftRooms.filter(r => !batchIdSet.has(r.batchId));
                       if (singleRows.length === 0) return null;
                       return (
-                        <View style={[s.batchRow, { borderBottomWidth: 0 }]}>
-                          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                        <View style={s.batchCard}>
+                          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
                             <Text style={s.batchTitle}>Phòng lẻ đã thêm</Text>
                             <Text style={s.batchPreviewText} numberOfLines={1}>
                               {formatBatchPreview(singleRows)}
                             </Text>
                           </View>
+                          <AnimatedPressable
+                            accessibilityLabel="Xem các phòng lẻ ở bước 3"
+                            style={s.iconBtn}
+                            onPress={() => {
+                              setActiveFloorFilter('ALL');
+                              setStep(3);
+                            }}
+                          >
+                            <Feather name="arrow-right" size={14} color={c.primary} />
+                          </AnimatedPressable>
                         </View>
                       );
                     })()}
@@ -1300,14 +1804,66 @@ export default function MultiFloorRoomSetupScreen() {
           )}
 
           {/* ============================================================== */}
-          {/* STEP 3: Gán loại phòng và kiểm tra                             */}
+          {/* STEP 3: Gán loại phòng                                         */}
           {/* ============================================================== */}
           {step === 3 && (
             <Animated.View
-              entering={reducedMotion ? undefined : FadeInDown.duration(220)}
+              entering={reducedMotion ? undefined : FadeInDown.duration(200)}
               style={{ gap: 12 }}
             >
-              {/* Floor Picker Chips */}
+              {/* Compact 3-Stat Overview Strip: Tổng · Đã gán · Chưa gán */}
+              <View style={s.overviewStrip}>
+                <View style={s.overviewCell}>
+                  <Text style={s.overviewValue}>{draftRooms.length}</Text>
+                  <Text style={s.overviewLabel}>Tổng số phòng</Text>
+                </View>
+                <View style={s.overviewDivider} />
+                <View style={s.overviewCell}>
+                  <Text style={[s.overviewValue, { color: c.primary }]}>{assignedRoomsCount}</Text>
+                  <Text style={s.overviewLabel}>Đã gán</Text>
+                </View>
+                <View style={s.overviewDivider} />
+                <View style={s.overviewCell}>
+                  <Text
+                    style={[
+                      s.overviewValue,
+                      validation.unassignedCount > 0 && { color: '#B45309' },
+                    ]}
+                  >
+                    {validation.unassignedCount}
+                  </Text>
+                  <Text style={s.overviewLabel}>Chưa gán</Text>
+                </View>
+              </View>
+
+              {/* Validation Readiness Banner */}
+              {draftRooms.length > 0 && (
+                validation.issues.length > 0 ? (
+                  <View style={s.attentionBar}>
+                    <Feather name="alert-circle" size={16} color="#B45309" />
+                    <Text style={s.attentionText}>
+                      Còn <Text style={{ fontWeight: '800' }}>{validation.issues.length} phòng</Text>{' '}
+                      cần xử lý trước khi tạo.
+                    </Text>
+                    <AnimatedPressable
+                      scaleTo={0.96}
+                      style={s.jumpIssueBtn}
+                      onPress={handleJumpToFirstIssue}
+                    >
+                      <Text style={s.jumpIssueText}>Đến phòng</Text>
+                    </AnimatedPressable>
+                  </View>
+                ) : (
+                  <View style={s.readyBar}>
+                    <Feather name="check-circle" size={16} color={c.primary} />
+                    <Text style={s.readyText}>
+                      Tất cả phòng đã đủ loại và hợp lệ — sẵn sàng Kiểm tra & lưu.
+                    </Text>
+                  </View>
+                )
+              )}
+
+              {/* Horizontal Floor Filter Chips */}
               {draftFloorLabels.length > 0 && (
                 <ScrollView
                   horizontal
@@ -1359,7 +1915,7 @@ export default function MultiFloorRoomSetupScreen() {
                 </ScrollView>
               )}
 
-              {/* Search + Needs Attention + Add Single Room */}
+              {/* Search + Add Single Room */}
               <View style={s.step3Controls}>
                 <View style={s.searchBox}>
                   <Feather name="search" size={16} color={c.textSecondary} />
@@ -1384,7 +1940,7 @@ export default function MultiFloorRoomSetupScreen() {
                 <AnimatedPressable
                   scaleTo={0.97}
                   style={s.addSingleBtn}
-                  accessibilityLabel="Thêm một phòng lẻ vào tầng đang xem"
+                  accessibilityLabel="Thêm phòng lẻ"
                   onPress={() => setAddSingleOpen(true)}
                 >
                   <Feather name="plus" size={15} color={c.primary} />
@@ -1392,44 +1948,21 @@ export default function MultiFloorRoomSetupScreen() {
                 </AnimatedPressable>
               </View>
 
-              {/* Quick Actions Bar: Needs Attention / Scope Assign / Multi-select / Undo */}
+              {/* Quick Actions: Gán nhanh · Chọn nhiều · Cần xử lý · Hoàn tác */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={s.chipsRow}
               >
-                <AnimatedPressable
-                  scaleTo={0.97}
-                  style={[s.toolChip, onlyNeedsAttention && s.toolChipWarnActive]}
-                  onPress={() => setOnlyNeedsAttention(prev => !prev)}
-                >
-                  <Feather
-                    name="alert-circle"
-                    size={14}
-                    color={onlyNeedsAttention ? '#FFFFFF' : validation.issues.length > 0 ? c.error : c.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      s.toolChipText,
-                      onlyNeedsAttention && { color: '#FFFFFF' },
-                      !onlyNeedsAttention && validation.issues.length > 0 && { color: c.error },
-                    ]}
-                  >
-                    Cần xử lý ({validation.issues.length})
-                  </Text>
-                </AnimatedPressable>
-
                 {draftRooms.length > 0 && (
                   <>
                     <AnimatedPressable
                       scaleTo={0.97}
-                      style={s.toolChip}
+                      style={s.quickAssignPill}
                       onPress={() => setBulkModalMode('SCOPE')}
                     >
-                      <Feather name="layers" size={14} color={c.primary} />
-                      <Text style={[s.toolChipText, { color: c.primary }]}>
-                        Gán theo phạm vi
-                      </Text>
+                      <Feather name="zap" size={14} color="#FFFFFF" />
+                      <Text style={s.quickAssignPillText}>Gán nhanh</Text>
                     </AnimatedPressable>
 
                     <AnimatedPressable
@@ -1451,20 +1984,47 @@ export default function MultiFloorRoomSetupScreen() {
                           selectionMode && { color: '#FFFFFF' },
                         ]}
                       >
-                        {selectionMode ? 'Xong chọn nhiều' : 'Chọn nhiều'}
+                        {selectionMode ? 'Xong chọn' : 'Chọn nhiều'}
                       </Text>
                     </AnimatedPressable>
                   </>
                 )}
 
+                <AnimatedPressable
+                  scaleTo={0.97}
+                  style={[s.toolChip, onlyNeedsAttention && s.toolChipWarnActive]}
+                  onPress={() => setOnlyNeedsAttention(prev => !prev)}
+                >
+                  <Feather
+                    name="filter"
+                    size={13}
+                    color={
+                      onlyNeedsAttention
+                        ? '#FFFFFF'
+                        : validation.issues.length > 0
+                        ? c.error
+                        : c.textSecondary
+                    }
+                  />
+                  <Text
+                    style={[
+                      s.toolChipText,
+                      onlyNeedsAttention && { color: '#FFFFFF' },
+                      !onlyNeedsAttention && validation.issues.length > 0 && { color: c.error },
+                    ]}
+                  >
+                    Cần xử lý ({validation.issues.length})
+                  </Text>
+                </AnimatedPressable>
+
                 {undoStack.length > 0 && (
                   <AnimatedPressable
                     scaleTo={0.97}
                     style={s.undoChip}
-                    accessibilityLabel="Hoàn tác lần gán loại gần nhất"
+                    accessibilityLabel="Hoàn tác lần gán gần nhất"
                     onPress={handleUndoLastAssign}
                   >
-                    <Feather name="rotate-ccw" size={14} color={c.primaryDark} />
+                    <Feather name="rotate-ccw" size={13} color="#7A4D0D" />
                     <Text style={s.undoChipText}>Hoàn tác</Text>
                   </AnimatedPressable>
                 )}
@@ -1480,7 +2040,6 @@ export default function MultiFloorRoomSetupScreen() {
                 </View>
               )}
 
-              {/* Selection Mode Helper Bar */}
               {selectionMode && filteredStep3Rooms.length > 0 && (
                 <View style={s.selectHelperRow}>
                   <Text style={s.selectHelperText}>
@@ -1496,15 +2055,15 @@ export default function MultiFloorRoomSetupScreen() {
                 </View>
               )}
 
-              {/* Room Rows List */}
+              {/* Mobile-Native Room Rows (No Desktop Table!) */}
               {draftRooms.length === 0 ? (
                 <View style={s.emptyStep3Card}>
                   <Feather name="grid" size={24} color={c.primary} />
                   <Text style={s.emptyStep3Title}>Chưa có phòng trong bản nháp</Text>
                   <Text style={s.emptyStep3Desc}>
                     {draftTypes.length > 0
-                      ? 'Bạn có thể tạo riêng các loại phòng mới vừa chuẩn bị, hoặc quay lại Bước 2 / bấm + Phòng lẻ để thêm phòng.'
-                      : 'Quay lại Bước 2 để tạo phòng theo tầng hoặc bấm + Phòng lẻ để thêm phòng.'}
+                      ? 'Bạn có thể tạo trước các loại phòng mới vừa chuẩn bị, hoặc quay lại Bước 2 / bấm + Phòng lẻ để thêm phòng.'
+                      : 'Quay lại Bước 2 để sinh phòng theo tầng hoặc bấm + Phòng lẻ.'}
                   </Text>
                 </View>
               ) : filteredStep3Rooms.length === 0 ? (
@@ -1523,8 +2082,8 @@ export default function MultiFloorRoomSetupScreen() {
                   </AnimatedPressable>
                 </View>
               ) : (
-                <View style={s.roomRowsCard}>
-                  {filteredStep3Rooms.map((row, idx) => {
+                <View style={{ gap: 8 }}>
+                  {filteredStep3Rooms.map(row => {
                     const assigned =
                       row.roomTypeId != null ? typeById.get(row.roomTypeId) : null;
                     const issue = validation.issueByRowId[row.rowId];
@@ -1533,65 +2092,80 @@ export default function MultiFloorRoomSetupScreen() {
                     return (
                       <AnimatedPressable
                         key={row.rowId}
-                        scaleTo={0.99}
+                        scaleTo={0.995}
                         style={[
-                          s.roomRow,
-                          idx === filteredStep3Rooms.length - 1 && { borderBottomWidth: 0 },
-                          selected && s.roomRowSelected,
+                          s.mobileRoomCard,
+                          selected && s.mobileRoomCardSelected,
+                          issue && issue.code !== 'MISSING_TYPE' && s.mobileRoomCardError,
                         ]}
                         onPress={() => {
                           if (selectionMode) {
                             toggleSelectRow(row.rowId);
                           } else {
-                            setEditingRow(row);
+                            setQuickPickRow(row);
                           }
                         }}
                       >
-                        {selectionMode && (
-                          <View style={[s.checkbox, selected && s.checkboxChecked]}>
-                            {selected && <Feather name="check" size={13} color="#FFFFFF" />}
-                          </View>
-                        )}
-
-                        <View style={s.roomCodeBadge}>
-                          <Text style={s.roomCodeText}>{row.roomNumber || '—'}</Text>
-                        </View>
-
-                        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                          {assigned ? (
-                            <Text style={s.roomTypeText} numberOfLines={1}>
-                              {assigned.roomType}
-                            </Text>
-                          ) : (
-                            <Text style={s.roomUnassignedText}>Chưa gán loại</Text>
+                        <View style={s.mobileRoomTop}>
+                          {selectionMode && (
+                            <View style={[s.checkbox, selected && s.checkboxChecked]}>
+                              {selected && <Feather name="check" size={13} color="#FFFFFF" />}
+                            </View>
                           )}
 
-                          <Text
-                            style={[
-                              s.roomSubMeta,
-                              issue && issue.code !== 'MISSING_TYPE' && { color: c.error },
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {issue && issue.code !== 'MISSING_TYPE'
-                              ? issue.message
-                              : effectiveActiveFloor === 'ALL'
-                              ? `${formatFloorDisplay(row.floor)}${
-                                  assigned ? ` · ${formatMoneyVnd(assigned.price)}/tháng` : ''
-                                }`
-                              : assigned
-                              ? `${formatMoneyVnd(assigned.price)}/tháng`
-                              : 'Chạm để chọn loại phòng hoặc sửa mã'}
-                          </Text>
+                          <View style={{ flex: 1, minWidth: 0 }}>
+                            <Text style={s.mobileRoomCode}>{row.roomNumber || '—'}</Text>
+                            <Text style={s.mobileRoomFloor}>
+                              {formatFloorDisplay(row.floor)}
+                            </Text>
+                          </View>
+
+                          {!selectionMode && (
+                            <AnimatedPressable
+                              accessibilityLabel={`Sửa mã hoặc xóa phòng ${row.roomNumber}`}
+                              style={s.rowMoreBtn}
+                              onPress={() => setEditingRow(row)}
+                            >
+                              <Feather name="more-horizontal" size={18} color={c.textSecondary} />
+                            </AnimatedPressable>
+                          )}
                         </View>
 
-                        {!selectionMode && (
-                          <Feather
-                            name={issue ? 'alert-circle' : 'chevron-right'}
-                            size={16}
-                            color={issue ? c.error : c.textMuted}
-                          />
-                        )}
+                        <View style={s.mobileRoomBottom}>
+                          <View style={{ flex: 1, minWidth: 0 }}>
+                            {issue && issue.code !== 'MISSING_TYPE' ? (
+                              <Text style={s.mobileRoomErrText} numberOfLines={2}>
+                                {issue.message}
+                              </Text>
+                            ) : assigned ? (
+                              <Text style={s.mobileRoomAssignedName} numberOfLines={1}>
+                                {assigned.roomType}
+                              </Text>
+                            ) : (
+                              <Text style={s.mobileRoomUnassigned}>Chưa gán loại</Text>
+                            )}
+                          </View>
+
+                          {!selectionMode && (
+                            <AnimatedPressable
+                              scaleTo={0.96}
+                              style={[
+                                s.inlineActionChip,
+                                assigned ? s.inlineActionChipChange : s.inlineActionChipPick,
+                              ]}
+                              onPress={() => setQuickPickRow(row)}
+                            >
+                              <Text
+                                style={[
+                                  s.inlineActionText,
+                                  assigned ? s.inlineActionTextChange : s.inlineActionTextPick,
+                                ]}
+                              >
+                                {assigned ? 'Thay đổi' : 'Chọn loại'}
+                              </Text>
+                            </AnimatedPressable>
+                          )}
+                        </View>
                       </AnimatedPressable>
                     );
                   })}
@@ -1601,7 +2175,7 @@ export default function MultiFloorRoomSetupScreen() {
           )}
         </ScrollView>
 
-        {/* Selection Mode Action Bar (Step 3 only when selectionMode ON) */}
+        {/* Selection Mode Bar (Step 3 only when selectionMode ON) */}
         {step === 3 && selectionMode && (
           <View style={s.selectionBar}>
             <View style={{ flex: 1 }}>
@@ -1609,7 +2183,7 @@ export default function MultiFloorRoomSetupScreen() {
               <Text style={s.selectionBarHint}>
                 {selectedRowIds.size > 0
                   ? 'Chỉ cập nhật các phòng đã chọn'
-                  : 'Chạm vào hàng phòng để chọn'}
+                  : 'Chạm vào thẻ phòng để chọn'}
               </Text>
             </View>
             <AnimatedPressable
@@ -1626,11 +2200,11 @@ export default function MultiFloorRoomSetupScreen() {
           </View>
         )}
 
-        {/* Unified Sticky Footer: Live Draft Status + Single Primary CTA */}
+        {/* Unified Sticky Footer */}
         <View style={s.footer}>
           <View style={s.footerStatsRow}>
             <Text style={s.footerStatText}>
-              <Text style={s.footerStatStrong}>{draftTypes.length}</Text> loại mới ·{' '}
+              <Text style={s.footerStatStrong}>{selectableTypes.length}</Text> loại dùng ·{' '}
               <Text style={s.footerStatStrong}>{draftRooms.length}</Text> phòng nháp
               {step === 3 && draftRooms.length > 0 ? (
                 <>
@@ -1652,14 +2226,14 @@ export default function MultiFloorRoomSetupScreen() {
             )}
           </View>
           <PrimaryButton
-            title={primaryFooterLabel}
+            title={primaryFooterTitle}
             disabled={primaryFooterDisabled}
             onPress={handlePrimaryFooterPress}
           />
         </View>
       </KeyboardAvoidingView>
 
-      {/* Step 1 Full-Height Child Modal: Add / Edit Draft Room Type */}
+      {/* Step 1 Full-Screen Child Modal */}
       <RoomSetupTypeModal
         visible={typeModalOpen}
         propertyId={property.propertyId}
@@ -1674,7 +2248,15 @@ export default function MultiFloorRoomSetupScreen() {
         onSaveDraft={handleSaveDraftType}
       />
 
-      {/* Step 3 Sheets */}
+      {/* Step 2 & 3 Bottom Sheets */}
+      <QuickTypePickSheet
+        visible={Boolean(quickPickRow)}
+        row={quickPickRow}
+        selectableTypes={selectableTypes}
+        onClose={() => setQuickPickRow(null)}
+        onSelectType={handleQuickAssignSingle}
+      />
+
       <DraftRoomEditSheet
         visible={Boolean(editingRow)}
         row={editingRow}
@@ -1687,7 +2269,7 @@ export default function MultiFloorRoomSetupScreen() {
 
       <AddSingleDraftRoomSheet
         visible={addSingleOpen}
-        defaultFloorLabel={effectiveActiveFloor}
+        defaultFloorLabel={step === 3 ? effectiveActiveFloor : `Tầng ${fromFloorInput || '1'}`}
         existingAndDraftRooms={existingAndDraftRooms}
         selectableTypes={selectableTypes}
         onClose={() => setAddSingleOpen(false)}
@@ -1705,11 +2287,13 @@ export default function MultiFloorRoomSetupScreen() {
         onApply={handleApplyScopedAssign}
       />
 
-      {/* Review Before Submit Modal (within Step 3, NOT a 4th step) */}
+      {/* Review & Save Sheet inside Step 3 (NO 4th step) */}
       <SetupReviewModal
         visible={reviewOpen}
         propertyName={propertyName}
         draftTypes={draftTypes}
+        usedSavedTypesCount={usedSavedTypesCount}
+        unassignedCount={validation.unassignedCount}
         draftRooms={draftRooms}
         selectableTypes={selectableTypes}
         issues={validation.issues}
@@ -1739,7 +2323,7 @@ const s = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     paddingHorizontal: authSpacing.lg,
     paddingTop: 10,
     paddingBottom: 10,
@@ -1766,73 +2350,86 @@ const s = StyleSheet.create({
     color: c.primary,
     marginTop: 1,
   },
-  stepBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  saveDraftBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
     borderRadius: authRadius.round,
-    backgroundColor: c.softMint,
+    backgroundColor: c.surface,
     borderWidth: 1,
+    borderColor: c.border,
+  },
+  saveDraftBtnSaved: {
+    backgroundColor: c.softMint,
     borderColor: '#C5E3DB',
   },
-  stepBadgeText: {
-    fontSize: 12,
+  saveDraftText: {
+    fontSize: 12.5,
     fontWeight: '700',
     color: c.primaryDark,
   },
-  progressStrip: {
+  stepperWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: authSpacing.lg,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: c.border,
-    gap: 8,
   },
-  progressMetaRow: {
+  stepperItemOuter: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
   },
-  progressStepTitle: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: c.forestInk,
-  },
-  stepPillsRow: {
+  stepperTab: {
+    flex: 1,
     flexDirection: 'row',
-    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    borderRadius: authRadius.round,
   },
-  stepMiniPill: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.border,
+  stepperTabActive: {
+    backgroundColor: c.softMint,
+  },
+  stepperDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#E3EBE8',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepMiniPillActive: {
+  stepperDotActive: {
     backgroundColor: c.primary,
-    borderColor: c.primary,
   },
-  stepMiniPillText: {
-    fontSize: 12,
-    fontWeight: '700',
+  stepperDotDone: {
+    backgroundColor: c.primaryDark,
+  },
+  stepperDotText: {
+    fontSize: 11,
+    fontWeight: '800',
     color: c.textSecondary,
   },
-  stepMiniPillTextActive: {
-    color: '#FFFFFF',
+  stepperLabel: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: c.textSecondary,
+    flexShrink: 1,
   },
-  progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#E3EBE8',
-    overflow: 'hidden',
+  stepperLabelActive: {
+    color: c.primaryDark,
+    fontWeight: '700',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: c.primary,
-    borderRadius: 2,
+  stepperDivider: {
+    width: 8,
+    height: 1.5,
+    backgroundColor: c.border,
+    marginHorizontal: 2,
   },
   scrollContent: {
     paddingHorizontal: authSpacing.lg,
@@ -1840,65 +2437,147 @@ const s = StyleSheet.create({
     paddingBottom: 28,
     gap: 14,
   },
-  card: {
-    backgroundColor: c.surface,
+  draftStatusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: authRadius.md,
+    backgroundColor: c.softMint,
+    borderWidth: 1,
+    borderColor: '#C5E3DB',
+  },
+  draftStatusText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: c.primaryDark,
+  },
+  draftClearLink: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: c.error,
+  },
+  draftErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: authRadius.md,
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#F3B8B2',
+  },
+  draftErrorText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: c.error,
+  },
+  stepIntro: {
+    gap: 3,
+  },
+  stepHeading: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: c.forestInk,
+    letterSpacing: -0.3,
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: c.textSecondary,
+  },
+  sectionBlock: {
+    gap: 10,
+  },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionLabel: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: c.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  savedTypeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
     borderRadius: authRadius.lg,
+    backgroundColor: c.surface,
     borderWidth: 1,
     borderColor: c.border,
-    padding: 16,
+  },
+  savedTypeCardSelected: {
+    borderColor: c.primary,
+    backgroundColor: '#F7FCFA',
+  },
+  draftTypeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+    padding: 12,
+    borderRadius: authRadius.lg,
+    backgroundColor: c.surface,
+    borderWidth: 1,
+    borderColor: '#C5E3DB',
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
+  typeThumb: {
+    width: 58,
+    height: 58,
+    borderRadius: 12,
+    backgroundColor: '#EAF2EF',
   },
-  cardTitle: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: c.forestInk,
-  },
-  cardSub: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: c.textSecondary,
-    marginTop: 2,
-  },
-  compactList: {
-    borderTopWidth: 1,
-    borderTopColor: c.border,
-  },
-  compactTypeRow: {
-    flexDirection: 'row',
+  typeThumbFallback: {
+    width: 58,
+    height: 58,
+    borderRadius: 12,
+    backgroundColor: c.softMint,
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
+    justifyContent: 'center',
   },
-  draftTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-  },
-  compactTypeName: {
-    fontSize: 14.5,
+  typeCardName: {
+    fontSize: 15,
     fontWeight: '700',
     color: c.forestInk,
     flexShrink: 1,
   },
-  compactTypeMeta: {
+  typeCardPrice: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: c.primary,
+  },
+  typeCardSpecs: {
     fontSize: 12.5,
     color: c.textSecondary,
   },
-  compactTypePrice: {
-    fontSize: 13.5,
+  selectPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: authRadius.round,
+  },
+  selectPillActive: {
+    backgroundColor: c.primary,
+  },
+  selectPillIdle: {
+    backgroundColor: c.background,
+    borderWidth: 1,
+    borderColor: c.border,
+  },
+  selectPillText: {
+    fontSize: 12,
     fontWeight: '700',
-    color: c.primary,
+    color: c.forestInk,
+  },
+  selectPillTextActive: {
+    color: '#FFFFFF',
   },
   draftPill: {
     paddingHorizontal: 7,
@@ -1934,8 +2613,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   addTypeOutlineBtn: {
-    minHeight: 46,
-    borderRadius: authRadius.md,
+    minHeight: 48,
+    borderRadius: authRadius.lg,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: c.primary,
@@ -1949,6 +2628,14 @@ const s = StyleSheet.create({
     fontSize: 14.5,
     fontWeight: '700',
     color: c.primary,
+  },
+  card: {
+    backgroundColor: c.surface,
+    borderRadius: authRadius.lg,
+    borderWidth: 1,
+    borderColor: c.border,
+    padding: 16,
+    gap: 13,
   },
   segmentWrap: {
     flexDirection: 'row',
@@ -1985,11 +2672,6 @@ const s = StyleSheet.create({
   twoCol: {
     flexDirection: 'row',
     gap: 12,
-  },
-  helperNote: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: c.textSecondary,
   },
   fieldSubLabel: {
     fontSize: 13.5,
@@ -2099,21 +2781,64 @@ const s = StyleSheet.create({
   },
   previewBox: {
     borderRadius: authRadius.md,
-    backgroundColor: c.softMint,
+    backgroundColor: '#F3FAF7',
     borderWidth: 1,
     borderColor: '#C5E3DB',
     padding: 12,
-    gap: 4,
+    gap: 6,
+  },
+  previewTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   previewLabel: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     color: c.primaryDark,
   },
-  previewValue: {
-    fontSize: 14.5,
+  previewToggleLink: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: c.primary,
+  },
+  previewFloorTitle: {
+    fontSize: 13,
     fontWeight: '700',
     color: c.forestInk,
+  },
+  previewChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  previewCodeChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: c.surface,
+    borderWidth: 1,
+    borderColor: '#CFE5DE',
+  },
+  previewCodeChipText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: c.forestInk,
+  },
+  previewMoreChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: c.softMint,
+  },
+  previewMoreChipText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: c.primaryDark,
+  },
+  previewMoreFloorsNote: {
+    fontSize: 12,
+    color: c.textSecondary,
   },
   previewError: {
     fontSize: 13,
@@ -2140,6 +2865,22 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  addSingleOutlineBtn: {
+    minHeight: 44,
+    borderRadius: authRadius.md,
+    borderWidth: 1,
+    borderColor: c.primary,
+    backgroundColor: c.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+  },
+  addSingleOutlineText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: c.primary,
+  },
   inlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2157,27 +2898,108 @@ const s = StyleSheet.create({
     lineHeight: 18,
     color: c.primaryDark,
   },
+  emptyInlineCard: {
+    padding: 14,
+    borderRadius: authRadius.md,
+    backgroundColor: c.surface,
+    borderWidth: 1,
+    borderColor: c.border,
+  },
   emptyInlineText: {
     fontSize: 13,
     lineHeight: 19,
     color: c.textSecondary,
   },
-  batchRow: {
+  batchCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
+    padding: 13,
+    borderRadius: authRadius.lg,
+    backgroundColor: c.surface,
+    borderWidth: 1,
+    borderColor: c.border,
   },
   batchTitle: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '700',
     color: c.forestInk,
   },
   batchPreviewText: {
     fontSize: 12.5,
     color: c.textSecondary,
+  },
+  overviewStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: c.surface,
+    borderRadius: authRadius.lg,
+    borderWidth: 1,
+    borderColor: c.border,
+    paddingVertical: 12,
+  },
+  overviewCell: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  overviewValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: c.forestInk,
+  },
+  overviewLabel: {
+    fontSize: 11.5,
+    color: c.textSecondary,
+  },
+  overviewDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: c.border,
+  },
+  attentionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: authRadius.md,
+    backgroundColor: '#FFF7E8',
+    borderWidth: 1,
+    borderColor: '#F1D4A7',
+  },
+  attentionText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#7A4D0D',
+  },
+  jumpIssueBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: authRadius.round,
+    backgroundColor: '#B45309',
+  },
+  jumpIssueText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  readyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: authRadius.md,
+    backgroundColor: c.softMint,
+    borderWidth: 1,
+    borderColor: '#C5E3DB',
+  },
+  readyText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: c.primaryDark,
   },
   floorTabChip: {
     flexDirection: 'row',
@@ -2247,6 +3069,20 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: c.primary,
   },
+  quickAssignPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: authRadius.round,
+    backgroundColor: c.primary,
+  },
+  quickAssignPillText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   toolChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2303,24 +3139,88 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: c.primary,
   },
-  roomRowsCard: {
+  mobileRoomCard: {
     backgroundColor: c.surface,
     borderRadius: authRadius.lg,
     borderWidth: 1,
     borderColor: c.border,
-    overflow: 'hidden',
+    padding: 13,
+    gap: 10,
   },
-  roomRow: {
+  mobileRoomCardSelected: {
+    backgroundColor: c.softMint,
+    borderColor: c.primary,
+  },
+  mobileRoomCardError: {
+    borderColor: '#F3B8B2',
+  },
+  mobileRoomTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
+    gap: 10,
   },
-  roomRowSelected: {
+  mobileRoomCode: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: c.forestInk,
+  },
+  mobileRoomFloor: {
+    fontSize: 12.5,
+    color: c.textSecondary,
+    marginTop: 1,
+  },
+  rowMoreBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: c.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileRoomBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#EFF3F1',
+  },
+  mobileRoomAssignedName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: c.forestInk,
+  },
+  mobileRoomUnassigned: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#B45309',
+  },
+  mobileRoomErrText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: c.error,
+  },
+  inlineActionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: authRadius.round,
+  },
+  inlineActionChipPick: {
+    backgroundColor: c.primary,
+  },
+  inlineActionChipChange: {
     backgroundColor: c.softMint,
+  },
+  inlineActionText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  inlineActionTextPick: {
+    color: '#FFFFFF',
+  },
+  inlineActionTextChange: {
+    color: c.primaryDark,
   },
   checkbox: {
     width: 22,
@@ -2335,35 +3235,6 @@ const s = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: c.primary,
     borderColor: c.primary,
-  },
-  roomCodeBadge: {
-    minWidth: 56,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: authRadius.sm,
-    backgroundColor: c.background,
-    borderWidth: 1,
-    borderColor: c.border,
-    alignItems: 'center',
-  },
-  roomCodeText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: c.forestInk,
-  },
-  roomTypeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: c.forestInk,
-  },
-  roomUnassignedText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#B45309',
-  },
-  roomSubMeta: {
-    fontSize: 12,
-    color: c.textSecondary,
   },
   emptyStep3Card: {
     backgroundColor: c.surface,

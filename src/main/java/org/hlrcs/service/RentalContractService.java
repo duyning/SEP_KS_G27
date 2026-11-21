@@ -2,6 +2,7 @@ package org.hlrcs.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.RentalContractRequest;
+import org.hlrcs.dto.request.RentalContractSignatureRequest;
 import org.hlrcs.entity.*;
 import org.hlrcs.exception.*;
 import org.hlrcs.repository.*;
@@ -10,6 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.*;
 import java.util.*;
 
@@ -20,9 +25,18 @@ public class RentalContractService {
     private final UserRepository users;
     private final AuthService auth;
     private final ObjectMapper json;
+    private final RoomTenancyService tenancies;
+    private static final SecureRandom SIGNING_RANDOM = new SecureRandom();
+
     public record Template(String id,String name,String description,String terms) { }
     public record View(Long id,String status,String propertyName,String propertyAddress,String roomNumber,
-                       LocalDate startDate,LocalDate endDate,LocalDateTime createdAt,LocalDateTime closedAt,RentalContractRequest details) { }
+                       LocalDate startDate, LocalDate endDate, LocalDateTime createdAt, LocalDateTime closedAt,
+                       RentalContractRequest details, String documentHash,
+                       SignatureView ownerSignature, SignatureView tenantSignature) { }
+    public record SignatureView(String name, Instant signedAt, String method,
+                                List<List<RentalContractSignatureRequest.SignaturePoint>> strokes) { }
+    private record SignatureAudit(Integer signerUserId, String documentHash, SignatureView signature) { }
+    public record SigningLink(String token, Instant expiresAt) { }
     public static List<Template> templates(){return List.of(
         new Template("BASIC","Mẫu 1 · Hợp đồng thuê phòng trọ","Trách nhiệm bên A, bên B và các thỏa thuận chung.",
             "1. Trách nhiệm của bên A\n"
@@ -111,7 +125,7 @@ public class RentalContractService {
             throw new AppException("Phòng "+room.getRoomNumber()+" đã có hợp đồng. Kết thúc đợt thuê hiện tại trước khi đổi khoảng ngày thuê.",HttpStatus.CONFLICT);
     }
     public void close(Room room){
-        var active=contracts.findByRoomIdAndOwnerIdAndStatus(room.getRoomId(),room.getProperty().getOwner().getUserId(),"ACTIVE");
+        var active=contracts.lockActiveForRoom(room.getRoomId(),room.getProperty().getOwner().getUserId());
         active.forEach(c->{c.setStatus("CLOSED");c.setClosedAt(LocalDateTime.now());});contracts.saveAll(active);
     }
     public RentalContract record(Room room,RentalContractRequest request){
@@ -125,7 +139,153 @@ public class RentalContractService {
             details.put("contractDate", LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).toString());
         }
         c.setStartDate(room.getLeaseStartDate());c.setEndDate(room.getLeaseEndDate());c.setDetailsJson(json.writeValueAsString(details));
-        return contracts.saveAndFlush(c);
+        var saved = contracts.saveAndFlush(c);
+        tenancies.attach(room, saved, request);
+        return saved;
     }
-    private View view(RentalContract c){return new View(c.getId(),c.getStatus(),c.getPropertyName(),c.getPropertyAddress(),c.getRoomNumber(),c.getStartDate(),c.getEndDate(),c.getCreatedAt(),c.getClosedAt(),json.readValue(c.getDetailsJson(),RentalContractRequest.class));}
+    @Transactional
+    public SigningLink createSigningLink(Long contractId) {
+        var contract = ownedContractForUpdate(contractId);
+        requireActive(contract);
+        if (contract.getTenantSignatureJson() != null) {
+            throw new AppException("Người thuê đã ký hợp đồng.", HttpStatus.CONFLICT);
+        }
+        tenantPhone(json.readValue(contract.getDetailsJson(), RentalContractRequest.class));
+
+        var randomBytes = new byte[32];
+        SIGNING_RANDOM.nextBytes(randomBytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        Instant expiresAt = Instant.now().plus(Duration.ofDays(7));
+        contract.setSigningTokenHash(hash(token));
+        contract.setSigningLinkExpiresAt(expiresAt);
+        return new SigningLink(token, expiresAt);
+    }
+
+    @Transactional
+    public View signAsOwner(Long id, RentalContractSignatureRequest request) {
+        var contract = ownedContractForUpdate(id);
+        if (contract.getOwnerSignatureJson() == null) {
+            var details = json.readValue(contract.getDetailsJson(), RentalContractRequest.class);
+            contract.setOwnerSignatureJson(sign(contract, contract.getOwnerId(), details.landlordName(), request));
+        }
+        return view(contract);
+    }
+
+    @Transactional(readOnly = true)
+    public View openAsTenant(String token) {
+        var contract = contracts.findBySigningTokenHash(hash(token)).orElseThrow(this::unavailableSigningLink);
+        var details = tenantDetails(contract);
+        requireTenant(contract, details);
+        return view(contract, details);
+    }
+
+    @Transactional
+    public View signAsTenant(String token, RentalContractSignatureRequest request) {
+        var contract = contracts.findForUpdateBySigningTokenHash(hash(token)).orElseThrow(this::unavailableSigningLink);
+        var details = tenantDetails(contract);
+        Integer signerId = requireTenant(contract, details);
+        if (contract.getTenantSignatureJson() == null) {
+            contract.setTenantSignatureJson(sign(contract, signerId, details.tenantName(), request));
+        }
+        return view(contract, details);
+    }
+
+    private RentalContract ownedContractForUpdate(Long id) {
+        return contracts.findByIdAndOwnerId(id, auth.getCurrentUser().getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hợp đồng của bạn."));
+    }
+
+    private Integer requireTenant(RentalContract contract, RentalContractRequest details) {
+        User user = auth.getCurrentUser();
+        if (Objects.equals(user.getUserId(), contract.getOwnerId())) throw unavailableSigningLink();
+        SignatureAudit existing = signatureAudit(contract.getTenantSignatureJson());
+        if (existing != null) {
+            if (!Objects.equals(existing.signerUserId(), user.getUserId())) throw unavailableSigningLink();
+            return user.getUserId();
+        }
+        if (!"ACTIVE".equals(contract.getStatus()) || contract.getSigningLinkExpiresAt() == null
+                || !contract.getSigningLinkExpiresAt().isAfter(Instant.now())) throw unavailableSigningLink();
+        if (user.getPhoneVerifiedAt() == null) {
+            throw new AppException("Hãy xác minh số điện thoại đã ghi trên hợp đồng để tiếp tục.", HttpStatus.FORBIDDEN);
+        }
+        String phone = user.getPhoneNumber();
+        if (phone == null || !tenantPhone(details).equals(phone.replaceAll("[() .-]", "").replaceFirst("^\\+84", "0"))) {
+            throw unavailableSigningLink();
+        }
+        return user.getUserId();
+    }
+
+    private String tenantPhone(RentalContractRequest details) {
+        String phone = PhoneVerificationService.normalize(details.tenantPhone().replaceAll("[()]", ""));
+        if (phone.isEmpty()) throw new BadRequestException("Hợp đồng cần có số điện thoại Việt Nam của người thuê để gửi liên kết ký.");
+        return phone;
+    }
+
+    private ResourceNotFoundException unavailableSigningLink() {
+        return new ResourceNotFoundException("Liên kết ký không khả dụng cho tài khoản này. Hãy kiểm tra tài khoản hoặc xin chủ trọ liên kết mới.");
+    }
+
+    private void requireActive(RentalContract contract) {
+        if (!"ACTIVE".equals(contract.getStatus())) {
+            throw new AppException("Hợp đồng đã kết thúc và không thể ký thêm.", HttpStatus.CONFLICT);
+        }
+    }
+
+    private String sign(RentalContract contract, Integer signerId, String name, RentalContractSignatureRequest request) {
+        requireActive(contract);
+        String documentHash = documentHash(contract);
+        if (!documentHash.equals(request.documentHash())) {
+            throw new AppException("Phiên bản hợp đồng đã thay đổi. Vui lòng mở lại hợp đồng trước khi ký.", HttpStatus.CONFLICT);
+        }
+        var strokes = request.strokes() == null ? List.<List<RentalContractSignatureRequest.SignaturePoint>>of() : request.strokes();
+        if ("DRAWN".equals(request.method())) {
+            boolean hasInk = strokes.stream().anyMatch(stroke -> stroke.stream().anyMatch(point -> !point.equals(stroke.get(0))));
+            if (!hasInk) throw new BadRequestException("Vui lòng vẽ chữ ký trong khung.");
+        } else if (!strokes.isEmpty()) {
+            throw new BadRequestException("Chữ ký họ tên không nhận nét vẽ.");
+        }
+        var signature = new SignatureView(name.trim(), Instant.now(), request.method(), strokes);
+        return json.writeValueAsString(new SignatureAudit(signerId, documentHash, signature));
+    }
+
+    private String documentHash(RentalContract contract) {
+        return hash(json.writeValueAsString(Arrays.asList(contract.getId(), contract.getRoomNumber(), contract.getPropertyName(),
+                contract.getPropertyAddress(), contract.getStartDate(), contract.getEndDate(), contract.getCreatedAt(),
+                contract.getDetailsJson())));
+    }
+
+    private static String hash(String value) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
+    }
+
+    private SignatureAudit signatureAudit(String value) {
+        return value == null ? null : json.readValue(value, SignatureAudit.class);
+    }
+
+    private SignatureView signatureView(String value) {
+        var audit = signatureAudit(value);
+        return audit == null ? null : audit.signature();
+    }
+
+    private RentalContractRequest tenantDetails(RentalContract contract) {
+        ObjectNode details = (ObjectNode) json.readTree(contract.getDetailsJson());
+        details.remove("fullScannedTranscript");
+        details.remove("sourceName");
+        return json.treeToValue(details, RentalContractRequest.class);
+    }
+
+    private View view(RentalContract contract) {
+        return view(contract, json.readValue(contract.getDetailsJson(), RentalContractRequest.class));
+    }
+
+    private View view(RentalContract contract, RentalContractRequest details) {
+        return new View(contract.getId(), contract.getStatus(), contract.getPropertyName(), contract.getPropertyAddress(),
+                contract.getRoomNumber(), contract.getStartDate(), contract.getEndDate(), contract.getCreatedAt(),
+                contract.getClosedAt(), details, documentHash(contract), signatureView(contract.getOwnerSignatureJson()),
+                signatureView(contract.getTenantSignatureJson()));
+    }
 }

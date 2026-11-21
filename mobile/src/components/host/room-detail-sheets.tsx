@@ -643,23 +643,20 @@ function RoomContractReaderContent({
           >
             {/* Status & Lease Period Card */}
             <View style={s.readerCard}>
-              <View style={s.readerStatusRow}>
-                <View
+              <View
+                style={[
+                  s.contractBadge,
+                  isActive ? s.contractBadgeActive : s.contractBadgeClosed,
+                ]}
+              >
+                <Text
                   style={[
-                    s.contractBadge,
-                    isActive ? s.contractBadgeActive : s.contractBadgeClosed,
+                    s.contractBadgeText,
+                    { color: isActive ? c.primary : c.textSecondary },
                   ]}
                 >
-                  <Text
-                    style={[
-                      s.contractBadgeText,
-                      { color: isActive ? c.primary : c.textSecondary },
-                    ]}
-                  >
-                    {isActive ? 'Đang quản lý' : 'Đã kết thúc'}
-                  </Text>
-                </View>
-                <Text style={s.contractCodeText}>Mã HĐ #{current.id}</Text>
+                  {isActive ? 'Đang quản lý' : 'Đã kết thúc'}
+                </Text>
               </View>
 
               <View style={s.contractDatesGrid}>
@@ -1139,12 +1136,8 @@ const s = StyleSheet.create({
     padding: authSpacing.lg,
     gap: 12,
   },
-  readerStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   contractBadge: {
+    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: authRadius.round,
@@ -1158,11 +1151,6 @@ const s = StyleSheet.create({
   contractBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-  },
-  contractCodeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: c.textSecondary,
   },
   contractDatesGrid: {
     flexDirection: 'row',

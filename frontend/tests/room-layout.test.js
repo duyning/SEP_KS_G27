@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {generateRoomLayout,layoutErrors,applyLayoutPattern,copyFloorLayout,selectLayoutNumbers} from '../src/services/room-layout.js';
+import {generateRoomLayout,layoutIssues,nextRoomSequence,applyLayoutPattern,copyFloorLayout,selectLayoutNumbers} from '../src/services/room-layout.js';
 
 test('generate many floors with leading zeroes and skip existing room numbers without overwriting',()=>{
  const result=generateRoomLayout({from:1,to:20,count:20,start:1,prefix:'P.'},['p.101']);
@@ -27,19 +27,38 @@ test('arbitrary selections and repeating three-type patterns leave other rooms u
  assert.ok(rows.every(row=>row.roomTypeId===null));
  assert.throws(()=>applyLayoutPattern(rows,ids,[]));
 });
-test('copy mixed floor layout by position without copying numbers and reject mismatched counts atomically',()=>{
+test('copy by position preserves target assignments and names unless overwrite is chosen',()=>{
  let rows=generateRoomLayout({from:1,to:3,count:4}).rooms;
  rows=applyLayoutPattern(rows,new Set(rows.filter(row=>row.floor==='Tầng 1').map(row=>row.id)),[1,2,3]);
  const copied=copyFloorLayout(rows,'Tầng 1',['Tầng 2','Tầng 3']);
  assert.deepEqual(copied.filter(row=>row.floor==='Tầng 2').map(row=>row.roomTypeId),[1,2,3,1]);
  assert.deepEqual(copied.map(row=>row.roomNumber),rows.map(row=>row.roomNumber));
- assert.throws(()=>copyFloorLayout(rows.slice(0,-1),'Tầng 1',['Tầng 2','Tầng 3']));
+ const shorter=rows.slice(0,-1);
+ shorter[4]={...shorter[4],roomNumber:'Tên riêng',roomTypeId:9};
+ const kept=copyFloorLayout(shorter,'Tầng 1',['Tầng 2','Tầng 3']);
+ assert.deepEqual(kept.filter(row=>row.floor==='Tầng 3').map(row=>row.roomTypeId),[1,2,3]);
+ assert.equal(kept[4].roomTypeId,9);
+ const overwritten=copyFloorLayout(shorter,'Tầng 1',['Tầng 2'],true);
+ assert.equal(overwritten[4].roomNumber,'Tên riêng');
+ assert.equal(overwritten[4].roomTypeId,1);
  assert.ok(rows.filter(row=>row.floor==='Tầng 2').every(row=>row.roomTypeId===null));
 });
 test('validate missing/foreign types, duplicated edited names and collisions with existing inventory',()=>{
  const rows=generateRoomLayout({from:1,to:1,count:3}).rooms;
  rows[0].roomTypeId=1;rows[1].roomTypeId=99;rows[2].roomTypeId=1;rows[2].roomNumber='101';
- const errors=layoutErrors(rows,[{roomTypeId:1}],['102']);
- assert.ok(errors[rows[1].id]);assert.ok(errors[rows[2].id]);
- assert.equal(layoutErrors(rows.slice(0,1),[{roomTypeId:1}],[])[rows[0].id],undefined);
+ const issues=layoutIssues(rows,[{roomTypeId:1,price:2000000}],['102']);
+ assert.ok(issues.get(rows[1].id).duplicate);
+ assert.equal(issues.get(rows[1].id).assigned,false);
+ assert.ok(issues.get(rows[0].id).duplicate);
+ assert.ok(issues.get(rows[2].id).duplicate);
+ assert.deepEqual(layoutIssues(rows.slice(0,1),[{roomTypeId:1,price:2000000}]).get(rows[0].id).messages,[]);
+ assert.deepEqual(layoutIssues(rows.slice(0,1),[{roomTypeId:1,price:0}]).get(rows[0].id).messages,['Loại phòng chưa có giá hợp lệ']);
+});
+test('append follows the floor and chosen prefix, with explicit odd or even generation',()=>{
+ const saved=[{floor:'2',roomNumber:'P.204'},{floor:'Tầng 2',roomNumber:'P.207'},{floor:'Tầng 3',roomNumber:'P.299'}];
+ const start=nextRoomSequence(saved,'Tầng 2','p.');
+ assert.equal(start,8);
+ const appended=generateRoomLayout({from:2,to:2,count:2,start,prefix:'P.',numbering:'ODD',floorLabel:'2'},saved.map(row=>row.roomNumber));
+ assert.deepEqual(appended.rooms.map(({roomNumber,floor})=>[roomNumber,floor]),[['P.209','2'],['P.211','2']]);
+ assert.deepEqual(generateRoomLayout({from:1,to:1,count:2,numbering:'EVEN'}).rooms.map(row=>row.roomNumber),['102','104']);
 });

@@ -140,9 +140,12 @@ function RoomTypesContent({
     setSort('NEWEST');
   };
 
-  const openCreateFlow = () => {
+  const openRoomSetup = () => {
     if (host.allowed && propertyId != null) {
-      router.push({ pathname: '/host/room-type', params: { propertyId: String(propertyId) } });
+      router.push({
+        pathname: '/host/room-setup',
+        params: { propertyId: String(propertyId) },
+      });
     }
   };
 
@@ -374,8 +377,9 @@ function RoomTypesContent({
           <AnimatedPressable
             scaleTo={0.97}
             accessibilityLabel="Thêm loại phòng mới"
+            accessibilityHint="Mở màn Thiết lập phòng"
             style={s.addBtn}
-            onPress={openCreateFlow}
+            onPress={openRoomSetup}
           >
             <Feather name="plus" size={16} color="#FFFFFF" />
             <Text style={s.addBtnText}>Thêm loại</Text>
@@ -467,8 +471,9 @@ function RoomTypesContent({
                   <AnimatedPressable
                     scaleTo={0.97}
                     style={s.emptyPrimaryBtn}
-                    onPress={openCreateFlow}
+                    onPress={openRoomSetup}
                     accessibilityLabel="Thêm loại phòng đầu tiên"
+                    accessibilityHint="Mở màn Thiết lập phòng"
                   >
                     <Feather name="plus" size={16} color="#FFFFFF" />
                     <Text style={s.emptyPrimaryBtnText}>Thêm loại phòng</Text>

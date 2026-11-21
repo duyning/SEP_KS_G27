@@ -32,6 +32,67 @@ import {
 } from '@/services/room-setup';
 
 /* -------------------------------------------------------------------------- */
+/* 0. Fast 1-Tap Room Type Picker Sheet ([Chọn loại] / [Thay đổi])            */
+/* -------------------------------------------------------------------------- */
+
+export function QuickTypePickSheet({
+  visible,
+  row,
+  selectableTypes,
+  onClose,
+  onSelectType,
+}: {
+  visible: boolean;
+  row: DraftRoomRow | null;
+  selectableTypes: SelectableRoomType[];
+  onClose: () => void;
+  onSelectType: (rowId: string, roomTypeId: number | null) => void;
+}) {
+  const reduced = useReducedMotionPreference();
+  if (!visible || !row) return null;
+
+  return (
+    <Modal transparent animationType={reduced ? 'none' : 'fade'} onRequestClose={onClose}>
+      <View style={s.backdrop}>
+        <Pressable style={s.backdropTap} onPress={onClose} />
+        <SafeAreaView edges={['bottom', 'left', 'right']} style={s.sheet}>
+          <View style={s.handle} />
+          <View style={s.sheetHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.sheetTitle}>Chọn loại phòng · {row.roomNumber}</Text>
+              <Text style={s.sheetSub}>{formatFloorDisplay(row.floor)}</Text>
+            </View>
+            <AnimatedPressable
+              accessibilityLabel="Đóng chọn loại phòng"
+              style={s.closeBtn}
+              onPress={onClose}
+            >
+              <Feather name="x" size={20} color={c.forestInk} />
+            </AnimatedPressable>
+          </View>
+
+          <ScrollView
+            style={s.sheetScroll}
+            contentContainerStyle={{ gap: 8, paddingBottom: 18 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <TypeOptionList
+              selectableTypes={selectableTypes}
+              selectedId={row.roomTypeId}
+              allowUnassigned
+              onSelect={nextId => {
+                onSelectType(row.rowId, nextId);
+                onClose();
+              }}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* 1. Edit Single Draft Room Sheet                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -443,6 +504,7 @@ function BulkAssignTypeSheetContent({
   const [chosenTypeId, setChosenTypeId] = useState<number | null>(
     selectableTypes.length === 1 ? selectableTypes[0].id : null
   );
+  const [confirmAllUnassigned, setConfirmAllUnassigned] = useState(false);
 
   const scopeOptions = useMemo(() => {
     if (mode === 'SELECTED') {
@@ -501,7 +563,11 @@ function BulkAssignTypeSheetContent({
     scopeOptions.find(opt => opt.key === scope) || scopeOptions[0];
   const affectedCount = currentScopeObj ? currentScopeObj.rows.length : 0;
   const chosenType = selectableTypes.find(t => t.id === chosenTypeId) || null;
-  const canApply = chosenTypeId != null && affectedCount > 0;
+  const needsAllConfirm = currentScopeObj?.key === 'ALL_UNASSIGNED' && affectedCount > 0;
+  const canApply =
+    chosenTypeId != null &&
+    affectedCount > 0 &&
+    (!needsAllConfirm || confirmAllUnassigned);
 
   return (
     <Modal transparent animationType={reduced ? 'none' : 'fade'} onRequestClose={onClose}>
@@ -512,10 +578,10 @@ function BulkAssignTypeSheetContent({
           <View style={s.sheetHeader}>
             <View style={{ flex: 1 }}>
               <Text style={s.sheetTitle}>
-                {mode === 'SELECTED' ? 'Gán loại cho phòng đã chọn' : 'Gán loại theo phạm vi'}
+                {mode === 'SELECTED' ? 'Gán loại cho phòng đã chọn' : 'Gán nhanh loại phòng'}
               </Text>
               <Text style={s.sheetSub}>
-                Xác nhận rõ số phòng sẽ thay đổi trước khi áp dụng
+                Xác nhận rõ phạm vi và số phòng bị ảnh hưởng trước khi áp dụng
               </Text>
             </View>
             <AnimatedPressable
@@ -581,10 +647,27 @@ function BulkAssignTypeSheetContent({
                 {affectedCount === 0
                   ? 'Không có phòng nào nằm trong phạm vi này.'
                   : chosenType
-                  ? `Sẽ gán loại "${chosenType.roomType}" cho ${affectedCount} phòng. Có thể hoàn tác ngay sau khi áp dụng.`
+                  ? `Sẽ gán loại "${chosenType.roomType}" cho ${affectedCount} phòng. Các phòng ngoài phạm vi sẽ giữ nguyên.`
                   : `Đang chọn ${affectedCount} phòng. Hãy chọn loại phòng ở trên để áp dụng.`}
               </Text>
             </View>
+
+            {needsAllConfirm && (
+              <AnimatedPressable
+                scaleTo={0.99}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: confirmAllUnassigned }}
+                style={s.confirmCheckRow}
+                onPress={() => setConfirmAllUnassigned(prev => !prev)}
+              >
+                <View style={[s.confirmBox, confirmAllUnassigned && s.confirmBoxActive]}>
+                  {confirmAllUnassigned && <Feather name="check" size={13} color="#FFFFFF" />}
+                </View>
+                <Text style={s.confirmCheckText}>
+                  Xác nhận gán cho tất cả {affectedCount} phòng chưa gán trên mọi tầng
+                </Text>
+              </AnimatedPressable>
+            )}
           </ScrollView>
 
           <View style={s.sheetFooter}>
@@ -592,7 +675,7 @@ function BulkAssignTypeSheetContent({
               <PrimaryButton
                 title={
                   affectedCount > 0
-                    ? `Áp dụng cho ${affectedCount} phòng`
+                    ? `Gán loại (${affectedCount} phòng)`
                     : 'Không có phòng phù hợp'
                 }
                 disabled={!canApply}
@@ -622,6 +705,8 @@ export function SetupReviewModal({
   visible,
   propertyName,
   draftTypes,
+  usedSavedTypesCount,
+  unassignedCount,
   draftRooms,
   selectableTypes,
   issues,
@@ -638,6 +723,8 @@ export function SetupReviewModal({
   visible: boolean;
   propertyName: string;
   draftTypes: DraftNewRoomType[];
+  usedSavedTypesCount: number;
+  unassignedCount: number;
   draftRooms: DraftRoomRow[];
   selectableTypes: SelectableRoomType[];
   issues: RoomSetupIssue[];
@@ -656,6 +743,8 @@ export function SetupReviewModal({
     <SetupReviewModalContent
       propertyName={propertyName}
       draftTypes={draftTypes}
+      usedSavedTypesCount={usedSavedTypesCount}
+      unassignedCount={unassignedCount}
       draftRooms={draftRooms}
       selectableTypes={selectableTypes}
       issues={issues}
@@ -675,6 +764,8 @@ export function SetupReviewModal({
 function SetupReviewModalContent({
   propertyName,
   draftTypes,
+  usedSavedTypesCount,
+  unassignedCount,
   draftRooms,
   selectableTypes,
   issues,
@@ -690,6 +781,8 @@ function SetupReviewModalContent({
 }: {
   propertyName: string;
   draftTypes: DraftNewRoomType[];
+  usedSavedTypesCount: number;
+  unassignedCount: number;
   draftRooms: DraftRoomRow[];
   selectableTypes: SelectableRoomType[];
   issues: RoomSetupIssue[];
@@ -758,7 +851,7 @@ function SetupReviewModalContent({
             <Feather name="arrow-left" size={20} color={c.forestInk} />
           </AnimatedPressable>
           <View style={{ flex: 1 }}>
-            <Text style={s.reviewTitle}>Kiểm tra trước khi lưu</Text>
+            <Text style={s.reviewTitle}>Kiểm tra & lưu</Text>
             <Text style={s.reviewSub} numberOfLines={1}>
               {propertyName} · Bước 3/3
             </Text>
@@ -770,21 +863,35 @@ function SetupReviewModalContent({
           contentContainerStyle={s.reviewScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Summary Strip */}
-          <View style={s.summaryGrid}>
-            <View style={s.summaryCell}>
-              <Text style={s.summaryNum}>{floorLabels.length}</Text>
-              <Text style={s.summaryLabel}>Số tầng</Text>
+          {/* Property + Complete Review Summary Card */}
+          <View style={s.reviewOverviewCard}>
+            <View style={s.reviewPropRow}>
+              <View style={s.reviewPropIcon}>
+                <Feather name="home" size={15} color={c.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.reviewPropLabel}>Nhà trọ áp dụng</Text>
+                <Text style={s.reviewPropName} numberOfLines={1}>
+                  {propertyName}
+                </Text>
+              </View>
             </View>
-            <View style={s.summaryDivider} />
-            <View style={s.summaryCell}>
-              <Text style={[s.summaryNum, { color: c.primary }]}>{draftRooms.length}</Text>
-              <Text style={s.summaryLabel}>Phòng tạo mới</Text>
-            </View>
-            <View style={s.summaryDivider} />
-            <View style={s.summaryCell}>
-              <Text style={s.summaryNum}>{draftTypes.length}</Text>
-              <Text style={s.summaryLabel}>Loại phòng mới</Text>
+
+            <View style={s.reviewMetricsGrid}>
+              <ReviewMetric label="Tổng số phòng" value={draftRooms.length} highlight />
+              <ReviewMetric label="Tổng số tầng" value={floorLabels.length} />
+              <ReviewMetric label="Loại phòng mới" value={draftTypes.length} />
+              <ReviewMetric label="Loại đã có sử dụng" value={usedSavedTypesCount} />
+              <ReviewMetric
+                label="Phòng chưa gán"
+                value={unassignedCount}
+                danger={unassignedCount > 0}
+              />
+              <ReviewMetric
+                label="Vấn đề cần xử lý"
+                value={issues.length}
+                danger={issues.length > 0}
+              />
             </View>
           </View>
 
@@ -995,6 +1102,33 @@ function SetupReviewModalContent({
         </View>
       </SafeAreaView>
     </Modal>
+  );
+}
+
+function ReviewMetric({
+  label,
+  value,
+  highlight,
+  danger,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <View style={s.metricBox}>
+      <Text
+        style={[
+          s.metricVal,
+          highlight && { color: c.primary },
+          danger && { color: c.error },
+        ]}
+      >
+        {value}
+      </Text>
+      <Text style={s.metricLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -1515,6 +1649,97 @@ const s = StyleSheet.create({
     textAlign: 'right',
     fontSize: 13,
     color: c.textSecondary,
+  },
+  confirmCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: authRadius.md,
+    backgroundColor: '#FFF7E8',
+    borderWidth: 1,
+    borderColor: '#F1D4A7',
+  },
+  confirmBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#B45309',
+    backgroundColor: c.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmBoxActive: {
+    backgroundColor: c.primary,
+    borderColor: c.primary,
+  },
+  confirmCheckText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7A4D0D',
+  },
+  reviewOverviewCard: {
+    backgroundColor: c.surface,
+    borderRadius: authRadius.lg,
+    borderWidth: 1,
+    borderColor: c.border,
+    padding: 14,
+    gap: 12,
+  },
+  reviewPropRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: c.border,
+  },
+  reviewPropIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: c.softMint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewPropLabel: {
+    fontSize: 11.5,
+    color: c.textSecondary,
+  },
+  reviewPropName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: c.forestInk,
+  },
+  reviewMetricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  metricBox: {
+    width: '31%',
+    flexGrow: 1,
+    backgroundColor: c.background,
+    borderRadius: authRadius.md,
+    borderWidth: 1,
+    borderColor: c.border,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 2,
+  },
+  metricVal: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: c.forestInk,
+  },
+  metricLabel: {
+    fontSize: 11,
+    color: c.textSecondary,
+    textAlign: 'center',
   },
   reviewFooter: {
     paddingHorizontal: authSpacing.lg,

@@ -58,6 +58,8 @@
     "dev": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
     "test:search": "node --experimental-strip-types --test tests/room-search.test.ts",
     "test:host": "node --experimental-strip-types --test tests/host.test.ts",
+    "test:loading": "node --experimental-strip-types --test tests/loading.test.ts",
+    "test:contracts": "node --experimental-strip-types --test tests/rental-contracts.test.ts",
     "test:room-setup": "node --experimental-strip-types --test tests/room-setup.test.ts",
     "test:registration": "node --experimental-strip-types --test tests/property-registration.test.ts"
   },

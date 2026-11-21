@@ -885,3 +885,246 @@ export function undoTypeAssignment(
     return row;
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Grouped Room Amenities, Floor Chip Preview & Local Draft Persistence       */
+/* -------------------------------------------------------------------------- */
+
+export interface RoomAmenityGroup {
+  id: string;
+  title: string;
+  keys: readonly string[];
+}
+
+export const ROOM_AMENITY_GROUPS: readonly RoomAmenityGroup[] = [
+  {
+    id: 'essentials',
+    title: 'Nội thất & Cơ bản',
+    keys: ['bed', 'wardrobe', 'desk', 'wifi', 'privateBathroom', 'curtains', 'window'],
+  },
+  {
+    id: 'appliances',
+    title: 'Điện lạnh & Thiết bị',
+    keys: [
+      'airConditioner',
+      'waterHeater',
+      'refrigerator',
+      'washingMachine',
+      'ceilingFan',
+      'television',
+      'inductionCooker',
+      'microwave',
+      'kitchenHood',
+    ],
+  },
+  {
+    id: 'space',
+    title: 'Không gian & An ninh',
+    keys: ['balcony', 'kitchen', 'loft', 'privateDrying', 'sofa', 'diningTable', 'smartLock'],
+  },
+];
+
+export interface FloorPreviewGroup {
+  floor: string;
+  displayFloor: string;
+  rooms: DraftRoomRow[];
+}
+
+export function groupPreviewByFloor(rows: readonly DraftRoomRow[]): FloorPreviewGroup[] {
+  const map = new Map<string, DraftRoomRow[]>();
+  for (const row of rows) {
+    const key = row.floor.trim() || 'Chưa rõ tầng';
+    const list = map.get(key);
+    if (list) list.push(row);
+    else map.set(key, [row]);
+  }
+  const labels = Array.from(map.keys()).sort((a, b) => {
+    const na = layoutFloorNumber(a);
+    const nb = layoutFloorNumber(b);
+    if (na != null && nb != null) return na - nb;
+    if (na != null) return -1;
+    if (nb != null) return 1;
+    return a.localeCompare(b, 'vi', { numeric: true });
+  });
+  return labels.map(floor => ({
+    floor,
+    displayFloor: formatFloorDisplay(floor),
+    rooms: map.get(floor) || [],
+  }));
+}
+
+export function countUsedSavedTypes(
+  draftRooms: readonly DraftRoomRow[],
+  savedTypes: readonly Pick<HostRoomType, 'roomTypeId'>[]
+): number {
+  const savedSet = new Set(savedTypes.map(t => t.roomTypeId));
+  const used = new Set<number>();
+  for (const row of draftRooms) {
+    if (row.roomTypeId != null && row.roomTypeId > 0 && savedSet.has(row.roomTypeId)) {
+      used.add(row.roomTypeId);
+    }
+  }
+  return used.size;
+}
+
+export interface PersistedRoomSetupDraft {
+  version: 1;
+  savedAt: string;
+  propertyId: number;
+  step: 1 | 2 | 3;
+  selectedSavedTypeIds: number[];
+  draftTypes: DraftNewRoomType[];
+  batches: DraftBatchSummary[];
+  draftRooms: DraftRoomRow[];
+}
+
+export function serializeRoomSetupDraft(input: {
+  propertyId: number;
+  step: 1 | 2 | 3;
+  selectedSavedTypeIds: number[];
+  draftTypes: DraftNewRoomType[];
+  batches: DraftBatchSummary[];
+  draftRooms: DraftRoomRow[];
+  savedAt?: string;
+}): string {
+  const payload: PersistedRoomSetupDraft = {
+    version: 1,
+    savedAt: input.savedAt || new Date().toISOString(),
+    propertyId: input.propertyId,
+    step: input.step,
+    selectedSavedTypeIds: Array.from(new Set(input.selectedSavedTypeIds.filter(id => Number.isSafeInteger(id) && id > 0))),
+    draftTypes: input.draftTypes.map(item => ({
+      localId: item.localId,
+      details: item.details,
+      form: {
+        ...item.form,
+        photos: item.form.photos.map(p => ({
+          id: p.id,
+          uri: p.uri,
+          fileName: p.fileName,
+          mimeType: p.mimeType,
+          fileSize: p.fileSize,
+        })),
+      },
+    })),
+    batches: input.batches,
+    draftRooms: input.draftRooms,
+  };
+  return JSON.stringify(payload);
+}
+
+export function parseRoomSetupDraft(
+  raw: string | null | undefined,
+  expectedPropertyId: number,
+  isUriAvailable?: (uri: string) => boolean
+): {
+  draft: PersistedRoomSetupDraft | null;
+  droppedPhotoCount: number;
+  nextLocalTypeId: number;
+} {
+  if (!raw) return { draft: null, droppedPhotoCount: 0, nextLocalTypeId: -1 };
+  try {
+    const parsed = JSON.parse(raw) as Partial<PersistedRoomSetupDraft> | null;
+    if (!parsed || parsed.version !== 1 || Number(parsed.propertyId) !== expectedPropertyId) {
+      return { draft: null, droppedPhotoCount: 0, nextLocalTypeId: -1 };
+    }
+    const step: 1 | 2 | 3 = parsed.step === 2 ? 2 : parsed.step === 3 ? 3 : 1;
+    const selectedSavedTypeIds = Array.isArray(parsed.selectedSavedTypeIds)
+      ? parsed.selectedSavedTypeIds.filter(id => Number.isSafeInteger(id) && id > 0)
+      : [];
+
+    let droppedPhotoCount = 0;
+    const seenLocalIds = new Set<number>();
+    const draftTypes: DraftNewRoomType[] = [];
+    if (Array.isArray(parsed.draftTypes)) {
+      for (const item of parsed.draftTypes) {
+        if (
+          !item ||
+          !Number.isSafeInteger(item.localId) ||
+          item.localId >= 0 ||
+          seenLocalIds.has(item.localId) ||
+          !item.details ||
+          !item.form
+        ) {
+          continue;
+        }
+        seenLocalIds.add(item.localId);
+        const rawPhotos = Array.isArray(item.form.photos) ? item.form.photos : [];
+        const keptPhotos: SetupPhotoAsset[] = [];
+        for (const p of rawPhotos) {
+          if (!p?.uri || !p?.id) continue;
+          if (isUriAvailable && !isUriAvailable(p.uri)) {
+            droppedPhotoCount += 1;
+            continue;
+          }
+          keptPhotos.push({
+            id: String(p.id),
+            uri: String(p.uri),
+            fileName: p.fileName ? String(p.fileName) : undefined,
+            mimeType: p.mimeType ? String(p.mimeType) : undefined,
+            fileSize: typeof p.fileSize === 'number' ? p.fileSize : undefined,
+          });
+        }
+        draftTypes.push({
+          localId: item.localId,
+          details: { ...item.details, propertyId: expectedPropertyId },
+          form: {
+            ...EMPTY_ROOM_TYPE_FORM,
+            ...item.form,
+            amenities: Array.isArray(item.form.amenities) ? item.form.amenities : [],
+            photos: keptPhotos,
+          },
+        });
+      }
+    }
+
+    const batches: DraftBatchSummary[] = Array.isArray(parsed.batches)
+      ? parsed.batches.filter(
+          b => Boolean(b && typeof b.batchId === 'string' && typeof b.label === 'string')
+        )
+      : [];
+
+    const draftRooms: DraftRoomRow[] = Array.isArray(parsed.draftRooms)
+      ? parsed.draftRooms
+          .filter(
+            r =>
+              Boolean(
+                r &&
+                  typeof r.rowId === 'string' &&
+                  typeof r.floor === 'string' &&
+                  typeof r.roomNumber === 'string'
+              )
+          )
+          .map(r => ({
+            rowId: r.rowId,
+            batchId: typeof r.batchId === 'string' ? r.batchId : 'restored',
+            floor: r.floor,
+            roomNumber: r.roomNumber,
+            roomTypeId:
+              typeof r.roomTypeId === 'number' && Number.isSafeInteger(r.roomTypeId)
+                ? r.roomTypeId
+                : null,
+          }))
+      : [];
+
+    const minLocalId = draftTypes.reduce((min, t) => Math.min(min, t.localId), 0);
+    const nextLocalTypeId = minLocalId - 1;
+
+    return {
+      draft: {
+        version: 1,
+        savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date().toISOString(),
+        propertyId: expectedPropertyId,
+        step,
+        selectedSavedTypeIds,
+        draftTypes,
+        batches,
+        draftRooms,
+      },
+      droppedPhotoCount,
+      nextLocalTypeId,
+    };
+  } catch {
+    return { draft: null, droppedPhotoCount: 0, nextLocalTypeId: -1 };
+  }
+}

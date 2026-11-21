@@ -1,5 +1,12 @@
 # HL-RCS — Entity catalog
 
+Cập nhật bổ sung 2026-11-18: `RentalContract` → `rental_contracts`, xem
+[Hợp đồng thuê phòng](RENTAL_CONTRACTS.md). `id` BIGINT PK; `roomId`/`ownerId`
+INT là ID snapshot (không có quan hệ JPA/FK để giữ lịch sử). `status` ACTIVE/CLOSED,
+snapshot `propertyName`/`propertyAddress`/`roomNumber`, `startDate`/`endDate` DATE,
+`detailsJson` MEDIUMTEXT chứa nội dung đã kiểm tra, `createdAt`/`closedAt` DATETIME.
+Index `(room_id,owner_id)`. Các số lượng entity bên dưới là mốc đối chiếu cũ.
+
 Đối chiếu JPA source ngày **2026-11-05**, commit `350dc13`.
 
 Có **29 @Entity**, **1 @Embeddable** (`RoomTypeAmenityId`) và **11 enums**.
