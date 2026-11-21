@@ -16,6 +16,41 @@ function load(fetcher: typeof fetch, token: string | null = null) {
   return module.exports as typeof import('../src/services/accommodations');
 }
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status });
+
+test('a slow AI response can finish after the default timeout when given a longer deadline', async context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const api = load(async (_input, init) => new Promise((resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    setTimeout(() => resolve(json({ success: true, data: { description: 'Gợi ý mô tả nhà trọ.' } })), 22_000);
+  }));
+
+  const slowDefault = assert.rejects(api.requestJson('https://api.example.test/slow', {}), /Máy chủ phản hồi quá lâu/);
+  const aiResponse = api.requestJson('https://api.example.test/api/property-writing/description', { method: 'POST' }, { timeoutMs: 40_000 });
+  context.mock.timers.tick(15_000);
+  await slowDefault;
+  context.mock.timers.tick(7_000);
+  assert.equal((await aiResponse).result.data.description, 'Gợi ý mô tả nhà trọ.');
+});
+
+test('the longer deadline still bounds AI response-body parsing with a specific message', async context => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const api = load(async (_input, init) => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        init?.signal?.addEventListener('abort', () => controller.error(new Error('aborted')), { once: true });
+      },
+    });
+    return new Response(body);
+  });
+  const result = assert.rejects(api.requestJson('https://api.example.test/api/property-writing/description', { method: 'POST' }, {
+    timeoutMs: 40_000,
+    timeoutMessage: 'AI phản hồi quá lâu.',
+  }), /AI phản hồi quá lâu/);
+  await Promise.resolve();
+  context.mock.timers.tick(40_000);
+  await result;
+});
+
 test('search sends server pagination and exact filter/sort contracts', async () => {
   const api = load(async input => {
     const url = new URL(String(input));

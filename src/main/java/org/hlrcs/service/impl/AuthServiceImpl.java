@@ -155,7 +155,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
-        GoogleUserInfo googleUser = googleTokenVerifier.verifyToken(request.idToken());
+        return loginWithVerifiedGoogleUser(googleTokenVerifier.verifyToken(request.idToken()));
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithVerifiedGoogleUser(GoogleUserInfo googleUser) {
         User user = userRepository.findByGoogleSubject(googleUser.subject()).orElse(null);
 
         if (user == null) {

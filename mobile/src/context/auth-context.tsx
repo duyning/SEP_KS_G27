@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type PropsWithChildren } from 'react';
-import { AuthSession, type AuthSnapshot, type LoginValues, type RegisterValues, type ProfileValues, type PasswordValues } from '../services/auth';
+import { AuthSession, type AuthSnapshot, type GoogleBrowserAttempt, type LoginValues, type RegisterValues, type ProfileValues, type PasswordValues } from '../services/auth';
 
 export type { AuthUser } from '../services/auth';
 export interface AuthContextValue extends Omit<AuthSnapshot, 'sessionError'> {
@@ -7,6 +7,7 @@ export interface AuthContextValue extends Omit<AuthSnapshot, 'sessionError'> {
   retry(): Promise<void>;
   signIn(values: LoginValues): Promise<void>;
   signInWithGoogle(idToken: string): Promise<void>;
+  signInWithGoogleCode(attempt: GoogleBrowserAttempt, code: string): Promise<void>;
   signUp(values: RegisterValues): Promise<void>;
   signOut(): Promise<void>;
   updateProfile(values: ProfileValues): Promise<void>;
@@ -24,7 +25,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return session.stop;
   }, [session]);
   return (
-    <AuthContext.Provider value={{ ...snapshot, sessionError: snapshot.sessionError?.message ?? null, retry: session.retry, signIn: session.signIn, signInWithGoogle: session.signInWithGoogle, signUp: session.signUp, signOut: session.signOut, updateProfile: session.updateProfile, sendPhoneOtp: session.sendPhoneOtp, verifyPhoneOtp: session.verifyPhoneOtp, changePassword: session.changePassword }}>
+    <AuthContext.Provider value={{ ...snapshot, sessionError: snapshot.sessionError?.message ?? null, retry: session.retry, signIn: session.signIn, signInWithGoogle: session.signInWithGoogle, signInWithGoogleCode: session.signInWithGoogleCode, signUp: session.signUp, signOut: session.signOut, updateProfile: session.updateProfile, sendPhoneOtp: session.sendPhoneOtp, verifyPhoneOtp: session.verifyPhoneOtp, changePassword: session.changePassword }}>
       {children}
     </AuthContext.Provider>
   );

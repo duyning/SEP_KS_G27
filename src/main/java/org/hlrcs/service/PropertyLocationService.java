@@ -24,8 +24,7 @@ public class PropertyLocationService {
     @org.springframework.beans.factory.annotation.Autowired
     public void setVietmap(VietmapLocationService vietmap){this.vietmap=vietmap;}
     private final String reverseUrl, nearbyUrl, userAgent, provider;
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
-            .followRedirects(HttpClient.Redirect.NEVER).build();
+    private final HttpClient http;
     private long lastReverse, lastNearby;
     private final Map<String, Cached> cache = new LinkedHashMap<>();
     private static final Set<String> HOSTS = Set.of("maps.app.goo.gl", "goo.gl", "google.com", "www.google.com", "maps.google.com");
@@ -35,14 +34,25 @@ public class PropertyLocationService {
     public record Nearby(List<Place> places, String attribution) {}
     public record Location(double latitude, double longitude, String addressDetail, String commune, String nearby,
                            List<Place> places, List<String> warnings, String attribution) {}
+    public record MobileLookup(Location location, String addressQuery) {}
+    private record MapTarget(double[] point, String addressQuery) {}
     private record Cached(long at, Object value) {}
 
+    @org.springframework.beans.factory.annotation.Autowired
     public PropertyLocationService(ObjectMapper json,
             @Value("${app.maps.reverse-url:}") String reverseUrl,
             @Value("${app.maps.nearby-url:https://overpass-api.de/api/interpreter}") String nearbyUrl,
             @Value("${app.maps.user-agent:NestHub/1.0 (property location lookup)}") String userAgent,
             @Value("${app.maps.provider:nominatim}") String provider) {
+        this(json, reverseUrl, nearbyUrl, userAgent, provider,
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
+                        .followRedirects(HttpClient.Redirect.NEVER).build());
+    }
+
+    PropertyLocationService(ObjectMapper json, String reverseUrl, String nearbyUrl, String userAgent,
+                            String provider, HttpClient http) {
         this.json=json; this.reverseUrl=reverseUrl; this.nearbyUrl=nearbyUrl; this.userAgent=userAgent; this.provider=provider;
+        this.http=http;
     }
     static void validate(double lat, double lng) {
         if (!Double.isFinite(lat)||!Double.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)
@@ -51,7 +61,7 @@ public class PropertyLocationService {
     private static URI googleUri(String value) {
         try {
             URI uri=URI.create(value);
-            if (!"https".equalsIgnoreCase(uri.getScheme())||!HOSTS.contains(uri.getHost())
+            if (!"https".equalsIgnoreCase(uri.getScheme())||uri.getHost()==null||!HOSTS.contains(uri.getHost())
                     ||uri.getUserInfo()!=null||(uri.getPort()!=-1&&uri.getPort()!=443)) throw new IllegalArgumentException();
             return uri;
         } catch (IllegalArgumentException e) { throw new BadRequestException("Chỉ nhận liên kết Google Maps HTTPS hợp lệ."); }
@@ -75,21 +85,70 @@ public class PropertyLocationService {
         }
         return null; // An @lat,lng viewport is not an exact property location.
     }
-    private double[] resolve(String input) throws IOException, InterruptedException {
+    private static String mapAddressQuery(URI uri) {
+        String path = uri.getPath();
+        String host = uri.getHost();
+        if (!"maps.google.com".equals(host) &&
+                (!Set.of("google.com", "www.google.com").contains(host) ||
+                        !("/maps".equals(path) || path.startsWith("/maps/")))) {
+            return null;
+        }
+        for (String parameter : Objects.toString(uri.getRawQuery(), "").split("&")) {
+            String[] entry = parameter.split("=", 2);
+            if (entry.length != 2 || !Set.of("q", "query").contains(entry[0])) continue;
+            String query = URLDecoder.decode(entry[1], StandardCharsets.UTF_8).strip();
+            if (query.length() >= 3 && query.length() <= 200 && query.codePoints().anyMatch(Character::isLetter)
+                    && query.codePoints().noneMatch(Character::isISOControl) && !query.contains("://")) {
+                return query;
+            }
+        }
+        return null;
+    }
+
+    private MapTarget resolve(String input, boolean allowAddressQuery) throws IOException, InterruptedException {
         if(input==null||input.trim().length()<3||input.length()>1500)throw new BadRequestException("Dán liên kết bản đồ hoặc tọa độ hợp lệ (tối đa 1500 ký tự).");
-        var point=coordinates(input);if(point!=null)return point;
+        var point=coordinates(input);if(point!=null)return new MapTarget(point, null);
         URI uri=googleUri(input.trim());
+        if (allowAddressQuery) {
+            String query = mapAddressQuery(uri);
+            if (query != null) return new MapTarget(null, query);
+        }
         if(!Set.of("maps.app.goo.gl","goo.gl").contains(uri.getHost()))throw new BadRequestException("Liên kết chưa chứa vị trí cụ thể. Hãy chọn một địa điểm hoặc ghim trên bản đồ.");
         for(int count=0;count<4;count++){
             var response=http.send(HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(8)).header("User-Agent",userAgent).GET().build(),HttpResponse.BodyHandlers.ofInputStream());
             try(var body=response.body()){
                 if(response.statusCode()<300||response.statusCode()>=400)break;
-                String location=response.headers().firstValue("location").orElse("");
+                String location=response.headers().firstValue("location").orElse(null);
+                if (location == null) break;
                 uri=googleUri(uri.resolve(location).toString()); // Validate EVERY redirect; no arbitrary outbound URLs.
-                point=coordinates(uri.toString());if(point!=null)return point;
+                point=coordinates(uri.toString());if(point!=null)return new MapTarget(point, null);
+                if (allowAddressQuery) {
+                    String query = mapAddressQuery(uri);
+                    if (query != null) return new MapTarget(null, query);
+                }
             }
         }
         throw new BadRequestException("Chưa đọc được vị trí từ link này. Hãy dùng link đầy đủ có tọa độ hoặc chọn ghim trên bản đồ.");
+    }
+
+    public MobileLookup lookupMobile(String input) {
+        try {
+            MapTarget target = resolve(input, true);
+            if (target.addressQuery() != null) return new MobileLookup(null, target.addressQuery());
+            double[] point = target.point();
+            try {
+                return new MobileLookup(lookup(input, point), null);
+            } catch (AppException e) {
+                if (Thread.currentThread().isInterrupted()) throw e;
+                return new MobileLookup(new Location(point[0], point[1], null, null, null, List.of(),
+                        List.of("Đã đặt ghim từ tọa độ. Chưa lấy được địa chỉ gợi ý."), null), null);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AppException("Đã dừng tra vị trí.", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (IOException e) {
+            throw new AppException("Không mở được liên kết bản đồ. Thử lại hoặc dùng link đầy đủ.", HttpStatus.BAD_GATEWAY);
+        }
     }
     private JsonNode fetch(URI uri,String body) throws IOException,InterruptedException {
         var builder=HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(12)).header("User-Agent",userAgent).header("Accept","application/json");
@@ -107,10 +166,17 @@ public class PropertyLocationService {
     private static String text(JsonNode node,String field){var value=node.path(field);return value.isString()?value.asString().trim():"";}
     private static String normalize(String value){return Normalizer.normalize(value,Normalizer.Form.NFD).replaceAll("\\p{M}","").replace('đ','d').replace('Đ','D').toLowerCase(Locale.ROOT);}
 
-    public synchronized Location lookup(String input) {
+    public Location lookup(String input) {
+        return lookup(input, null);
+    }
+
+    private synchronized Location lookup(String input, double[] resolvedPoint) {
         try {
             String inputKey="input:"+Objects.toString(input,"").trim();var known=cached(inputKey);if(known instanceof Location result)return result;
-            var savedPoint=cached("point:"+inputKey);double[] point=savedPoint instanceof double[] saved?saved:resolve(input);remember("point:"+inputKey,point);if(vietmap!=null&&vietmap.enabled())return vietmap.reverse(point[0],point[1]);var warnings=new ArrayList<String>();String address=null,commune=null;
+            var savedPoint=cached("point:"+inputKey);
+            double[] point = savedPoint instanceof double[] saved ? saved : resolvedPoint;
+            if (point == null) point = resolve(input, false).point();
+            remember("point:"+inputKey,point);if(vietmap!=null&&vietmap.enabled())return vietmap.reverse(point[0],point[1]);var warnings=new ArrayList<String>();String address=null,commune=null;
             if(!reverseUrl.isBlank()){
                 try {
                     String reverseKey="reverse:"+key(point[0],point[1]);var stored=cached(reverseKey);JsonNode data;

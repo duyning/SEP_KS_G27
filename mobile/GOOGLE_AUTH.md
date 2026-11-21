@@ -2,9 +2,9 @@
 
 ## Current state
 
-- Spring Boot already implements `POST /api/auth/google` with `{idToken}` and verifies Google's signature, issuer, expiry, verified email and Web Client ID audience. No backend contract or database change was made for this mobile integration.
-- Mobile Google credentials use the same AuthSession path as password login. Only the backend's HL-RCS JWT is persisted via the existing SecureStore implementation. The app does not accept roles/profile fields from Google's client-side result and does not store Google ID tokens.
-- Login screen has a Google option. **Expo Go cannot execute this native Google SDK.** In Expo Go the option is disabled with an explanation; ordinary password login remains available. The native SDK is dynamically imported only after checking the execution environment.
+- The existing `POST /api/auth/google` verifies the Google ID token for native and web sign-in. The Expo Go browser flow uses `/api/auth/google/mobile/*` and the same account rules and database schema.
+- Mobile Google sign-in uses the same AuthSession path as password login. SecureStore persists the HL-RCS JWT returned by the backend. The backend supplies the profile and role.
+- Development builds use the native Google SDK. Expo Go uses the system browser and an eight-digit confirmation code when the HTTPS browser origin is configured.
 - Expo web uses the official Google Identity Services button. Its credential is POSTed to the same backend endpoint. Closing the chooser does not create a session. No client secret belongs in the app.
 
 ## Already tested against the real backend
@@ -27,7 +27,18 @@ The backend deliberately rejects an existing password-account email that has not
 
 ## Test in Expo Go now
 
-Keep phone and backend on a reachable network, restart with `npx expo start --clear --port 8082`, and test email/password login. A development seed account in backend source is `user@hlrcs.com` / `123456`; its current role is whatever the backend returns (the live test returned ROOM_HOST). Do not change roles in the app.
+1. Add the HTTPS origin serving the browser login to **Authorized JavaScript origins** of the same Google Web Client ID used by Spring Boot. Use the origin without a path.
+2. Proxy `/api/auth/google/mobile/*` on that HTTPS origin to the same Spring Boot instance serving the phone (port 8081 for local development). All steps for an attempt must reach that instance because attempts are held in memory and expire after five minutes.
+3. For local development on Windows, stop the old Expo terminal and run this from `mobile`, substituting your registered origin:
+
+   ```powershell
+   npm run dev -- -GoogleBrowserOrigin https://login.example.com
+   ```
+
+   The launcher saves the origin in `mobile/.env.local` and applies it to the mobile API. Later runs can use `npm run dev`. Outside this launcher, set `GOOGLE_MOBILE_BROWSER_ORIGIN` on Spring Boot and `EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN` in the app.
+4. Tap **Tiếp tục với Google**, select an account in the system browser, then enter the eight-digit confirmation code back in HL_RCS.
+
+The browser page and app each receive a separate part of the confirmation. A code is consumed once and the Google credential is verified on the backend with the matching nonce. Local HTTP over Wi-Fi remains available for password login.
 
 ## Expo web
 

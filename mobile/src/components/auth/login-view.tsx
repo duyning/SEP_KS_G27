@@ -35,7 +35,7 @@ export function LoginView() {
   const { height } = useWindowDimensions();
   const isCompact = height < 720;
 
-  const { user, loading, signIn, signInWithGoogle } = useAuth();
+  const { user, loading, signIn, signInWithGoogle, signInWithGoogleCode } = useAuth();
 
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -222,7 +222,7 @@ export function LoginView() {
                 style={styles.submitBtn}
               />
               <View style={styles.googleDivider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>hoặc</Text><View style={styles.dividerLine} /></View>
-              <GoogleSignInButton disabled={isActionDisabled} onCredential={handleGoogleCredential} onError={setAlertMessage} onBusyChange={setGoogleProviderBusy} />
+              <GoogleSignInButton disabled={isActionDisabled} onCredential={handleGoogleCredential} onBrowserCode={signInWithGoogleCode} onError={setAlertMessage} onBusyChange={setGoogleProviderBusy} />
             </View>
 
             {/* Switch to Register */}

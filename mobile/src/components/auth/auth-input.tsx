@@ -16,6 +16,7 @@ export interface AuthInputProps extends TextInputProps {
   icon?: ComponentProps<typeof Feather>['name'];
   error?: string;
   hint?: string;
+  hintRight?: ReactNode;
   rightElement?: ReactNode;
 }
 
@@ -26,11 +27,13 @@ export const AuthInput = forwardRef<TextInputInstance, AuthInputProps>(function 
     icon,
     error,
     hint,
+    hintRight,
     rightElement,
     style,
     onFocus,
     onBlur,
     editable = true,
+    multiline = false,
     testID,
     ...rest
   },
@@ -58,14 +61,13 @@ export const AuthInput = forwardRef<TextInputInstance, AuthInputProps>(function 
         <Text style={styles.label} nativeID={testID ? `${testID}-label` : undefined}>
           {label}
         </Text>
-        {!!optionalLabel && (
-          <Text style={styles.optionalLabel}>{optionalLabel}</Text>
-        )}
+        {!!optionalLabel && <Text style={styles.optionalLabel}>{optionalLabel}</Text>}
       </View>
 
       <View
         style={[
-          styles.inputContainer,
+          styles.inputContainerBase,
+          multiline ? styles.inputContainerMultiline : styles.inputContainerSingle,
           { borderColor: getBorderColor() },
           focused && styles.inputFocused,
           isInvalid && styles.inputInvalid,
@@ -73,14 +75,22 @@ export const AuthInput = forwardRef<TextInputInstance, AuthInputProps>(function 
         ]}
       >
         {icon && (
-          <View style={styles.leftIconWrapper} pointerEvents="none">
+          <View
+            style={[styles.leftIconWrapper, multiline && styles.leftIconMultiline]}
+            pointerEvents="none"
+          >
             <Feather name={icon} size={18} color={getIconColor()} />
           </View>
         )}
 
         <TextInput
           ref={ref}
-          style={[styles.input, style]}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          style={[
+            multiline ? styles.inputMultiline : styles.inputSingle,
+            style,
+          ]}
           placeholderTextColor={authColors.placeholder}
           onFocus={e => {
             setFocused(true);
@@ -101,12 +111,18 @@ export const AuthInput = forwardRef<TextInputInstance, AuthInputProps>(function 
       </View>
 
       {error ? (
-        <View style={styles.errorRow} accessibilityRole="alert">
-          <Feather name="alert-circle" size={13} color={authColors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.metaFooterRow}>
+          <View style={styles.errorRow} accessibilityRole="alert">
+            <Feather name="alert-circle" size={13} color={authColors.error} />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+          {hintRight}
         </View>
-      ) : hint ? (
-        <Text style={styles.hintText}>{hint}</Text>
+      ) : hint || hintRight ? (
+        <View style={styles.metaFooterRow}>
+          {hint ? <Text style={styles.hintText}>{hint}</Text> : <View style={{ flex: 1 }} />}
+          {hintRight}
+        </View>
       ) : null}
     </View>
   );
@@ -133,14 +149,22 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: authColors.textMuted,
   },
-  inputContainer: {
+  inputContainerBase: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 52,
     borderWidth: 1,
     borderRadius: authRadius.md,
     backgroundColor: authColors.surface,
     paddingHorizontal: 14,
+  },
+  inputContainerSingle: {
+    alignItems: 'center',
+    minHeight: 50,
+  },
+  inputContainerMultiline: {
+    alignItems: 'flex-start',
+    minHeight: 112,
+    maxHeight: 220,
+    paddingVertical: 12,
   },
   inputFocused: {
     borderWidth: 1.5,
@@ -161,15 +185,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
   },
-  input: {
+  leftIconMultiline: {
+    marginTop: 2,
+  },
+  inputSingle: {
     flex: 1,
     fontSize: 15,
     lineHeight: 20,
     color: authColors.forestInk,
+    paddingVertical: 12,
+    minHeight: 48,
+  },
+  inputMultiline: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+    color: authColors.forestInk,
     paddingVertical: 0,
-    height: '100%',
+    minHeight: 88,
+    maxHeight: 196,
+    textAlignVertical: 'top',
+  },
+  metaFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   errorRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -182,6 +226,7 @@ const styles = StyleSheet.create({
     color: authColors.error,
   },
   hintText: {
+    flex: 1,
     fontSize: 12,
     lineHeight: 16,
     color: authColors.textSecondary,

@@ -9,6 +9,8 @@ function compile(file:string,bindings:Record<string,unknown>){const module={expo
 const models=compile('../src/services/host.ts',{require:()=>({})}) as typeof import('../src/services/host');
 const edits=compile('../src/services/host-edit.ts',{require:()=>({})}) as typeof import('../src/services/host-edit');
 const property=compile('../src/services/host-property.ts',{require:()=>({})}) as typeof import('../src/services/host-property');
+const roomTypesHelper=compile('../src/services/host-room-types.ts',{require:(name:string)=>name==='./host'?models:{}}) as typeof import('../src/services/host-room-types');
+const roomsHelper=compile('../src/services/host-rooms.ts',{require:(name:string)=>name==='./host'?models:{}}) as typeof import('../src/services/host-rooms');
 const data={roomTypes:{roomTypes:[]},dashboard:{properties:[],totalRoomCount:0,availableRoomCount:0,pendingViewingCount:0,pendingRegistrationCount:0,roomTypeCount:0},properties:{records:[]},rooms:{rooms:[]},viewings:{viewings:[]},inbox:{items:[],hasNext:false,unreadCount:0}};
 function fixture(enabled=true,getToken=async():Promise<string|null>=>'test-token') {const calls:string[]=[];let errorPath='',errorStatus=500,unauthorized=0;const api={...models,hostRequest:async(path:string)=>{calls.push(path);if(path===errorPath)throw new models.HostError('Fixture API failure',errorStatus);const key=(Object.keys(models.hostPaths) as (keyof typeof models.hostPaths)[]).find(key=>models.hostPaths[key]===path);return key?data[key]:null;}};const context=compile('../src/context/host-context.tsx',{require:(name:string)=>name==='react'?{createContext:()=>null}:name==='@/services/host'?api:name==='@/services/auth'?{tokenStore:{get:getToken}}:{}}) as typeof import('../src/context/host-context');return {store:new context.HostStore(enabled,()=>{unauthorized++;}),calls,fail:(path:string,status=500)=>{errorPath=path;errorStatus=status;},unauthorized:()=>unauthorized};}
 test('guests and tenant roles do not dispatch host API reads or mutations',async()=>{const f=fixture(false);await f.store.refresh();await assert.rejects(f.store.mutate('/host/rooms/1',{}));assert.equal(f.calls.length,0);});
@@ -41,3 +43,139 @@ test('directions require both real numeric coordinates with valid ranges',()=>{a
 test('public visibility never establishes verification or approval by itself',()=>{const visible={displayStatus:'VISIBLE',verified:false} as import('../src/services/host').HostProperty;assert.equal(property.baseReview(visible),'Chưa có kết quả xét duyệt riêng');assert.equal(property.baseReview({...visible,verified:true}),'Đã phê duyệt');assert.equal(property.documentStatus('REJECTED'),'Đã từ chối');assert.equal(property.documentStatus(undefined),'Đã tiếp nhận · Chưa có kết quả kiểm tra');});
 test('detail counts distinguish unknown or malformed data from actual zero',()=>{for(const value of [undefined,null,-1,NaN,1.5,'3'])assert.equal(property.propertyCount(value),'—');assert.equal(property.propertyCount(0),'0');assert.equal(property.propertyCount(14),'14');});
 test('pending change proposals remain pending rather than offering direct public edits',()=>{const value={registrationId:70,displayStatus:'VISIBLE',changeRequest:{registrationId:71,status:'PENDING'}} as import('../src/services/host').HostProperty;assert.equal(property.propertyChangeState(value),'Đề nghị thay đổi đang chờ xét duyệt.');assert.ok(property.propertyChangeState({...value,changeRequest:null}).includes('cổng quản lý web'));assert.equal(property.propertyRule('quietHours:22:30'),'Giữ trật tự sau 22:30');assert.equal(property.propertyRule('customRule'),'customRule');});
+
+test('room type inventory separates maintenance rooms instead of computing occupied as total minus vacant',()=>{
+  const type={roomTypeId:10,propertyId:1,roomType:'Studio',price:3000000,areaSqm:25,capacity:2,totalRooms:5,vacantRooms:2} as import('../src/services/host').HostRoomType;
+  const rooms=[
+    {roomId:1,propertyId:1,roomTypeId:10,status:'VACANT'},
+    {roomId:2,propertyId:1,roomTypeId:10,status:'VACANT'},
+    {roomId:3,propertyId:1,roomTypeId:10,status:'OCCUPIED'},
+    {roomId:4,propertyId:1,roomTypeId:10,status:'OCCUPIED'},
+    {roomId:5,propertyId:1,roomTypeId:10,status:'MAINTENANCE'},
+  ] as import('../src/services/host').HostRoom[];
+  const inv=roomTypesHelper.roomTypeInventory(type,rooms);
+  assert.equal(inv.total,5);assert.equal(inv.vacant,2);assert.equal(inv.occupied,2);assert.equal(inv.other,1);
+  const withoutRooms=roomTypesHelper.roomTypeInventory(type,undefined);
+  assert.equal(withoutRooms.total,5);assert.equal(withoutRooms.vacant,2);assert.equal(withoutRooms.occupied,null);
+});
+
+test('property room types overview keeps unknown counts null and ignores filtered subsets',()=>{
+  const emptyOverview=roomTypesHelper.propertyRoomTypesOverview(undefined,undefined);
+  assert.equal(emptyOverview.roomTypeCount,null);assert.equal(emptyOverview.totalRooms,null);assert.equal(emptyOverview.vacantRooms,null);assert.equal(emptyOverview.occupiedRooms,null);
+  const types=[{roomTypeId:1,propertyId:1,totalRooms:3,vacantRooms:1},{roomTypeId:2,propertyId:1,totalRooms:0,vacantRooms:0}] as import('../src/services/host').HostRoomType[];
+  const rooms=[{roomTypeId:1,propertyId:1,status:'VACANT'},{roomTypeId:1,propertyId:1,status:'OCCUPIED'},{roomTypeId:1,propertyId:1,status:'MAINTENANCE'}] as import('../src/services/host').HostRoom[];
+  const fullOverview=roomTypesHelper.propertyRoomTypesOverview(types,rooms);
+  assert.equal(fullOverview.roomTypeCount,2);assert.equal(fullOverview.totalRooms,3);assert.equal(fullOverview.vacantRooms,1);assert.equal(fullOverview.occupiedRooms,1);
+});
+
+test('room type filtering supports accent-insensitive Vietnamese search, unconfirmed filter and price sorting',()=>{
+  const types=[
+    {roomTypeId:1,propertyId:1,roomType:'Phòng khép kín ban công',price:3500000,totalRooms:3,vacantRooms:1,availabilityConfirmationStatus:'CURRENT',availabilityConfirmedAt:'2026-11-20T05:00:00Z',createdAt:'2026-11-10T00:00:00Z'},
+    {roomTypeId:2,propertyId:1,roomType:'Phòng đôi sinh viên',price:2200000,totalRooms:2,vacantRooms:2,availabilityConfirmationStatus:'UNCONFIRMED',availabilityConfirmedAt:null,createdAt:'2026-11-15T00:00:00Z'},
+    {roomTypeId:3,propertyId:1,roomType:'Studio cao cấp',price:null,totalRooms:0,vacantRooms:0,availabilityConfirmationStatus:'UNCONFIRMED',availabilityConfirmedAt:null,createdAt:'2026-11-18T00:00:00Z'},
+  ] as import('../src/services/host').HostRoomType[];
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{search:'khep kin'}).map(t=>t.roomTypeId).join(','),'1');
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{filter:'UNCONFIRMED'}).map(t=>t.roomTypeId).join(','),'2');
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{filter:'EMPTY'}).map(t=>t.roomTypeId).join(','),'3');
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{sort:'PRICE_ASC'}).map(t=>t.roomTypeId).join(','),'2,1,3');
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{sort:'PRICE_DESC'}).map(t=>t.roomTypeId).join(','),'1,2,3');
+  assert.equal(roomTypesHelper.filterAndSortHostRoomTypes(types,undefined,{sort:'NEWEST'}).map(t=>t.roomTypeId).join(','),'3,2,1');
+});
+
+test('availability confirmation validator accepts valid CURRENT payload and rejects malformed or stale responses',()=>{
+  const valid={roomTypeId:12,propertyId:1,roomType:'Studio',price:3000000,areaSqm:24,capacity:2,totalRooms:4,vacantRooms:1,availabilityConfirmationStatus:'CURRENT',availabilityConfirmedAt:'2026-11-20T10:00:00Z',availabilityStale:false};
+  assert.equal(roomTypesHelper.validateAvailabilityConfirmationResponse(12,valid).roomTypeId,12);
+  assert.throws(()=>roomTypesHelper.validateAvailabilityConfirmationResponse(12,{...valid,availabilityConfirmationStatus:'STALE'}));
+  assert.throws(()=>roomTypesHelper.validateAvailabilityConfirmationResponse(12,{...valid,availabilityStale:true}));
+  assert.throws(()=>roomTypesHelper.validateAvailabilityConfirmationResponse(12,{...valid,totalRooms:0,vacantRooms:0}));
+  assert.throws(()=>roomTypesHelper.validateAvailabilityConfirmationResponse(99,valid));
+  assert.equal(roomTypesHelper.canConfirmRoomTypeAvailability({total:0,vacant:0,occupied:0,other:0}),false);
+  assert.equal(roomTypesHelper.canConfirmRoomTypeAvailability({total:2,vacant:1,occupied:1,other:0}),true);
+});
+
+test('room type detail formatters preserve backend fee units, never turn null into 0 and distinguish custom room prices',()=>{
+  assert.equal(roomTypesHelper.formatMoneyVnd(null),'Chưa cấu hình');
+  assert.equal(roomTypesHelper.formatMoneyVnd(0),'0 đ');
+  assert.ok(roomTypesHelper.formatFeeWithUnit(3500,'kWh').includes('3.500 đ/kWh'));
+  assert.ok(roomTypesHelper.formatFeeWithUnit(20000,'m³').includes('20.000 đ/m³'));
+  assert.ok(roomTypesHelper.formatFeeWithUnit(100000,'phòng').includes('100.000 đ/phòng'));
+  assert.ok(roomTypesHelper.formatFeeWithUnit(150000,'người').includes('150.000 đ/người'));
+  assert.equal(roomTypesHelper.formatFeeWithUnit(undefined,'kWh'),'Chưa cấu hình');
+  assert.equal(roomTypesHelper.formatFloorLabel('2'),'Tầng 2');
+  assert.equal(roomTypesHelper.formatFloorLabel('Tầng 3'),'Tầng 3');
+  assert.equal(roomTypesHelper.roomAmenityLabel('airConditioner'),'Điều hòa Inverter');
+  assert.equal(roomTypesHelper.roomAmenityLabel('customKey'),'customKey');
+  const custom=roomTypesHelper.resolveRoomEffectivePrice({price:3000000,customPrice:3200000},3000000);
+  assert.equal(custom.amount,3200000);assert.equal(custom.isCustom,true);
+  const inherited=roomTypesHelper.resolveRoomEffectivePrice({price:3000000,customPrice:null},3000000);
+  assert.equal(inherited.amount,3000000);assert.equal(inherited.isCustom,false);
+});
+
+test('floor grouping preserves distinct stored floor labels like Tang 1 and Tang 01 without merging',()=>{
+  const rooms=[
+    {roomId:1,propertyId:1,roomTypeId:10,roomType:'Studio',roomNumber:'101',floor:'Tầng 1',status:'VACANT',publicVisible:true},
+    {roomId:2,propertyId:1,roomTypeId:10,roomType:'Studio',roomNumber:'0102',floor:'Tầng 01',status:'OCCUPIED',publicVisible:false},
+    {roomId:3,propertyId:1,roomTypeId:11,roomType:'Đôi',roomNumber:'201',floor:'2',status:'MAINTENANCE',publicVisible:false},
+  ] as import('../src/services/host').HostRoom[];
+  const groups=roomsHelper.groupRoomsByFloor(rooms);
+  assert.equal(groups.length,3);
+  assert.equal(groups[0].floor,'Tầng 1');
+  assert.equal(groups[1].floor,'Tầng 01');
+  assert.equal(groups[2].floor,'Tầng 2');
+  const ov=roomsHelper.propertyRoomsOverview(rooms);
+  assert.equal(ov.totalRooms,3);assert.equal(ov.vacantRooms,1);assert.equal(ov.occupiedRooms,1);
+});
+
+test('room filtering supports search by roomNumber or roomType plus visibility and floor filters',()=>{
+  const rooms=[
+    {roomId:1,propertyId:1,roomTypeId:10,roomType:'Phòng khép kín',roomNumber:'P101',floor:'Tầng 1',status:'VACANT',publicVisible:true},
+    {roomId:2,propertyId:1,roomTypeId:11,roomType:'Studio gác xép',roomNumber:'P201',floor:'Tầng 2',status:'OCCUPIED',publicVisible:false},
+  ] as import('../src/services/host').HostRoom[];
+  assert.equal(roomsHelper.filterHostRooms(rooms,{search:'gac xep'}).map(r=>r.roomId).join(','),'2');
+  assert.equal(roomsHelper.filterHostRooms(rooms,{search:'p101'}).map(r=>r.roomId).join(','),'1');
+  assert.equal(roomsHelper.filterHostRooms(rooms,{visibility:'PUBLIC'}).map(r=>r.roomId).join(','),'1');
+  assert.equal(roomsHelper.filterHostRooms(rooms,{visibility:'PRIVATE'}).map(r=>r.roomId).join(','),'2');
+  assert.equal(roomsHelper.filterHostRooms(rooms,{typeId:'11'}).map(r=>r.roomId).join(','),'2');
+});
+
+test('bulk status lease date validation and response validators enforce exact backend contracts',()=>{
+  assert.equal(Object.keys(roomsHelper.validateBulkLeaseDates('VACANT',null,null)).length,0);
+  assert.ok(roomsHelper.validateBulkLeaseDates('OCCUPIED','','2026-12-01').leaseStartDate);
+  assert.ok(roomsHelper.validateBulkLeaseDates('OCCUPIED','2026-12-10','2026-12-01').leaseEndDate);
+  assert.equal(Object.keys(roomsHelper.validateBulkLeaseDates('OCCUPIED','2026-12-01','2027-06-01')).length,0);
+  const statusPayload={propertyId:1,roomIds:[1,2],status:'VACANT' as const,leaseStartDate:null,leaseEndDate:null};
+  assert.equal(roomsHelper.validateBulkStatusResponse(statusPayload,[{roomId:1,propertyId:1,status:'VACANT'},{roomId:2,propertyId:1,status:'VACANT'}]).length,2);
+  assert.throws(()=>roomsHelper.validateBulkStatusResponse(statusPayload,[{roomId:1,propertyId:1,status:'VACANT'}]));
+  const pubPayload={propertyId:1,roomIds:[1]};
+  assert.equal(roomsHelper.validatePublicationResponse(pubPayload,[{roomId:1,propertyId:1,publicVisible:true},{roomId:2,propertyId:1,publicVisible:false}]).length,2);
+  assert.throws(()=>roomsHelper.validatePublicationResponse(pubPayload,[{roomId:1,propertyId:1,publicVisible:false}]));
+});
+
+test('room detail contract selection, date-only formatting, deposit resolution and delete guards follow backend rules',()=>{
+  const contracts=[
+    {id:20,status:'CLOSED' as const,startDate:'2026-06-01',endDate:'2026-11-30',details:{terms:'HĐ cũ',tenantName:'An'}},
+    {id:15,status:'ACTIVE' as const,startDate:'2026-01-01',endDate:'2026-12-31',details:{terms:'HĐ đang hiệu lực',tenantName:'Bình'}},
+  ];
+  assert.equal(roomsHelper.selectDisplayContract(contracts)?.id,15);
+  assert.equal(roomsHelper.selectDisplayContract([contracts[0]])?.id,20);
+  assert.equal(roomsHelper.selectDisplayContract([]),null);
+  assert.equal(roomsHelper.formatIsoDateVi('2026-11-20'),'20/11/2026');
+  assert.equal(roomsHelper.formatIsoDateVi(null),'Chưa cập nhật');
+  // Deposit never defaults to monthly rent
+  assert.equal(roomsHelper.resolveRoomDeposit({deposit:null},{deposit:null}),null);
+  assert.equal(roomsHelper.resolveRoomDeposit({deposit:null},{deposit:3500000}),3500000);
+  assert.equal(roomsHelper.resolveRoomDeposit({deposit:4000000},{deposit:3500000}),4000000);
+  // Price mechanism
+  assert.equal(roomsHelper.roomPriceMechanism({price:3200000,customPrice:3200000},{price:3000000}).isCustom,true);
+  assert.equal(roomsHelper.roomPriceMechanism({price:3000000,customPrice:null},{price:3000000}).isCustom,false);
+  // Delete room guard
+  assert.equal(roomsHelper.canDeleteRoom({status:'OCCUPIED'},true).allowed,false);
+  assert.ok(roomsHelper.canDeleteRoom({status:'OCCUPIED'},true).reason?.includes('Còn trống'));
+  assert.equal(roomsHelper.canDeleteRoom({status:'VACANT'},true).allowed,true);
+  assert.equal(roomsHelper.canDeleteRoom({status:'VACANT'},false).allowed,false);
+  // Room confirmation freshness
+  const now=Date.parse('2026-11-20T12:00:00+07:00');
+  assert.equal(roomsHelper.roomConfirmationPresentation({confirmedAt:'2026-11-19T10:00:00',confirmationStatus:null},now).state,'CURRENT');
+  assert.equal(roomsHelper.roomConfirmationPresentation({confirmedAt:'2026-11-01T10:00:00',confirmationStatus:null},now).state,'STALE');
+  assert.equal(roomsHelper.roomConfirmationPresentation({confirmedAt:null,confirmationStatus:null},now).state,'UNCONFIRMED');
+});

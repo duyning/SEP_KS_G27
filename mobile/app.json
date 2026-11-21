@@ -25,11 +25,14 @@
     },
     "plugins": [
       "expo-router",
-      ["expo-image-picker", {
-        "photosPermission": "Cho phép HL_RCS chọn ảnh đại diện từ thư viện của bạn.",
-        "cameraPermission": false,
-        "microphonePermission": false
-      }],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép HL_RCS chọn ảnh từ thư viện của bạn.",
+          "cameraPermission": "Cho phép HL_RCS chụp ảnh nhà trọ để gửi xét duyệt.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -42,6 +45,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "androidRegistrationMap": false,
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a7d6cf45-359d-4d53-8109-334d888dccbb"
+      }
     }
   }
 }

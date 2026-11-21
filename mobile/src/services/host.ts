@@ -1,4 +1,4 @@
-import { getApiBase, requestJson } from './accommodations';
+import { getApiBase, requestJson, type JsonRequestOptions } from './accommodations';
 export interface HostAttachment {documentId:number;type?:string;fileName?:string;verificationStatus?:string|null}
 export interface HostProperty {
  propertyId:number|null;registrationId?:number;name:string;address:string;displayStatus:string;roomTypeCount:number;totalRooms:number|null;vacantRooms:number|null;pendingViewingCount:number;
@@ -9,19 +9,19 @@ export interface HostProperty {
  changeRequest?:{registrationId:number;status:string;reasonNote?:string|null;requestedFields?:string[];fieldNotes?:Record<string,string>}|null;
  latitude?:string|null;longitude?:string|null;reverificationRequired?:boolean;reverificationReasons?:string[];
 }
-export interface HostRoom { roomId: number; propertyId: number; roomTypeId: number; roomType: string; roomNumber: string; floor: string; status: string; price: number | null; customPrice: number | null; areaSqm: number | null }
+export interface HostRoom { roomId: number; propertyId: number; roomTypeId: number; roomType: string; roomNumber: string; floor: string; status: string; price: number | null; customPrice: number | null; areaSqm: number | null; capacity?: number | null; deposit?: number | null; amenities?: string[]; publicVisible?: boolean; leaseStartDate?: string | null; leaseEndDate?: string | null; confirmedAt?: string | null; confirmationStatus?: string | null; confirmationStale?: boolean }
 export interface HostViewing { bookingId: number; propertyId: number; propertyName: string; roomTypeId: number; roomType: string; renterName: string; renterPhone: string; scheduledDate: string; status: string; note?: string; decisionReason?: string; createdAt: string }
 export interface HostInbox { items: { notificationId: number; bookingId: number; content: string; read: boolean; createdAt: string }[]; hasNext: boolean; unreadCount: number }
 export interface HostDashboard { properties: {propertyId: number; name: string}[]; totalRoomCount: number; availableRoomCount: number; pendingViewingCount: number; pendingRegistrationCount: number; roomTypeCount: number }
-export interface HostRoomType { roomTypeId:number;propertyId:number;roomType:string;price:number|null;areaSqm:number|null;capacity:number;totalRooms:number;vacantRooms:number;deposit?:number|null;description?:string;imageUrl?:string|null;amenities?:string[];electricityPrice?:number|null;waterPrice?:number|null;internetPrice?:number|null;servicePrice?:number|null;images?:{imageId:number;fileName:string}[]; }
+export interface HostRoomType { roomTypeId:number;propertyId:number;roomType:string;price:number|null;areaSqm:number|null;capacity:number;totalRooms:number;vacantRooms:number;deposit?:number|null;description?:string;imageUrl?:string|null;amenities?:string[];electricityPrice?:number|null;waterPrice?:number|null;internetPrice?:number|null;servicePrice?:number|null;images?:{imageId:number;fileName:string}[];createdAt?:string|null;rooms?:HostRoom[];availabilityConfirmedAt?:string|null;availabilityConfirmationStatus?:string|null;availabilityStale?:boolean; }
 export interface HostManagedProperty {propertyId:number;name:string;address?:string;status:string}
 export interface HostData { roomTypes:{roomTypes:HostRoomType[];properties?:HostManagedProperty[]}; dashboard: HostDashboard; properties: { records: HostProperty[] }; rooms: { rooms: HostRoom[] }; viewings: { viewings: HostViewing[] }; inbox: HostInbox }
 export type HostResource = keyof HostData;
 export const hostPaths: Record<HostResource,string> = { roomTypes:'/host/room-types', dashboard: '/host/dashboard', properties: '/host/property', rooms: '/host/rooms', viewings: '/host/viewings', inbox: '/viewings/notifications?page=0' };
 export class HostError extends Error { constructor(message: string, readonly status = 0) { super(message); } }
-export async function hostRequest<T>(path: string, token: string, signal: AbortSignal, body?: unknown, method = 'GET'): Promise<T> {
+export async function hostRequest<T>(path: string, token: string, signal: AbortSignal, body?: unknown, method = 'GET', options?: JsonRequestOptions): Promise<T> {
   if (!token) throw new HostError('Phiên đăng nhập đã hết hạn.',401);
-  const {response,result} = await requestJson(`${getApiBase()}/api${path}`, {method,signal,credentials:'omit',headers:{Authorization:`Bearer ${token}`,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+  const {response,result} = await requestJson(`${getApiBase()}/api${path}`, {method,signal,credentials:'omit',headers:{Authorization:`Bearer ${token}`,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}, options);
   if (!response.ok || result?.success !== true) throw new HostError(result?.message || 'Không thể tải dữ liệu quản lý.',response.status);
   return result.data as T;
 }

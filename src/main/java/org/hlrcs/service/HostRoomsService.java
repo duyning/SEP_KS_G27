@@ -1,6 +1,8 @@
 package org.hlrcs.service;
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.RoomRequest;
+import org.hlrcs.dto.request.RoomLayoutRequest;
+import org.hlrcs.dto.request.RoomSetupRequest;
 import org.hlrcs.dto.response.HostRoomsResponse;
 import org.hlrcs.entity.Room;
 import org.hlrcs.entity.enums.RegistrationStatus;
@@ -9,7 +11,12 @@ import org.hlrcs.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 @Service @RequiredArgsConstructor
 public class HostRoomsService {
@@ -20,6 +27,47 @@ public class HostRoomsService {
     private final RoomTypeRepository types;
     private final HostRoomTypeService typeService;
     private final RoomMapping mapper;
+    private final RentalContractService rentalContracts;
+
+    public record SetupResult(Map<Integer, Integer> createdTypes, List<HostRoomsResponse.RoomSummary> rooms) { }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public SetupResult createSetup(RoomSetupRequest request, List<MultipartFile> photos) {
+        int photoCount = request.types().stream().mapToInt(RoomSetupRequest.NewType::photoCount).sum();
+        if (photoCount != photos.size() || photoCount > 40 ||
+                photos.stream().mapToLong(MultipartFile::getSize).sum() > 80L * 1024 * 1024) {
+            throw new BadRequestException("Kiểm tra số ảnh đã chọn. Mỗi đợt tối đa 40 ảnh và tổng 80 MB.");
+        }
+        var localIds = new HashSet<Integer>();
+        for (var draft : request.types()) {
+            if (!localIds.add(draft.localId()) || !request.propertyId().equals(draft.details().propertyId())) {
+                throw new BadRequestException("Loại phòng bị lặp hoặc không khớp nhà trọ đang thiết lập.");
+            }
+        }
+        for (var draft : request.rooms()) {
+            if (draft.roomTypeId() == 0 || (draft.roomTypeId() < 0 && !localIds.contains(draft.roomTypeId()))) {
+                throw new BadRequestException("Chưa gán loại phòng hợp lệ cho phòng " + draft.roomNumber() + ".");
+            }
+        }
+
+        var createdTypes = new HashMap<Integer, Integer>();
+        int photoOffset = 0;
+        for (var draft : request.types()) {
+            int nextOffset = photoOffset + draft.photoCount();
+            try {
+                var created = typeService.save(draft.details(), null, photos.subList(photoOffset, nextOffset));
+                createdTypes.put(draft.localId(), created.roomTypeId());
+            } catch (AppException error) {
+                throw new AppException(draft.details().roomType().trim() + " · " + error.getMessage(), error.getStatus());
+            }
+            photoOffset = nextOffset;
+        }
+        if (request.rooms().isEmpty()) return new SetupResult(createdTypes, List.of());
+
+        var roomDrafts = request.rooms().stream().map(draft -> new RoomLayoutRequest.Draft(
+                createdTypes.getOrDefault(draft.roomTypeId(), draft.roomTypeId()), draft.roomNumber(), draft.floor())).toList();
+        return new SetupResult(createdTypes, layout(new RoomLayoutRequest(request.propertyId(), roomDrafts)));
+    }
 
     @Transactional(readOnly=true)
     public HostRoomsResponse list(Integer propertyId,Integer typeId) {
@@ -53,6 +101,7 @@ public class HostRoomsService {
             invalidate(type);
             if (oldType != null && !oldType.getRoomTypeId().equals(type.getRoomTypeId())) invalidate(oldType);
         }
+        if(id!=null){rentalContracts.validateDates(room,value.status(),value.leaseStartDate(),value.leaseEndDate());if("VACANT".equals(value.status()))rentalContracts.close(room);}
         room.setConfirmedAt(LocalDateTime.now());
         applyLease(room,value.status(),value.leaseStartDate(),value.leaseEndDate(),false);
         room.setRoomType(type);room.setRoomNumber(number);room.setFloor(floor);room.setStatus(value.status());room.setCustomPrice(value.customPrice());
@@ -87,11 +136,19 @@ public class HostRoomsService {
         // Validate all targets before mutating the managed entities.
         for(var room:selected)active(room.getProperty());
         applyLease(new Room(),value.status(),value.leaseStartDate(),value.leaseEndDate(),true);
+        var drafts=new java.util.HashMap<Integer,org.hlrcs.dto.request.RentalContractRequest>();
+        if(value.contracts()!=null&&!value.contracts().isEmpty()){
+            if(!"OCCUPIED".equals(value.status())||value.contracts().size()!=ids.size())throw new BadRequestException("Cần một hợp đồng riêng cho mỗi phòng chuyển sang Đang thuê.");
+            for(var draft:value.contracts())if(!ids.contains(draft.roomId())||drafts.put(draft.roomId(),draft)!=null)throw new BadRequestException("Danh sách hợp đồng có phòng không khớp hoặc bị trùng.");
+        }
+        for(var room:selected)rentalContracts.validateDates(room,value.status(),value.leaseStartDate(),value.leaseEndDate());
         var confirmed=LocalDateTime.now();
         for(var room:selected){
             if(!java.util.Objects.equals(room.getStatus(),value.status()))invalidate(room.getRoomType());
             applyLease(room,value.status(),value.leaseStartDate(),value.leaseEndDate(),true);
             room.setStatus(value.status());room.setConfirmedAt(confirmed);
+            if("VACANT".equals(value.status()))rentalContracts.close(room);
+            else if(drafts.containsKey(room.getRoomId()))rentalContracts.record(room,drafts.get(room.getRoomId()));
         }
         rooms.saveAllAndFlush(selected);
         return selected.stream().map(mapper::summary).toList();

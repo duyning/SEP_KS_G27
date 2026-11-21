@@ -1,4 +1,7 @@
-param([ValidateSet('web', 'mobile')][string]$Target = 'mobile')
+param(
+    [ValidateSet('web', 'mobile')][string]$Target = 'mobile',
+    [ValidatePattern('^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?$')][string]$GoogleBrowserOrigin
+)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $projectRoot
@@ -14,5 +17,9 @@ $javaTmp = Join-Path $projectRoot '.local/java-tmp'
 New-Item -ItemType Directory -Path $javaTmp -Force | Out-Null
 $jvmArguments = '-Djdk.net.unixdomain.tmpdir="' + $javaTmp.Replace('\', '/') + '"'
 $apiPort = if ($Target -eq 'web') { 8080 } else { 8081 }
-& (Join-Path $projectRoot 'mvnw.cmd') spring-boot:run "-Dspring-boot.run.jvmArguments=$jvmArguments" "-Dspring-boot.run.arguments=--server.address=0.0.0.0 --server.port=$apiPort" '-Dspring-boot.run.profiles=mysql'
+$springArguments = "--server.address=0.0.0.0 --server.port=$apiPort"
+if ($Target -eq 'mobile' -and $GoogleBrowserOrigin) {
+    $springArguments += " --app.google.mobile-browser-origin=$GoogleBrowserOrigin"
+}
+& (Join-Path $projectRoot 'mvnw.cmd') spring-boot:run "-Dspring-boot.run.jvmArguments=$jvmArguments" "-Dspring-boot.run.arguments=$springArguments" '-Dspring-boot.run.profiles=mysql'
 exit $LASTEXITCODE

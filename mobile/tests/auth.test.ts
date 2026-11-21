@@ -54,6 +54,8 @@ function fixture() {
     sendPhoneOtp: async phone => ({phoneNumber:phone,expiresAt:new Date(Date.now()+300000).toISOString(),resendAt:new Date(Date.now()+60000).toISOString()}), verifyPhoneOtp: async () => {},
     login: async () => ({ user, accessToken: 'fresh-token' }),
     googleLogin: async () => ({ user, accessToken: 'google-session-token' }),
+    startGoogleBrowser: async () => ({ id: 'A'.repeat(43), proof: 'B'.repeat(43) }),
+    redeemGoogleBrowser: async () => ({ user, accessToken: 'google-browser-session-token' }),
     register: async () => ({ user, accessToken: 'fresh-token' }),
     me: async () => user, logout: async () => {},
     updateProfile: async values => ({ ...user, ...values }), changePassword: async () => {},
@@ -62,6 +64,34 @@ function fixture() {
   return { service, store, api, session, token: () => token };
 }
 function response(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status }); }
+
+test('browser Google exchange requires HTTPS, sends a one-time proof and saves only the server session', async () => {
+  const { service, env } = load();
+  env.EXPO_PUBLIC_API_URL = 'http://192.168.1.4:8081';
+  const attempt = { id: 'A'.repeat(43), proof: 'B'.repeat(43) };
+  const calls: { url: string; body: unknown }[] = [];
+  const api = service.createAuthApi(async (url, options) => {
+    calls.push({ url: String(url), body: options?.body ? JSON.parse(String(options.body)) : null });
+    const data = String(url).endsWith('/start') ? attempt : { ...user, accessToken: 'browser-jwt' };
+    return response({ success: true, data });
+  });
+  await assert.rejects(api.startGoogleBrowser(), { code: 'config' });
+  assert.equal(calls.length, 0);
+  env.EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN = 'https://login.example.test';
+  const started = await api.startGoogleBrowser();
+  await assert.rejects(api.redeemGoogleBrowser(started, '1234'), { code: 'validation' });
+  const { session, token, api: fixtureApi } = fixture();
+  fixtureApi.redeemGoogleBrowser = api.redeemGoogleBrowser;
+  session.start();
+  await tick();
+  await session.signInWithGoogleCode(started, '01234567');
+  assert.deepEqual(calls, [
+    { url: 'https://login.example.test/api/auth/google/mobile/start', body: null },
+    { url: 'https://login.example.test/api/auth/google/mobile/redeem', body: { ...attempt, code: '01234567' } },
+  ]);
+  assert.equal(token(), 'browser-jwt');
+  assert.equal(session.getSnapshot().user?.userId, user.userId);
+});
 
 test('validates exact field keys, six-character passwords and optional Vietnamese mobile number', () => {
   const { service } = load();

@@ -31,6 +31,11 @@ public class PropertyRegistrationController {
         return ApiResponse.success(locations.lookup(input.input()));
     }
 
+    @PostMapping("/location/resolve-mobile")
+    public ApiResponse<org.hlrcs.service.PropertyLocationService.MobileLookup> resolveMobileLocation(@Valid @RequestBody LocationInput input) {
+        return ApiResponse.success(locations.lookupMobile(input.input()));
+    }
+
     @GetMapping("/{id}/edit")
     public ApiResponse<PropertyEditService.Edit> edit(@PathVariable Integer id) { return ApiResponse.success(edits.edit(id)); }
 

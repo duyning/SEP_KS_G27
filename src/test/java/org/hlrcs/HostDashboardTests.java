@@ -899,16 +899,61 @@ class HostDashboardTests {
         return new TestImage("room.png","image/png",java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jz2kAAAAASUVORK5CYII="));
     }
     private HttpResponse<String> typeMultipart(String token,Integer id,Map<String,Object> value,java.util.List<TestImage> files) throws Exception {
+        return hostMultipart(token, "/api/host/room-types" + (id == null ? "" : "/" + id), id == null ? "POST" : "PUT",
+                "details", value, files);
+    }
+    private HttpResponse<String> hostMultipart(String token, String path, String method, String partName,
+            Map<String,Object> value, java.util.List<TestImage> files) throws Exception {
         String boundary="room-type-"+System.nanoTime();var body=new java.io.ByteArrayOutputStream();
-        body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"details\"\r\nContent-Type: application/json\r\n\r\n").getBytes());
+        body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+partName+"\"; filename=\"blob\"\r\nContent-Type: application/json\r\n\r\n").getBytes());
         body.writeBytes(json.writeValueAsBytes(value));body.writeBytes("\r\n".getBytes());
         for(var file:files){
             body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"photos\"; filename=\""+file.name()+"\"\r\nContent-Type: "+file.mime()+"\r\n\r\n").getBytes());
             body.writeBytes(file.bytes());body.writeBytes("\r\n".getBytes());
         }
         body.writeBytes(("--"+boundary+"--\r\n").getBytes());
-        return client.send(HttpRequest.newBuilder(uri("/api/host/room-types"+(id==null?"":"/"+id))).header("Authorization","Bearer "+token).header("Content-Type","multipart/form-data; boundary="+boundary)
-                .method(id==null?"POST":"PUT",HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+        return client.send(HttpRequest.newBuilder(uri(path)).header("Authorization","Bearer "+token).header("Content-Type","multipart/form-data; boundary="+boundary)
+                .method(method,HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void unifiedRoomSetupRollsBackTypesAndImagesOnRoomConflict() throws Exception {
+        var owner = account(UserRole.ROOM_HOST);
+        String jwt = token(owner);
+        var property = properties.save(Property.builder().owner(owner).name("Unified setup").status("ACTIVE").build());
+        var existing = roomTypes.save(RoomType.builder().property(property).roomType("Existing studio").price(new BigDecimal("2000000")).build());
+        physicalRooms.save(Room.builder().property(property).roomType(existing).roomNumber("P.101").floor("Tầng 1").status("VACANT").build());
+        var typeA = typeDetails(property.getPropertyId());
+        typeA.put("roomType", "Studio A");
+        var typeB = typeDetails(property.getPropertyId());
+        typeB.put("roomType", "Studio B");
+        var payload = new java.util.HashMap<String,Object>();
+        payload.put("propertyId", property.getPropertyId());
+        payload.put("types", java.util.List.of(Map.of("localId", -1, "details", typeA, "photoCount", 0),
+                Map.of("localId", -2, "details", typeB, "photoCount", 1)));
+        payload.put("rooms", java.util.List.of(mixedRoom(-1, "P.102", "Tầng 1"), mixedRoom(-2, "p.101", "Tầng 1")));
+        long imageCount = typeImages.count();
+        String path = "/api/host/rooms/setup";
+        var rejected = hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage()));
+        assertEquals(409, rejected.statusCode(), rejected.body());
+        assertEquals(1, roomTypes.findByProperty_PropertyId(property.getPropertyId()).size());
+        assertEquals(1, physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
+        assertEquals(imageCount, typeImages.count());
+
+        payload.put("rooms", java.util.List.of(mixedRoom(-1, "P.102", "Tầng 1"), mixedRoom(-2, "P.103", "Tầng 1"),
+                mixedRoom(existing.getRoomTypeId(), "P.104", "Tầng 1")));
+        var response = hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage()));
+        assertEquals(200, response.statusCode(), response.body());
+        var result = json.readTree(response.body()).path("data");
+        int idA = result.path("createdTypes").path("-1").asInt();
+        int idB = result.path("createdTypes").path("-2").asInt();
+        assertTrue(idA > 0 && idB > 0 && idA != idB);
+        assertEquals(idA, result.path("rooms").path(0).path("roomTypeId").asInt());
+        assertEquals(idB, result.path("rooms").path(1).path("roomTypeId").asInt());
+        assertEquals(existing.getRoomTypeId().intValue(), result.path("rooms").path(2).path("roomTypeId").asInt());
+        assertFalse(result.path("rooms").path(0).path("publicVisible").asBoolean());
+        assertTrue(typeImages.findByRoomType_RoomTypeIdOrderByImageIdAsc(idA).isEmpty());
+        assertEquals(1, typeImages.findByRoomType_RoomTypeIdOrderByImageIdAsc(idB).size());
+        assertEquals(409, hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage())).statusCode());
+        assertEquals(4, physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
     }
     private HttpResponse<String> deleteType(String token,int id) throws Exception {
         return client.send(HttpRequest.newBuilder(uri("/api/host/room-types/"+id)).header("Authorization","Bearer "+token).DELETE().build(),HttpResponse.BodyHandlers.ofString());

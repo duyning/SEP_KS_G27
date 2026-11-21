@@ -17,6 +17,8 @@ public interface RoomRepository extends JpaRepository<Room,Integer> {
     @Query("select r.roomType.roomTypeId as roomTypeId, count(r) as availableRooms from Room r " +
             "where r.roomType.roomTypeId in :ids and r.property = r.roomType.property and r.publicVisible = true and r.status = 'VACANT' group by r.roomType.roomTypeId")
     List<VacancyCount> countPublicVacancies(@org.springframework.data.repository.query.Param("ids") List<Integer> ids);
+    @EntityGraph(attributePaths={"property","property.owner"})
+    java.util.Optional<Room> findByRoomIdAndProperty_Owner_UserId(Integer roomId, Integer ownerId);
     @EntityGraph(attributePaths={"property","roomType"})
     List<Room> findByProperty_Owner_UserIdOrderByRoomNumberAsc(Integer ownerId);
     @EntityGraph(attributePaths={"roomType"})

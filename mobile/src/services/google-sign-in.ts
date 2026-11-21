@@ -1,10 +1,13 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
-import { AuthError } from './auth';
+import { openURL } from 'expo-linking';
+import { AuthError, authApi, googleBrowserOrigin, type GoogleBrowserAttempt } from './auth';
 
-export function googleSignInAvailability(): { available: boolean; reason?: string } {
+export function googleSignInAvailability(): { available: boolean; mode?: 'browser' | 'native'; reason?: string } {
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    return { available: false, reason: 'Đăng nhập Google cần bản development build. Trên Expo Go, bạn vẫn có thể đăng nhập bằng email.' };
+    return googleBrowserOrigin()
+      ? { available: true, mode: 'browser' }
+      : { available: false, reason: 'Đăng nhập Google trên Expo Go cần địa chỉ HTTPS đã đăng ký của HL_RCS.' };
   }
   if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim()) {
     return { available: false, reason: 'Đăng nhập Google chưa được cấu hình.' };
@@ -15,12 +18,24 @@ export function googleSignInAvailability(): { available: boolean; reason?: strin
   if (Platform.OS === 'android' && !Constants.expoConfig?.android?.package) {
     return { available: false, reason: 'Cần khai báo Android package và đăng ký SHA-1 trong Google Cloud trước khi tạo development build.' };
   }
-  return { available: true };
+  return { available: true, mode: 'native' };
+}
+
+export async function startGoogleBrowser(signal: AbortSignal): Promise<GoogleBrowserAttempt> {
+  const origin = googleBrowserOrigin();
+  if (!origin) throw new AuthError('Chưa cấu hình địa chỉ HTTPS đăng nhập Google.', 'config');
+  const attempt = await authApi.startGoogleBrowser(signal);
+  if (signal.aborted) throw new AuthError('Đã hủy đăng nhập Google.', 'cancelled');
+  // Only the public attempt ID goes to the browser. The redemption proof stays in the app.
+  await openURL(`${origin}/api/auth/google/mobile/browser#${attempt.id}`);
+  return attempt;
 }
 
 export async function requestGoogleIdToken(): Promise<string | null> {
   const availability = googleSignInAvailability();
-  if (!availability.available) throw new AuthError(availability.reason!, 'config');
+  if (availability.mode !== 'native') {
+    throw new AuthError(availability.reason ?? 'Hãy đăng nhập Google bằng trình duyệt trên Expo Go.', 'config');
+  }
   // Import only after the Expo Go guard: loading the native SDK eagerly would
   // otherwise crash Expo Go, including ordinary email/password login.
   let sdk: typeof import('@react-native-google-signin/google-signin');
