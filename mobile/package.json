@@ -61,7 +61,14 @@
     "test:loading": "node --experimental-strip-types --test tests/loading.test.ts",
     "test:contracts": "node --experimental-strip-types --test tests/rental-contracts.test.ts",
     "test:room-setup": "node --experimental-strip-types --test tests/room-setup.test.ts",
-    "test:registration": "node --experimental-strip-types --test tests/property-registration.test.ts"
+    "test:registration": "node --experimental-strip-types --test tests/property-registration.test.ts",
+    "test:onboarding": "node --experimental-strip-types --test tests/host-onboarding.test.ts",
+    "test:phone-otp": "node --experimental-strip-types --test tests/phone-verification.test.ts",
+    "test:property-change": "node --experimental-strip-types --test tests/property-change.test.ts",
+    "test:utilities": "node --experimental-strip-types --test tests/room-utilities.test.ts",
+    "test:billing": "node --experimental-strip-types --test tests/room-billing.test.ts",
+    "test:room-type-edit": "node --experimental-strip-types --test tests/room-type-edit-delete.test.ts",
+    "test:tenancy-contract": "node --experimental-strip-types --test tests/tenancy-contract-flow.test.ts"
   },
   "private": true
 }

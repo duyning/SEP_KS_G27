@@ -920,6 +920,22 @@ function RoomsContent({
         hasRooms={Boolean(propertyRooms && propertyRooms.length > 0)}
         selectionMode={selectionMode}
         onClose={() => setMenuOpen(false)}
+        onOpenUtilities={() => {
+          if (propertyId != null) {
+            router.push({
+              pathname: '/host/utilities',
+              params: { propertyId: String(propertyId) },
+            });
+          }
+        }}
+        onOpenBilling={() => {
+          if (propertyId != null) {
+            router.push({
+              pathname: '/host/billing',
+              params: { propertyId: String(propertyId) },
+            });
+          }
+        }}
         onOpenMultiFloorSetup={() => {
           if (propertyId != null) {
             router.push({

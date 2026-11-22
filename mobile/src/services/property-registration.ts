@@ -105,6 +105,68 @@ export function registrationPoint(lat?: string, lng?: string) {
   return Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? { latitude, longitude } : null;
 }
 
+type RegistrationPoint = NonNullable<ReturnType<typeof registrationPoint>>;
+
+export type RegistrationLocationSuggestion = RegistrationPoint & {
+  addressDetail?: string | null;
+  commune?: string | null;
+  nearby?: string | null;
+  warnings?: string[];
+  attribution?: string;
+};
+export type RegistrationAddressMatch = { refId: string; display: string };
+export type ResolvedRegistrationAddress = {
+  display: string;
+  location: RegistrationLocationSuggestion;
+};
+export type RegistrationLocationPatch = {
+  latitude: string;
+  longitude: string;
+  addressDetail?: string;
+  commune?: string;
+  nearby?: string;
+};
+
+export async function firstResolvedRegistrationAddress(
+  matches: RegistrationAddressMatch[],
+  resolve: (refId: string) => Promise<RegistrationLocationSuggestion | null>,
+  signal: AbortSignal
+): Promise<ResolvedRegistrationAddress | null> {
+  for (const { refId, display } of matches) {
+    if (signal.aborted) return null;
+    const location = await resolve(refId);
+    if (signal.aborted) return null;
+    if (location && registrationPoint(String(location.latitude), String(location.longitude))) {
+      return { display, location };
+    }
+  }
+  return null;
+}
+
+export function registrationLocationPatch(
+  values: Pick<RegistrationValues, 'addressDetail' | 'commune' | 'nearby'>,
+  point: RegistrationPoint,
+  suggestion?: RegistrationLocationSuggestion | null
+): RegistrationLocationPatch {
+  const patch: RegistrationLocationPatch = {
+    latitude: point.latitude.toFixed(7),
+    longitude: point.longitude.toFixed(7),
+  };
+  const address = suggestion?.addressDetail?.trim();
+  let area = suggestion?.commune?.trim();
+  if (!area && address && suggestion?.attribution === 'VIETMAP') {
+    // VietMap displays the current commune even when the API sees conflicting old and new names.
+    const parts = address.normalize('NFC').toLocaleLowerCase('vi').split(',').map(part => part.trim());
+    const namedAreas = PROPERTY_AREAS.filter(name => parts.includes(`xã ${name.toLocaleLowerCase('vi')}`));
+    if (namedAreas.length === 1) area = namedAreas[0];
+  }
+  const nearby = suggestion?.nearby?.trim();
+  if (!values.addressDetail.trim() && address) patch.addressDetail = address.slice(0, 255);
+  if (!values.commune.trim() && area && PROPERTY_AREAS.includes(area)) patch.commune = area;
+  if (!values.nearby.trim() && nearby) patch.nearby = nearby.slice(0, 255);
+  return patch;
+}
+
 export function registrationAssetError(asset: RegistrationAsset, document: boolean): string | null {
   if (!(document ? DOCUMENT_TYPES : PHOTO_TYPES).includes(asset.mimeType || '')) {
     return document ? 'Chọn tệp PDF, JPG, PNG hoặc WebP.' : 'Chọn ảnh JPG, PNG hoặc WebP.';

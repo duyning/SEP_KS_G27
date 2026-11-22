@@ -1265,17 +1265,10 @@ function RegistrationForm({
         <LocationSheet
           values={values}
           onClose={() => setModal(null)}
-          onApply={(nextPoint, suggested) => {
-            form.update('latitude', nextPoint.latitude.toFixed(7));
-            form.update('longitude', nextPoint.longitude.toFixed(7));
-            if (suggested?.addressDetail) {
-              form.update('addressDetail', suggested.addressDetail.slice(0, 255));
-            }
-            if (suggested?.commune && PROPERTY_AREAS.includes(suggested.commune)) {
-              form.update('commune', suggested.commune);
-            }
-            if (suggested?.nearby) {
-              form.update('nearby', suggested.nearby.slice(0, 255));
+          onApply={location => {
+            for (const field of ['latitude', 'longitude', 'addressDetail', 'commune', 'nearby'] as const) {
+              const value = location[field];
+              if (value !== undefined) form.update(field, value);
             }
             setModal(null);
           }}

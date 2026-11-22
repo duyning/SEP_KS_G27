@@ -124,6 +124,9 @@ export function roomKey(value: unknown): string {
   return String(value ?? '').trim().toUpperCase();
 }
 
+const roomNumberBody = (value: unknown): string => roomKey(value).replace(/^(?:PHÒNG|P)[. _-]*(?=[0-9])/, '');
+export const roomIdentityKey = (value: unknown): string => roomNumberBody(value).replace(/^0+(?=[0-9]+$)/, '');
+
 export function layoutFloorNumber(label: unknown): number | null {
   const match = String(label ?? '').trim().match(/^(?:tầng\s+)?(\d+)$/iu);
   return match ? Number(match[1]) : null;
@@ -334,11 +337,11 @@ export function nextRoomSequence(
 ): number {
   const floorNo = Number(floor);
   if (!Number.isInteger(floorNo) || floorNo < 0) return 1;
-  const stem = roomKey(`${prefix}${floorNo}`);
+  const stem = roomNumberBody(`${prefix}${floorNo}`);
   const highest = existingAndDraftRooms.reduce((max, row) => {
     const rowFloor = layoutFloorNumber(row.floor);
     if (rowFloor !== floorNo) return max;
-    const code = roomKey(row.roomNumber);
+    const code = roomNumberBody(row.roomNumber);
     if (!code.startsWith(stem)) return max;
     const suffix = code.slice(stem.length);
     return /^\d{2,4}$/.test(suffix) ? Math.max(max, Number(suffix)) : max;
@@ -570,7 +573,7 @@ export function validateDraftRooms(
   unassignedCount: number;
   duplicateCount: number;
 } {
-  const savedKeys = new Set(savedRooms.map(r => roomKey(r.roomNumber)).filter(Boolean));
+  const savedKeys = new Set(savedRooms.map(r => roomIdentityKey(r.roomNumber)).filter(Boolean));
   const typeById = new Map<number, SelectableRoomType>();
   for (const t of selectableTypes) {
     typeById.set(t.id, t);
@@ -578,7 +581,7 @@ export function validateDraftRooms(
 
   const draftCounts = new Map<string, number>();
   for (const row of draftRooms) {
-    const key = roomKey(row.roomNumber);
+    const key = roomIdentityKey(row.roomNumber);
     if (key) draftCounts.set(key, (draftCounts.get(key) || 0) + 1);
   }
 
@@ -589,7 +592,7 @@ export function validateDraftRooms(
 
   for (const row of draftRooms) {
     const code = row.roomNumber.trim();
-    const key = roomKey(code);
+    const key = roomIdentityKey(code);
     const floor = row.floor.trim();
 
     let issue: RoomSetupIssue | null = null;
@@ -812,14 +815,15 @@ export function reconcileDraftAgainstServer(
 } {
   const serverTypeNames = new Set(latestServerTypes.map(t => t.roomType.trim().toLowerCase()));
   const serverRoomCodes = new Set(latestServerRooms.map(r => roomKey(r.roomNumber)));
+  const serverRoomKeys = new Set(latestServerRooms.map(r => roomIdentityKey(r.roomNumber)));
 
   const matchedTypes = draftTypes.filter(t =>
     serverTypeNames.has(t.details.roomType.trim().toLowerCase())
   );
-  const matchedRooms = draftRooms.filter(r => serverRoomCodes.has(roomKey(r.roomNumber)));
+  const matchedRooms = draftRooms.filter(r => serverRoomKeys.has(roomIdentityKey(r.roomNumber)));
 
   const allTypesMatched = matchedTypes.length === draftTypes.length;
-  const allRoomsMatched = matchedRooms.length === draftRooms.length;
+  const allRoomsMatched = draftRooms.every(r => serverRoomCodes.has(roomKey(r.roomNumber)));
   const allAlreadyCreated =
     (draftTypes.length > 0 || draftRooms.length > 0) && allTypesMatched && allRoomsMatched;
 

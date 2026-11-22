@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { InlineError } from '@/components/auth/inline-error';
 import { PrimaryButton } from '@/components/auth/primary-button';
@@ -23,6 +23,7 @@ import {
   ContractOwnerSignSheet,
   ContractTocSheet,
 } from '@/components/host/contract-sheets';
+import { SignatureStrokesView } from '@/components/host/signature-pad';
 import { useReducedMotionPreference } from '@/constants/motion';
 import { useAuth } from '@/context/auth-context';
 import { useHost } from '@/context/host-context';
@@ -182,6 +183,12 @@ function RoomContractDetailContent({
       controller.abort();
     };
   }, [host.allowed, roomId, reloadTick]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setReloadTick(n => n + 1);
+    }, [])
+  );
 
   const loadContracts = useCallback((isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -445,6 +452,18 @@ function RoomContractDetailContent({
           <Text style={s.centerStateText}>
             Chưa có bản ghi hợp đồng nào được lưu trên hệ thống cho phòng này.
           </Text>
+          {roomId != null && (
+            <PrimaryButton
+              title="Lập hợp đồng thuê phòng"
+              icon="file-plus"
+              onPress={() =>
+                router.replace({
+                  pathname: '/host/contract-create',
+                  params: { roomId: String(roomId) },
+                })
+              }
+            />
+          )}
           <AnimatedPressable scaleTo={0.97} style={s.retryBtn} onPress={handleBack}>
             <Text style={s.retryBtnText}>Quay lại chi tiết phòng</Text>
           </AnimatedPressable>
@@ -759,11 +778,20 @@ function RoomContractDetailContent({
                   </View>
 
                   {contract.ownerSignature ? (
-                    <View style={s.signedMetaBox}>
-                      <Feather name="clock" size={14} color={c.primary} />
-                      <Text style={s.signedMetaText}>
-                        Đã ký lúc {formatSigningTimestamp(contract.ownerSignature.signedAt)}
-                      </Text>
+                    <View style={{ gap: 8 }}>
+                      {contract.ownerSignature.method === 'DRAWN' &&
+                      contract.ownerSignature.strokes?.length ? (
+                        <SignatureStrokesView
+                          strokes={contract.ownerSignature.strokes}
+                          height={76}
+                        />
+                      ) : null}
+                      <View style={s.signedMetaBox}>
+                        <Feather name="clock" size={14} color={c.primary} />
+                        <Text style={s.signedMetaText}>
+                          Đã ký lúc {formatSigningTimestamp(contract.ownerSignature.signedAt)}
+                        </Text>
+                      </View>
                     </View>
                   ) : (
                     <Text style={s.unsignedMetaText}>
@@ -771,18 +799,20 @@ function RoomContractDetailContent({
                     </Text>
                   )}
 
-                  {sigProgress.canOwnerSign && (
-                    <AnimatedPressable
-                      scaleTo={0.98}
-                      style={s.outlineActionBtn}
-                      onPress={() => {
-                        setOwnerSignError(null);
-                        setOwnerSignOpen(true);
-                      }}
-                    >
-                      <Feather name="edit-3" size={15} color={c.primary} />
-                      <Text style={s.outlineActionText}>Ký hợp đồng bằng họ tên</Text>
-                    </AnimatedPressable>
+                  {sigProgress.canOwnerSign && roomId != null && (
+                    <PrimaryButton
+                      title="Ký hợp đồng (Họ tên / Vẽ chữ ký)"
+                      icon="pen-tool"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/host/contract-sign',
+                          params: {
+                            roomId: String(roomId),
+                            contractId: String(contract.id),
+                          },
+                        })
+                      }
+                    />
                   )}
                 </View>
 
@@ -799,11 +829,20 @@ function RoomContractDetailContent({
                   </View>
 
                   {contract.tenantSignature ? (
-                    <View style={s.signedMetaBox}>
-                      <Feather name="clock" size={14} color={c.primary} />
-                      <Text style={s.signedMetaText}>
-                        Đã ký lúc {formatSigningTimestamp(contract.tenantSignature.signedAt)}
-                      </Text>
+                    <View style={{ gap: 8 }}>
+                      {contract.tenantSignature.method === 'DRAWN' &&
+                      contract.tenantSignature.strokes?.length ? (
+                        <SignatureStrokesView
+                          strokes={contract.tenantSignature.strokes}
+                          height={76}
+                        />
+                      ) : null}
+                      <View style={s.signedMetaBox}>
+                        <Feather name="clock" size={14} color={c.primary} />
+                        <Text style={s.signedMetaText}>
+                          Đã ký lúc {formatSigningTimestamp(contract.tenantSignature.signedAt)}
+                        </Text>
+                      </View>
                     </View>
                   ) : (
                     <>

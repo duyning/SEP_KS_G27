@@ -31,6 +31,61 @@ test('location requires a known area and validates both coordinates when provide
   assert.ok(errors.commune && errors.addressDetail && errors.latitude);
   assert.equal(Object.keys(api.validateRegistration({ ...values, commune: 'Hạ Bằng', latitude: '21.01', longitude: '105.5' }, files, 1)).length, 0);
 });
+test('address lookup exposes only the first candidate confirmed by the place lookup', async () => {
+  const checked: string[] = [];
+  const location = { latitude: 21.02, longitude: 105.56, commune: 'Hạ Bằng' };
+  const result = await api.firstResolvedRegistrationAddress(
+    [
+      { refId: 'rejected-ref', display: 'Kết quả bị API từ chối' },
+      { refId: 'invalid-coordinates', display: 'Kết quả có tọa độ sai' },
+      { refId: 'verified-ref', display: 'Địa chỉ đã xác minh' },
+      { refId: 'unused-ref', display: 'Kết quả tiếp theo' },
+    ],
+    async refId => {
+      checked.push(refId);
+      if (refId === 'rejected-ref') return null;
+      return refId === 'invalid-coordinates' ? { ...location, latitude: 123 } : location;
+    },
+    new AbortController().signal
+  );
+  assert.deepEqual(checked, ['rejected-ref', 'invalid-coordinates', 'verified-ref']);
+  assert.equal(result?.display, 'Địa chỉ đã xác minh');
+  assert.equal(result?.location, location);
+});
+test('saving a confirmed pin fills empty fields from the location and preserves manual values', () => {
+  const point = { latitude: 21.02915, longitude: 105.563 };
+  const suggestion = { ...point, addressDetail: 'Địa chỉ từ bản đồ', commune: 'Hạ Bằng', nearby: 'Chợ gần nhà trọ' };
+  const blank = api.registrationValues();
+  const patch = api.registrationLocationPatch(blank, point, suggestion);
+  assert.equal(patch.addressDetail, suggestion.addressDetail);
+  assert.equal(patch.commune, suggestion.commune);
+  assert.equal(patch.nearby, suggestion.nearby);
+  const partial = api.registrationLocationPatch({ ...values, nearby: '' }, point, {
+    ...suggestion, nearby: null,
+  });
+  assert.equal(partial.latitude, '21.0291500');
+  assert.equal(partial.longitude, '105.5630000');
+  assert.equal(partial.addressDetail, undefined);
+  assert.equal(partial.commune, undefined);
+  assert.equal(partial.nearby, undefined);
+  assert.equal(api.registrationLocationPatch(blank, point, { ...point, commune: 'Khác' }).commune, undefined);
+  assert.deepEqual(Object.keys(api.registrationLocationPatch(blank, point)), ['latitude', 'longitude']);
+});
+test('a VietMap address can supply one explicitly named commune when old and new areas differ', () => {
+  const blank = api.registrationValues();
+  const point = { latitude: 21.02915, longitude: 105.563 };
+  const location = {
+    ...point, commune: null, attribution: 'VIETMAP',
+    addressDetail: 'Nhà trọ kiểm thử, Xã Hạ Bằng, Thành phố Hà Nội',
+  };
+  assert.equal(api.registrationLocationPatch(blank, point, location).commune, 'Hạ Bằng');
+  assert.equal(api.registrationLocationPatch(blank, point, {
+    ...location, addressDetail: 'Nhà trọ kiểm thử, Xã Hạ Bằng, Xã Tân Xã, Hà Nội',
+  }).commune, undefined);
+  assert.equal(api.registrationLocationPatch(blank, point, {
+    ...location, addressDetail: 'Nhà trọ Xã Hạ Bằng, Thành phố Hà Nội',
+  }).commune, undefined);
+});
 test('full catalog keeps backend IDs and rejects invalid or duplicate quiet hours', () => {
   assert.equal(api.AMENITIES.length, 18);
   assert.equal(api.RULES.length, 12);

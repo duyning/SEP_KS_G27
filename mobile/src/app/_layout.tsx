@@ -70,6 +70,13 @@ function AppBootstrapShell() {
           >
             <Stack.Screen name="(main)" />
             <Stack.Screen name="rooms/[roomTypeId]" />
+            <Stack.Screen name="become-host" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/property-change" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/utilities" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/billing" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/bill-detail" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/contract-create" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="host/contract-sign" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="login" options={{ animation: 'fade' }} />
             <Stack.Screen name="register" options={{ animation: 'slide_from_right' }} />
           </Stack>

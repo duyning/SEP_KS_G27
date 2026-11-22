@@ -22,9 +22,14 @@ import {
 import { authColors as c, authRadius, authSpacing } from '@/components/auth/tokens';
 import { AnimatedPressable } from '@/components/home/animated-pressable';
 import { RoomTypeImageGallery } from '@/components/host/room-type-gallery';
+import {
+  RoomTypeActionSheet,
+  RoomTypeDeleteSheet,
+} from '@/components/host/room-type-editor-sheets';
 import { AvailabilityConfirmSheet } from '@/components/host/room-types-sheets';
 import { statusLabel } from '@/components/host/host-ui';
-import { useReducedMotionPreference } from '@/constants/motion';
+import { triggerHaptic, useReducedMotionPreference } from '@/constants/motion';
+import { deleteHostRoomType } from '@/services/host-type-upload';
 
 type FeatherName = ComponentProps<typeof Feather>['name'];
 
@@ -79,6 +84,14 @@ function RoomTypeDetailContent({
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [confirmNotice, setConfirmNotice] = useState<string | null>(null);
   const confirmLock = useRef(false);
+
+  // Overflow menu & safe delete state
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteLock = useRef(false);
+
   const fetchGeneration = useRef(0);
 
   const loadDetail = useCallback(
@@ -260,6 +273,41 @@ function RoomTypeDetailContent({
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!activeType || roomTypeId == null || deleteLock.current) return;
+    deleteLock.current = true;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await host.store.mutate(
+        `/host/room-types/${roomTypeId}`,
+        undefined,
+        'DELETE',
+        undefined,
+        (token, signal) => deleteHostRoomType(roomTypeId, token, signal)
+      );
+      triggerHaptic('success');
+      setDeleteOpen(false);
+      router.replace({
+        pathname: '/host/room-types',
+        params: {
+          ...(resolvedPropertyId != null ? { propertyId: String(resolvedPropertyId) } : {}),
+          notice: `Đã xóa loại phòng "${activeType.roomType}".`,
+        },
+      });
+    } catch (err) {
+      triggerHaptic('medium');
+      setDeleteError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể xóa loại phòng. Vui lòng thử lại.'
+      );
+    } finally {
+      deleteLock.current = false;
+      setDeleteBusy(false);
+    }
+  };
+
   const previewRooms = roomsForType ? roomsForType.slice(0, 3) : [];
   const totalRoomsCount = inventory?.total ?? roomsForType?.length ?? null;
 
@@ -316,7 +364,18 @@ function RoomTypeDetailContent({
         <Text style={s.headerTitle} numberOfLines={1}>
           Chi tiết loại phòng
         </Text>
-        <View style={s.headerSpacer} />
+        {activeType && host.allowed ? (
+          <AnimatedPressable
+            accessibilityRole="button"
+            accessibilityLabel={`Tùy chọn cho loại phòng ${activeType.roomType}`}
+            style={s.backBtn}
+            onPress={() => setMenuOpen(true)}
+          >
+            <Feather name="more-horizontal" size={20} color={c.forestInk} />
+          </AnimatedPressable>
+        ) : (
+          <View style={s.headerSpacer} />
+        )}
       </View>
 
       {!host.allowed ? (
@@ -702,6 +761,48 @@ function RoomTypeDetailContent({
             }}
             onConfirm={() => {
               void handleConfirmAvailability();
+            }}
+          />
+
+          {/* Detail Header Overflow Menu (`⋯`) */}
+          <RoomTypeActionSheet
+            target={menuOpen ? activeType : null}
+            propertyName={property?.name}
+            inventory={inventory}
+            canEdit={canEdit}
+            canDelete={host.allowed}
+            showViewDetail={false}
+            onClose={() => setMenuOpen(false)}
+            onManageRooms={openManagedRooms}
+            onEdit={openEditScreen}
+            onDelete={() => {
+              setDeleteError(null);
+              setDeleteOpen(true);
+            }}
+          />
+
+          {/* Safe Delete Sheet */}
+          <RoomTypeDeleteSheet
+            target={deleteOpen ? activeType : null}
+            propertyName={property?.name}
+            inventory={inventory}
+            canManage={host.allowed}
+            busy={deleteBusy}
+            error={deleteError}
+            onClose={() => {
+              if (!deleteBusy) {
+                setDeleteOpen(false);
+                setDeleteError(null);
+              }
+            }}
+            onInspectRooms={() => {
+              if (deleteBusy) return;
+              setDeleteOpen(false);
+              setDeleteError(null);
+              openManagedRooms();
+            }}
+            onConfirmDelete={() => {
+              void handleConfirmDelete();
             }}
           />
         </>

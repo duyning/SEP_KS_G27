@@ -26,7 +26,8 @@ public interface RoomRepository extends JpaRepository<Room,Integer> {
     @EntityGraph(attributePaths={"roomType"})
     List<Room> findByRoomType_RoomTypeIdOrderByRoomNumberAsc(Integer typeId);
     boolean existsByRoomType_RoomTypeId(Integer typeId);
-    boolean existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot(Integer propertyId,String number,Integer id);
+    @Query("select r.roomNumber from Room r where r.property.propertyId = :propertyId and r.roomId <> :excludedId")
+    List<String> findRoomNumbers(Integer propertyId, Integer excludedId);
     boolean existsByProperty_PropertyIdAndPublicVisibleTrue(Integer propertyId);
     boolean existsByRoomType_RoomTypeIdAndPublicVisibleTrue(Integer roomTypeId);
     long countByProperty_PropertyId(Integer propertyId);

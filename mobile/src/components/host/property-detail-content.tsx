@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentRef, type ReactNode } from 'react';
 import * as Linking from 'expo-linking';
+import { router, useFocusEffect } from 'expo-router';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
@@ -14,6 +15,9 @@ import {
   propertyFields,
   propertyRule,
 } from '@/services/host-property';
+import { resolvePropertyChangeEntry } from '@/services/property-change';
+import { hasPropertyChangeDraft } from '@/services/property-change-draft';
+import { useAuth } from '@/context/auth-context';
 import { useHost } from '@/context/host-context';
 import { authColors as c, authRadius, authSpacing } from '@/components/auth/tokens';
 import { AnimatedPressable } from '@/components/home/animated-pressable';
@@ -37,12 +41,52 @@ function getBadgeStyle(status: string, reverificationRequired?: boolean) {
 }
 
 export function PropertyDetailContent({ record }: { record: HostProperty }) {
+  const { user } = useAuth();
   const host = useHost();
   const reducedMotion = useReducedMotionPreference();
   const [section, setSection] = useState<'info' | 'location' | 'documents'>('info');
+  const [hasLocalChangeDraft, setHasLocalChangeDraft] = useState(false);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const scrollY = useRef(0);
   const sectionsY = useRef(0);
+
+  const draftUserId = user?.userId ?? null;
+  const draftRegId = record.changeRequest?.registrationId ?? record.registrationId ?? null;
+
+  useFocusEffect(
+    useCallback(() => {
+      let ignore = false;
+      async function checkDraft() {
+        if (!draftUserId || !draftRegId) {
+          if (!ignore) setHasLocalChangeDraft(false);
+          return;
+        }
+        const exists = await hasPropertyChangeDraft(draftUserId, draftRegId);
+        if (!ignore) setHasLocalChangeDraft(exists);
+      }
+      void checkDraft();
+      return () => {
+        ignore = true;
+      };
+    }, [draftUserId, draftRegId])
+  );
+
+  const changeEntry = useMemo(
+    () => resolvePropertyChangeEntry(record, hasLocalChangeDraft),
+    [record, hasLocalChangeDraft]
+  );
+
+  const handleOpenPropertyChange = () => {
+    if (!changeEntry.visible || !changeEntry.registrationId) return;
+    router.push({
+      pathname: '/host/property-change',
+      params: {
+        registrationId: String(changeEntry.registrationId),
+        ...(changeEntry.propertyId ? { propertyId: String(changeEntry.propertyId) } : {}),
+        ...(changeEntry.mode === 'status' ? { mode: 'status' } : {}),
+      },
+    });
+  };
 
   const changeSection = (next: string) => {
     setSection(next as 'info' | 'location' | 'documents');
@@ -190,6 +234,75 @@ export function PropertyDetailContent({ record }: { record: HostProperty }) {
             </View>
           </View>
         )}
+
+        {/* Property Change Request Entry Action Card */}
+        {changeEntry.visible ? (
+          <AnimatedPressable
+            scaleTo={0.99}
+            accessibilityRole="button"
+            accessibilityLabel={`${changeEntry.ctaLabel} cho nhà trọ ${record.name}`}
+            style={[
+              s.changeEntryCard,
+              changeEntry.tone === 'warning' && s.changeEntryWarn,
+              changeEntry.tone === 'error' && s.changeEntryErr,
+              changeEntry.tone === 'pending' && s.changeEntryPending,
+            ]}
+            onPress={handleOpenPropertyChange}
+          >
+            <View style={s.changeEntryTop}>
+              <View style={s.changeEntryIcon}>
+                <Feather
+                  name={
+                    changeEntry.mode === 'status'
+                      ? 'clock'
+                      : changeEntry.mode === 'supplement' || changeEntry.mode === 'resubmit_initial'
+                        ? 'alert-triangle'
+                        : 'edit-3'
+                  }
+                  size={16}
+                  color={
+                    changeEntry.tone === 'error'
+                      ? c.error
+                      : changeEntry.tone === 'warning'
+                        ? '#9A5B0A'
+                        : c.primary
+                  }
+                />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <View style={s.changeEntryTitleRow}>
+                  <Text style={s.changeEntryTitle} numberOfLines={1}>
+                    {changeEntry.title}
+                  </Text>
+                  <View
+                    style={[
+                      s.changeEntryBadge,
+                      changeEntry.tone === 'warning' && { backgroundColor: '#FEF3C7' },
+                      changeEntry.tone === 'error' && { backgroundColor: '#FEE2E2' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        s.changeEntryBadgeText,
+                        changeEntry.tone === 'warning' && { color: '#92400E' },
+                        changeEntry.tone === 'error' && { color: '#991B1B' },
+                      ]}
+                    >
+                      {changeEntry.badge}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={s.changeEntrySub} numberOfLines={2}>
+                  {changeEntry.subtitle}
+                </Text>
+              </View>
+            </View>
+            <View style={s.changeEntryFooter}>
+              <Text style={s.changeEntryCta}>{changeEntry.ctaLabel}</Text>
+              <Feather name="chevron-right" size={16} color={c.primary} />
+            </View>
+          </AnimatedPressable>
+        ) : null}
       </Animated.View>
 
       {/* Index 2 (Sticky): Segmented Menu — 3 tabs only */}
@@ -1096,5 +1209,80 @@ const s = StyleSheet.create({
     fontWeight: '600',
     color: c.forestInk,
     fontVariant: ['tabular-nums'],
+  },
+  changeEntryCard: {
+    marginTop: 4,
+    backgroundColor: c.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#C5E3DC',
+    padding: 14,
+    gap: 10,
+  },
+  changeEntryPending: {
+    backgroundColor: '#F4FBF9',
+    borderColor: '#B5DFD6',
+  },
+  changeEntryWarn: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  changeEntryErr: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  changeEntryTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  changeEntryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: c.softMint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  changeEntryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  changeEntryTitle: {
+    flex: 1,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: c.forestInk,
+  },
+  changeEntryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: authRadius.round,
+    backgroundColor: c.softMint,
+  },
+  changeEntryBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: c.primary,
+  },
+  changeEntrySub: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: c.textSecondary,
+  },
+  changeEntryFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: c.border,
+  },
+  changeEntryCta: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: c.primary,
   },
 });

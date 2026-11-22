@@ -151,7 +151,10 @@ public class HostRoomsService {
         if(!room.getProperty().getPropertyId().equals(property.getPropertyId()))throw new BadRequestException("Không được chuyển phòng sang nhà trọ khác.");
         String number=RoomRules.number(value.roomNumber());
         String floor=RoomRules.floor(value.floor());
-        if(rooms.existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot(property.getPropertyId(),number,id==null?-1:id))throw new AppException("Số phòng đã tồn tại trong nhà trọ. Vui lòng chọn số phòng khác.",HttpStatus.CONFLICT);
+        // Existing duplicates can still be edited without changing their room numbers.
+        if (id == null || !number.equalsIgnoreCase(room.getRoomNumber())) {
+            RoomRules.reserveNumber(RoomRules.numberKeys(rooms.findRoomNumbers(property.getPropertyId(), id == null ? -1 : id)), number);
+        }
         var oldType = room.getRoomType();
         boolean inventoryChanged = id == null || oldType == null || !oldType.getRoomTypeId().equals(type.getRoomTypeId()) || !java.util.Objects.equals(room.getStatus(),value.status());
         if (inventoryChanged) {
@@ -226,15 +229,14 @@ public class HostRoomsService {
                 .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy nhà trọ của bạn."));
         active(property);
         var available=types.findByProperty_PropertyId(property.getPropertyId()).stream().collect(java.util.stream.Collectors.toMap(org.hlrcs.entity.RoomType::getRoomTypeId,t->t));
-        var existing=rooms.findByProperty_Owner_UserIdOrderByRoomNumberAsc(owner.getUserId()).stream()
-                .filter(r->r.getProperty().getPropertyId().equals(property.getPropertyId())).map(r->java.util.Objects.toString(r.getRoomNumber(),"").trim().toUpperCase(java.util.Locale.ROOT)).collect(java.util.stream.Collectors.toSet());
+        var existing = RoomRules.numberKeys(rooms.findRoomNumbers(property.getPropertyId(), -1));
         var created=new java.util.ArrayList<Room>();
         for(var row:request.rooms()) {
             var type=available.get(row.roomTypeId());
             if(type==null)throw new ResourceNotFoundException("Loại phòng không thuộc nhà trọ này. Chưa tạo phòng nào.");
             if(type.getPrice()==null||type.getPrice().signum()<=0)throw new BadRequestException("Loại phòng phải có giá hợp lệ trước khi tạo phòng.");
             var number=RoomRules.number(row.roomNumber());var floor=RoomRules.floor(row.floor());
-            if(!existing.add(number))throw new AppException("Trùng số phòng "+number+". Chưa tạo phòng nào.",HttpStatus.CONFLICT);
+            RoomRules.reserveNumber(existing, number);
             created.add(Room.builder().property(property).roomType(type).roomNumber(number).floor(floor).status("VACANT").publicVisible(false).build());
         }
         created.stream().map(Room::getRoomType).distinct().forEach(this::invalidate);

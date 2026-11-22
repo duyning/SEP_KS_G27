@@ -1,7 +1,7 @@
 import { useHostMode } from '@/context/host-mode-context';
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { authColors as c } from '@/components/auth/tokens';
@@ -12,6 +12,12 @@ import { LOADING_MESSAGES, useLoading } from '@/components/loading';
 import { ConfirmDialog, ProfileMenuRow, ProfilePage, ProfileSkeleton, UserAvatar, profileStyles as p, roleLabels } from '@/components/profile/profile-ui';
 import { useAuth } from '@/context/auth-context';
 import { tokenStore } from '@/services/auth';
+import {
+  resolveOnboardingBannerState,
+  type HostOnboardingCurrent,
+} from '@/services/host-onboarding';
+import { hasOnboardingDraft } from '@/services/host-onboarding-draft';
+import { fetchOnboardingCurrent } from '@/services/host-onboarding-upload';
 
 export default function ProfileScreen() {
   const { isHostMode, setDiscovery } = useHostMode();
@@ -20,7 +26,58 @@ export default function ProfileScreen() {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [onboardingCurrent, setOnboardingCurrent] = useState<HostOnboardingCurrent | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
   const lock = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let ignore = false;
+      const controller = new AbortController();
+
+      async function syncOnboarding() {
+        if (!user || user.role !== 'USER') {
+          if (!ignore) {
+            setOnboardingCurrent(null);
+            setHasDraft(false);
+          }
+          return;
+        }
+        try {
+          const [token, draftExists] = await Promise.all([
+            tokenStore.get(),
+            hasOnboardingDraft(user.userId),
+          ]);
+          if (ignore) return;
+          setHasDraft(draftExists);
+          if (!token) {
+            setOnboardingCurrent(null);
+            return;
+          }
+          const current = await fetchOnboardingCurrent(token, controller.signal);
+          if (!ignore) setOnboardingCurrent(current);
+        } catch {
+          /* Ignore non-blocking status check error on Account screen. */
+        }
+      }
+
+      void syncOnboarding();
+      return () => {
+        ignore = true;
+        controller.abort();
+      };
+    }, [user])
+  );
+
+  const hostEntry = useMemo(
+    () =>
+      resolveOnboardingBannerState({
+        user,
+        current: onboardingCurrent,
+        hasLocalDraft: hasDraft,
+      }),
+    [user, onboardingCurrent, hasDraft]
+  );
 
   const switchWorkspace = (toDiscovery: boolean) => {
     const taskId = startLoading({
@@ -67,12 +124,38 @@ export default function ProfileScreen() {
     <InlineError message={error || (!user ? sessionError : null)} />
     {loading && !user ? <ProfileSkeleton /> : !user && sessionError ? <View style={{ gap: 16 }}><Text style={p.hint}>Chưa thể xác nhận phiên đăng nhập. Thử tải lại khi có kết nối.</Text><PrimaryButton title="Thử lại" onPress={() => { void retry(); }} /></View> : !user ? <View style={s.guest}>
       <UserAvatar size={76} /><Text style={s.guestTitle}>Chào mừng đến với HL_RCS</Text><Text style={s.guestDescription}>Đăng nhập để lưu phòng yêu thích và quản lý lịch hẹn của bạn.</Text><PrimaryButton title="Đăng nhập" onPress={() => router.push('/login')} /><AnimatedPressable style={s.register} onPress={() => router.push('/register')}><Text style={s.edit}>Tạo tài khoản</Text></AnimatedPressable>
+      <View style={p.group}>
+        <ProfileMenuRow
+          icon="home"
+          title="Trở thành chủ trọ"
+          subtitle="Đăng nhập để đăng ký đối tác & nhà trọ đầu tiên"
+          onPress={() => router.push('/login?redirect=%2Fbecome-host')}
+        />
+      </View>
     </View> : <View style={{ gap: 24 }}>
       <AnimatedPressable accessibilityLabel="Chỉnh sửa hồ sơ" scaleTo={0.98} onPress={() => router.push('/account/edit')} style={s.identity}>
         <UserAvatar name={user.fullName} uri={user.avatar} />
         <View style={{ flex: 1, minWidth: 0, gap: 4 }}><Text style={s.name}>{user.fullName}</Text><Text style={s.email}>{user.email}</Text><Text style={s.role}>{roleLabels[user.role]}</Text><Text style={s.edit}>Chỉnh sửa hồ sơ</Text></View>
       </AnimatedPressable>
       <Text style={p.sectionLabel}>QUẢN LÝ TÀI KHOẢN</Text>{user.role === 'ROOM_HOST' && <ProfileMenuRow icon="home" title="Quản lý nhà trọ" onPress={() => { switchWorkspace(false); }} />}
+      {user.role === 'USER' && hostEntry.visible && (
+        <View style={p.group}>
+          <ProfileMenuRow
+            icon="award"
+            title={
+              hostEntry.state === 'pending'
+                ? 'Hồ sơ đối tác đang thẩm định'
+                : hostEntry.state === 'needs_supplement'
+                  ? 'Bổ sung hồ sơ đối tác chủ trọ'
+                  : hostEntry.state === 'draft'
+                    ? 'Tiếp tục đăng ký làm chủ trọ'
+                    : 'Trở thành chủ trọ'
+            }
+            subtitle={hostEntry.ctaLabel}
+            onPress={() => router.push('/become-host')}
+          />
+        </View>
+      )}
       <View style={p.group}>
         {['USER', 'ROOM_HOST'].includes(user.role) && <><ProfileMenuRow icon="heart" title="Phòng đã lưu" subtitle="Những nơi ở bạn đang quan tâm" onPress={() => router.push('/favorites')} /><View style={p.divider} /></>}
         <ProfileMenuRow icon="user" title="Thông tin cá nhân" subtitle="Tên, liên hệ và khu vực ưu tiên" onPress={() => router.push('/account/edit')} />

@@ -225,6 +225,56 @@ export function MyPropertiesScreen() {
         </Text>
       )}
 
+      {records && records.some(item => item.propertyId != null) && (
+        <View style={s.opsShortcutRow}>
+          <AnimatedPressable
+            scaleTo={0.985}
+            accessibilityRole="button"
+            accessibilityLabel="Mở màn Ghi điện nước hàng tháng"
+            style={s.opsShortcutBtn}
+            onPress={() => {
+              const firstOwned = records.find(item => item.propertyId != null);
+              router.push({
+                pathname: '/host/utilities',
+                ...(firstOwned?.propertyId
+                  ? { params: { propertyId: String(firstOwned.propertyId) } }
+                  : {}),
+              });
+            }}
+          >
+            <View style={s.utilityShortcutIcon}>
+              <Feather name="zap" size={16} color={c.primary} />
+            </View>
+            <Text style={s.utilityShortcutTitle} numberOfLines={1}>
+              Ghi điện nước
+            </Text>
+          </AnimatedPressable>
+
+          <AnimatedPressable
+            scaleTo={0.985}
+            accessibilityRole="button"
+            accessibilityLabel="Mở màn Phiếu thu và Công nợ"
+            style={s.opsShortcutBtn}
+            onPress={() => {
+              const firstOwned = records.find(item => item.propertyId != null);
+              router.push({
+                pathname: '/host/billing',
+                ...(firstOwned?.propertyId
+                  ? { params: { propertyId: String(firstOwned.propertyId) } }
+                  : {}),
+              });
+            }}
+          >
+            <View style={s.utilityShortcutIcon}>
+              <Feather name="file-text" size={16} color={c.primary} />
+            </View>
+            <Text style={s.utilityShortcutTitle} numberOfLines={1}>
+              Phiếu thu & Công nợ
+            </Text>
+          </AnimatedPressable>
+        </View>
+      )}
+
       {error && (
         <View style={s.noticeCard}>
           <Feather name="wifi-off" size={18} color={c.error} />
@@ -1046,5 +1096,35 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: c.primary,
+  },
+  opsShortcutRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  opsShortcutBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: c.surface,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#C5E3DC',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  utilityShortcutIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: c.softMint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  utilityShortcutTitle: {
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: c.forestInk,
   },
 });

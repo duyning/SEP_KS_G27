@@ -50,6 +50,7 @@ import {
   parseRoomSetupDraft,
   reconcileDraftAgainstServer,
   roomKey,
+  roomIdentityKey,
   sanitizeDigitsInput,
   serializeRoomSetupDraft,
   undoTypeAssignment,
@@ -370,8 +371,8 @@ export default function MultiFloorRoomSetupScreen() {
 
   const previewCollisionCount = useMemo(() => {
     if (!batchPreview.rows.length) return 0;
-    const existingKeys = new Set(existingAndDraftRooms.map(r => roomKey(r.roomNumber)));
-    return batchPreview.rows.filter(r => existingKeys.has(roomKey(r.roomNumber))).length;
+    const existingKeys = new Set(existingAndDraftRooms.map(r => roomIdentityKey(r.roomNumber)));
+    return batchPreview.rows.filter(r => existingKeys.has(roomIdentityKey(r.roomNumber))).length;
   }, [batchPreview.rows, existingAndDraftRooms]);
 
   const markDirty = () => {

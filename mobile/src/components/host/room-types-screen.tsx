@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import { useHost } from '@/context/host-context';
 import { AnimatedPressable } from '@/components/home/animated-pressable';
 import { authColors as c, authRadius, authSpacing } from '@/components/auth/tokens';
-import { useReducedMotionPreference } from '@/constants/motion';
+import { triggerHaptic, useReducedMotionPreference } from '@/constants/motion';
 import { getApiBase, resolveImageUrl } from '@/services/accommodations';
 import { hostPrice, type HostRoom, type HostRoomType } from '@/services/host';
 import {
@@ -22,8 +22,13 @@ import {
   type RoomTypeFilterKey,
   type RoomTypeSortKey,
 } from '@/services/host-room-types';
+import { deleteHostRoomType } from '@/services/host-type-upload';
 import { h } from './host-ui';
 import { useManagedProperty } from './management-ui';
+import {
+  RoomTypeActionSheet,
+  RoomTypeDeleteSheet,
+} from './room-type-editor-sheets';
 import {
   AvailabilityConfirmSheet,
   CompactPropertyPicker,
@@ -37,12 +42,13 @@ export function RoomTypesScreen({
   scopedPropertyId?: string;
   onBack?(): void;
 } = {}) {
-  const params = useLocalSearchParams<{ propertyId?: string }>();
+  const params = useLocalSearchParams<{ propertyId?: string; notice?: string }>();
   const initialPropertyId = scopedPropertyId || params.propertyId;
   return (
     <RoomTypesContent
-      key={initialPropertyId || 'all'}
+      key={`${initialPropertyId || 'all'}:${params.notice || ''}`}
       initialPropertyId={initialPropertyId}
+      initialNotice={params.notice}
       onBack={onBack}
     />
   );
@@ -50,9 +56,11 @@ export function RoomTypesScreen({
 
 function RoomTypesContent({
   initialPropertyId,
+  initialNotice,
   onBack,
 }: {
   initialPropertyId?: string;
+  initialNotice?: string;
   onBack?(): void;
 }) {
   const host = useHost();
@@ -75,8 +83,16 @@ function RoomTypesContent({
   const [confirmTarget, setConfirmTarget] = useState<HostRoomType | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  const [confirmBanner, setConfirmBanner] = useState<string | null>(null);
+  const [confirmBanner, setConfirmBanner] = useState<string | null>(initialNotice || null);
   const confirmLock = useRef(false);
+
+  // Overflow menu & safe delete sheet state
+  const [menuTarget, setMenuTarget] = useState<HostRoomType | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<HostRoomType | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteLock = useRef(false);
+
   const activePropertyRef = useRef<number | undefined>(propertyId);
   const mountedRef = useRef(true);
 
@@ -100,6 +116,11 @@ function RoomTypesContent({
     setConfirmBanner(null);
     setConfirmBusy(false);
     confirmLock.current = false;
+    setMenuTarget(null);
+    setDeleteTarget(null);
+    setDeleteError(null);
+    setDeleteBusy(false);
+    deleteLock.current = false;
   };
 
   const hasTypesData = Boolean(host.data.roomTypes);
@@ -163,6 +184,60 @@ function RoomTypesContent({
     });
   };
 
+  const openEditType = (item: HostRoomType) => {
+    router.push({
+      pathname: '/host/room-type',
+      params: { propertyId: String(item.propertyId), id: String(item.roomTypeId) },
+    });
+  };
+
+  const handleOpenDelete = (item: HostRoomType) => {
+    setDeleteTarget(item);
+    setDeleteError(null);
+    setConfirmBanner(null);
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!deleteTarget || deleteLock.current) return;
+    const targetType = deleteTarget;
+    const requestedPropertyId = propertyId;
+
+    deleteLock.current = true;
+    setDeleteBusy(true);
+    setDeleteError(null);
+
+    try {
+      await host.store.mutate(
+        `/host/room-types/${targetType.roomTypeId}`,
+        undefined,
+        'DELETE',
+        undefined,
+        (token, signal) => deleteHostRoomType(targetType.roomTypeId, token, signal)
+      );
+
+      if (!mountedRef.current || activePropertyRef.current !== requestedPropertyId) {
+        return;
+      }
+
+      triggerHaptic('success');
+      setDeleteTarget(null);
+      setConfirmBanner(`Đã xóa loại phòng "${targetType.roomType}".`);
+    } catch (err) {
+      if (!mountedRef.current || activePropertyRef.current !== requestedPropertyId) {
+        return;
+      }
+      triggerHaptic('medium');
+      setDeleteError(
+        err instanceof Error ? err.message : 'Không thể xóa loại phòng. Vui lòng thử lại.'
+      );
+    } finally {
+      deleteLock.current = false;
+      if (mountedRef.current && activePropertyRef.current === requestedPropertyId) {
+        setDeleteBusy(false);
+      }
+    }
+  };
+
   const handleOpenConfirm = (item: HostRoomType) => {
     setConfirmTarget(item);
     setConfirmError(null);
@@ -212,6 +287,16 @@ function RoomTypesContent({
   const confirmInventory = useMemo(
     () => (confirmTarget ? roomTypeInventory(confirmTarget, propertyRooms) : null),
     [confirmTarget, propertyRooms]
+  );
+
+  const menuInventory = useMemo(
+    () => (menuTarget ? roomTypeInventory(menuTarget, propertyRooms) : null),
+    [menuTarget, propertyRooms]
+  );
+
+  const deleteInventory = useMemo(
+    () => (deleteTarget ? roomTypeInventory(deleteTarget, propertyRooms) : null),
+    [deleteTarget, propertyRooms]
   );
 
   const canCreate = host.allowed && property?.status === 'ACTIVE' && propertyId != null;
@@ -409,6 +494,7 @@ function RoomTypesContent({
               imageToken={host.imageToken}
               reducedMotion={reducedMotion}
               onPressDetail={() => openDetail(item)}
+              onPressMenu={() => setMenuTarget(item)}
               onPressConfirm={() => handleOpenConfirm(item)}
             />
           )}
@@ -529,6 +615,54 @@ function RoomTypesContent({
           void handleConfirmSubmit();
         }}
       />
+
+      {/* Card Overflow Menu (`⋯`) */}
+      <RoomTypeActionSheet
+        target={menuTarget}
+        propertyName={property?.name}
+        inventory={menuInventory}
+        canEdit={canCreate}
+        canDelete={host.allowed}
+        onClose={() => setMenuTarget(null)}
+        onViewDetail={() => {
+          if (menuTarget) openDetail(menuTarget);
+        }}
+        onManageRooms={() => {
+          if (menuTarget) openRoomsForType(menuTarget);
+        }}
+        onEdit={() => {
+          if (menuTarget) openEditType(menuTarget);
+        }}
+        onDelete={() => {
+          if (menuTarget) handleOpenDelete(menuTarget);
+        }}
+      />
+
+      {/* Safe Delete Confirmation / Blocking Sheet */}
+      <RoomTypeDeleteSheet
+        target={deleteTarget}
+        propertyName={property?.name}
+        inventory={deleteInventory}
+        canManage={host.allowed}
+        busy={deleteBusy}
+        error={deleteError}
+        onClose={() => {
+          if (!deleteBusy) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+        onInspectRooms={() => {
+          if (!deleteTarget || deleteBusy) return;
+          const target = deleteTarget;
+          setDeleteTarget(null);
+          setDeleteError(null);
+          openRoomsForType(target);
+        }}
+        onConfirmDelete={() => {
+          void handleDeleteSubmit();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -569,6 +703,7 @@ function RoomTypeCard({
   imageToken,
   reducedMotion,
   onPressDetail,
+  onPressMenu,
   onPressConfirm,
 }: {
   item: HostRoomType;
@@ -577,6 +712,7 @@ function RoomTypeCard({
   imageToken: string | null;
   reducedMotion: boolean;
   onPressDetail: () => void;
+  onPressMenu: () => void;
   onPressConfirm: () => void;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -624,49 +760,59 @@ function RoomTypeCard({
       }
       style={s.card}
     >
-      {/* Main Info Row — Tappable to open Detail */}
-      <AnimatedPressable
-        scaleTo={0.99}
-        accessibilityLabel={`Xem chi tiết loại phòng ${item.roomType}, giá ${hostPrice(item.price)}`}
-        style={s.cardHeroRow}
-        onPress={onPressDetail}
-      >
-        {/* Left Thumbnail */}
-        <View style={s.thumbBox}>
-          {privateImageUri && !imgFailed ? (
-            <Image
-              source={{
-                uri: privateImageUri,
-                headers: { Authorization: `Bearer ${imageToken}` },
-              }}
-              style={s.thumbImg}
-              contentFit="cover"
-              cachePolicy="none"
-              onError={() => setImgFailed(true)}
-            />
-          ) : fallbackPublicUri && !imgFailed ? (
-            <Image
-              source={{ uri: fallbackPublicUri }}
-              style={s.thumbImg}
-              contentFit="cover"
-              onError={() => setImgFailed(true)}
-            />
-          ) : (
-            <Feather name="image" size={22} color={c.textMuted} />
-          )}
-        </View>
+      {/* Main Info Row — Tappable to open Detail, separate `⋯` overflow menu */}
+      <View style={s.cardHeroWrapper}>
+        <AnimatedPressable
+          scaleTo={0.99}
+          accessibilityLabel={`Xem chi tiết loại phòng ${item.roomType}, giá ${hostPrice(item.price)}`}
+          style={s.cardHeroRow}
+          onPress={onPressDetail}
+        >
+          {/* Left Thumbnail */}
+          <View style={s.thumbBox}>
+            {privateImageUri && !imgFailed ? (
+              <Image
+                source={{
+                  uri: privateImageUri,
+                  headers: { Authorization: `Bearer ${imageToken}` },
+                }}
+                style={s.thumbImg}
+                contentFit="cover"
+                cachePolicy="none"
+                onError={() => setImgFailed(true)}
+              />
+            ) : fallbackPublicUri && !imgFailed ? (
+              <Image
+                source={{ uri: fallbackPublicUri }}
+                style={s.thumbImg}
+                contentFit="cover"
+                onError={() => setImgFailed(true)}
+              />
+            ) : (
+              <Feather name="image" size={22} color={c.textMuted} />
+            )}
+          </View>
 
-        {/* Right Text Block — Long title wraps cleanly, price never pushed off screen */}
-        <View style={s.cardHeroCopy}>
-          <Text style={s.cardTitle} numberOfLines={3}>
-            {item.roomType}
-          </Text>
-          <Text style={s.cardPrice}>{hostPrice(item.price)}</Text>
-          {specsText ? <Text style={s.cardSpecs}>{specsText}</Text> : null}
-        </View>
+          {/* Right Text Block — Long title wraps cleanly, price never pushed off screen */}
+          <View style={s.cardHeroCopy}>
+            <Text style={s.cardTitle} numberOfLines={3}>
+              {item.roomType}
+            </Text>
+            <Text style={s.cardPrice}>{hostPrice(item.price)}</Text>
+            {specsText ? <Text style={s.cardSpecs}>{specsText}</Text> : null}
+          </View>
+        </AnimatedPressable>
 
-        <Feather name="chevron-right" size={18} color={c.textMuted} style={{ marginTop: 2 }} />
-      </AnimatedPressable>
+        <AnimatedPressable
+          scaleTo={0.94}
+          accessibilityRole="button"
+          accessibilityLabel={`Tùy chọn cho loại phòng ${item.roomType}`}
+          style={s.cardMoreBtn}
+          onPress={onPressMenu}
+        >
+          <Feather name="more-horizontal" size={19} color={c.forestInk} />
+        </AnimatedPressable>
+      </View>
 
       {/* Inventory Line */}
       <View style={s.inventoryRow}>
@@ -997,10 +1143,28 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 1,
   },
+  cardHeroWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
   cardHeroRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
+  },
+  cardMoreBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: c.background,
+    borderWidth: 1,
+    borderColor: c.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -2,
+    marginRight: -2,
   },
   thumbBox: {
     width: 72,

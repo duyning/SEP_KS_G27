@@ -12,6 +12,16 @@ import {
   RoomDetailMenuSheet,
   RoomStatusUpdateSheet,
 } from '@/components/host/room-detail-sheets';
+import {
+  RoomCurrentTenancyPanel,
+  RoomTenancyHistoryPanel,
+} from '@/components/host/room-tenancy-panel';
+import {
+  TenancyAddOccupantSheet,
+  TenancyCloseSheet,
+  TenancyLeaveOccupantSheet,
+  TenancyStartSheet,
+} from '@/components/host/room-tenancy-sheets';
 import { ConfirmDialog } from '@/components/profile/profile-ui';
 import { AuthInput } from '@/components/auth/auth-input';
 import { PrimaryButton } from '@/components/auth/primary-button';
@@ -20,7 +30,7 @@ import { authColors as c, authRadius, authSpacing } from '@/components/auth/toke
 import { AnimatedPressable } from '@/components/home/animated-pressable';
 import { useHost } from '@/context/host-context';
 import { useAuth } from '@/context/auth-context';
-import { useReducedMotionPreference } from '@/constants/motion';
+import { triggerHaptic, useReducedMotionPreference } from '@/constants/motion';
 import { tokenStore } from '@/services/auth';
 import { HostError, hostPrice, type HostRoom } from '@/services/host';
 import { validateRoomDraft, type RoomDraft } from '@/services/host-edit';
@@ -42,20 +52,37 @@ import {
   updateHostRoomStatuses,
   type RentalContractView,
 } from '@/services/host-rooms';
+import {
+  addRoomOccupant,
+  closeRoomTenancy,
+  fetchRoomTenancyProfile,
+  markRoomOccupantLeft,
+  startRoomTenancy,
+  type RoomOccupant,
+  type RoomTenancyProfile,
+} from '@/services/room-tenancy';
+
+type RoomDetailTab = 'info' | 'tenancy' | 'history';
 
 export default function RoomRoute() {
-  const { id, propertyId, mode } = useLocalSearchParams<{
+  const { id, propertyId, mode, tab, notice } = useLocalSearchParams<{
     id?: string;
     propertyId?: string;
     mode?: string;
+    tab?: string;
+    notice?: string;
   }>();
   const { user } = useAuth();
+  const initialTab: RoomDetailTab =
+    tab === 'tenancy' || tab === 'history' ? tab : 'info';
 
   if (id && mode !== 'edit') {
     return (
       <RoomDetailView
-        key={`detail:${user?.userId || 'guest'}:${id}`}
+        key={`detail:${user?.userId || 'guest'}:${id}:${initialTab}`}
         roomId={/^\d+$/.test(id) ? Number(id) : null}
+        initialTab={initialTab}
+        initialNotice={notice}
       />
     );
   }
@@ -64,10 +91,18 @@ export default function RoomRoute() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 1. Màn Chi tiết phòng (Single Vertical Scroll, Ivory & Brand Teal)         */
+/* 1. Màn Chi tiết phòng (3 Tabs: Thông tin · Hồ sơ đợt thuê · Lịch sử)        */
 /* -------------------------------------------------------------------------- */
 
-function RoomDetailView({ roomId }: { roomId: number | null }) {
+function RoomDetailView({
+  roomId,
+  initialTab,
+  initialNotice,
+}: {
+  roomId: number | null;
+  initialTab: RoomDetailTab;
+  initialNotice?: string;
+}) {
   const host = useHost();
   const reducedMotion = useReducedMotionPreference();
 
@@ -98,12 +133,29 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
         : ['ACTIVE', 'VISIBLE'].includes(property.displayStatus))
   );
 
+  // Active 3-tab view (Thông tin phòng | Hồ sơ đợt thuê | Lịch sử đợt thuê)
+  const [activeTab, setActiveTab] = useState<RoomDetailTab>(initialTab);
+
   // Contracts state
   const [contracts, setContracts] = useState<RentalContractView[] | null>(null);
   const [contractsLoading, setContractsLoading] = useState(false);
   const [contractsError, setContractsError] = useState<string | null>(null);
   const [contractReaderOpen, setContractReaderOpen] = useState(false);
   const contractFetchGen = useRef(0);
+
+  // Tenancy profile state
+  const [tenancyProfile, setTenancyProfile] = useState<RoomTenancyProfile | null>(null);
+  const [tenancyLoading, setTenancyLoading] = useState(false);
+  const [tenancyError, setTenancyError] = useState<string | null>(null);
+  const [tenancyActionError, setTenancyActionError] = useState<string | null>(null);
+  const [tenancyBusy, setTenancyBusy] = useState(false);
+  const [startSheetOpen, setStartSheetOpen] = useState(false);
+  const [addOccupantOpen, setAddOccupantOpen] = useState(false);
+  const [leaveTarget, setLeaveTarget] = useState<RoomOccupant | null>(null);
+  const [closeSheetOpen, setCloseSheetOpen] = useState(false);
+  const [handoverMonth, setHandoverMonth] = useState<string | null>(null);
+  const tenancyFetchGen = useRef(0);
+  const tenancyLock = useRef(false);
 
   // Collapsible amenities
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
@@ -119,7 +171,7 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [statusNotice, setStatusNotice] = useState<string | null>(initialNotice || null);
   const statusLock = useRef(false);
   const mountedRef = useRef(true);
 
@@ -161,13 +213,45 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
     }
   }, [host.allowed, roomId]);
 
+  const loadTenancy = useCallback(async () => {
+    if (!host.allowed || roomId == null) return;
+    const gen = ++tenancyFetchGen.current;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    setTenancyLoading(true);
+    setTenancyError(null);
+
+    try {
+      const token = await tokenStore.get();
+      if (gen !== tenancyFetchGen.current) return;
+      const profile = await fetchRoomTenancyProfile(roomId, token || '', controller.signal);
+      if (gen !== tenancyFetchGen.current || controller.signal.aborted) return;
+      setTenancyProfile(profile);
+    } catch (err) {
+      if (gen !== tenancyFetchGen.current) return;
+      setTenancyError(
+        controller.signal.aborted
+          ? 'Tải hồ sơ đợt thuê quá lâu. Vui lòng thử lại.'
+          : err instanceof Error
+          ? err.message
+          : 'Chưa tải được hồ sơ đợt thuê.'
+      );
+    } finally {
+      clearTimeout(timer);
+      if (gen === tenancyFetchGen.current) {
+        setTenancyLoading(false);
+      }
+    }
+  }, [host.allowed, roomId]);
+
   useFocusEffect(
     useCallback(() => {
-      void loadContracts();
+      void Promise.all([loadContracts(), loadTenancy()]);
       return () => {
         contractFetchGen.current++;
+        tenancyFetchGen.current++;
       };
-    }, [loadContracts])
+    }, [loadContracts, loadTenancy])
   );
 
   const handleBack = () => {
@@ -233,7 +317,7 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
       }
 
       if (!mountedRef.current) return;
-      await loadContracts();
+      await Promise.all([loadContracts(), loadTenancy()]);
       if (!mountedRef.current) return;
       setStatusSheetOpen(false);
       setStatusNotice(
@@ -281,6 +365,169 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
     } finally {
       deleteLock.current = false;
       if (mountedRef.current) setDeleteBusy(false);
+    }
+  };
+
+  const handleStartTenancy = async (payload: {
+    name: string;
+    phone: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    if (!room || tenancyLock.current) return;
+    tenancyLock.current = true;
+    setTenancyBusy(true);
+    setTenancyActionError(null);
+    try {
+      let nextProfile: RoomTenancyProfile | null = null;
+      await host.store.mutate(
+        `/host/rooms/${room.roomId}/tenancies`,
+        payload,
+        'POST',
+        undefined,
+        async (token, signal) => {
+          const res = await startRoomTenancy(room.roomId, payload, token, signal);
+          nextProfile = res.profile;
+          return res;
+        }
+      );
+      if (!mountedRef.current) return;
+      if (nextProfile) setTenancyProfile(nextProfile);
+      setStartSheetOpen(false);
+      triggerHaptic('success');
+      setStatusNotice('Đã lưu hồ sơ đợt thuê hiện tại.');
+    } catch (err) {
+      if (mountedRef.current) {
+        triggerHaptic('medium');
+        setTenancyActionError(
+          err instanceof Error ? err.message : 'Chưa thể tạo hồ sơ đợt thuê.'
+        );
+      }
+    } finally {
+      tenancyLock.current = false;
+      if (mountedRef.current) setTenancyBusy(false);
+    }
+  };
+
+  const handleAddOccupant = async (payload: {
+    name: string;
+    phone: string | null;
+    joinedOn: string;
+  }) => {
+    if (!room || !tenancyProfile?.current || tenancyLock.current) return;
+    tenancyLock.current = true;
+    setTenancyBusy(true);
+    setTenancyActionError(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 18000);
+    try {
+      const token = await tokenStore.get();
+      const next = await addRoomOccupant(
+        room.roomId,
+        tenancyProfile.current.key,
+        payload,
+        token || '',
+        controller.signal
+      );
+      if (!mountedRef.current) return;
+      setTenancyProfile(next);
+      setAddOccupantOpen(false);
+      triggerHaptic('success');
+      setStatusNotice(`Đã thêm người ở cùng "${payload.name}".`);
+    } catch (err) {
+      if (mountedRef.current) {
+        triggerHaptic('medium');
+        setTenancyActionError(
+          err instanceof Error ? err.message : 'Chưa thể thêm người ở cùng.'
+        );
+      }
+    } finally {
+      clearTimeout(timer);
+      tenancyLock.current = false;
+      if (mountedRef.current) setTenancyBusy(false);
+    }
+  };
+
+  const handleMarkOccupantLeft = async (date: string) => {
+    if (!room || !tenancyProfile?.current || !leaveTarget?.id || tenancyLock.current) return;
+    tenancyLock.current = true;
+    setTenancyBusy(true);
+    setTenancyActionError(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 18000);
+    try {
+      const token = await tokenStore.get();
+      const next = await markRoomOccupantLeft(
+        room.roomId,
+        tenancyProfile.current.key,
+        leaveTarget.id,
+        date,
+        token || '',
+        controller.signal
+      );
+      if (!mountedRef.current) return;
+      setTenancyProfile(next);
+      const personName = leaveTarget.name;
+      setLeaveTarget(null);
+      triggerHaptic('success');
+      setStatusNotice(`Đã ghi nhận ngày rời phòng của "${personName}".`);
+    } catch (err) {
+      if (mountedRef.current) {
+        triggerHaptic('medium');
+        setTenancyActionError(
+          err instanceof Error ? err.message : 'Chưa thể lưu ngày rời phòng.'
+        );
+      }
+    } finally {
+      clearTimeout(timer);
+      tenancyLock.current = false;
+      if (mountedRef.current) setTenancyBusy(false);
+    }
+  };
+
+  const handleCloseTenancy = async (date: string) => {
+    if (!room || !tenancyProfile?.current || tenancyLock.current) return;
+    tenancyLock.current = true;
+    setTenancyBusy(true);
+    setTenancyActionError(null);
+    try {
+      let nextProfile: RoomTenancyProfile | null = null;
+      await host.store.mutate(
+        `/host/rooms/${room.roomId}/tenancies/${tenancyProfile.current.key}/close`,
+        { date },
+        'POST',
+        undefined,
+        async (token, signal) => {
+          const res = await closeRoomTenancy(
+            room.roomId,
+            tenancyProfile.current!.key,
+            date,
+            token,
+            signal
+          );
+          nextProfile = res.profile;
+          return res;
+        }
+      );
+      if (!mountedRef.current) return;
+      if (nextProfile) setTenancyProfile(nextProfile);
+      await loadContracts();
+      if (!mountedRef.current) return;
+      setCloseSheetOpen(false);
+      setHandoverMonth(date.slice(0, 7));
+      setActiveTab('history');
+      triggerHaptic('success');
+      setStatusNotice('Đã kết thúc đợt thuê và chuyển phòng về Còn trống.');
+    } catch (err) {
+      if (mountedRef.current) {
+        triggerHaptic('medium');
+        setTenancyActionError(
+          err instanceof Error ? err.message : 'Chưa thể kết thúc đợt thuê.'
+        );
+      }
+    } finally {
+      tenancyLock.current = false;
+      if (mountedRef.current) setTenancyBusy(false);
     }
   };
 
@@ -365,9 +612,14 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
           propertyName={property?.name}
           canManage={canManage}
           reducedMotion={reducedMotion}
+          activeTab={activeTab}
+          onChangeTab={next => {
+            triggerHaptic('selection');
+            setActiveTab(next);
+          }}
           refreshing={host.loading}
           onRefresh={() => {
-            void Promise.all([host.store.refresh(), loadContracts()]);
+            void Promise.all([host.store.refresh(), loadContracts(), loadTenancy()]);
           }}
           contracts={contracts}
           contractsLoading={contractsLoading}
@@ -377,15 +629,82 @@ function RoomDetailView({ roomId }: { roomId: number | null }) {
           onRetryContracts={() => {
             void loadContracts();
           }}
-          onOpenContractReader={() =>
+          tenancyProfile={tenancyProfile}
+          tenancyLoading={tenancyLoading}
+          tenancyError={tenancyError}
+          handoverMonth={handoverMonth}
+          onRetryTenancy={() => {
+            void loadTenancy();
+          }}
+          onOpenContractReader={(contractId?: number) =>
             router.push({
               pathname: '/host/contract',
               params: {
                 roomId: String(room.roomId),
-                ...(displayContract ? { contractId: String(displayContract.id) } : {}),
+                ...(contractId != null
+                  ? { contractId: String(contractId) }
+                  : displayContract
+                  ? { contractId: String(displayContract.id) }
+                  : {}),
               },
             })
           }
+          onOpenContractSigning={(contractId: number) =>
+            router.push({
+              pathname: '/host/contract-sign',
+              params: {
+                roomId: String(room.roomId),
+                contractId: String(contractId),
+              },
+            })
+          }
+          onOpenCreateContract={() =>
+            router.push({
+              pathname: '/host/contract-create',
+              params: {
+                roomId: String(room.roomId),
+                propertyId: String(room.propertyId),
+              },
+            })
+          }
+          onOpenStartTenancy={() => {
+            setTenancyActionError(null);
+            setStartSheetOpen(true);
+          }}
+          onOpenAddOccupant={() => {
+            setTenancyActionError(null);
+            setAddOccupantOpen(true);
+          }}
+          onOpenLeaveOccupant={person => {
+            setTenancyActionError(null);
+            setLeaveTarget(person);
+          }}
+          onOpenCloseTenancy={() => {
+            setTenancyActionError(null);
+            setCloseSheetOpen(true);
+          }}
+          startSheetOpen={startSheetOpen}
+          addOccupantOpen={addOccupantOpen}
+          leaveTarget={leaveTarget}
+          closeSheetOpen={closeSheetOpen}
+          tenancyBusy={tenancyBusy}
+          tenancyActionError={tenancyActionError}
+          onCloseStartSheet={() => setStartSheetOpen(false)}
+          onSubmitStartTenancy={payload => {
+            void handleStartTenancy(payload);
+          }}
+          onCloseAddOccupant={() => setAddOccupantOpen(false)}
+          onSubmitAddOccupant={payload => {
+            void handleAddOccupant(payload);
+          }}
+          onCloseLeaveOccupant={() => setLeaveTarget(null)}
+          onSubmitLeaveOccupant={date => {
+            void handleMarkOccupantLeft(date);
+          }}
+          onCloseEndTenancy={() => setCloseSheetOpen(false)}
+          onSubmitCloseTenancy={date => {
+            void handleCloseTenancy(date);
+          }}
           amenitiesOpen={amenitiesOpen}
           onToggleAmenities={() => setAmenitiesOpen(v => !v)}
           statusNotice={statusNotice}
@@ -452,6 +771,8 @@ function RoomDetailBody({
   propertyName,
   canManage,
   reducedMotion,
+  activeTab,
+  onChangeTab,
   refreshing,
   onRefresh,
   contracts,
@@ -460,7 +781,32 @@ function RoomDetailBody({
   displayContract,
   activeContract,
   onRetryContracts,
+  tenancyProfile,
+  tenancyLoading,
+  tenancyError,
+  handoverMonth,
+  onRetryTenancy,
   onOpenContractReader,
+  onOpenContractSigning,
+  onOpenCreateContract,
+  onOpenStartTenancy,
+  onOpenAddOccupant,
+  onOpenLeaveOccupant,
+  onOpenCloseTenancy,
+  startSheetOpen,
+  addOccupantOpen,
+  leaveTarget,
+  closeSheetOpen,
+  tenancyBusy,
+  tenancyActionError,
+  onCloseStartSheet,
+  onSubmitStartTenancy,
+  onCloseAddOccupant,
+  onSubmitAddOccupant,
+  onCloseLeaveOccupant,
+  onSubmitLeaveOccupant,
+  onCloseEndTenancy,
+  onSubmitCloseTenancy,
   amenitiesOpen,
   onToggleAmenities,
   statusNotice,
@@ -496,6 +842,8 @@ function RoomDetailBody({
   propertyName?: string;
   canManage: boolean;
   reducedMotion: boolean;
+  activeTab: RoomDetailTab;
+  onChangeTab: (next: RoomDetailTab) => void;
   refreshing: boolean;
   onRefresh: () => void;
   contracts: RentalContractView[] | null;
@@ -504,7 +852,41 @@ function RoomDetailBody({
   displayContract: RentalContractView | null;
   activeContract: RentalContractView | null;
   onRetryContracts: () => void;
-  onOpenContractReader: () => void;
+  tenancyProfile: RoomTenancyProfile | null;
+  tenancyLoading: boolean;
+  tenancyError: string | null;
+  handoverMonth: string | null;
+  onRetryTenancy: () => void;
+  onOpenContractReader: (contractId?: number) => void;
+  onOpenContractSigning: (contractId: number) => void;
+  onOpenCreateContract: () => void;
+  onOpenStartTenancy: () => void;
+  onOpenAddOccupant: () => void;
+  onOpenLeaveOccupant: (person: RoomOccupant) => void;
+  onOpenCloseTenancy: () => void;
+  startSheetOpen: boolean;
+  addOccupantOpen: boolean;
+  leaveTarget: RoomOccupant | null;
+  closeSheetOpen: boolean;
+  tenancyBusy: boolean;
+  tenancyActionError: string | null;
+  onCloseStartSheet: () => void;
+  onSubmitStartTenancy: (payload: {
+    name: string;
+    phone: string;
+    startDate: string;
+    endDate: string;
+  }) => void;
+  onCloseAddOccupant: () => void;
+  onSubmitAddOccupant: (payload: {
+    name: string;
+    phone: string | null;
+    joinedOn: string;
+  }) => void;
+  onCloseLeaveOccupant: () => void;
+  onSubmitLeaveOccupant: (date: string) => void;
+  onCloseEndTenancy: () => void;
+  onSubmitCloseTenancy: (date: string) => void;
   amenitiesOpen: boolean;
   onToggleAmenities: () => void;
   statusNotice: string | null;
@@ -558,8 +940,67 @@ function RoomDetailBody({
     displayContract?.endDate || (room.status === 'OCCUPIED' ? room.leaseEndDate : null);
   const hasAnyLeaseDates = Boolean(startDateDisplay || endDateDisplay);
 
+  const openUtilitiesForRoom = (month?: string) => {
+    router.push({
+      pathname: '/host/utilities',
+      params: {
+        propertyId: String(room.propertyId),
+        roomId: String(room.roomId),
+        ...(month ? { month } : {}),
+      },
+    });
+  };
+
+  const openBillingForRoom = (month?: string) => {
+    router.push({
+      pathname: '/host/billing',
+      params: {
+        propertyId: String(room.propertyId),
+        roomId: String(room.roomId),
+        ...(month ? { month } : {}),
+      },
+    });
+  };
+
+  const historyCount = tenancyProfile?.history?.length ?? 0;
+
   return (
     <>
+      {/* 3-Tab Segmented Control matching Website: Thông tin | Hồ sơ thuê | Lịch sử */}
+      <View style={s.tabBarWrap}>
+        <View style={s.tabBarTrack} accessibilityRole="tablist">
+          {(
+            [
+              { key: 'info' as const, label: 'Thông tin' },
+              { key: 'tenancy' as const, label: 'Hồ sơ thuê' },
+              {
+                key: 'history' as const,
+                label: historyCount > 0 ? `Lịch sử (${historyCount})` : 'Lịch sử',
+              },
+            ] as const
+          ).map(item => {
+            const active = activeTab === item.key;
+            return (
+              <AnimatedPressable
+                key={item.key}
+                scaleTo={0.98}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                style={[s.tabBarItem, active && s.tabBarItemActive]}
+                onPress={() => onChangeTab(item.key)}
+              >
+                <Text
+                  style={[s.tabBarText, active && s.tabBarTextActive]}
+                  numberOfLines={1}
+                >
+                  {item.label}
+                </Text>
+              </AnimatedPressable>
+            );
+          })}
+        </View>
+      </View>
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={s.scrollContent}
@@ -586,6 +1027,38 @@ function RoomDetailBody({
             </AnimatedPressable>
           </View>
         )}
+
+        {activeTab === 'tenancy' ? (
+          <RoomCurrentTenancyPanel
+            room={room}
+            profile={tenancyProfile}
+            loading={tenancyLoading}
+            error={tenancyError}
+            canManage={canManage}
+            onRetry={onRetryTenancy}
+            onOpenUtilities={openUtilitiesForRoom}
+            onOpenBilling={openBillingForRoom}
+            onOpenStartTenancy={onOpenStartTenancy}
+            onOpenAddOccupant={onOpenAddOccupant}
+            onOpenLeaveOccupant={onOpenLeaveOccupant}
+            onOpenContract={id => onOpenContractReader(id)}
+            onOpenSigning={id => onOpenContractSigning(id)}
+            onOpenCreateContract={onOpenCreateContract}
+            onOpenCloseTenancy={onOpenCloseTenancy}
+          />
+        ) : activeTab === 'history' ? (
+          <RoomTenancyHistoryPanel
+            profile={tenancyProfile}
+            loading={tenancyLoading}
+            error={tenancyError}
+            handoverMonth={handoverMonth}
+            onRetry={onRetryTenancy}
+            onOpenUtilities={openUtilitiesForRoom}
+            onOpenBilling={openBillingForRoom}
+            onOpenContract={id => onOpenContractReader(id)}
+          />
+        ) : (
+          <>
 
         {/* 2. Tổng quan phòng (Mã phòng, trạng thái, tầng, loại phòng, giá nổi bật nhất, diện tích, sức chứa) */}
         <Animated.View
@@ -721,7 +1194,7 @@ function RoomDetailBody({
                   scaleTo={0.98}
                   accessibilityLabel="Xem hợp đồng thuê phòng"
                   style={s.viewContractBtn}
-                  onPress={onOpenContractReader}
+                  onPress={() => onOpenContractReader(displayContract.id)}
                 >
                   <Feather name="file-text" size={15} color={c.primary} />
                   <Text style={s.viewContractBtnText}>
@@ -731,9 +1204,22 @@ function RoomDetailBody({
                   <Feather name="arrow-right" size={15} color={c.primary} />
                 </AnimatedPressable>
               ) : (
-                <Text style={s.mutedText}>
-                  Phòng chưa có văn bản hợp đồng lưu trên hệ thống cho kỳ thuê này.
-                </Text>
+                <View style={{ gap: 10 }}>
+                  <Text style={s.mutedText}>
+                    Phòng chưa có văn bản hợp đồng lưu trên hệ thống cho kỳ thuê này.
+                  </Text>
+                  {canManage && (
+                    <AnimatedPressable
+                      scaleTo={0.98}
+                      style={s.viewContractBtn}
+                      onPress={onOpenCreateContract}
+                    >
+                      <Feather name="file-plus" size={15} color={c.primary} />
+                      <Text style={s.viewContractBtnText}>Lập hợp đồng thuê phòng</Text>
+                      <Feather name="arrow-right" size={15} color={c.primary} />
+                    </AnimatedPressable>
+                  )}
+                </View>
               )}
             </View>
           ) : (
@@ -871,10 +1357,12 @@ function RoomDetailBody({
             </View>
           )}
         </Animated.View>
+          </>
+        )}
       </ScrollView>
 
-      {/* 6. Thanh thao tác dưới (Cập nhật tình trạng là nút phụ, Chỉnh sửa thông tin là nút chính) */}
-      {canManage && (
+      {/* 6. Thanh thao tác dưới (hiển thị trên tab Thông tin phòng) */}
+      {canManage && activeTab === 'info' && (
         <View style={s.bottomBar}>
           <AnimatedPressable
             scaleTo={0.98}
@@ -904,6 +1392,24 @@ function RoomDetailBody({
         room={room}
         canManage={canManage}
         onClose={onCloseMenu}
+        onOpenUtilities={() =>
+          router.push({
+            pathname: '/host/utilities',
+            params: {
+              propertyId: String(room.propertyId),
+              roomId: String(room.roomId),
+            },
+          })
+        }
+        onOpenBilling={() =>
+          router.push({
+            pathname: '/host/billing',
+            params: {
+              propertyId: String(room.propertyId),
+              roomId: String(room.roomId),
+            },
+          })
+        }
         onOpenRoomType={onOpenRoomType}
         onRequestDelete={onRequestDelete}
       />
@@ -936,6 +1442,49 @@ function RoomDetailBody({
         roomNumber={room.roomNumber}
         contracts={contracts || []}
         onClose={onCloseContractReader}
+      />
+
+      {/* Tenancy Management Bottom Sheets */}
+      <TenancyStartSheet
+        visible={startSheetOpen}
+        room={room}
+        today={tenancyProfile?.today || new Date().toISOString().slice(0, 10)}
+        busy={tenancyBusy}
+        error={tenancyActionError}
+        onClose={onCloseStartSheet}
+        onSubmit={onSubmitStartTenancy}
+      />
+
+      <TenancyAddOccupantSheet
+        visible={addOccupantOpen}
+        lease={tenancyProfile?.current ?? null}
+        today={tenancyProfile?.today || new Date().toISOString().slice(0, 10)}
+        hasActiveContract={Boolean(tenancyProfile?.current?.contractId)}
+        busy={tenancyBusy}
+        error={tenancyActionError}
+        onClose={onCloseAddOccupant}
+        onSubmit={onSubmitAddOccupant}
+      />
+
+      <TenancyLeaveOccupantSheet
+        person={leaveTarget}
+        today={tenancyProfile?.today || new Date().toISOString().slice(0, 10)}
+        busy={tenancyBusy}
+        error={tenancyActionError}
+        onClose={onCloseLeaveOccupant}
+        onSubmit={onSubmitLeaveOccupant}
+      />
+
+      <TenancyCloseSheet
+        visible={closeSheetOpen}
+        room={room}
+        lease={tenancyProfile?.current ?? null}
+        today={tenancyProfile?.today || new Date().toISOString().slice(0, 10)}
+        busy={tenancyBusy}
+        error={tenancyActionError}
+        onClose={onCloseEndTenancy}
+        onOpenBilling={() => openBillingForRoom()}
+        onConfirm={onSubmitCloseTenancy}
       />
     </>
   );
@@ -1201,6 +1750,44 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: c.background,
+  },
+  tabBarWrap: {
+    paddingHorizontal: authSpacing.lg,
+    paddingTop: 4,
+    paddingBottom: 8,
+    backgroundColor: c.background,
+  },
+  tabBarTrack: {
+    flexDirection: 'row',
+    backgroundColor: '#E9F0ED',
+    borderRadius: authRadius.lg,
+    padding: 4,
+    gap: 4,
+  },
+  tabBarItem: {
+    flex: 1,
+    minHeight: 38,
+    borderRadius: authRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  tabBarItemActive: {
+    backgroundColor: c.surface,
+    shadowColor: '#142D29',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  tabBarText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: c.textSecondary,
+  },
+  tabBarTextActive: {
+    color: c.primary,
+    fontWeight: '700',
   },
   header: {
     paddingHorizontal: authSpacing.lg,

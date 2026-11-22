@@ -63,7 +63,7 @@ test('empty floor starts at 01 and existing floors continue sequentially across 
     extraRooms: 3,
     existingAndDraftRooms: [
       { floor: 'Tầng 1', roomNumber: '102' }, // saved
-      { floor: 'Tầng 1', roomNumber: '104' }, // draft
+      { floor: 'Tầng 1', roomNumber: 'P.104' }, // draft
     ],
     batchId: 'b1',
   });
@@ -164,8 +164,8 @@ test('draft room validation detects duplicates against both saved and draft room
   ];
   const savedRooms = [{ roomNumber: '101' }];
   const draftRows = [
-    { rowId: 'r1', batchId: 'b1', floor: 'Tầng 1', roomNumber: '101', roomTypeId: 10 }, // dup saved
-    { rowId: 'r2', batchId: 'b1', floor: 'Tầng 1', roomNumber: '102', roomTypeId: -1 }, // dup draft
+    { rowId: 'r1', batchId: 'b1', floor: 'Tầng 1', roomNumber: 'P.101', roomTypeId: 10 }, // dup saved
+    { rowId: 'r2', batchId: 'b1', floor: 'Tầng 1', roomNumber: 'P.0102', roomTypeId: -1 }, // dup draft
     { rowId: 'r3', batchId: 'b1', floor: 'Tầng 1', roomNumber: '102', roomTypeId: -1 }, // dup draft
     { rowId: 'r4', batchId: 'b1', floor: 'Tầng 1', roomNumber: '103', roomTypeId: null }, // unassigned
     { rowId: 'r5', batchId: 'b1', floor: 'Tầng 1', roomNumber: '104', roomTypeId: -1 }, // valid

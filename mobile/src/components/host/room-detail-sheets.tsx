@@ -40,6 +40,8 @@ export function RoomDetailMenuSheet({
   room,
   canManage,
   onClose,
+  onOpenUtilities,
+  onOpenBilling,
   onOpenRoomType,
   onRequestDelete,
 }: {
@@ -47,6 +49,8 @@ export function RoomDetailMenuSheet({
   room: HostRoom;
   canManage: boolean;
   onClose: () => void;
+  onOpenUtilities?: () => void;
+  onOpenBilling?: () => void;
   onOpenRoomType: () => void;
   onRequestDelete: () => void;
 }) {
@@ -73,6 +77,52 @@ export function RoomDetailMenuSheet({
           </View>
 
           <View style={{ gap: 10, paddingBottom: 6 }}>
+            {onOpenUtilities ? (
+              <AnimatedPressable
+                scaleTo={0.98}
+                style={s.menuOption}
+                accessibilityLabel={`Ghi điện nước phòng ${room.roomNumber}`}
+                onPress={() => {
+                  onClose();
+                  onOpenUtilities();
+                }}
+              >
+                <View style={s.menuOptionIcon}>
+                  <Feather name="zap" size={18} color={c.primary} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={s.menuOptionTitle}>Ghi điện nước phòng này</Text>
+                  <Text style={s.menuOptionSub} numberOfLines={1}>
+                    Ghi chỉ số điện nước và chốt kỳ cho phòng {room.roomNumber}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={c.textMuted} />
+              </AnimatedPressable>
+            ) : null}
+
+            {onOpenBilling ? (
+              <AnimatedPressable
+                scaleTo={0.98}
+                style={s.menuOption}
+                accessibilityLabel={`Phiếu thu và công nợ phòng ${room.roomNumber}`}
+                onPress={() => {
+                  onClose();
+                  onOpenBilling();
+                }}
+              >
+                <View style={s.menuOptionIcon}>
+                  <Feather name="file-text" size={18} color={c.primary} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={s.menuOptionTitle}>Phiếu thu & Công nợ phòng này</Text>
+                  <Text style={s.menuOptionSub} numberOfLines={1}>
+                    Xem công nợ, lập phiếu thu hoặc ghi nhận thanh toán phòng {room.roomNumber}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={c.textMuted} />
+              </AnimatedPressable>
+            ) : null}
+
             <AnimatedPressable
               scaleTo={0.98}
               style={s.menuOption}

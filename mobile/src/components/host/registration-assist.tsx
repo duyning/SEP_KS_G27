@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -18,15 +19,20 @@ import { AnimatedPressable } from '@/components/home/animated-pressable';
 import { authColors as c, authRadius, authSpacing } from '@/components/auth/tokens';
 import { useReducedMotionPreference } from '@/constants/motion';
 import { tokenStore } from '@/services/auth';
-import { hostRequest } from '@/services/host';
+import { HostError, hostRequest } from '@/services/host';
 import {
   AMENITIES,
-  PROPERTY_AREAS,
+  firstResolvedRegistrationAddress,
+  registrationLocationPatch,
   registrationPoint,
   ruleLabel,
+  type RegistrationAddressMatch,
+  type RegistrationLocationPatch,
+  type RegistrationLocationSuggestion,
   type RegistrationValues,
+  type ResolvedRegistrationAddress,
 } from '@/services/property-registration';
-import { RegistrationLocationMap, type RegistrationPoint } from './registration-location-map';
+import { RegistrationLocationMap } from './registration-location-map';
 
 export function RegistrationSheet({
   title,
@@ -242,45 +248,34 @@ export function DescriptionAssistResult({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Location Picker Sheet (Map-first, collapsible link/coordinate lookup)       */
+/* Location Picker Sheet                                                      */
 /* -------------------------------------------------------------------------- */
 
-type LocationSuggestion = RegistrationPoint & {
-  addressDetail?: string;
-  commune?: string;
-  nearby?: string;
-  warnings?: string[];
-  attribution?: string;
-};
-
 type LinkLookup = {
-  location: LocationSuggestion | null;
+  location: RegistrationLocationSuggestion | null;
   addressQuery: string | null;
 };
 
-type AddressMatch = { refId: string; display: string };
-
 export function LocationSheet({
   values,
+  lookupPath = '/host/property-registrations/location/resolve-mobile',
   onApply,
   onClose,
 }: {
   values: RegistrationValues;
-  onApply(
-    point: RegistrationPoint,
-    suggested?: Pick<LocationSuggestion, 'addressDetail' | 'commune' | 'nearby'>
-  ): void;
+  lookupPath?: string;
+  onApply(location: RegistrationLocationPatch): void;
   onClose(): void;
 }) {
   const [point, setPoint] = useState(() => registrationPoint(values.latitude, values.longitude));
-  const [suggestion, setSuggestion] = useState<LocationSuggestion | null>(null);
+  const [suggestion, setSuggestion] = useState<RegistrationLocationSuggestion | null>(null);
   const [mapKey, setMapKey] = useState(0);
   const [linkOpen, setLinkOpen] = useState(false);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [address, setAddress] = useState<string | null>(null);
-  const [matches, setMatches] = useState<AddressMatch[]>([]);
+  const [match, setMatch] = useState<ResolvedRegistrationAddress | null>(null);
   const [addressError, setAddressError] = useState('');
   const request = useRef<AbortController | null>(null);
 
@@ -307,7 +302,7 @@ export function LocationSheet({
     }
   };
 
-  const showLocation = (result: LocationSuggestion) => {
+  const showLocation = (result: RegistrationLocationSuggestion) => {
     const resolved = registrationPoint(String(result?.latitude), String(result?.longitude));
     if (!resolved) throw new Error('Máy chủ chưa trả về tọa độ hợp lệ.');
     setPoint(resolved);
@@ -316,18 +311,30 @@ export function LocationSheet({
   };
 
   const findAddress = async (text: string, token: string, signal: AbortSignal) => {
+    setMatch(null);
     const search = (query: string) =>
-      hostRequest<AddressMatch[]>('/property-location/autocomplete', token, signal, { text: query }, 'POST');
+      hostRequest<RegistrationAddressMatch[]>('/property-location/autocomplete', token, signal, { text: query }, 'POST');
     try {
       let results = await search(text);
       const addressOnly = text.includes(',') ? text.slice(text.indexOf(',') + 1).trim() : '';
       if (!results.length && addressOnly.length >= 3 && !signal.aborted) {
         results = await search(addressOnly);
       }
+      const resolved = await firstResolvedRegistrationAddress(results, async refId => {
+        try {
+          return await hostRequest<RegistrationLocationSuggestion>(
+            '/property-location/place', token, signal, { refId }, 'POST'
+          );
+        } catch (cause) {
+          // An autocomplete result may have an unsupported reference or no place details.
+          if (cause instanceof HostError && [400, 404, 422, 502].includes(cause.status)) return null;
+          throw cause;
+        }
+      }, signal);
       if (!signal.aborted) {
-        setMatches(results);
+        setMatch(resolved);
         setAddressError(
-          results.length ? '' : 'Không tìm thấy địa chỉ phù hợp. Hãy sửa từ khóa hoặc đặt ghim trên bản đồ.'
+          resolved ? '' : 'Không tìm thấy địa chỉ có tọa độ. Hãy sửa từ khóa hoặc đặt ghim trên bản đồ.'
         );
       }
     } catch (cause) {
@@ -344,13 +351,14 @@ export function LocationSheet({
     }
     const pair = raw.match(/^([+-]?\d+(?:\.\d+)?)\s*[,;\s]\s*([+-]?\d+(?:\.\d+)?)$/);
     const localPoint = pair ? registrationPoint(pair[1], pair[2]) : null;
+    Keyboard.dismiss();
     setError('');
     setAddress(null);
-    setMatches([]);
+    setMatch(null);
     setAddressError('');
     void runLookup(async (token, signal) => {
       const result = await hostRequest<LinkLookup>(
-        '/host/property-registrations/location/resolve-mobile',
+        lookupPath,
         token,
         signal,
         { input: localPoint ? `${localPoint.latitude},${localPoint.longitude}` : raw },
@@ -358,9 +366,10 @@ export function LocationSheet({
         { timeoutMs: 40_000 }
       );
       if (signal.aborted) return;
-      if (result.location) {
+      if (result?.location) {
         showLocation(result.location);
-      } else if (result.addressQuery) {
+        setLinkOpen(false);
+      } else if (result?.addressQuery) {
         setAddress(result.addressQuery);
         await findAddress(result.addressQuery, token, signal);
       } else {
@@ -376,55 +385,35 @@ export function LocationSheet({
     });
   };
 
-  const canApplyAddress = Boolean(
-    suggestion &&
-      (suggestion.addressDetail ||
-        suggestion.nearby ||
-        PROPERTY_AREAS.includes(suggestion.commune || ''))
-  );
+  const savePin = () => {
+    if (!point || request.current) return;
+    const apply = (details?: RegistrationLocationSuggestion) =>
+      onApply(registrationLocationPatch(values, point, details));
+    if (suggestion?.addressDetail || suggestion?.commune || suggestion?.nearby) {
+      apply(suggestion);
+      return;
+    }
+    void runLookup(async (token, signal) => {
+      const details = await hostRequest<RegistrationLocationSuggestion>(
+        '/property-location/reverse', token, signal, point, 'POST', { timeoutMs: 6_000 }
+      );
+      if (!signal.aborted) apply(details);
+    }, () => apply());
+  };
 
   return (
     <RegistrationSheet
       title="Chọn vị trí trên bản đồ"
       onClose={onClose}
-      footer={
-        <View style={{ gap: 8 }}>
-          {point && canApplyAddress && suggestion && (
-            <AnimatedPressable
-              scaleTo={0.98}
-              disabled={busy}
-              style={s.applyWithSuggestBtn}
-              onPress={() => onApply(point, suggestion)}
-            >
-              <Feather name="check-circle" size={16} color={c.primary} />
-              <Text style={s.applyWithSuggestText}>Dùng ghim và điền địa chỉ gợi ý</Text>
-            </AnimatedPressable>
-          )}
-          <PrimaryButton
-            title={point ? 'Lưu ghim vị trí' : 'Chạm bản đồ để đặt ghim'}
-            disabled={!point || busy}
-            onPress={() => {
-              if (point) onApply(point);
-            }}
-          />
-        </View>
-      }
+      footer={linkOpen && !point ? undefined : (
+        <PrimaryButton
+          title={point ? 'Lưu ghim vị trí' : 'Chạm bản đồ để đặt ghim'}
+          disabled={!point || busy}
+          loading={Boolean(point && busy && !linkOpen)}
+          onPress={savePin}
+        />
+      )}
     >
-      {/* Map takes priority at top */}
-      <RegistrationLocationMap
-        key={mapKey}
-        point={point}
-        onSelect={next => {
-          if (request.current) {
-            request.current.abort();
-            request.current = null;
-            setBusy(false);
-          }
-          setPoint(next);
-          setSuggestion(null);
-        }}
-      />
-
       {/* Collapsible Link or Coordinate Lookup */}
       <View style={s.lookupCard}>
         <AnimatedPressable
@@ -432,7 +421,10 @@ export function LocationSheet({
           accessibilityRole="button"
           accessibilityState={{ expanded: linkOpen }}
           style={s.lookupToggle}
-          onPress={() => setLinkOpen(v => !v)}
+          onPress={() => {
+            if (linkOpen) Keyboard.dismiss();
+            setLinkOpen(!linkOpen);
+          }}
         >
           <View style={s.lookupIconBox}>
             <Feather name="link" size={15} color={c.primary} />
@@ -458,7 +450,7 @@ export function LocationSheet({
                 setInput(val);
                 setError('');
                 setAddress(null);
-                setMatches([]);
+                setMatch(null);
                 setAddressError('');
               }}
               maxLength={1500}
@@ -496,7 +488,7 @@ export function LocationSheet({
                   value={address}
                   onChangeText={text => {
                     setAddress(text);
-                    setMatches([]);
+                    setMatch(null);
                     setAddressError('');
                   }}
                   maxLength={200}
@@ -508,6 +500,7 @@ export function LocationSheet({
                   disabled={busy || address.trim().length < 3}
                   style={[s.lookupActionBtn, (busy || address.trim().length < 3) && { opacity: 0.65 }]}
                   onPress={() => {
+                    Keyboard.dismiss();
                     setAddressError('');
                     void runLookup((token, signal) => findAddress(address.trim(), token, signal),
                       () => setAddressError('Chưa tìm được địa chỉ.'));
@@ -515,39 +508,43 @@ export function LocationSheet({
                 >
                   <Text style={s.lookupActionText}>Tìm địa chỉ</Text>
                 </AnimatedPressable>
-                {matches.map(match => (
+                {match && (
                   <AnimatedPressable
-                    key={match.refId}
                     accessibilityRole="button"
                     disabled={busy}
                     style={s.addressMatch}
                     onPress={() => {
-                      setAddressError('');
-                      void runLookup(async (token, signal) => {
-                        const result = await hostRequest<LocationSuggestion>(
-                          '/property-location/place', token, signal, { refId: match.refId }, 'POST'
-                        );
-                        if (signal.aborted) return;
-                        showLocation(result);
-                        setAddress(null);
-                        setMatches([]);
-                      }, cause => setAddressError(
-                        cause instanceof Error ? cause.message : 'Chưa lấy được tọa độ. Hãy thử lại.'
-                      ));
+                      showLocation(match.location);
+                      setAddress(null);
+                      setMatch(null);
+                      setLinkOpen(false);
                     }}
                   >
                     <Feather name="map-pin" size={16} color={c.primary} />
                     <Text style={[s.suggestionLine, { flex: 1 }]}>{match.display}</Text>
                     <Feather name="chevron-right" size={15} color={c.textSecondary} />
                   </AnimatedPressable>
-                ))}
+                )}
               </View>
             )}
           </View>
         )}
       </View>
 
-      {/* Suggestion Preview Card (optional apply — never silently overwrites address) */}
+      <RegistrationLocationMap
+        key={mapKey}
+        point={point}
+        onSelect={next => {
+          if (request.current) {
+            request.current.abort();
+            request.current = null;
+            setBusy(false);
+          }
+          setPoint(next);
+          setSuggestion(null);
+        }}
+      />
+
       {suggestion && (
         <View style={s.suggestionCard}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -793,21 +790,5 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: c.forestInk,
-  },
-  applyWithSuggestBtn: {
-    minHeight: 46,
-    borderRadius: authRadius.lg,
-    backgroundColor: c.primaryLight,
-    borderWidth: 1,
-    borderColor: c.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  applyWithSuggestText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: c.primary,
   },
 });
