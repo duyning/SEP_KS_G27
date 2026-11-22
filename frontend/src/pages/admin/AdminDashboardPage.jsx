@@ -6,6 +6,7 @@ import {useAuth} from '../../context/AuthContext.jsx';
 import {adminDashboardViews, getAdminDashboardView} from '../../routing/admin-navigation.js';
 import {roleLabels} from '../../routing/screens.js';
 import {adminApi} from '../../services/admin.js';
+import useCommunityLive from '../../components/useCommunityLive.js';
 import '../../styles/admin-dashboard.css';
 
 const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Ngừng hoạt động'};
@@ -29,6 +30,7 @@ export default function AdminDashboardPage(){
  const view=getAdminDashboardView(params);
  const q=params.get('q')||'',role=params.get('role')||'ALL',unassigned=params.get('unassigned')==='true',page=Math.max(0,parseInt(params.get('page'),10)||0);
  const [revision,setRevision]=useState(0),[query,setQuery]=useState(q);
+ useCommunityLive('posts,reports',()=>{if(['overview','activity'].includes(view))setRevision(value=>value+1);});
  const [overview,setOverview]=useState({loading:true,data:null,error:''}),[list,setList]=useState({loading:true,data:null,error:''});
  useEffect(()=>{const timer=setTimeout(()=>setQuery(q),250);return()=>clearTimeout(timer);},[q]);
  useEffect(()=>{const controller=new AbortController();setOverview({loading:true,data:null,error:''});adminApi.dashboard(controller.signal).then(data=>{if(!controller.signal.aborted)setOverview({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setOverview({loading:false,data:null,error:error.message});});return()=>controller.abort();},[user.userId,revision]);

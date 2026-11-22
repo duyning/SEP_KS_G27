@@ -3,8 +3,27 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { StateView } from '../../components/PortalUI.jsx';
 import { useViewingData, ViewingLoadState, ViewingPagination } from '../../components/ViewingUI.jsx';
 import { formatViewingDate, hostViewingLink, viewingApi, viewingLink } from '../../services/viewings.js';
+import CommunityNotificationInbox from '../../components/CommunityNotificationInbox.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function NotificationsPage({ host = false }) {
+  const [params] = useSearchParams();
+  const { user } = useAuth();
+  const community = params.get('tab') === 'community' || !host && !params.has('tab');
+  const member = ['USER', 'ROOM_HOST'].includes(user?.role);
+  const path = host ? '/host/notifications' : '/notifications';
+  if (!member) return <ViewingNotifications host={host} />;
+  return <div className="cn-center">
+    <h1>Thông báo của bạn</h1>
+    <nav className="cn-center-tabs" aria-label="Loại thông báo">
+      <Link to={`${path}?tab=community`} aria-current={community ? 'page' : undefined}>Cộng đồng</Link>
+      <Link to={`${path}?tab=viewings`} aria-current={!community ? 'page' : undefined}>Lịch xem phòng</Link>
+    </nav>
+    {community ? <CommunityNotificationInbox /> : <ViewingNotifications host={host} />}
+  </div>;
+}
+
+function ViewingNotifications({ host = false }) {
   const [params, setParams] = useSearchParams();
   const unread = params.get('unread') === 'true';
   const rawPage = Number(params.get('page'));
@@ -33,12 +52,12 @@ export default function NotificationsPage({ host = false }) {
 
   function change(nextUnread, nextPage = 0) {
     setActionError('');
-    setParams({ ...(nextUnread ? { unread: 'true' } : {}), ...(nextPage ? { page: nextPage } : {}) });
+    setParams({ tab: 'viewings', ...(nextUnread ? { unread: 'true' } : {}), ...(nextPage ? { page: nextPage } : {}) });
   }
 
   return <section className="viewing-flow">
     <header className="viewing-heading">
-      <div>{!host && <h1>Thông báo của bạn</h1>}<p>Yêu cầu mới và phản hồi về lịch xem phòng.</p></div>
+      <div><h2>Thông báo lịch xem phòng</h2><p>Yêu cầu mới và phản hồi về lịch xem phòng.</p></div>
       <button type="button" className="p-button" disabled={busy !== null} onClick={reload}>Làm mới</button>
     </header>
     <div className="viewing-actions">

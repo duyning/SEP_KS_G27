@@ -12,17 +12,31 @@ import CommunityPostFooter from './CommunityPostFooter.jsx';
 import CommunityFeedCard, {CommunityCategoryBadge} from './CommunityFeedCard.jsx';
 import CommunityPostContactLinks from './CommunityPostContactLinks.jsx';
 import CommunityReportDialog from './CommunityReportDialog.jsx';
+import CommunityPostComments from './CommunityPostComments.jsx';
+import useCommunityLive from './useCommunityLive.js';
 import Modal from './common/Modal.jsx';
 import {AnimatePresence,MotionButton} from './motion/MotionUI.jsx';
+const ignoreCommentCount = () => {};
 
 function InlinePhoto({postId,image}){const photo=useCommunityImage(postId,image.id);return photo.url?<img src={photo.url} alt={image.fileName} onError={photo.fail}/>:<p role="status">{photo.loading?'Đang tải ảnh...':'Không tải được ảnh'}</p>}
 export default function CommunityPrototype({state,mine,user,params,setParams,onCreate,onEdit,onDelete,deleting}){
  const navigate=useNavigate(),route=useLocation(),posts=state.data||[];
  const {category,q,location,sort}=readFeedFilters(params);
  const focusedId=Number(route.hash.match(/^#post-(\d+)$/)?.[1]);
+ const notificationComment=Number(params.get('comment'));
+ const commentFocus=notificationComment>0?{commentId:notificationComment,rootId:Number(params.get('root')),page:Math.max(0,Number(params.get('commentPage'))||0)}:null;
  const sharedScope=`${mine}:${user?.userId??''}:${focusedId}`;
  const [shared,setShared]=useState(null);
+ const [sharedRevision,setSharedRevision]=useState(0);
+ useCommunityLive('posts',()=>{if(focusedId)setSharedRevision(value=>value+1);},focusedId||null);
  const selected=posts.find(post=>post.id===focusedId)||(shared?.scope===sharedScope?shared.post:null);
+ const notificationTarget=params.has('notification')&&focusedId>0;
+ const visiblePosts=notificationTarget&&selected&&!posts.some(post=>post.id===focusedId)?[selected,...posts]:posts;
+ useEffect(()=>{
+  if(!notificationTarget||!selected||commentFocus)return;
+  const target=document.getElementById(`post-${focusedId}`);
+  target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});
+ },[notificationTarget,selected?.id,route.key]);
  const sentinel=useRef(null),loadMore=useRef(state.loadMore);
  loadMore.current=state.loadMore;
  const [showBackToTop,setShowBackToTop]=useState(false);
@@ -49,12 +63,12 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
  useEffect(()=>{
   if(!focusedId||posts.some(post=>post.id===focusedId))return;
   const controller=new AbortController();
-  setShared({scope:sharedScope,post:null,error:''});
+  setShared(current=>current?.scope===sharedScope?current:{scope:sharedScope,post:null,error:''});
   communityApi.feedPost(focusedId,mine,controller.signal).then(post=>{
    if(!controller.signal.aborted)setShared({scope:sharedScope,post,error:''});
-  }).catch(error=>{if(!controller.signal.aborted)setShared({scope:sharedScope,post:null,error:error.message});});
+  }).catch(error=>{if(!controller.signal.aborted)setShared(current=>({scope:sharedScope,post:error.status===404?null:current?.scope===sharedScope?current.post:null,error:error.message}));});
   return()=>controller.abort();
- },[sharedScope]);
+ },[sharedScope,sharedRevision,posts.some(post=>post.id===focusedId)]);
  useEffect(()=>{document.title='Cộng đồng Hòa Lạc | HL_RCS';},[]);
  useEffect(()=>{
   if(!user){setMineCount(null);return;}
@@ -85,12 +99,12 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
    {state.refreshing&&<p className="community-background-status" role="status"><LoaderCircle className="spin" size={16}/>Đang cập nhật dữ liệu mới. Nội dung hiện tại vẫn được giữ nguyên.</p>}
    {state.refreshError&&<div className="community-background-status community-background-status--error" role="alert"><span>Không thể cập nhật dữ liệu mới: {state.refreshError}</span><button type="button" onClick={state.reload}>Thử lại</button></div>}
    {state.loading&&<div className="community-empty-state" role="status">Đang tải bài viết...</div>}{state.error&&<div className="community-empty-state" role="alert"><h2>Không thể tải bài viết</h2><p>{state.error}</p><button type="button" className="btn-empty-reset" onClick={state.reload}>Thử lại</button></div>}
-   {!state.loading&&!state.error&&!posts.length&&<div className="community-empty-state" role="status"><div className="empty-icon-box"><Search size={48}/></div><h2 className="empty-title">Không tìm thấy bài viết phù hợp</h2><p className="empty-desc">{mine?'Bạn chưa có bài viết phù hợp trong danh mục này.':'Không có bài viết nào khớp với bộ lọc hiện tại. Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.'}</p><div className="empty-actions"><button type="button" className="btn-empty-reset" onClick={reset}>Xóa bộ lọc</button><button type="button" className="btn-create-post" onClick={onCreate}>Đăng bài mới</button></div></div>}
-   <div className="community-feed-list" id="communityFeedList" tabIndex={-1} aria-label="Danh sách bài viết">{posts.map(post=>{
-    return <CommunityFeedCard key={post.id} post={post} showStatus={mine}>
+   {!state.loading&&!state.error&&!visiblePosts.length&&<div className="community-empty-state" role="status"><div className="empty-icon-box"><Search size={48}/></div><h2 className="empty-title">Không tìm thấy bài viết phù hợp</h2><p className="empty-desc">{mine?'Bạn chưa có bài viết phù hợp trong danh mục này.':'Không có bài viết nào khớp với bộ lọc hiện tại. Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác.'}</p><div className="empty-actions"><button type="button" className="btn-empty-reset" onClick={reset}>Xóa bộ lọc</button><button type="button" className="btn-create-post" onClick={onCreate}>Đăng bài mới</button></div></div>}
+   <div className="community-feed-list" id="communityFeedList" tabIndex={-1} aria-label="Danh sách bài viết">{visiblePosts.map(post=>{
+    return <CommunityFeedCard key={post.id} post={post} showStatus={mine} focused={notificationTarget&&post.id===focusedId}>
      {mine&&post.status==='NEED_CHANGES'&&<section className="community-revision-note" aria-label="Yêu cầu chỉnh sửa từ nhân viên"><strong>Nhân viên yêu cầu chỉnh sửa</strong><p>{post.decisionNote||'Vui lòng kiểm tra và cập nhật lại nội dung bài viết.'}</p><button type="button" className="btn-view-detail" onClick={()=>onEdit(post)}>Chỉnh sửa và gửi duyệt lại</button></section>}
      {mine&&post.status==='REJECTED'&&<p className="community-rejected-note">Lý do từ chối: {post.decisionNote||'Nội dung không phù hợp tiêu chuẩn cộng đồng.'}</p>}
-     <CommunityPostFooter post={post} deleting={deleting} onDelete={()=>onDelete(post)} onReport={setReportPost}/>
+     <CommunityPostFooter key={notificationTarget&&post.id===focusedId?route.key:post.id} post={post} focus={notificationTarget&&post.id===focusedId?commentFocus:null} deleting={deleting} onDelete={()=>onDelete(post)} onReport={setReportPost}/>
      </CommunityFeedCard>;
    })}</div>
    <div ref={sentinel} className="community-feed-load-more" aria-busy={state.loadingMore}>
@@ -102,8 +116,12 @@ export default function CommunityPrototype({state,mine,user,params,setParams,onC
   </section><CommunityPrototypeSidebar onZone={value=>change({location:value})}/></div></main>
   {showBackToTop&&<button type="button" className="community-back-to-top" aria-label="Cuộn lên đầu trang" title="Cuộn lên đầu trang" onClick={scrollToTop}><ArrowUp size={22} aria-hidden="true"/></button>}
   {reportPost&&<CommunityReportDialog post={reportPost} user={user} onClose={()=>setReportPost(null)}/>}
-  <AnimatePresence>{selected&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} closeOnEscape={!reportPost} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}{canReportCommunityPost(selected,user)&&<MotionButton className="p-button" onClick={()=>setReportPost(selected)}>Báo cáo bài viết</MotionButton>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><CommunityCategoryBadge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p>
+  <AnimatePresence>{selected&&!notificationTarget&&<Modal title={selected.title} maxWidth="900px" className="community-detail-prototype" onClose={closeDetail} closeOnEscape={!reportPost} footer={<div className="community-detail-actions">{detailPhone(selected.authorPhone)&&<a className="btn-quick-call" href={`tel:${detailPhone(selected.authorPhone)}`}><Phone size={16}/>Gọi {selected.authorName}</a>}{canReportCommunityPost(selected,user)&&<MotionButton className="p-button" onClick={()=>setReportPost(selected)}>Báo cáo bài viết</MotionButton>}<MotionButton className="p-button" onClick={closeDetail}>Đóng</MotionButton></div>}><CommunityCategoryBadge post={selected}/><p className="community-detail-meta">{selected.authorName} · {communityDate(selected.createdAt)}</p><p className="post-main-price">{selected.priceDisplay}</p><p className="community-detail-meta"><MapPin size={16}/>{selected.location}</p>
     <CommunityPostContactLinks post={selected}/>
-    <div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}</Modal>}</AnimatePresence>
+    {mine&&<><p>{selected.statusLabel}</p>{selected.decisionNote&&<p>{selected.decisionNote}</p>}
+      {['NEED_CHANGES','REJECTED'].includes(selected.status)&&<button type="button" className="p-button" onClick={()=>{closeDetail();onEdit(selected);}}>Chỉnh sửa bài viết</button>}</>}
+    <div className="community-detail-copy">{selected.content}</div><div className="community-detail-photos">{selected.images.map(image=><InlinePhoto key={image.id} postId={selected.id} image={image}/>)}</div>{selected.videos.map(video=><CommunityPostVideo key={video.id} postId={selected.id} video={video}/>)}
+    {commentFocus&&selected.status==='APPROVED'&&<CommunityPostComments key={`${selected.id}:${notificationComment}`} postId={selected.id} user={user} focus={commentFocus} onCount={ignoreCommentCount}/>}
+    </Modal>}</AnimatePresence>
  </>;
 }

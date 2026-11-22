@@ -9,6 +9,8 @@ import { useToast } from '../components/PortalUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { hostApi } from '../services/host.js';
 import { HostHeaderTarget } from '../components/HostHeaderSlot.jsx';
+import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
+import useCommunityLive from '../components/useCommunityLive.js';
 import { staffHostApi } from '../services/staff-host-applications.js';
 import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
@@ -92,6 +94,7 @@ export default function PortalLayout({ screen, children }) {
     return () => controller.abort();
   }, [portal, user?.userId, location.key]);
   const [staffRevision, setStaffRevision] = useState(0);
+  useCommunityLive('posts', () => { if (portal === 'staff') setStaffRevision(value => value + 1); });
   useEffect(() => {
     if (portal !== 'staff') return;
     const refresh = () => setStaffRevision(value => value + 1);
@@ -279,7 +282,7 @@ export default function PortalLayout({ screen, children }) {
             <nav className="public-desktop-nav" aria-label="Điều hướng chính">
               {location.pathname==='/'?<><a href="#nha-tro">Tìm phòng trọ</a><a href="#khu-vuc">Khu vực Hòa Lạc</a><a href="#loi-the">Lợi thế HL_RCS</a><a href="#chu-tro">Dành cho Chủ trọ</a></>:publicLinks.map(([label, to]) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
-            <div className="public-account">{account}</div>
+            <div className="public-account"><CommunityNotificationBell />{account}</div>
             <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={23} />
             </MotionButton>
@@ -297,6 +300,7 @@ export default function PortalLayout({ screen, children }) {
             </div>
           </div>
           <div className="portal-topbar-right">
+            <CommunityNotificationBell />
             {portal === 'host' && screen.path === '/host' && <div className="host-header-actions" ref={setHostHeaderTarget}/>}
             <Link className="btn-view-public-site" to="/" title="Xem giao diện tìm kiếm phòng của người thuê">
               <ExternalLink size={15} /> <span className="hide-mobile">Trang người thuê</span>

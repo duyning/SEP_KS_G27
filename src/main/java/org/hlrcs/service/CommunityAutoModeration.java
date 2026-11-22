@@ -28,6 +28,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class CommunityAutoModeration {
+    private java.util.function.Consumer<CommunityNotificationEvent> notificationEvents = event -> {};
+    private java.util.function.Consumer<CommunityRealtimeEvent> liveEvents = event -> {};
+    @org.springframework.beans.factory.annotation.Autowired
+    void notificationPublisher(org.springframework.context.ApplicationEventPublisher publisher) {
+        notificationEvents = publisher::publishEvent;
+        liveEvents = publisher::publishEvent;
+    }
+
     public enum Mode { OFF, ASSIST, AUTO }
     public record Settings(Mode mode, boolean configured) {}
 
@@ -64,6 +72,7 @@ public class CommunityAutoModeration {
         synchronized (decisionLock) {
             if (mode != next) modeGeneration++;
             mode = next;
+            tx.executeWithoutResult(status -> liveEvents.accept(new CommunityRealtimeEvent("posts", null, null, false, true, true)));
             return settings();
         }
     }
@@ -138,6 +147,7 @@ public class CommunityAutoModeration {
         }
         job.setState(State.RUNNING);
         job.setStartedAt(now);
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         String context = json.writeValueAsString(new PostContext(post.getPostType().name(), post.getTitle(), post.getDescription()));
         return new Work(job.getId(), post.getPostId(), job.getRevision(), modeGeneration,
                 mode == Mode.AUTO && job.isAutoEligible(), context, media.findByPost_PostIdOrderByMediaIdAsc(post.getPostId()));
@@ -150,6 +160,7 @@ public class CommunityAutoModeration {
         job.setState(result);
         job.setFindings(json.writeValueAsString(findings));
         job.setFinishedAt(LocalDateTime.now());
+        if (post != null) liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         if (!work.auto() || mode != Mode.AUTO || work.generation() != modeGeneration
                 || !pendingRevision(post, work.revision())) return;
 
@@ -170,6 +181,8 @@ public class CommunityAutoModeration {
         post.setReviewNote(note);
         job.setDecision(decision);
         job.setDecisionNote(note);
+        notificationEvents.accept(CommunityNotificationEvent.reviewed(post));
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
     }
 
     private static boolean pendingRevision(Post post, int revision) {

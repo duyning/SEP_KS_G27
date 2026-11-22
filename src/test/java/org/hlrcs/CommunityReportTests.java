@@ -202,6 +202,38 @@ class CommunityReportTests {
         assertEquals(1, api("GET", MINE, reporter, null, 200).path("totalElements").asInt());
     }
 
+    @Test
+    void filterTotalsCountDistinctPostsAndAllReportsAcrossDecisions() throws Exception {
+        api("GET", ADMIN + "/stats", null, null, 401);
+        api("GET", ADMIN + "/stats", reporter, null, 403);
+        api("GET", ADMIN + "/stats", staff, null, 403);
+        var before = api("GET", ADMIN + "/stats", admin, null, 200);
+        int post = post(true);
+        int first = submit(post, reporter, "FRAUD", "", 201).path("id").asInt();
+        submit(post, other, "SPAM", "", 201);
+        var opened = api("GET", ADMIN + "/stats", admin, null, 200);
+        for (String status : List.of("ALL", "OPEN")) {
+            assertEquals(before.path(status).path("posts").asLong() + 1, opened.path(status).path("posts").asLong());
+            assertEquals(before.path(status).path("reports").asLong() + 2, opened.path(status).path("reports").asLong());
+        }
+        api("POST", ADMIN + "/" + first + "/decision", admin, DISMISS, 200);
+        var kept = api("GET", ADMIN + "/stats", admin, null, 200);
+        assertEquals(before.path("OPEN"), kept.path("OPEN"));
+        assertEquals(before.path("DISMISSED").path("posts").asLong() + 1, kept.path("DISMISSED").path("posts").asLong());
+        assertEquals(before.path("DISMISSED").path("reports").asLong() + 2, kept.path("DISMISSED").path("reports").asLong());
+        int later = submit(post, register(), "MISLEADING", "", 201).path("id").asInt();
+        var reopened = api("GET", ADMIN + "/stats", admin, null, 200);
+        assertEquals(opened.path("ALL").path("posts"), reopened.path("ALL").path("posts"));
+        assertEquals(opened.path("ALL").path("reports").asLong() + 1, reopened.path("ALL").path("reports").asLong());
+        assertEquals(kept.path("DISMISSED"), reopened.path("DISMISSED"));
+        api("POST", ADMIN + "/" + later + "/decision", admin, HIDE, 200);
+        var hidden = api("GET", ADMIN + "/stats", admin, null, 200);
+        assertEquals(before.path("OPEN"), hidden.path("OPEN"));
+        assertEquals(before.path("RESOLVED").path("posts").asLong() + 1, hidden.path("RESOLVED").path("posts").asLong());
+        assertEquals(before.path("RESOLVED").path("reports").asLong() + 1, hidden.path("RESOLVED").path("reports").asLong());
+        assertEquals(reopened.path("ALL"), hidden.path("ALL"));
+    }
+
     private int reportStatus(int post) throws Exception {
         return mvc.perform(reportRequest(post, reporter, "FRAUD", "")).andReturn().getResponse().getStatus();
     }

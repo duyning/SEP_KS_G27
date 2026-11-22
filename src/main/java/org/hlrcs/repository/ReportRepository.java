@@ -29,6 +29,10 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
         LocalDateTime getLatestAt();
     }
 
+    interface CommunityTotals { long getPosts(); long getReports(); }
+    @Query("select count(distinct r.targetId) as posts, count(r) as reports from Report r where r.targetType=:type and r.status in :statuses")
+    CommunityTotals communityTotals(@Param("type") ReportTargetType type, @Param("statuses") Collection<ReportStatus> statuses);
+
     @Query(value = """
             select r.targetId as postId,
                    max(case when r.status in :statuses then r.reportId else null end) as selectedReportId,

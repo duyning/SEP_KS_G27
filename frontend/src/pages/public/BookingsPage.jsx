@@ -44,7 +44,7 @@ export default function BookingsPage() {
     <header className="viewing-heading">
       <div><h1>Lịch xem phòng của bạn</h1><p>Theo dõi lịch đã gửi và phản hồi của chủ trọ.</p></div>
       <div className="viewing-actions">
-        <Link className="p-button" to="/notifications">Thông báo</Link>
+        <Link className="p-button" to="/notifications?tab=viewings">Thông báo</Link>
         <Link className="p-button primary" to="/search">Tìm phòng</Link>
       </div>
     </header>

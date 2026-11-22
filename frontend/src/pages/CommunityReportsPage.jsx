@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, EyeOff, FileText, Flag, Inbox, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, EyeOff, FileText, Flag, Inbox, ShieldCheck, Clock3, Layers3, ShieldAlert, Copy, FileWarning, MessageSquare, ListFilter, Check } from 'lucide-react';
 import { Modal, StateView, useToast } from '../components/PortalUI.jsx';
 import { communityReportsApi, reportDate, reportPage, reportReasons, reportStatuses } from '../services/community-reports.js';
 import CommunityFeedCard from '../components/CommunityFeedCard.jsx';
 import CommunityPostFooter from '../components/CommunityPostFooter.jsx';
+import CommunityReportAiPanel from '../components/CommunityReportAiPanel.jsx';
+import useCommunityLive from '../components/useCommunityLive.js';
 import '../styles/community-reports.css';
 
 const adminPath = '/admin/community/reports';
 const minePath = '/community/reports';
-const queueFilters = { OPEN: reportStatuses.OPEN, ALL: 'Tất cả', RESOLVED: reportStatuses.RESOLVED, DISMISSED: reportStatuses.DISMISSED };
+const queueFilters = { ALL: 'Tất cả', OPEN: reportStatuses.OPEN, RESOLVED: reportStatuses.RESOLVED, DISMISSED: reportStatuses.DISMISSED };
+const statusIcons = { ALL: Layers3, OPEN: Clock3, RESOLVED: ShieldCheck, DISMISSED: Inbox };
+const reasonOptions = {
+  ALL: ['Tất cả lý do', ListFilter], FRAUD: ['Lừa đảo', ShieldAlert], SPAM: ['Spam / đăng trùng', Copy],
+  INAPPROPRIATE: ['Không phù hợp', EyeOff], MISLEADING: ['Sai thông tin', FileWarning], OTHER: ['Lý do khác', MessageSquare], LEGACY: ['Báo cáo cũ', FileText],
+};
 const reasonLabel = report => reportReasons[report.reasonCode] || 'Báo cáo cũ';
 const legacyReason = 'LEGACY';
 const reasonKey = report => Object.hasOwn(reportReasons, report.reasonCode) ? report.reasonCode : legacyReason;
@@ -170,18 +177,23 @@ function AdminReportDetail({ data, onRefresh, selected, reportUrl, reasonFilter,
         </button>}
       </header>
       <div className="report-sidebar-content">
-        <div className="community-report-form report-reason-filter">
-          <label htmlFor="report-reason-filter">Lọc theo lý do</label>
-          <select id="report-reason-filter" value={reasonFilter} onChange={event => onReasonFilterChange(event.target.value)}>
-            <option value="ALL">Tất cả lý do ({data.relatedReports.length})</option>
-            {Object.entries(reportReasons).map(([code, label]) => <option key={code} value={code}>
-              {label} ({reasonCounts.get(code) ?? 0})
-            </option>)}
-            {(reasonCounts.has(legacyReason) || reasonFilter === legacyReason) && <option value={legacyReason}>
-              Báo cáo cũ ({reasonCounts.get(legacyReason) ?? 0})
-            </option>}
-          </select>
-          <small role="status">Hiển thị {filteredReports.length}/{data.relatedReports.length} lượt báo cáo</small>
+        <CommunityReportAiPanel key={report.postId} reportId={report.id} postId={report.postId} />
+        <div className="report-reason-control">
+          <div className="report-filter-title"><h3><ListFilter size={16} aria-hidden="true" />Loại báo cáo</h3>
+            <span>{openReports.length} chờ · {data.relatedReports.length-openReports.length} đã đóng</span></div>
+          <div className="report-reason-chips" role="group" aria-label="Lọc theo lý do báo cáo">
+            {Object.entries(reasonOptions).filter(([code]) => code !== legacyReason || reasonCounts.has(legacyReason) || reasonFilter === legacyReason).map(([code,[label,Icon]]) => {
+              const count=code==='ALL'?data.relatedReports.length:reasonCounts.get(code)??0;
+              return <button className="report-reason-chip" type="button" key={code} data-reason={code} aria-pressed={reasonFilter===code}
+                disabled={!count&&reasonFilter!==code} onClick={()=>onReasonFilterChange(code)}
+                aria-label={`${reportReasons[code]||label}, ${count} lượt báo cáo`}>
+                <Icon size={16} aria-hidden="true" /><span>{label}</span><strong>{count}</strong>
+                {reasonFilter===code&&<Check className="report-filter-selected" size={14} aria-hidden="true" />}
+              </button>;
+            })}
+          </div>
+          <p className="report-filter-result" role="status">Hiển thị <strong>{filteredReports.length}/{data.relatedReports.length}</strong> lượt báo cáo.
+            <span> Quyết định vẫn áp dụng cho toàn bộ báo cáo đang chờ.</span></p>
         </div>
         {filteredReports.length > 0 ? <ul className="report-related-list">
           {filteredReports.map(item => <li key={item.id}>
@@ -269,22 +281,32 @@ export default function CommunityReportsPage({ admin = false }) {
   const base = admin ? adminPath : minePath;
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState({});
+  const [stats, setStats] = useState(null);
   const requestKey = `${admin}:${id}:${status}:${page}:${revision}`;
+  const dataScope = `${admin}:${id}:${status}:${page}`;
+  useCommunityLive(admin ? 'reports,posts' : 'my-reports', () => setRevision(value => value + 1));
 
   useEffect(() => {
     const controller = new AbortController();
     const load = id ? communityReportsApi.detail(id, controller.signal)
-      : admin ? communityReportsApi.queue(status, page, controller.signal) : communityReportsApi.mine(page, controller.signal);
+      : admin ? Promise.all([communityReportsApi.queue(status, page, controller.signal), communityReportsApi.stats(controller.signal)])
+          .then(([queue, counts]) => { if (!controller.signal.aborted) setStats(counts); return queue; })
+        : communityReportsApi.mine(page, controller.signal);
     load.then(data => {
-      if (!controller.signal.aborted) setState({ key: requestKey, data });
+      if (!controller.signal.aborted) setState({ key: requestKey, scope: dataScope, data });
     }).catch(error => {
-      if (!controller.signal.aborted) setState({ key: requestKey, error: error.message });
+      if (!controller.signal.aborted) setState(current => ({ ...([401,403,404].includes(error.status) ? {} : current), key: requestKey, error: error.message }));
     });
     return () => controller.abort();
   }, [admin, id, status, page, requestKey]);
 
   const refresh = () => setRevision(value => value + 1);
-  const data = state.key === requestKey ? state.data : null;
+  const data = state.scope === dataScope ? state.data : null;
+  useEffect(() => {
+    if (!id && data && page >= Math.max(1, data.totalPages)) {
+      const next = new URLSearchParams(params); next.delete('page'); setParams(next, { replace: true });
+    }
+  }, [id, page, data?.totalPages]);
   const error = state.key === requestKey ? state.error : null;
   function changePage(nextPage) {
     const next = new URLSearchParams(params);
@@ -320,11 +342,19 @@ export default function CommunityReportsPage({ admin = false }) {
       </div>
     </header> : <h1>Báo cáo của tôi</h1>}
     {admin && !id && <div className="report-queue-toolbar">
-      <div className="report-queue-filters" role="group" aria-label="Lọc theo trạng thái">
-        {Object.entries(queueFilters).map(([key, label]) => <button className="p-button" key={key} type="button"
-          aria-pressed={status === key} onClick={() => changeStatus(key)}>{label}</button>)}
+      <div className="report-status-filters" role="group" aria-label="Lọc theo trạng thái" aria-busy={!stats}>
+        {Object.entries(queueFilters).map(([key, label]) => {
+          const Icon=statusIcons[key], count=stats?.[key];
+          return <button className="report-status-filter" data-status={key} key={key} type="button"
+            aria-pressed={status===key} onClick={()=>changeStatus(key)}>
+            <span className="report-status-filter-label"><span className="report-status-icon"><Icon size={19} aria-hidden="true" /></span>{label}
+              {status===key&&<Check size={16} aria-hidden="true" />}</span>
+            <span className="report-status-total"><strong>{count?.posts??'—'}</strong> bài viết</span>
+            <span className="report-status-subtotal">{count?.reports??'—'} lượt báo cáo</span>
+          </button>;
+        })}
       </div>
-      <button className="p-button" type="button" onClick={refresh} disabled={!data && !error}><RefreshCw size={16} aria-hidden="true" />Làm mới</button>
+      <p className="report-live-caption"><span aria-hidden="true" />Tự động cập nhật theo thời gian thực</p>
     </div>}
     {error && <StateView kind="error" message={error}><button className="p-button" type="button" onClick={refresh}>Thử lại</button></StateView>}
     {!error && !data && <StateView kind="loading" message="Đang tải báo cáo…" />}

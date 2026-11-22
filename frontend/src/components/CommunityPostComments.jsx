@@ -1,31 +1,39 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Pencil, Reply, CornerDownRight, MoreHorizontal, Trash2 } from 'lucide-react';
 import { communityApi } from '../services/community.js';
 import { commentTree, loadReplyThread } from '../services/comment-tree.js';
+import useCommunityLive from './useCommunityLive.js';
+const FocusedComment = createContext(null);
 
 function useCommentPage(postId, parentId, page, revision, enabled, onCount) {
+  const [liveRevision, setLiveRevision] = useState(0);
+  useCommunityLive('comments', () => { if (enabled) setLiveRevision(value => value + 1); }, postId);
   const [state, setState] = useState({ loading: true, result: null, error: '' });
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    setState({ loading: true, result: null, error: '' });
+    const scope = `${postId}:${parentId}:${page}`;
+    setState(current => ({ loading: true, result: current.scope === scope ? current.result : null, error: '', scope }));
     const task = parentId == null ? communityApi.comments(postId, page, controller.signal)
       : loadReplyThread(communityApi, postId, parentId, controller.signal);
     task.then(result => {
       if (controller.signal.aborted) return;
       onCount(result.commentCount);
-      setState({ loading: false, result, error: '' });
-    }).catch(error => { if (!controller.signal.aborted) setState({ loading: false, result: null, error: error.message }); });
+      setState({ loading: false, result, error: '', scope });
+    }).catch(error => { if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, result: error.status === 404 ? null : current.result, error: error.message })); });
     return () => controller.abort();
-  }, [postId, parentId, page, revision, enabled, onCount]);
+  }, [postId, parentId, page, revision, liveRevision, enabled, onCount]);
   return [state, setState];
 }
 
-export default function CommunityPostComments({ postId, panelId, user, onCount }) {
-  const [page, setPage] = useState(0);
+export default function CommunityPostComments({ postId, panelId, user, onCount, focus = null }) {
+  const [page, setPage] = useState(focus?.page || 0);
   const [revision, setRevision] = useState(0);
   const [state, setState] = useCommentPage(postId, null, page, revision, true, onCount);
+  useEffect(() => {
+    if (state.result && page >= Math.max(1, state.result.totalPages)) setPage(Math.max(0, state.result.totalPages - 1));
+  }, [page, state.result?.totalPages]);
   const deleted = root => {
     if (root && state.result?.content.length === 1 && page > 0) setPage(value => value - 1);
     setRevision(value => value + 1);
@@ -38,22 +46,23 @@ export default function CommunityPostComments({ postId, panelId, user, onCount }
     setPage(Math.floor((state.result?.totalElements || 0) / 20));
     setRevision(value => value + 1);
   };
-  return <section id={panelId} className="community-comments" aria-label="Bình luận bài viết">
+  return <FocusedComment.Provider value={focus?.commentId}><section id={panelId} className="community-comments" aria-label="Bình luận bài viết">
     <h3>Bình luận</h3>
     <LoadFeedback state={state} onRetry={() => setRevision(value => value + 1)} />
     {state.result && <>
       {!state.result.content.length && <p>Chưa có bình luận nào.</p>}
       <ul className="community-comments-list">{state.result.content.map(comment => <CommentThread key={comment.id}
-        postId={postId} comment={comment} user={user} onCount={onCount} onRootUpdate={updateRoot} onDelete={deleted} />)}</ul>
+        postId={postId} comment={comment} user={user} onCount={onCount} onRootUpdate={updateRoot} onDelete={deleted}
+        initiallyOpen={comment.id === focus?.rootId && comment.id !== focus?.commentId} />)}</ul>
       <Pagination result={state.result} page={page} onPage={setPage} label="Trang bình luận" />
     </>}
     {user ? <CommentForm key={user.userId} label="Viết bình luận" submitLabel="Gửi bình luận" disabled={state.loading || !state.result}
       onSubmit={create} /> : <p><Link to="/login">Đăng nhập</Link> để viết bình luận.</p>}
-  </section>;
+  </section></FocusedComment.Provider>;
 }
 
-function CommentThread({ postId, comment, user, onCount, onRootUpdate, onDelete }) {
-  const [open, setOpen] = useState(false);
+function CommentThread({ postId, comment, user, onCount, onRootUpdate, onDelete, initiallyOpen = false }) {
+  const [open, setOpen] = useState(initiallyOpen);
   const [target, setTarget] = useState(null);
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
@@ -103,6 +112,14 @@ function ReplyBranches({ nodes, postId, user, onUpdate, onDelete, onReply }) {
 }
 
 function CommentBody({ comment, postId, user, onUpdate, onReply, onDelete }) {
+  const focused = useContext(FocusedComment) === comment.id;
+  const commentElement = useRef(null);
+  useEffect(() => {
+    if (focused) {
+      commentElement.current?.scrollIntoView({ block: 'center' });
+      commentElement.current?.focus({ preventScroll: true });
+    }
+  }, [focused]);
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -141,7 +158,7 @@ function CommentBody({ comment, postId, user, onUpdate, onReply, onDelete }) {
     } catch (failure) { if (!controller.signal.aborted) setDeleteError(failure.message); }
     finally { if (!controller.signal.aborted) { deletion.current = null; setDeleting(false); } }
   };
-  return <div className="community-comment-body">
+  return <div ref={commentElement} tabIndex={focused ? -1 : undefined} className={`community-comment-body${focused ? ' cn-focused-comment' : ''}`}>
     <CommentAvatar name={comment.authorName} />
     <div className="community-comment-content">
     <div className={`community-comment-bubble${owner ? ' community-comment-bubble--owned' : ''}`}>

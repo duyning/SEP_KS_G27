@@ -4,11 +4,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Building2, MessageSquare, RefreshCw, ShieldAlert, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { StaffLoadState, StaffMetric, staffDate, useStaffLoad } from '../../components/StaffUI.jsx';
+import useCommunityLive from '../../components/useCommunityLive.js';
 
 const types = { PROPERTY: 'Nhà trọ', SERVICE: 'Hồ sơ dịch vụ', REPORT: 'Báo cáo', COMMUNITY: 'Cộng đồng', SUPPORT: 'Hỗ trợ' };
 export default function StaffDashboardPage() {
   const { user } = useAuth();
   const state = useStaffLoad('dashboard');
+  useCommunityLive('posts', state.reload);
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState('ALL');
   const selectFilter = type => { setFilter(type); if (params.has('view')) setParams({}); };

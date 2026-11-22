@@ -498,3 +498,11 @@ So sánh tên bảng/cột khai báo trong entity với [SQL tham khảo](../sql
 ## Bổ sung bộ ảnh dịch vụ — 2026-11-08
 
 `ServiceImage` là embeddable gồm `content` (LONGBLOB, không rỗng) và `contentType` (varchar(100)). `ServiceRegistration.additionalImages` là element collection lazy, bảng `service_registration_images`, FK `registration_id`, thứ tự `image_position`. Ảnh đại diện tiếp tục dùng `ServiceRegistration.imageContent/imageContentType`; collection chứa tối đa 4 ảnh tiếp theo. Xem SERVICE_MANAGEMENT.md cho contract và điều kiện công khai.
+
+## CommunityReportAnalysis — AI hỗ trợ report (2026-11-22)
+
+Entity `CommunityReportAnalysis` ánh xạ `community_report_analyses`, khóa chính `report_id` là ID report dạng scalar; `postId` cũng là scalar, không thêm cascade/FK tới bài để tác vụ bỏ qua được khi bài đã xóa. Mỗi report có tối đa một tác vụ hiện hành.
+
+Các trường: `state` (QUEUED/RUNNING/READY/FAILED/DISABLED/SKIPPED), `generation`, `fingerprint`, `rulesVersion`, `model`, `findings` (JSON TEXT), `recommendation`, `errorCode`, `completedChecks`, `totalChecks`, `requestedAt`, `startedAt`, `finishedAt`. State STALE/CLOSED/UNAVAILABLE là trạng thái suy ra cho API, không phải enum database. Chỉ admin ACTIVE đọc/xếp lại tác vụ. Kết quả không tự sửa Post/Report hoặc ModerationLog.
+
+Chi tiết luồng/rule/cấu hình: [COMMUNITY_REPORT_AI_RULES.md](COMMUNITY_REPORT_AI_RULES.md).

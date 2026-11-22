@@ -25,7 +25,10 @@ export const communityReportsApi = {
   },
   mine: (page, signal) => request(`/mine?page=${page}`, { basePath: '/api/community/reports', signal }),
   queue: (status, page, signal) => request(`?status=${status}&page=${page}`, { basePath: adminPath, signal }),
+  stats: signal => request('/stats', { basePath: adminPath, signal }),
   detail: (id, signal) => request(`/${id}`, { basePath: adminPath, signal }).then(normalizeDetail),
+  ai: (id, signal) => request(`/${id}/ai`, { basePath: adminPath, signal }),
+  analyze: id => request(`/${id}/ai`, { basePath: adminPath, method: 'POST' }),
   evidence: (id, signal) => request(`/${id}/evidence`, { basePath: adminPath, signal, responseType: 'blob' }),
   resolve: (id, action, reason) => request(`/${id}/decision`, { basePath: adminPath, method: 'POST', body: { action, reason } }).then(normalizeDetail),
 };

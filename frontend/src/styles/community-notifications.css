@@ -1,0 +1,50 @@
+.cn-bell { position: relative; flex: none; }
+.public-account:has(> .cn-bell) { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.cn-bell .cn-bell-trigger { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #dce5ed; border-radius: 50%; background: white; color: #334155; cursor: pointer; }
+.cn-bell .cn-bell-trigger[aria-expanded=true] { background: #e8f7f3; color: #0f766e; }
+.cn-bell .cn-count { position: absolute; right: -3px; top: -3px; padding: 1px 5px; min-width: 19px; border-radius: 999px; background: #b91c1c; color: #fff; font: 700 11px/1.5 sans-serif; text-align: center; }
+.cn-bell .cn-popover { position: absolute; right: 0; top: calc(100% + 10px); width: min(400px, calc(100vw - 32px)); max-height: min(650px, calc(100dvh - 130px)); overflow-y: auto; border: 1px solid #dce5ed; border-radius: 14px; background: white; box-shadow: 0 12px 35px #0f172a26; z-index: 90; color: #172b40; }
+.community-inbox { color: #172b40; font-size: 14px; line-height: 1.5; }
+.community-inbox .community-inbox-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 16px; }
+.community-inbox h2 { margin: 0; font-size: 18px; }
+.community-inbox .cn-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+.community-inbox .cn-filters button, .community-inbox .cn-action, .community-inbox .cn-pagination button, .community-inbox .cn-read { min-height: 44px; border: 0; padding: 8px 12px; border-radius: 8px; background: transparent; font: inherit; color: #0f766e; cursor: pointer; }
+.community-inbox .cn-filters button[aria-pressed=true] { background: #e7f7f2; font-weight: 700; }
+.community-inbox .cn-list { list-style: none; margin: 0; padding: 0 8px 8px; }
+.community-inbox .cn-list li { border-radius: 10px; border-bottom: 1px solid #edf1f5; }
+.community-inbox .cn-list li.is-unread { background: #eff9f6; }
+.community-inbox .cn-open { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.community-inbox .cn-open:hover { background: #e6f0ee; }
+.community-inbox .cn-avatar { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; flex: none; background: #e2e8f0; color: #334155; font-weight: 700; }
+.community-inbox .cn-avatar.is-system { background: #d5eee7; color: #0f766e; }
+.community-inbox .cn-copy { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.community-inbox .cn-copy time { color: #476174; font-size: 12px; }
+.community-inbox .cn-reason { white-space: pre-wrap; color: #475569; }
+.community-inbox .cn-unread-dot { margin-top: 8px; width: 8px; height: 8px; border-radius: 50%; flex: none; background: #0f766e; }
+.community-inbox .cn-read { margin: 0 12px 4px 66px; font-size: 12px; }
+.community-inbox .cn-error { margin: 8px 16px; color: #991b1b; padding: 10px; background: #fff1f2; border-radius: 8px; }
+.community-inbox .cn-empty { display: grid; justify-items: center; gap: 8px; padding: 26px 16px; color: #475569; text-align: center; }
+.community-inbox .cn-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; }
+.cn-bell .cn-all { display: block; padding: 12px; text-align: center; border-top: 1px solid #e2e8f0; color: #0f766e; font-weight: 650; }
+.cn-center { max-width: 850px; margin-inline: auto; }
+.cn-center .community-inbox { background: #fff; border: 1px solid #dce5ed; border-radius: 14px; }
+.cn-center-tabs { display: flex; gap: 8px; margin: 12px 0 20px; }
+.cn-center-tabs a { min-height: 44px; padding: 10px 14px; border-radius: 8px; color: #334155; text-decoration: none; }
+.cn-center-tabs a[aria-current=page] { background: #e7f7f2; color: #0f766e; font-weight: 700; }
+.cn-bell :is(button,a):focus-visible, .community-inbox :is(button,a):focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.community-inbox button:disabled { opacity: .6; cursor: default; }
+.community-comment-body.cn-focused-comment { border-radius: 10px; outline: 2px solid #0f766e; outline-offset: 4px; background: #eff9f6; }
+@media(max-width:600px) {
+  .public-navbar:has(.cn-bell) .portal-brand small { display: none; }
+  .cn-bell .cn-popover { position: fixed; left: 16px; right: 16px; top: 85px; width: auto; max-height: calc(100dvh - 105px); }
+  .community-inbox .cn-open { gap: 8px; padding: 10px 8px; }
+  .community-inbox .cn-read { margin-left: 50px; }
+}
+
+.community-inbox .cn-menu { position: relative; margin-left: auto; }
+.community-inbox .cn-options { position: absolute; top: 100%; right: 0; z-index: 2; width: min(290px, calc(100vw - 70px)); padding: 6px; background: white; border: 1px solid #dce5ed; border-radius: 10px; box-shadow: 0 8px 24px #0f172a26; }
+.community-inbox .cn-options button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 6px; background: transparent; color: #172b40; font: inherit; text-align: left; cursor: pointer; }
+.community-inbox .cn-options button svg { flex: none; }
+.community-inbox .cn-options button:hover { background: #eff9f6; }
+.community-inbox .cn-success { padding: 10px 16px; color: #0f766e; }
+.community-feed-card.cn-focused-post { outline: 2px solid #0f766e; outline-offset: 3px; scroll-margin-top: 110px; }

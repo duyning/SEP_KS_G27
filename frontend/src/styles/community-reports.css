@@ -208,3 +208,39 @@
   .report-queue-grid, .report-queue-heading, .report-detail-grid .community-report-panel { padding-inline: 12px; }
   .report-queue-link { min-width: 0; }
 }
+
+/* Report filters: global post totals and per-post reason counts. */
+.admin-report-page { --report-filter-line:#dce5ed; --report-filter-muted:#526579; }
+.admin-report-page .report-status-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; width:100%; }
+.admin-report-page .report-status-filter { --filter-color:#334155; --filter-soft:#f1f5f9; display:grid; gap:6px; min-width:0; padding:12px 14px; border:1px solid var(--report-filter-line); border-top:3px solid var(--filter-color); border-radius:12px; background:#fff; color:#172b40; text-align:left; font:inherit; cursor:pointer; }
+.report-status-filter[data-status=ALL] { --filter-color:#1d4ed8; --filter-soft:#eff6ff; }
+.report-status-filter[data-status=OPEN] { --filter-color:#92400e; --filter-soft:#fffbeb; }
+.report-status-filter[data-status=RESOLVED] { --filter-color:#0f766e; --filter-soft:#effaf5; }
+.report-status-filter[data-status=DISMISSED] { --filter-color:#475569; --filter-soft:#f1f5f9; }
+.admin-report-page .report-status-filter[aria-pressed=true] { background:var(--filter-soft); border-color:var(--filter-color); box-shadow:inset 0 0 0 1px var(--filter-color); }
+.admin-report-page .report-status-filter:hover { border-color:var(--filter-color); }
+.report-status-filter-label { display:flex; align-items:center; gap:8px; font-weight:650; }
+.report-status-filter-label > svg { margin-left:auto; flex:none; color:var(--filter-color); }
+.report-status-icon { display:grid; place-items:center; flex:none; width:30px; height:30px; border-radius:8px; color:var(--filter-color); background:var(--filter-soft); }
+.report-status-total { color:var(--report-filter-muted); font-size:13px; }
+.report-status-total strong { color:#0f172a; font-size:25px; font-weight:750; margin-right:4px; }
+.report-status-subtotal { color:var(--report-filter-muted); font-size:12px; }
+.admin-report-page .report-live-caption { display:flex; align-items:center; gap:7px; margin:2px 0 0; font-size:12px; color:var(--report-filter-muted); }
+.report-live-caption > span { width:7px; height:7px; border-radius:50%; background:#0f766e; }
+.report-filter-title { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:9px; }
+.report-filter-title h3 { display:flex; align-items:center; gap:7px; margin:0; font-size:14px; font-weight:650; }
+.report-filter-title > span { color:var(--report-filter-muted); font-size:12px; font-weight:500; }
+.report-reason-chips { display:flex; gap:7px; flex-wrap:wrap; }
+.admin-report-page .report-reason-chip { --reason-color:#0f766e; --reason-soft:#eefaf7; display:inline-flex; align-items:center; gap:7px; min-height:44px; max-width:100%; padding:7px 10px; border:1px solid var(--report-filter-line); border-radius:9px; background:white; color:#334155; font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.report-reason-chip[data-reason=FRAUD] { --reason-color:#a12828; --reason-soft:#fff1f2; }
+.report-reason-chip[data-reason=SPAM] { --reason-color:#7e22ce; --reason-soft:#faf5ff; }
+.report-reason-chip[data-reason=INAPPROPRIATE] { --reason-color:#b45309; --reason-soft:#fffbeb; }
+.report-reason-chip[data-reason=MISLEADING] { --reason-color:#1d4ed8; --reason-soft:#eff6ff; }
+.report-reason-chip[data-reason=OTHER], .report-reason-chip[data-reason=LEGACY] { --reason-color:#475569; --reason-soft:#f1f5f9; }
+.report-reason-chip > svg { flex:none; color:var(--reason-color); }
+.report-reason-chip strong { display:grid; place-items:center; min-width:23px; height:23px; padding-inline:4px; border-radius:6px; color:var(--reason-color); background:var(--reason-soft); font-size:12px; }
+.admin-report-page .report-reason-chip[aria-pressed=true] { border-color:var(--reason-color); background:var(--reason-soft); box-shadow:inset 0 0 0 1px var(--reason-color); color:var(--reason-color); font-weight:650; }
+.admin-report-page .report-reason-chip:disabled { color:#64748b; background:#f8fafc; cursor:default; }
+.admin-report-page .report-filter-result { margin-top:9px; color:var(--report-filter-muted); font-size:12px; line-height:1.6; }
+.admin-report-page :is(.report-status-filter,.report-reason-chip):focus-visible { outline:2px solid #0f766e; outline-offset:3px; }
+@media(max-width:600px) { .admin-report-page .report-status-filters { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .admin-report-page .report-status-filter { padding:10px; } .report-status-filter-label { font-size:12px; gap:6px; } .report-status-icon { width:25px; height:25px; } }

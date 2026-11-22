@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { authApi, clearToken, getToken, saveToken } from '../services/auth.js';
 import LogoutConfirmation from '../components/LogoutConfirmation.jsx';
+import { startCommunityRealtime } from '../services/community-live.js';
 import '../styles/logout-confirm.css';
 
 const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  useEffect(() => { if (!loading) return startCommunityRealtime(); }, [loading, user?.userId, user?.role]);
   const [sessionError, setSessionError] = useState('');
   const [explicitLogout, setExplicitLogout] = useState(false);
   const [reload, setReload] = useState(0);

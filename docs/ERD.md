@@ -197,3 +197,7 @@ erDiagram
 ```
 
 Bảng collection của embeddable ServiceImage; ảnh đại diện vẫn lưu trên service_registrations. Thứ tự ảnh được giữ bằng image_position.
+
+## AI hỗ trợ báo cáo Community (2026-11-22)
+
+`community_report_analyses` có một bản ghi hiện hành cho mỗi `report_id` (scalar, không ánh xạ FK JPA); `post_id` là scalar. Tác vụ giữ dấu vân tay và kết quả tham khảo; không thay đổi quan hệ/report lifecycle hiện có. Xem [rule và luồng phân tích](COMMUNITY_REPORT_AI_RULES.md).

@@ -1,3 +1,4 @@
+import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
@@ -53,7 +54,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
         </ul>
 
 
-        <div className="nav-actions">{account}</div>
+        <div className="nav-actions"><CommunityNotificationBell />{account}</div>
 
 
         <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
