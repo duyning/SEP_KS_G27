@@ -158,8 +158,21 @@ async function check() {
     const description = ai.getByLabel('Nhu cầu thuê phòng');
     assert.ok(await description.evaluate(field => field === document.activeElement));
     assert.ok(await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).isDisabled());
-    await ai.getByRole('button', { name: 'Dưới 2,5 triệu' }).click();
-    assert.match(await description.inputValue(), /2,5 triệu\/tháng/);
+    const samples = ai.getByRole('group', { name: 'Nhu cầu mẫu' });
+    const exampleDescription = 'Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh.';
+    const sample = samples.getByRole('button', { name: exampleDescription, exact: true });
+    assert.equal(await samples.getByRole('button').count(), 1);
+    for (const width of [375, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(await sample.evaluate(button => button.scrollWidth <= button.clientWidth + 1), `Sample overflows at ${width}px`);
+    }
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
+    assert.ok(await sample.evaluate(button => button.scrollWidth <= button.clientWidth + 1), 'Sample overflows at 200% zoom');
+    await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+    await sample.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await description.inputValue(), exampleDescription);
     assert.ok(await description.evaluate(field => field === document.activeElement));
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã có điều hòa');
     await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();

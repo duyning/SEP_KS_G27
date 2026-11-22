@@ -16,11 +16,7 @@ import '../styles/accommodation-recommendations.css';
 
 const scoreFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
 const descriptionLimit = 1200;
-const examples = [
-  ['Dưới 2,5 triệu', 'Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh.'],
-  ['Studio cho 2 người', 'Studio cho 2 người, có bếp riêng và máy giặt.'],
-  ['Ở Tân Xã', 'Phòng ở Tân Xã, từ 20 m², có ban công và không chung chủ.'],
-];
+const exampleDescription = 'Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh.';
 
 export default function AccommodationRecommendations({ origin, onClose }) {
   const { user, loading } = useAuth();
@@ -108,12 +104,12 @@ export default function AccommodationRecommendations({ origin, onClose }) {
           <textarea id="ai-room-description" ref={descriptionInput} required rows={4} maxLength={descriptionLimit} disabled={busy}
             placeholder="Bạn muốn ở khu vực nào, giá khoảng bao nhiêu và cần tiện nghi gì?"
             value={description} onChange={event => changeDescription(event.target.value)} />
-          {!result && <div className="accommodation-ai-examples" role="group" aria-label="Mô tả mẫu">
-            <span>Thử mẫu</span>
-            {examples.map(([label, text]) => <button type="button" key={label} disabled={busy} onClick={() => {
-              changeDescription(text);
+          {!result && <div className="accommodation-ai-examples" role="group" aria-labelledby="ai-room-example-label">
+            <span id="ai-room-example-label">Nhu cầu mẫu</span>
+            <button type="button" disabled={busy} onClick={() => {
+              changeDescription(exampleDescription);
               descriptionInput.current?.focus();
-            }}>{label}<ArrowDownLeft size={13} aria-hidden="true" /></button>)}
+            }}><span>{exampleDescription}</span><ArrowDownLeft size={13} aria-hidden="true" /></button>
           </div>}
           {question && <div className="accommodation-ai-clarification">
             <label htmlFor="ai-room-answer"><Sparkles size={17} aria-hidden="true" />{question}</label>
