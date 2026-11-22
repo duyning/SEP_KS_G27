@@ -1,6 +1,5 @@
 .location-search-form { display: grid; gap: .75rem; }
 .location-search-form p { margin: 0; }
-.location-search-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: .75rem; }
 .location-search-form label { display: grid; gap: .35rem; color: #334155; font-weight: 600; }
 .location-search-form input,
 .location-search-form textarea {
