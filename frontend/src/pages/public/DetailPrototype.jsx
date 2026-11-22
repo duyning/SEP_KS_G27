@@ -39,7 +39,8 @@ export default function DetailPrototype({room,item,origin,isWishlisted,onSave,on
     </section>
 
    </div>
-   <nav className="rtd-section-nav" aria-label="Thông tin phòng"><a href="#rtd-costs">Chi phí thuê</a><a href="#rtd-amenities">Tiện nghi</a><a href="#rtd-description">Mô tả & quy định</a><a href="#rtd-location">Vị trí</a><a href="#rtd-reviews">Đánh giá</a><a href="#property-room-types-title">Loại phòng khác</a></nav>
+   <nav className="rtd-section-nav" aria-label="Thông tin phòng"><a href="#property-room-types-title">Các loại phòng</a><a href="#rtd-costs">Chi phí thuê</a><a href="#rtd-amenities">Tiện nghi</a><a href="#rtd-description">Mô tả & quy định</a><a href="#rtd-location">Vị trí</a><a href="#rtd-reviews">Đánh giá</a></nav>
+   <PropertyRoomTypes item={item} origin={origin}/>
    <Section id="rtd-costs" title="Chi phí thuê & tiền cần chuẩn bị"><p className="rtd-section-note">Biểu phí do chủ trọ khai báo. Xác nhận cách tính và các khoản phát sinh trước khi thuê.</p><dl className="rtd-fees">{fees.map(([label,value,note])=><div key={label}><dt>{label}</dt><dd>{value}</dd><small>{note}</small></div>)}</dl></Section>
    <div className="rtd-body-grid"><div>
     <Section id="rtd-amenities" title="Tiện nghi & trang thiết bị"><dl className="rtd-room-specs">{[['Phòng ngủ',room.specs.bedroom],['Phòng tắm',room.specs.bathroom]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><RoomAmenities item={item}/></Section>
@@ -50,7 +51,6 @@ export default function DetailPrototype({room,item,origin,isWishlisted,onSave,on
 
     {room.gallery.length>0&&<Section title="Ảnh tổng thể nhà trọ"><div className="rtd-property-photos">{room.gallery.map((photo,index)=><button key={photo.url} onClick={()=>onPhoto(index,'property')} aria-label={`Xem ảnh nhà trọ ${index+1}`}><DetailImage src={photo.url} alt={`Ảnh nhà trọ ${index+1}`} loading="lazy"/></button>)}</div></Section>}
    </div></div>
-   <PropertyRoomTypes item={item} origin={origin} separateCurrent/>
    </div></div>
    <section className="rtd-similar"><div className="rtd-similar-heading"><h2>Nhà trọ tương tự quanh Hòa Lạc</h2><Link to={withSearchOrigin('/search',origin)}>Xem tất cả phòng</Link></div><DetailSimilar rooms={item.similar} origin={origin} savedIds={savedIds} onSave={onSaveSimilar} isSaveBusy={isSaveBusy}/></section>
   </div>

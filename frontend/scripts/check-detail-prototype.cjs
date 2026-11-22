@@ -7,16 +7,49 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  const summary={propertyId:12,roomTypeId:22,propertyName:'Nhà trọ Minh Quân',roomTypeName:'Studio khép kín ban công',address:'Thôn 2, Tân Xã, Thạch Thất, Hà Nội',price:2200000,areaSqm:25,verificationStatus:'APPROVED',availableRooms:2,imageUrl:'/api/test-photo/1'};
  const detail={summary,gallery:Array.from({length:5},(_,i)=>({url:`/api/test-photo/${i+1}`,caption:`Ảnh phòng ${i+1}`})),capacity:2,deposit:2200000,electricityPrice:3500,waterPrice:30000,internetPrice:100000,servicePrice:50000,description:'Nội dung đã lưu trong database.\n\nPhòng có ban công và không gian sinh hoạt riêng.',propertyDescription:'Thông tin cơ sở đã được chủ trọ đăng ký.',amenities:['airConditioner','privateBathroom','bed','wifi'],propertyAmenities:['parking'],selectedRules:['quietHours'],rules:'Không hút thuốc trong phòng.',publishedAt:'2026-10-20T10:00:00',nearby:'Cách ĐH FPT 800m',mapUrl:'https://www.google.com/maps/search/?api=1&query=Tan+Xa',publicContact:{phone:'0912345678',zaloPhone:'0987654321'},reviews:{totalReviews:2,averageRating:4.5,ratingCounts:[0,0,0,1,1],latest:[{reviewId:1,authorName:'Người thuê thực tế',rating:5,content:'Nhận xét được lấy từ database.',createdAt:'2026-10-22T08:00:00'}]},similar:[{...summary,propertyId:13,roomTypeId:23,propertyName:'Nhà trọ tương tự thật'}]};
  detail.propertyGallery=Array.from({length:5},(_,i)=>({url:`/api/test-photo/building-${i+1}`,caption:'Ảnh nhà trọ'}));
- detail.roomTypes=[summary,{...summary,roomTypeId:24,roomTypeName:'Phòng gác lửng',price:1800000,areaSqm:20,availableRooms:0,imageUrl:'/api/test-photo/room-24'}];
+ detail.roomTypes=[summary,{...summary,roomTypeId:24,roomTypeName:'Phòng gác lửng',price:1800000,areaSqm:20,availableRooms:0,imageUrl:'/api/test-photo/room-24'},{...summary,roomTypeId:25,roomTypeName:'Studio có bếp riêng',price:2900000,areaSqm:34,imageUrl:null}];
  await page.route('**/api/**',async route=>{const req=route.request(),url=new URL(req.url());assert.equal(req.method(),'GET','No business write from detail UI');if(url.pathname==='/maps/api/js')return route.abort();if(url.pathname.startsWith('/api/test-photo/'))return route.fulfill({contentType:'image/svg+xml',body:svg});if(url.pathname==='/api/auth/me')return route.fulfill({status:401,json:{success:false}});if(url.pathname.endsWith('/details')){requests++;if(mode==='error')return route.fulfill({status:500,json:{success:false,message:'Lỗi kiểm thử tải chi tiết'}});const chosen=Number(url.pathname.match(/room-types\/(\d+)/)?.[1]);const current=chosen===24?{...detail,summary:detail.roomTypes[1],description:'Mô tả riêng phòng gác lửng',gallery:[{url:'/api/test-photo/room-24'}]}:detail;const value=mode==='missing'?{...detail,propertyGallery:[],roomTypes:[],gallery:[],amenities:[],propertyAmenities:[],selectedRules:[],publicContact:null,deposit:null,electricityPrice:null,waterPrice:null,internetPrice:null,servicePrice:null,similar:[],reviews:{totalReviews:0,averageRating:null,ratingCounts:[0,0,0,0,0],latest:[]},summary:{...summary,imageUrl:null,availableRooms:0}}:current;return route.fulfill({json:{success:true,data:value}})}throw Error('Unexpected local API path: '+url.pathname)});
- const url=(process.env.FRONTEND_URL||'http://127.0.0.1:5173')+'/properties/detail?propertyId=12&roomTypeId=22';await page.goto(url);await page.locator('.rtd-heading h1').waitFor();
+ const url=(process.env.FRONTEND_URL||'http://127.0.0.1:5173')+'/properties/detail?propertyId=12&roomTypeId=22';await page.goto(url+'&originLat=21.01354&originLng=105.52522');await page.locator('.rtd-heading h1').waitFor();
  assert.equal(await page.locator('.navbar-wrapper').count(),1);assert.equal(await page.locator('.footer-wrapper').count(),1);assert.equal(await page.locator('.rtd-gallery button').count(),4);
  await page.getByText('Nội dung đã lưu trong database.',{exact:true}).waitFor();assert.ok(await page.locator('.review-text-content').innerText()==='Nhận xét được lấy từ database.');assert.equal(await page.locator('.rtd-contact a[href^="tel:"]').getAttribute('href'),'tel:0912345678');
  assert.equal(await page.locator('.rtd-property-photos img').first().getAttribute('src'),'/api/test-photo/building-1');
- assert.equal(await page.locator('.property-room-choice').count(),1);
- await page.locator('.property-room-choice').first().focus();await page.keyboard.press('Enter');await page.locator('.rtd-heading h1').filter({hasText:'Phòng gác lửng'}).waitFor();
- assert.ok(page.url().includes('roomTypeId=24#room-type-details'));assert.equal(await page.locator('.rtd-property-photos img').first().getAttribute('src'),'/api/test-photo/building-1');assert.equal(await page.locator('.rtd-cover img').getAttribute('src'),'/api/test-photo/room-24');
- assert.equal(await page.locator('.property-room-current[aria-current=true]').count(),1);await page.goBack();await page.locator('.rtd-heading h1').filter({hasText:'Studio khép kín ban công'}).waitFor();
+ const catalog=page.getByRole('region',{name:'Các loại phòng tại nhà trọ'});
+ const current=catalog.getByRole('link',{name:'Studio khép kín ban công',exact:true});
+ const loft=catalog.getByRole('link',{name:'Phòng gác lửng',exact:true});
+ assert.equal(await catalog.getByRole('listitem').count(),3);
+ await current.getByText('Đang xem',{exact:true}).waitFor();
+ assert.equal(await current.getAttribute('aria-current'),'true');
+ await loft.getByText('1.800.000 đ',{exact:true}).waitFor();
+ await loft.getByText('Hết phòng',{exact:true}).waitFor();
+ await catalog.getByRole('link',{name:'Studio có bếp riêng',exact:true}).getByText('Chưa có ảnh',{exact:true}).waitFor();
+
+ await page.setViewportSize({width:375,height:1000});
+ await page.getByRole('link',{name:'Các loại phòng',exact:true}).click();
+ await page.waitForFunction(()=>{
+  const heading=document.getElementById('property-room-types-title').getBoundingClientRect();
+  const header=document.querySelector('.navbar-wrapper').getBoundingClientRect();
+  return heading.top>=header.bottom&&heading.bottom<innerHeight;
+ });
+ for(const width of [375,768,1024,1440]){
+  await page.setViewportSize({width,height:1000});
+  const first=await current.boundingBox(),second=await loft.boundingBox();
+  const photo=await current.locator('img').boundingBox();
+  assert.ok(first&&second&&photo&&photo.width>=first.width-3,`Room photo should fill its card at ${width}px`);
+  assert.ok(width===375?second.y>=first.y+first.height:Math.abs(first.y-second.y)<2,`Unexpected card layout at ${width}px`);
+ }
+ await page.evaluate(()=>{document.documentElement.style.zoom='2';});
+ assert.ok(await catalog.evaluate(section=>section.scrollWidth<=section.clientWidth+1),'Room cards overflow at 200% zoom');
+ await page.evaluate(()=>{document.documentElement.style.zoom='';});
+
+ await loft.focus();await page.keyboard.press('Enter');await page.locator('.rtd-heading h1').filter({hasText:'Phòng gác lửng'}).waitFor();
+ const selectedUrl=new URL(page.url());
+ assert.equal(selectedUrl.searchParams.get('roomTypeId'),'24');
+ assert.equal(selectedUrl.searchParams.get('originLat'),'21.01354');
+ assert.equal(selectedUrl.searchParams.get('originLng'),'105.52522');
+ assert.equal(selectedUrl.hash,'#room-type-details');
+ assert.equal(await page.locator('.rtd-property-photos img').first().getAttribute('src'),'/api/test-photo/building-1');assert.equal(await page.locator('.rtd-cover img').getAttribute('src'),'/api/test-photo/room-24');
+ await loft.getByText('Đang xem',{exact:true}).waitFor();assert.equal(await loft.getAttribute('aria-current'),'true');
+ assert.equal(await catalog.locator('a[aria-current=true]').count(),1);await page.goBack();await current.getByText('Đang xem',{exact:true}).waitFor();
  for(const width of [1920,1440,1366,1280,1024,768,390,375]){await page.setViewportSize({width,height:1000});await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Overflow '+width);if([1440,390].includes(width))await page.screenshot({path:path.join(os.tmpdir(),`hlrcs-detail-prototype-${width}.png`),fullPage:true})}
  await page.setViewportSize({width:1440,height:1000});await page.getByRole('button',{name:'Phóng to ảnh phòng',exact:true}).click();await page.getByRole('dialog').waitFor();await page.keyboard.press('ArrowRight');await page.getByRole('dialog',{name:'Hình ảnh loại phòng · 2/5'}).waitFor();await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(await page.getByRole('button',{name:'Phóng to ảnh phòng',exact:true}).evaluate(e=>e===document.activeElement),true);
  const favorite=page.getByRole('button',{name:'Phòng yêu thích',exact:true});assert.equal(await favorite.getAttribute('aria-pressed'),'false');await favorite.click();await page.waitForURL('**/login');await page.goBack();await favorite.waitFor();
@@ -26,6 +59,9 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Mở thực đơn',exact:true}).click();assert.equal(await page.locator('#navMenu.show').count(),1);await page.keyboard.press('Escape');assert.equal(await page.locator('#navMenu.show').count(),0);await page.emulateMedia({reducedMotion:'reduce'});await page.locator('#btnMobileBook').click();await page.waitForURL('**/login');await page.goBack();await page.locator('.rtd-heading h1').waitFor();await page.getByRole('button',{name:'Phóng to ảnh phòng',exact:true}).click();await page.getByRole('dialog').waitFor();assert.equal(await page.getByRole('dialog').evaluate(el=>getComputedStyle(el).transform),'none');await page.keyboard.press('Escape');
  await page.setViewportSize({width:720,height:500});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Equivalent 200% reflow');
  mode='missing';await page.goto(url);await page.getByText('Chưa có đánh giá. Hãy chia sẻ trải nghiệm sau khi thuê phòng.',{exact:true}).waitFor();assert.equal(await page.locator('.rtd-contact a[href^="tel:"]').count(),0);assert.ok((await page.locator('.rtd-fees dd').allTextContents()).includes('Chưa cập nhật'));
+ assert.equal(await catalog.getByRole('listitem').count(),1);
+ await current.getByText('Chưa có ảnh',{exact:true}).waitFor();
+ await catalog.getByText('Chưa tải được danh sách các loại phòng khác.',{exact:true}).waitFor();
  mode='error';await page.reload();await page.getByRole('heading',{name:'Không thể xem phòng trọ'}).waitFor();mode='data';await page.getByRole('button',{name:'Thử lại',exact:true}).click();await page.locator('.rtd-heading h1').waitFor();assert.deepEqual(errors,[]);
  console.log(JSON.stringify({passed:true,propertyGallerySeparated:true,roomTypeSwitch:true,widths:8,databaseFields:true,privateDataNotInvented:true,galleryKeyboard:true,focusRestoration:true,favoritePromptsLogin:true,missingData:true,errorRetry:true,reducedMotion:true,zoomReflowEquivalent:true,requests,mysqlWrites:0,pageErrors:0}));
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
