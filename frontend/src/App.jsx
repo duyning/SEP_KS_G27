@@ -1,5 +1,5 @@
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useLayoutEffect, useRef } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import PortalLayout from './layouts/PortalLayout.jsx';
@@ -68,6 +68,20 @@ function LegacyRedirect({ screen }) {
 
 export default function App() {
   const { user, loading, sessionError, retry, logout } = useAuth();
+  const { pathname, hash } = useLocation();
+  const previousPath = useRef(null);
+
+  useLayoutEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => { window.history.scrollRestoration = previous; };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (previousPath.current === pathname) return;
+    previousPath.current = pathname;
+    if (!hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname, hash]);
 
   if (loading) {
     return <GlobalLoading message={DEFAULT_SESSION_LOADING_MESSAGE} />;
