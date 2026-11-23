@@ -6,6 +6,15 @@ function pendingRegistration(data) {
 }
 
 export const hostApi = {
+  async confirmAvailability(id, signal) {
+    const value = await request(`/room-types/${roomTypeId(id)}/availability-confirmation`, {basePath:'/api/host', method:'POST', signal});
+    if (!value || value.roomTypeId !== Number(id) || value.availabilityConfirmationStatus !== 'CURRENT'
+      || !value.availabilityConfirmedAt || !Number.isFinite(Date.parse(value.availabilityConfirmedAt))
+      || value.availabilityStale !== false || !Number.isInteger(value.vacantRooms) || !Number.isInteger(value.totalRooms)
+      || value.vacantRooms < 0 || value.vacantRooms > value.totalRooms || value.totalRooms < 1)
+      throw new ApiError('Chưa xác nhận được kết quả đã lưu. Vui lòng tải lại danh sách.', 502);
+    return value;
+  },
   async propertyEdit(id,signal){
     const data=await request(`/property-registrations/${roomTypeId(id)}/edit`,{basePath:'/api/host',signal});
     if(!data||data.registrationId!==Number(id)||!data.details||!['editableFields','requestedFields','photos','documents'].every(key=>Array.isArray(data[key]))||typeof data.versionToken!=='string')throw new ApiError('Dữ liệu chỉnh sửa không hợp lệ.',502);

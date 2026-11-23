@@ -62,7 +62,7 @@ export default function PublicNavbar({ savedCount = 0 }) {
             <li><NavLink to="/map" className="nav-item" onClick={() => setMobileOpen(false)}>Bản đồ</NavLink></li>
             <li>
               <NavLink to="/favorites" className="nav-item" onClick={() => setMobileOpen(false)}>
-                Đã lưu (<span className="menu-fav-count">{savedCount}</span>)
+                Phòng yêu thích (<span className="menu-fav-count">{savedCount}</span>)
               </NavLink>
             </li>
             <li><NavLink to="/bookings" className="nav-item" onClick={() => setMobileOpen(false)}>Lịch xem phòng</NavLink></li>
@@ -88,7 +88,7 @@ export default function PublicNavbar({ savedCount = 0 }) {
               className="btn-wishlist-top"
               id="topWishlistBtn"
               aria-label="Danh sách phòng yêu thích"
-              title="Nhà trọ đã lưu"
+              title="Phòng yêu thích"
             >
               <Heart size={18} />
               <span className="wishlist-count" id="wishlistCount">{savedCount}</span>

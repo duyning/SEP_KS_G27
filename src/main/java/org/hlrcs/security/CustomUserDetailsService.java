@@ -5,7 +5,6 @@ import org.hlrcs.entity.UserCapability;
 import org.hlrcs.repository.UserCapabilityRepository;
 import org.hlrcs.repository.UserRepository;
 import org.hlrcs.service.RegistrationContact;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public CustomUserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
                 .or(() -> userRepository.findByPhoneNumber(email))
                 .or(() -> findAlternatePhone(email))

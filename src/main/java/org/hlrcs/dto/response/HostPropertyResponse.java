@@ -14,5 +14,5 @@ public record HostPropertyResponse(List<PropertyDetail> records) {
             List<Attachment> documents, int roomTypeCount, Integer totalRooms, Integer vacantRooms,
             long pendingViewingCount, LocalDateTime createdAt, LocalDateTime updatedAt, String reasonNote,
             List<String> requestedFields, Map<String, String> fieldNotes,
-            ChangeRequest changeRequest, String latitude, String longitude) {}
+            ChangeRequest changeRequest, String latitude, String longitude, boolean reverificationRequired, List<String> reverificationReasons) {}
 }

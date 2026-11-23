@@ -69,7 +69,7 @@ export const MOCK_ROOMS = [
         "caption": "Ban công riêng đón gió tự nhiên, có chỗ lắp máy giặt và phơi đồ"
       }
     ],
-    "description": "Phòng trọ Studio khép kín tại Nhà trọ Minh Quân là lựa chọn hàng đầu cho sinh viên ĐH FPT và cán bộ nhân viên công nghệ cao Hòa Lạc. Tòa nhà 5 tầng xây mới hoàn toàn, nằm tại khu dân cư an ninh yên tĩnh của Thôn 2 Tân Xã, cách cổng trường FPT chỉ khoảng 800m.\n\nPhòng được thiết kế tối ưu với ban công riêng biệt đón gió hồ Tân Xã mát mẻ. Không gian bên trong đã trang bị sẵn điều hòa Inverter thế hệ mới, bình nước nóng Ariston, giường nệm 1m6x2m, tủ quần áo 3 cánh và bàn ghế học tập.\n\nToàn bộ cư dân sử dụng khóa cửa cổng bằng vân tay và thẻ từ thông minh, giờ giấc sinh hoạt hoàn toàn tự do 24/7, không chung chủ. Tầng 1 bố trí khu để xe máy rộng rãi có lắp đặt hệ thống phòng cháy chữa cháy (PCCC) đạt chuẩn được nghiệm thu định kỳ.",
+    "description": "Phòng trọ Studio khép kín tại Nhà trọ Minh Quân là lựa chọn hàng đầu cho sinh viên ĐH FPT và cán bộ nhân viên công nghệ cao Hòa Lạc. Tòa nhà 5 tầng xây mới hoàn toàn, nằm tại khu dân cư an ninh yên tĩnh của Thôn 2 Tân Xã, cách cổng trường FPT chỉ khoảng 800m.\n\nPhòng được thiết kế tối ưu với ban công riêng biệt đón gió hồ Tân Xã mát mẻ. Không gian bên trong đã trang bị sẵn điều hòa thế hệ mới, bình nước nóng Ariston, giường nệm 1m6x2m, tủ quần áo 3 cánh và bàn ghế học tập.\n\nToàn bộ cư dân sử dụng khóa cửa cổng bằng vân tay và thẻ từ thông minh, giờ giấc sinh hoạt hoàn toàn tự do 24/7, không chung chủ. Tầng 1 bố trí khu để xe máy rộng rãi có lắp đặt hệ thống phòng cháy chữa cháy (PCCC) đạt chuẩn được nghiệm thu định kỳ.",
     "rules": [
       "Giờ giấc tự do 24/7, ra vào cổng vân tay bảo mật",
       "Không chung chủ, không phụ thu thêm giờ",
@@ -78,7 +78,7 @@ export const MOCK_ROOMS = [
       "Thực hiện nghiêm túc quy định an toàn PCCC, không sử dụng bếp than"
     ],
     "amenities": [
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Máy giặt dùng chung",
       "Ban công thoáng mát",
@@ -242,7 +242,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Thang máy thẻ từ",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Tủ lạnh riêng",
       "Bếp từ đôi âm tủ",
       "Hút mùi cao cấp",
@@ -660,7 +660,7 @@ export const MOCK_ROOMS = [
         "caption": "Ban công riêng ngắm hoàng hôn hồ Tân Xã cực chill"
       }
     ],
-    "description": "The Green View là dự án căn hộ dịch vụ cao cấp nhất ven hồ Tân Xã, mang đến không gian sống đẳng cấp dành cho người trẻ hiện đại. Căn hộ tầng 5 sở hữu view panorama trọn vẹn mặt hồ lộng gió, đón ánh sáng tự nhiên ngập tràn vào mỗi buổi sáng.\n\nTrang thiết bị nội thất nhập khẩu đồng bộ: Điều hòa 2 chiều Inverter tiết kiệm điện, Tủ lạnh Panasonic, Máy giặt riêng đặt tại ban công, Bếp từ đôi cao cấp cùng hệ thống đèn âm trần chống mỏi mắt.\n\nTòa nhà có lễ tân, bảo vệ 24/7 và hệ thống camera AI nhận diện khuôn mặt tại cửa ra vào, bảo đảm sự riêng tư và an ninh tuyệt đối cho cư dân.",
+    "description": "The Green View là dự án căn hộ dịch vụ cao cấp nhất ven hồ Tân Xã, mang đến không gian sống đẳng cấp dành cho người trẻ hiện đại. Căn hộ tầng 5 sở hữu view panorama trọn vẹn mặt hồ lộng gió, đón ánh sáng tự nhiên ngập tràn vào mỗi buổi sáng.\n\nTrang thiết bị nội thất nhập khẩu đồng bộ: Điều hòa 2 chiều tiết kiệm điện, Tủ lạnh Panasonic, Máy giặt riêng đặt tại ban công, Bếp từ đôi cao cấp cùng hệ thống đèn âm trần chống mỏi mắt.\n\nTòa nhà có lễ tân, bảo vệ 24/7 và hệ thống camera AI nhận diện khuôn mặt tại cửa ra vào, bảo đảm sự riêng tư và an ninh tuyệt đối cho cư dân.",
     "rules": [
       "Tòa nhà cao cấp, duy trì nếp sống văn minh và lịch sự",
       "Nghiêm cấm tiệc tùng gây ồn ào sau 22h00",
@@ -806,14 +806,14 @@ export const MOCK_ROOMS = [
         "caption": "Khu phơi đồ riêng biệt có ánh nắng tự nhiên"
       }
     ],
-    "description": "Phòng trọ Bình Yên tọa lạc tại khu dân cư thanh bình gần F-Ville 2, rất phù hợp với sinh viên các khóa cuối làm đồ án, ôn thi hoặc các bạn đi thực tập tại Khu Công nghệ cao Hòa Lạc. \n\nPhòng diện tích 24m² rộng rãi, sạch sẽ với vệ sinh khép kín, đã trang bị sẵn điều hòa Inverter mát lịm, bình nóng lạnh, bàn bếp riêng và chỗ phơi đồ riêng từng phòng.\n\nBác Cường chủ nhà rất chu đáo, cổng ra vào lắp khóa từ vân tay hiện đại, giờ giấc tự do không phụ thuộc, để xe tầng 1 rộng rãi không tính phí.",
+    "description": "Phòng trọ Bình Yên tọa lạc tại khu dân cư thanh bình gần F-Ville 2, rất phù hợp với sinh viên các khóa cuối làm đồ án, ôn thi hoặc các bạn đi thực tập tại Khu Công nghệ cao Hòa Lạc. \n\nPhòng diện tích 24m² rộng rãi, sạch sẽ với vệ sinh khép kín, đã trang bị sẵn điều hòa mát lịm, bình nóng lạnh, bàn bếp riêng và chỗ phơi đồ riêng từng phòng.\n\nBác Cường chủ nhà rất chu đáo, cổng ra vào lắp khóa từ vân tay hiện đại, giờ giấc tự do không phụ thuộc, để xe tầng 1 rộng rãi không tính phí.",
     "rules": [
       "Giờ giấc tự do 24/24, khóa vân tay bảo mật",
       "Khu vực chuyên cho sinh viên và người đi làm, giữ không gian yên tĩnh",
       "Khóa xe cẩn thận và tắt các thiết bị điện khi ra khỏi phòng"
     ],
     "amenities": [
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Bếp nấu ăn riêng",
       "Chỗ phơi đồ riêng",
@@ -927,7 +927,7 @@ export const MOCK_ROOMS = [
     "amenities": [
       "Vệ sinh khép kín",
       "Bình nóng lạnh",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Wifi tốc độ cao",
       "Camera an ninh 24/7",
       "Giờ giấc tự do",
@@ -1018,7 +1018,7 @@ export const MOCK_ROOMS = [
     "amenities": [
       "Thang máy thẻ từ",
       "Ban công thoáng mát",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Tủ lạnh có sẵn",
       "Wifi 6 tốc độ cao",
@@ -1109,7 +1109,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Thang máy thẻ từ",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Tủ lạnh có sẵn",
       "Bếp từ nấu ăn",
@@ -1291,7 +1291,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Thang máy thẻ từ",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Máy giặt dùng chung",
       "Wifi cáp quang",
@@ -1382,7 +1382,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Vệ sinh khép kín",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Wifi cáp quang",
       "Camera an ninh 24/7",
@@ -1478,7 +1478,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Vệ sinh khép kín",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Sân vườn thoáng mát",
       "Wifi cáp quang",
@@ -1569,7 +1569,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Vệ sinh khép kín",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Wifi tốc độ cao",
       "Camera an ninh 24/7",
@@ -1661,7 +1661,7 @@ export const MOCK_ROOMS = [
       "Thang máy thẻ từ",
       "Tủ lạnh có sẵn",
       "Máy giặt riêng",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Ban công thoáng mát",
       "Khóa vân tay",
@@ -1842,7 +1842,7 @@ export const MOCK_ROOMS = [
     "amenities": [
       "View hồ Panorama",
       "Thang máy thẻ từ",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Tủ lạnh có sẵn",
       "Máy giặt riêng",
       "Bếp từ âm",
@@ -1934,7 +1934,7 @@ export const MOCK_ROOMS = [
     ],
     "amenities": [
       "Vệ sinh khép kín",
-      "Điều hòa Inverter",
+      "Điều hòa",
       "Bình nóng lạnh",
       "Wifi cáp quang",
       "Camera an ninh 24/7",

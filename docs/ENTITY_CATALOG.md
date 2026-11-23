@@ -57,6 +57,9 @@ PK = primary key, FK = relationship column; @MapsId có thể khiến cùng cộ
 
 ### PropertyRegistration → `property_registrations`
 
+Bổ sung 2026-11-11: `reverificationReasonsJson` (String/TEXT nullable) lưu các nhóm
+thay đổi cần tái xác minh trên đề nghị; giữ lại sau xét duyệt để tra lịch sử.
+
 [Java source](../src/main/java/org/hlrcs/entity/PropertyRegistration.java)
 
 | Java field | Java type | DB column | Mapping / constraints |
@@ -91,6 +94,11 @@ PK = primary key, FK = relationship column; @MapsId có thể khiến cùng cộ
 
 ### Property → `properties`
 
+Bổ sung 2026-11-11: `reverificationRequired` (boolean NOT NULL DEFAULT FALSE) và
+`reverificationReasonsJson` (String/TEXT nullable). Flag công khai độc lập với
+status ACTIVE, không khóa quản lý Room. Chỉ phê duyệt tái xác minh đúng baseline
+mới gỡ flag; không ảnh hưởng mốc xác nhận phòng trống.
+
 [Java source](../src/main/java/org/hlrcs/entity/Property.java)
 
 | Java field | Java type | DB column | Mapping / constraints |
@@ -108,6 +116,11 @@ PK = primary key, FK = relationship column; @MapsId có thể khiến cùng cộ
 | `updatedAt` | `LocalDateTime` | `updated_at` | nullable mặc định; UpdateTimestamp |
 
 ### RoomType → `room_types`
+
+Bổ sung 2026-11-11 (N01–N04): `availabilityConfirmedAt` (Instant, nullable,
+`availability_confirmed_at`, UTC) và `availabilityConfirmedBy` (User, ManyToOne LAZY,
+nullable FK `availability_confirmed_by` → users). Null cho dữ liệu chưa xác nhận.
+Độ mới được tính lúc đọc, không lưu cột stale hoặc snapshot số phòng trống.
 
 [Java source](../src/main/java/org/hlrcs/entity/RoomType.java)
 

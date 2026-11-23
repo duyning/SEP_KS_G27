@@ -10,7 +10,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
  const favorites=useFavorites(),savedCount=favorites?.total??providedSavedCount;
  const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
- const account=user?<>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm shell-desktop-dashboard">Bảng điều khiển</Link>}<NotificationBell/><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link><div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
+ const account=user?<>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm shell-desktop-dashboard">Bảng điều khiển</Link>}<NotificationBell/><Link to="/favorites" className="btn-wishlist-top" aria-label="Phòng yêu thích"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link><div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
  return <div className={`prototype-home prototype-shared-shell ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
     <div className="top-announcement">
       <div className="container top-announcement-inner">
@@ -49,7 +49,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
         <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/search">Tìm phòng</NavLink></li>
           <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
+          <li><Link className="nav-item" to="/favorites">Phòng yêu thích (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/bookings">Lịch xem phòng</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
           <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
@@ -61,7 +61,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
 
 
         <div className="nav-actions">{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Nhà trọ đã lưu" style={{"textDecoration": "none"}} to="/favorites">
+          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Phòng yêu thích" style={{"textDecoration": "none"}} to="/favorites">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
             <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
           </Link>
@@ -92,9 +92,8 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
           Nền tảng công nghệ kết nối trực tiếp người thuê và chủ nhà trọ tại khu vực ĐH FPT và Khu Công nghệ cao Hòa Lạc. Minh bạch thông tin, cam kết không môi giới.
         </p>
         <div className="footer-socials">
-          <a href="#" className="social-link" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-          <a href="#" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
-          <a href="#" className="social-link" aria-label="Hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
+          <a href="https://zalo.me/0912345678" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
+          <a href="tel:0912345678" className="social-link" aria-label="Hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
         </div>
       </div>
 
@@ -144,13 +143,6 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
     <div className="footer-bottom">
       <div className="container footer-bottom-inner">
         <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
-        <div className="bottom-links">
-          <a href="#">Điều khoản sử dụng</a>
-          <span className="dot">•</span>
-          <a href="#">Chính sách bảo mật</a>
-          <span className="dot">•</span>
-          <a href="#">Quy chế hoạt động</a>
-        </div>
       </div>
     </div>
   </footer>}</div>;

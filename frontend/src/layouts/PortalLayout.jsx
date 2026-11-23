@@ -15,7 +15,7 @@ import '../styles/host-header.css';
 
 const hostFooterTitles = { '/host/property': 'Quản lý nhà trọ', '/host/room-types': 'Quản lý loại phòng', '/host/rooms': 'Danh sách phòng', '/host/viewings': 'Yêu cầu xem phòng', '/host/property/new': 'Đăng ký nhà trọ', '/host/property/edit':'Cập nhật hồ sơ nhà trọ' };
 
-const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Đã lưu', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare], ['Bài tổng hợp', '/collected-posts', Globe]];
+const publicLinks = [['Tìm phòng', '/search', House], ['Bản đồ', '/map', PanelTop], ['Phòng yêu thích', '/favorites', Heart], ['Lịch xem phòng', '/bookings', CalendarDays], ['Dịch vụ', '/services', Wrench], ['Cộng đồng', '/community', MessagesSquare], ['Bài tổng hợp', '/collected-posts', Globe]];
 const menus = {
   host: [
     ['TỔNG QUAN', [['Bảng điều khiển', '/host', LayoutDashboard]]],

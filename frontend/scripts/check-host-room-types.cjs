@@ -51,7 +51,7 @@ async function main(){
     await page.getByLabel('Tên loại phòng',{exact:false}).fill('Studio ban công');
     await page.getByLabel('Diện tích (m²)',{exact:false}).fill('25');
     await page.getByLabel('Giá thuê niêm yết',{exact:false}).fill('2200000');
-    await page.getByRole('checkbox',{name:'Điều hòa Inverter'}).check();await page.getByRole('checkbox',{name:'Wifi tốc độ cao'}).check();
+    await page.getByRole('checkbox',{name:'Điều hòa'}).check();await page.getByRole('checkbox',{name:'Wifi tốc độ cao'}).check();
     for(const width of [1536,1024,768,390]){
       await page.setViewportSize({width,height:1000});
       await dialog.evaluate(element=>element.scrollTop=0);

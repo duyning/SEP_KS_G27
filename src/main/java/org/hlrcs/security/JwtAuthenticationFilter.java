@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,11 +31,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                String username = tokenProvider.getUsernameFromJWT(jwt);
-
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-                if (userDetails.isEnabled()) {
+            if (StringUtils.hasText(jwt)) {
+                var claims = tokenProvider.readClaims(jwt);
+                var userDetails = customUserDetailsService.loadUserByUsername(claims.getSubject());
+                Long sessionVersion = claims.get("sessionVersion", Long.class);
+                long tokenVersion = sessionVersion == null ? 0L : sessionVersion;
+                if (userDetails.isEnabled() && userDetails.getUser().getSessionVersion() == tokenVersion) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

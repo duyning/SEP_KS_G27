@@ -3,14 +3,6 @@ import { ROOM_AMENITIES } from './room-types.js';
 import { AMENITIES, formatRuleLabel } from './property-registration.js';
 
 export const detailMoney = value => Number.isFinite(value) ? `${new Intl.NumberFormat('vi-VN').format(value)} đ` : 'Chưa cập nhật';
-// Only the reference distances are illustrative; never use sample prices, photos or contacts.
-const referenceDistances = [
-  { name: 'Đại học FPT Hòa Lạc (Campus)', distance: '800m', time: '2 phút xe máy / 8 phút đi bộ' },
-  { name: 'Đại học Quốc Gia Hà Nội (VNU Hòa Lạc)', distance: '2.5km', time: '6 phút xe máy' },
-  { name: 'Khu Công nghệ cao Hòa Lạc (F-Ville, Viettel)', distance: '1.2km', time: '3 phút xe máy' },
-  { name: 'Chợ dân sinh Tân Xã & Chuỗi WinMart+', distance: '250m', time: '3 phút đi bộ' },
-  { name: 'Trạm đón xe Bus Hòa Lạc (Tuyến 74, 88, 107)', distance: '400m', time: '5 phút đi bộ' },
-];
 const labels = (keys, options) => keys.map(key => options.find(([id]) => id === key)?.[1] || key);
 export function toDetailPrototype(item) {
   const amenities = labels(item.amenities, ROOM_AMENITIES), common = labels(item.propertyAmenities, AMENITIES);
@@ -32,7 +24,7 @@ export function toDetailPrototype(item) {
     parkingFee: 'Liên hệ chủ trọ', parkingFeeNote: item.propertyAmenities.includes('parking') ? 'Có khu vực để xe; xác nhận mức phí trước khi thuê.' : 'Chưa cập nhật thông tin chỗ để xe.',
     initialEstimate: estimate, estimateDisplay: estimate == null ? 'Cần xác nhận thêm' : detailMoney(estimate),
     description: [item.description, item.propertyDescription !== item.description ? item.propertyDescription : null].filter(Boolean).join('\n\n') || 'Chủ trọ chưa bổ sung mô tả chi tiết.',
-    amenities: [...new Set([...amenities, ...common])], rules: [...(item.selectedRules || []).map(formatRuleLabel), ...(item.rules ? [item.rules] : [])], distances: referenceDistances,
+    amenities: [...new Set([...amenities, ...common])], rules: [...(item.selectedRules || []).map(formatRuleLabel), ...(item.rules ? [item.rules] : [])],
     hostInfo: { name: item.publicContact?.hostName?.trim() || item.propertyName, avatar: null, role: 'Chủ trọ / Đại diện nhà trọ', joined: item.publishedAt ? `Hồ sơ duyệt ${detailDate(item.publishedAt)}` : 'Thông tin liên hệ công khai', responseRate: 'Liên hệ để xác nhận', phone: phone || '', zalo: zaloLink(item.publicContact?.zaloPhone)?.split('/').at(-1) || '' },
     reviews: item.reviews.latest,
   };

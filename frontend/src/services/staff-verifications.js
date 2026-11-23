@@ -266,7 +266,7 @@ export function getVerificationRowActions(item) {
           title: 'Mở hồ sơ và chọn các mục cần chủ trọ bổ sung',
         },
       ];
-      if (meta.readyForApproval && hasVersion) {
+      if (meta.readyForApproval && hasVersion && !item.reverificationRequired) {
         secondary.unshift({
           id: 'quick-approve',
           kind: 'quick_decision',
@@ -295,7 +295,7 @@ export function getVerificationRowActions(item) {
           tone: 'primary',
         },
         secondary,
-        statusHint: meta.readyForApproval ? 'Đủ hồ sơ bắt buộc · Sẵn sàng duyệt' : 'Cần kiểm tra kỹ tài liệu đính kèm',
+        statusHint: item.reverificationRequired ? 'Cần đối chiếu thay đổi quan trọng · Nhà trọ tạm ẩn' : meta.readyForApproval ? 'Đủ hồ sơ bắt buộc · Sẵn sàng duyệt' : 'Cần kiểm tra kỹ tài liệu đính kèm',
       };
     }
     return {

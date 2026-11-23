@@ -1,0 +1,14 @@
+.availability-notice{display:flex;align-items:flex-start;gap:6px;margin:8px 0;font-size:.8125rem;line-height:1.5;overflow-wrap:anywhere;text-align:left}
+.availability-notice svg{flex:none;margin-top:2px}
+.availability-current{color:var(--availability-success,#065f46)}
+.availability-stale{color:var(--availability-warning,#92400e)}
+.availability-unconfirmed{color:var(--availability-muted,#475569)}
+.availability-error{color:var(--availability-error,#991b1b)}
+.host-availability-confirmation{padding:12px 16px;border-top:1px solid var(--border-color,#e2e8f0);min-width:0}
+.host-availability-confirmation>button{white-space:normal;min-height:44px;text-align:left;border:1px solid var(--availability-action,#0f766e);border-radius:8px;color:var(--availability-action,#0f766e);background:var(--availability-surface,#fff);padding:8px 12px}
+.host-availability-confirmation>button:disabled{opacity:.55;cursor:not-allowed}
+.host-availability-confirmation>small,.host-availability-confirmation>[role=status]{display:block;font-size:.8125rem;line-height:1.5}
+.availability-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:20px}
+.availability-actions button{min-height:44px;white-space:normal}
+.availability-actions button:focus-visible,.host-availability-confirmation button:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
+@media(max-width:480px){.availability-actions{flex-direction:column}.availability-actions button{width:100%}}

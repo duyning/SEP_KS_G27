@@ -1,3 +1,4 @@
+import ReverificationNotice from '../../components/ReverificationNotice.jsx';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -185,7 +186,7 @@ function PropertyDetail({ property }) {
   const badge = (
     <span className={`hp-status ${property.displayStatus.toLowerCase()}`}>
       {pending ? <Clock3 size={13} /> : visible ? <Check size={13} /> : null}
-      {stateLabels[property.displayStatus]}
+      {property.reverificationRequired ? 'Chờ tái xác minh' : stateLabels[property.displayStatus]}
     </span>
   );
   const filter =
@@ -266,6 +267,7 @@ function PropertyDetail({ property }) {
 
   return (
     <article className="hp-detail" data-status={property.displayStatus}>
+      <ReverificationNotice required={property.reverificationRequired} reasons={property.reverificationReasons} status={property.changeRequest?.status} note={property.changeRequest?.reasonNote} registrationId={property.changeRequest?.registrationId}/>
       <div className="hp-sheet">
         <section className="hp-summary">
           <div className="hp-cover">
@@ -383,7 +385,7 @@ function PropertyDetail({ property }) {
               )}
               {change ? (
                 <p className="hp-feedback-context">
-                  Thông tin đã duyệt của nhà trọ tiếp tục hiển thị trong khi đề nghị thay đổi được
+                  {property.reverificationRequired ? 'Nhà trọ đang tạm ẩn trong khi hồ sơ tái xác minh được' : 'Thông tin đã duyệt của nhà trọ tiếp tục hiển thị trong khi đề nghị thay đổi được'}
                   xử lý.
                 </p>
               ) : pending ? (
@@ -942,6 +944,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                   </Link>
 
                   <div className="hm-prop-body">
+                    <ReverificationNotice required={record.reverificationRequired} reasons={record.reverificationReasons} status={record.changeRequest?.status} note={record.changeRequest?.reasonNote} registrationId={record.changeRequest?.registrationId}/>
                     <div className="hm-prop-head">
                       <h2 className="hm-prop-name">
                         <Link to={detailLink(record)} title={record.name} onClick={() => rememberProperty(record)}>
