@@ -208,7 +208,7 @@ export const MOCK_HOST_SUPPORT = [
     "subject": "Yêu cầu kiểm tra & cấp lại badge Xác minh nhà trọ sau khi hoàn thiện PCCC",
     "category": "VERIFICATION",
     "categoryLabel": "Xác minh / xét duyệt",
-    "content": "Chào ban quản trị, tôi đã hoàn thiện bổ sung đầy đủ hệ thống bình bọt và tiêu lệnh PCCC theo biên bản hướng dẫn. Nhờ Staff kiểm tra lại hồ sơ để khôi phục huy hiệu Xác minh xanh cho nhà trọ Minh Quân.",
+    "content": "Chào nhân viên, tôi đã hoàn thiện bổ sung đầy đủ hệ thống bình bọt và tiêu lệnh PCCC theo biên bản hướng dẫn. Nhờ nhân viên kiểm tra lại hồ sơ để khôi phục huy hiệu Xác minh xanh cho nhà trọ Minh Quân.",
     "status": "PENDING",
     "statusLabel": "Chờ tiếp nhận",
     "createdAt": "2026-10-20T10:15:00.000Z",
@@ -219,7 +219,7 @@ export const MOCK_HOST_SUPPORT = [
         "author": "Trần Gia Huy",
         "role": "HOST",
         "time": "2026-10-20 10:15",
-        "text": "Chào ban quản trị, tôi đã hoàn thiện hồ sơ PCCC bổ sung."
+        "text": "Chào nhân viên, tôi đã hoàn thiện hồ sơ PCCC bổ sung."
       }
     ]
   },

@@ -1,3 +1,4 @@
+import UIButton from '../common/Button.jsx';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -52,7 +53,7 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
               <div className="brand-portal-role">STAFF PORTAL</div>
             </div>
           </Link>
-          <button
+          <UIButton
             type="button"
             id="btnCloseSidebar"
             className="btn-close-sidebar-mobile"
@@ -60,7 +61,7 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
             onClick={onClose}
           >
             <X size={20} />
-          </button>
+          </UIButton>
         </div>
 
         {/* Navigation Links */}
@@ -138,17 +139,17 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
               </NavLink>
             </li>
             <li>
-              <button type="button" className="nav-link btn-logout-sidebar" onClick={handleLogout} style={{ color: '#e11d48' }}>
+              <UIButton type="button" className="nav-link btn-logout-sidebar" onClick={handleLogout} style={{ color: '#e11d48' }}>
                 <LogOut className="nav-icon" size={18} />
                 <span>Đăng xuất</span>
-              </button>
+              </UIButton>
             </li>
           </ul>
         </nav>
 
         {/* Sidebar User Footer */}
         {user && (
-          <div className="sidebar-user-footer" style={{ padding: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <div className="sidebar-user-footer" style={{ padding: 'var(--space-4)', borderTop: '1px solid #e2e8f0' }}>
             <div className="sidebar-user-card" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="user-avatar-badge" style={{
                 width: '36px', height: '36px', borderRadius: '50%', background: '#0f766e',
@@ -160,7 +161,7 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
                 <div className="user-display-name" style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                   {user.fullName || user.email}
                 </div>
-                <div className="user-role-tag" style={{ fontSize: '11px', color: '#0d9488', fontWeight: 600 }}>
+                <div className="user-role-tag" style={{ fontSize: '11px', color: '#0f766e', fontWeight: 600 }}>
                   Chuyên viên vận hành
                 </div>
               </div>

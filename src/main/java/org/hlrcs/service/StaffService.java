@@ -32,6 +32,7 @@ public class StaffService {
     private final ServiceRegistrationRepository serviceApplications;
     private final PropertyVerificationAccess verificationAccess;
     private final jakarta.persistence.EntityManager entityManager;
+    private final ServiceComplaintRepository serviceComplaints;
 
     private PropertyRegistrationRequest submission(PropertyRegistration registration) {
         if (registration.getRegistrationDetails() == null) return null;
@@ -156,6 +157,11 @@ public class StaffService {
         var supportRows = support.findAllByOrderByCreatedAtAsc();
         var postRows = posts.findAllByOrderByCreatedAtAsc();
         var queue = new ArrayList<QueueItem>();
+        var complaintRows = serviceComplaints.findAllByOrderByComplaintIdDesc().stream()
+                .filter(c -> Set.of("PENDING", "EXPLAINED").contains(c.getStatus())).toList();
+        for (var c : complaintRows) queue.add(new QueueItem("SERVICE-REPORT-" + c.getComplaintId(), "REPORT", c.getService().getServiceName(),
+                c.getReporter().getFullName(), c.getContent(), "PENDING", LocalDateTime.ofInstant(c.getCreatedAt(), java.time.ZoneId.systemDefault()),
+                "/staff/service-complaints?id=" + c.getComplaintId()));
         var serviceRows = serviceApplications.findAllByOrderByRegistrationIdDesc();
         for (var row : serviceRows) if (row.getStatus() == RegistrationStatus.PENDING) {
             queue.add(new QueueItem("SERVICE-" + row.getRegistrationId(), "SERVICE", row.getServiceName(), row.getApplicantName(),
@@ -170,8 +176,8 @@ public class StaffService {
         for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), "/staff/community/detail?id=" + row.getPostId()));
         queue.sort(Comparator.comparing(QueueItem::createdAt, Comparator.nullsLast(Comparator.naturalOrder())));
         var activityRows = actor.getRole()==UserRole.ADMIN ? logs.findAllByOrderByCreatedAtDesc() : logs.findVisibleForVerificationStaff(actor.getUserId());
-        long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
-        return new Dashboard(verification.stream().filter(row -> row.getStatus() == RegistrationStatus.PENDING).count(), reportRows.stream().filter(row -> row.getStatus() == ReportStatus.PENDING).count(), null,
+        long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED", "DISMISS", "REMOVE").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
+        return new Dashboard(verification.stream().filter(row -> row.getStatus() == RegistrationStatus.PENDING).count(), reportRows.stream().filter(row -> row.getStatus() == ReportStatus.PENDING).count() + complaintRows.size(), null,
                 supportRows.stream().filter(row -> row.getStatus() != SupportStatus.COMPLETED).count(), postRows.stream().filter(row -> row.getStatus() == PostStatus.PENDING).count(),
                 actor.getRole()==UserRole.ADMIN ? properties.findAll().stream().filter(row -> "ACTIVE".equalsIgnoreCase(row.getStatus())).count() : properties.countActiveForAssignedStaff(actor.getUserId()), processed, null, null, queue, activityRows.stream().limit(20).map(this::activity).toList());
     }

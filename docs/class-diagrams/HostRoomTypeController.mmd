@@ -1,0 +1,230 @@
+classDiagram
+    direction TB
+    class HostRoomTypeController {
+        <<Controller>>
+        +create()
+        +createWithImages()
+        +update()
+        +detail()
+        +delete()
+        +image()
+        +getRoomTypes()
+    }
+    class HostRoomTypeService {
+        <<Service>>
+        +create()
+        +save()
+        +detail()
+        +image()
+        +delete()
+        +getRoomTypes()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class PropertyRepository {
+        <<interface>>
+        +findByOwner_UserIdOrderByPropertyIdAsc()
+    }
+    class PropertyRegistrationRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findForReview()
+        +findByUser_UserIdOrderByCreatedAtDesc()
+        +findFirstByUser_UserIdAndStatusOrderByCreatedAtDesc()
+        +countByUser_UserIdAndStatus()
+    }
+    class RoomTypeRepository {
+        <<interface>>
+        +findByProperty_Owner_UserId()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCase()
+        +existsByProperty_PropertyIdAndRoomTypeIgnoreCaseAndRoomTypeIdNot()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class RoomTypeImageRepository {
+        <<interface>>
+        +findByRoomType_RoomTypeIdOrderByImageIdAsc()
+        +deleteByRoomType_RoomTypeId()
+    }
+    class BookingRepository {
+        <<interface>>
+        +existsByRoomType_RoomTypeId()
+        +countByRoomType_Property_PropertyIdAndStatus()
+        +findByRoomType_Property_Owner_UserIdOrderByCreatedAtDesc()
+        +countByRoomType_Property_Owner_UserIdAndStatus()
+        +findTop5ByRoomType_Property_Owner_UserIdOrderByCreatedAtDesc()
+    }
+    class RoomTypeVideoRepository {
+        <<interface>>
+        +deleteByRoomType_RoomTypeId()
+    }
+    class RoomTypeAmenityRepository {
+        <<interface>>
+        +deleteByRoomType_RoomTypeId()
+    }
+    class WishlistRepository {
+        <<interface>>
+        +deleteByRoomType_RoomTypeId()
+    }
+    class RoomRepository {
+        <<interface>>
+        +findByProperty_Owner_UserIdOrderByRoomNumberAsc()
+        +findByRoomType_RoomTypeIdOrderByRoomNumberAsc()
+        +existsByRoomType_RoomTypeId()
+        +existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot()
+        +countByProperty_PropertyId()
+        +countByProperty_PropertyIdAndStatus()
+        +countByProperty_Owner_UserId()
+    }
+    class RoomMapping {
+        <<Service>>
+        +summary()
+    }
+    class Property {
+        <<Entity>>
+        -Integer propertyId
+        -User owner
+        -PropertyRegistration registration
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -String description
+    }
+    class PropertyRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -String name
+        -String address
+        -String contactInfo
+        -String googleMapLink
+        -RegistrationStatus status
+        -User reviewer
+    }
+    class RoomType {
+        <<Entity>>
+        -Integer roomTypeId
+        -Property property
+        -String roomType
+        -BigDecimal price
+        -Float areaSqm
+        -BigDecimal servicePrice
+        -String description
+        -Integer capacity
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class RoomTypeImage {
+        <<Entity>>
+        -Integer imageId
+        -RoomType roomType
+        -String imageUrl
+        -String fileName
+        -String contentType
+        -byte[] fileContent
+    }
+    class Booking {
+        <<Entity>>
+        -Integer bookingId
+        -User renter
+        -RoomType roomType
+        -LocalDateTime scheduledDate
+        -BookingStatus status
+        -String note
+        -LocalDateTime createdAt
+    }
+    class RoomTypeVideo {
+        <<Entity>>
+        -Integer videoId
+        -RoomType roomType
+        -String videoUrl
+    }
+    class RoomTypeAmenity {
+        <<Entity>>
+        -RoomTypeAmenityId id
+        -RoomType roomType
+        -Amenity amenity
+    }
+    class Wishlist {
+        <<Entity>>
+        -Integer wishlistId
+        -User user
+        -RoomType roomType
+        -LocalDateTime createdAt
+    }
+    class Room {
+        <<Entity>>
+        -Integer roomId
+        -Property property
+        -RoomType roomType
+        -String roomNumber
+        -String floor
+        -String status
+        -BigDecimal customPrice
+        -LocalDateTime confirmedAt
+    }
+    class HostRoomTypesResponse {
+        <<DTO>>
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    HostRoomTypeController --> HostRoomTypeService : injected
+    HostRoomTypeService --> AuthService : injected
+    HostRoomTypeService --> PropertyRepository : injected
+    HostRoomTypeService --> PropertyRegistrationRepository : injected
+    HostRoomTypeService --> RoomTypeRepository : injected
+    HostRoomTypeService --> UserRepository : injected
+    HostRoomTypeService --> RoomTypeImageRepository : injected
+    HostRoomTypeService --> BookingRepository : injected
+    HostRoomTypeService --> RoomTypeVideoRepository : injected
+    HostRoomTypeService --> RoomTypeAmenityRepository : injected
+    HostRoomTypeService --> WishlistRepository : injected
+    HostRoomTypeService --> RoomRepository : injected
+    HostRoomTypeService --> RoomMapping : injected
+    PropertyRepository --|> JpaRepository
+    PropertyRepository ..> Property : entity - ID Integer
+    PropertyRegistrationRepository --|> JpaRepository
+    PropertyRegistrationRepository ..> PropertyRegistration : entity - ID Integer
+    RoomTypeRepository --|> JpaRepository
+    RoomTypeRepository ..> RoomType : entity - ID Integer
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    RoomTypeImageRepository --|> JpaRepository
+    RoomTypeImageRepository ..> RoomTypeImage : entity - ID Integer
+    BookingRepository --|> JpaRepository
+    BookingRepository ..> Booking : entity - ID Integer
+    RoomTypeVideoRepository --|> JpaRepository
+    RoomTypeVideoRepository ..> RoomTypeVideo : entity - ID Integer
+    RoomTypeAmenityRepository --|> JpaRepository
+    RoomTypeAmenityRepository ..> RoomTypeAmenity : entity - ID RoomTypeAmenityId
+    WishlistRepository --|> JpaRepository
+    WishlistRepository ..> Wishlist : entity - ID Integer
+    RoomRepository --|> JpaRepository
+    RoomRepository ..> Room : entity - ID Integer
+    HostRoomTypeController ..> HostRoomTypesResponse : DTO

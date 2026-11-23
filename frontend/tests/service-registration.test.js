@@ -25,7 +25,7 @@ test('image submissions retain cancellation and the legacy signal-only call', as
 
 test('field validation returns every correction without discarding valid input', () => {
   const errors = validateServiceRegistrationFields({ ...form, description: 'Chưa đủ nội dung', contactPhone: '123', contactEmail: 'sai-email' }, [], { imageRequired: true });
-  assert.deepEqual(Object.keys(errors), ['image', 'description', 'contactPhone', 'contactEmail', 'documents']);
+  assert.deepEqual(Object.keys(errors), ['image', 'description', 'contactPhone', 'contactEmail']);
   assert.match(errors.description, /20 đến 5000 ký tự/);
   assert.equal(form.description, 'Dịch vụ chuyển trọ quanh khu vực Hòa Lạc.');
   assert.deepEqual(validateServiceRegistrationFields(form, [], { retainedCount: 1, noteRequired: true, note: 'Cập nhật mô tả dịch vụ.' }), {});
@@ -47,13 +47,13 @@ test('duplicate-name conflicts belong to the name field; stale conflicts stay gl
   assert.deepEqual(serviceRegistrationFieldErrors({ status: 400, fields: { 'details.contactPhone': 'Số điện thoại không hợp lệ.' } }), { contactPhone: 'Số điện thoại không hợp lệ.' });
   assert.deepEqual(serviceRegistrationFieldErrors({ status: 400, message: 'Ảnh chỉ nhận JPG, PNG, WEBP đúng định dạng.' }), { image: 'Ảnh chỉ nhận JPG, PNG, WEBP đúng định dạng.' });
 });
-test('service registration validates pricing and required evidence', () => {
+test('service registration validates pricing and optional evidence', () => {
   assert.equal(validateServiceRegistration(form, [file]), '');
   assert.equal(validateServiceRegistration({ ...form, pricingType: 'NEGOTIABLE', price: '' }, [file]), '');
   for (const price of ['', '-1', '0', 'abc', '100.123', '10000000000']) assert.ok(validateServiceRegistration({ ...form, price }, [file]));
   assert.ok(validateServiceRegistration({ ...form, contactPhone: '123' }, [file]));
   assert.ok(validateServiceRegistration({ ...form, categoryId: '' }, [file]));
-  assert.ok(validateServiceRegistration(form, []));
+  assert.equal(validateServiceRegistration(form, []), '');
   assert.ok(validateServiceRegistration(form, Array(6).fill(file)));
   assert.ok(validateServiceRegistration(form, [{ ...file, size: 11 * 1024 * 1024 }]));
   assert.ok(validateServiceRegistration(form, [{ ...file, type: 'text/html' }]));
@@ -74,10 +74,10 @@ test('submission sends multipart evidence and refuses unconfirmed success', asyn
       assert.ok(options.body instanceof FormData);
       assert.equal(options.headers['Content-Type'], undefined);
       assert.equal(JSON.parse(await options.body.get('details').text()).serviceName, form.serviceName);
-      assert.equal(options.body.getAll('documents').length, 1);
-      return { ok: true, status: 201, json: async () => ({ success: true, data: { registrationId: 42, serviceName: form.serviceName, status: 'PENDING', documents: [{ documentId: 1 }] } }) };
+      assert.equal(options.body.getAll('documents').length, 0);
+      return { ok: true, status: 201, json: async () => ({ success: true, data: { registrationId: 42, serviceName: form.serviceName, status: 'PENDING', documents: [] } }) };
     };
-    const result = await serviceRegistrationApi.submit(form, [new File(['%PDF-1.4'], 'license.pdf', { type: 'application/pdf' })]);
+    const result = await serviceRegistrationApi.submit(form, []);
     assert.equal(result.registrationId, 42);
     globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: {} }) });
     await assert.rejects(serviceRegistrationApi.submit(form, []), error => error.status === 502);
@@ -92,7 +92,8 @@ test('submission sends multipart evidence and refuses unconfirmed success', asyn
 
 test('field errors identify each invalid control and allow optional email and negotiated price', () => {
   const errors = validateServiceRegistrationFields({ ...form, serviceName: ' ', applicantName: 'A', description: 'Short', serviceArea: '', contactEmail: 'bad-address', categoryId: '0', contactPhone: '12', price: '-5' }, []);
-  for (const key of ['serviceName', 'applicantName', 'description', 'serviceArea', 'contactEmail', 'categoryId', 'contactPhone', 'price', 'documents']) assert.ok(errors[key], key);
+  for (const key of ['serviceName', 'applicantName', 'description', 'serviceArea', 'contactEmail', 'categoryId', 'contactPhone', 'price']) assert.ok(errors[key], key);
+  assert.equal(errors.documents, undefined, 'Verification documents are optional; uploaded files are still validated');
   assert.deepEqual(validateServiceRegistrationFields({ ...form, contactEmail: '', pricingType: 'NEGOTIABLE', price: '' }, [file]), {});
   assert.ok(validateServiceRegistrationFields({ ...form, serviceName: 'x'.repeat(256) }, [file]).serviceName);
   assert.ok(validateServiceRegistrationFields({ ...form, description: 'x'.repeat(5001) }, [file]).description);

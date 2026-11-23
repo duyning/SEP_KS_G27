@@ -1,3 +1,4 @@
+import UIButton from './common/Button.jsx';
 import { useId, useState } from 'react';
 
 export default function ServiceExpandableText({ text, label }) {
@@ -10,6 +11,6 @@ export default function ServiceExpandableText({ text, label }) {
   return <div className="svc-expandable-text">
     {label && <strong>{label}</strong>}
     <p id={id}>{expanded || !long ? value : preview.trimEnd() + '…'}</p>
-    {long && <button type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(previous => !previous)}>{expanded ? 'Thu gọn' : 'Xem thêm'}</button>}
+    {long && <UIButton type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(previous => !previous)}>{expanded ? 'Thu gọn' : 'Xem thêm'}</UIButton>}
   </div>;
 }

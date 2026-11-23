@@ -19,7 +19,7 @@ public class ServicePublicationService {
     }
     public boolean isPublic(org.hlrcs.entity.Service row) {
         var registration = row.getRegistration();
-        return "ACTIVE".equals(row.getStatus()) && row.getProvider().getStatus() == UserStatus.ACTIVE
+        return !row.isModerationHidden() && "ACTIVE".equals(row.getStatus()) && row.getProvider().getStatus() == UserStatus.ACTIVE
                 && registration != null && registration.getStatus() == RegistrationStatus.APPROVED
                 && "APPROVE".equals(registration.getCapabilityDecision()) && "APPROVE".equals(registration.getListingDecision())
                 && hasCapability(row.getProvider().getUserId());

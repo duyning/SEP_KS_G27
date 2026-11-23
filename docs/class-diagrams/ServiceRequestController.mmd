@@ -1,0 +1,109 @@
+classDiagram
+    direction TB
+    class ServiceRequestController {
+        <<Controller>>
+        +mine()
+        +incoming()
+        +detail()
+        +submit()
+        +respond()
+    }
+    class ServiceRequestService {
+        <<Service>>
+        +mine()
+        +incoming()
+        +detail()
+        +submit()
+        +respond()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class ServiceRequestRepository {
+        <<interface>>
+        +findByCustomer_UserIdOrderByRequestIdDesc()
+        +findByService_Provider_UserIdOrderByRequestIdDesc()
+        +findForResponse()
+    }
+    class ServiceRepository {
+        <<interface>>
+        +findByProvider_UserIdOrderByServiceIdDesc()
+        +existsByProvider_UserIdAndServiceNameIgnoreCaseAndStatusNot()
+        +existsByRegistration_RegistrationId()
+        +findByStatusOrderByServiceIdDesc()
+        +findByStatusAndCategory_CategoryIdOrderByServiceIdDesc()
+        +findByRegistration_RegistrationId()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class ServicePublicationService {
+        <<Service>>
+        +hasCapability()
+        +isPublic()
+    }
+    class ServiceRequest {
+        <<Entity>>
+        -Integer requestId
+        -Service service
+        -User customer
+        -String contactName
+        -String contactPhone
+        -String description
+        -String address
+        -Instant scheduledAt
+    }
+    class Service {
+        <<Entity>>
+        -Integer serviceId
+        -User provider
+        -ServiceCategory category
+        -ServiceRegistration registration
+        -String serviceName
+        -String contactInfo
+        -String contactEmail
+        -String pricingType
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class ServiceRequestInput {
+        <<DTO>>
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    ServiceRequestController --> ServiceRequestService : injected
+    ServiceRequestService --> AuthService : injected
+    ServiceRequestService --> ServiceRequestRepository : injected
+    ServiceRequestService --> ServiceRepository : injected
+    ServiceRequestService --> UserRepository : injected
+    ServiceRequestService --> ServicePublicationService : injected
+    ServiceRequestRepository --|> JpaRepository
+    ServiceRequestRepository ..> ServiceRequest : entity - ID Integer
+    ServiceRepository --|> JpaRepository
+    ServiceRepository ..> Service : entity - ID Integer
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    ServiceRequestController ..> ServiceRequestInput : DTO

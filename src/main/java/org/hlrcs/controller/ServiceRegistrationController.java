@@ -21,6 +21,13 @@ public class ServiceRegistrationController {
     private final ServiceRegistrationService service;
     private final ServiceCategoryRepository categories;
     public record Category(Integer categoryId, String name) {}
+    public record CancellationRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(0) Integer revision) {}
+
+    @PostMapping("/{id}/cancel")
+    public ApiResponse<ServiceRegistrationService.RegistrationInfo> cancel(@PathVariable Integer id,
+            @Valid @RequestBody CancellationRequest request) {
+        return ApiResponse.success(service.cancel(id, request.revision()));
+    }
 
     @GetMapping("/categories")
     public ApiResponse<List<Category>> categories() {
@@ -33,6 +40,9 @@ public class ServiceRegistrationController {
 
     @GetMapping("/mine")
     public ApiResponse<List<ServiceRegistrationService.RegistrationInfo>> mine() { return ApiResponse.success(service.mine()); }
+
+    @GetMapping("/services")
+    public ApiResponse<List<ServiceRegistrationService.RegistrationInfo>> myServices() { return ApiResponse.success(service.myServices()); }
 
     @PostMapping(value = "/services/{id}/changes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ServiceRegistrationService.RegistrationInfo> change(@PathVariable Integer id,
@@ -51,7 +61,7 @@ public class ServiceRegistrationController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ServiceRegistrationService.RegistrationInfo>> submit(
             @Valid @RequestPart("details") ServiceRegistrationRequest details,
-            @RequestPart("documents") List<MultipartFile> documents,
+            @RequestPart(value = "documents", required = false) List<MultipartFile> documents,
             @RequestPart(value = "image", required = false) List<MultipartFile> image) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(service.submit(details, documents, image)));
     }

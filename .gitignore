@@ -44,3 +44,15 @@ frontend/.env.*
 !frontend/.env.example
 frontend/migration/room-types-check/
 frontend/migration/supplement-check/
+
+# Local environment and generated verification artifacts
+.env
+.env.*
+!.env.example
+node_modules/
+frontend/migration/design-system-check/
+frontend/migration/service-request-check/
+
+# Intermediate diagram generation files
+docs/class-diagram-demo/*.xml
+docs/class-diagram-demo/manifest.json

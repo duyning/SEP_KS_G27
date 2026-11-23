@@ -3,15 +3,15 @@ import { X } from 'lucide-react';
 import { motion, useIsPresent } from 'motion/react';
 import { AnimatePresence, useSurfaceMotion } from '../motion/MotionUI.jsx';
 
-export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px', closeOnBackdrop = true, closeOnEscape = true, className = '', footer }) {
-  return <AnimatePresence propagate>{isOpen && <ModalBody {...{ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer }} />}</AnimatePresence>;
+export default function Modal({ title, isOpen = true, onClose, children, maxWidth = '560px', closeOnBackdrop = true, closeOnEscape = true, className = '', footer, initialFocus, closeDisabled = false }) {
+  return <AnimatePresence propagate>{isOpen && <ModalBody {...{ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer, initialFocus, closeDisabled }} />}</AnimatePresence>;
 }
 
-function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer }) {
+function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeOnEscape, className, footer, initialFocus, closeDisabled }) {
   const titleId = useId();
   const overlayRef = useRef(null);
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  closeRef.current = closeDisabled ? undefined : onClose;
   const escapeRef = useRef(closeOnEscape);
   escapeRef.current = closeOnEscape;
   const present = useIsPresent();
@@ -22,7 +22,7 @@ function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeO
     const trigger = document.activeElement;
     const overlay = overlayRef.current;
     const focusable = () => [...overlay.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length);
-    focusable()[0]?.focus({ preventScroll: true });
+    (initialFocus ? overlay.querySelector(initialFocus) : focusable()[0])?.focus({ preventScroll: true });
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && escapeRef.current) {
         e.preventDefault();
@@ -43,7 +43,7 @@ function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeO
       document.body.style.overflow = prevOverflow;
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
-  }, [present]);
+  }, [present, initialFocus]);
 
   return (
     <div
@@ -55,7 +55,7 @@ function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeO
       inert={!present || undefined}
       aria-hidden={!present || undefined}
       onClick={(e) => {
-        if (closeOnBackdrop && e.target === overlayRef.current) onClose?.();
+        if (closeOnBackdrop && e.target === overlayRef.current) closeRef.current?.();
       }}
       style={{
         position: 'fixed',
@@ -102,6 +102,7 @@ function ModalBody({ title, onClose, children, maxWidth, closeOnBackdrop, closeO
           </h3>
           <button
             type="button"
+            disabled={closeDisabled}
             onClick={onClose}
             aria-label="Đóng"
             title="Đóng"

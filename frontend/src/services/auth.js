@@ -1,3 +1,4 @@
+import { notifyServiceUpdate } from './service-live.js';
 const TOKEN_KEY = 'hlrcs_access_token';
 export const getToken = () => sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 export function clearToken() {
@@ -36,6 +37,7 @@ export async function request(path, { method = 'GET', body, signal, basePath = '
     throw new ApiError(result?.message || 'Không thể xử lý yêu cầu. Vui lòng thử lại.', response.status,
       result?.data && typeof result.data === 'object' ? result.data : {});
   }
+  if (method !== 'GET' && /\/api\/(?:services|service-|staff\/service)/.test(basePath + path)) notifyServiceUpdate();
   return result.data;
 }
 export const authApi = {

@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {Activity, ArrowRight, ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock3, FolderOpen, LayoutDashboard, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, Users, UserRound, UserRoundCheck, AlertCircle} from 'lucide-react';
 import {MotionButton} from '../../components/motion/MotionUI.jsx';
+import AdminServiceSummary from '../../components/AdminServiceSummary.jsx';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {roleLabels} from '../../routing/screens.js';
 import {adminApi} from '../../services/admin.js';
@@ -40,6 +41,7 @@ export default function AdminDashboardPage(){
   <section className="ad-hero"><div><span className="ad-eyebrow">HL_RCS · ADMIN CONSOLE</span><h1>Quản trị hệ thống</h1><p>Xin chào, <strong>{user.fullName||user.email}</strong>. Theo dõi dữ liệu và giám sát hoạt động của nền tảng.</p><span className="ad-hero-caption"><LockKeyhole size={13}/>Khu vực dành cho Quản trị viên</span></div><div className="ad-hero-side"><ShieldCheck size={37} strokeWidth={1.5}/><span>TỔNG QUAN VẬN HÀNH</span><small>{data?`Cập nhật: ${date(data.fetchedAt)}`:'Đang kết nối dữ liệu hệ thống'}</small><MotionButton className="ad-button ad-hero-refresh" disabled={overview.loading} onClick={refresh}><RefreshCw size={14} className={overview.loading?'spin':''}/>Làm mới dữ liệu</MotionButton></div></section>
   <nav className="ad-view-nav" aria-label="Mục quản trị">{Object.entries(views).map(([key,[label,Icon]])=><Link key={key} className={view===key?'active':''} aria-current={view===key?'page':undefined} to={key==='overview'?'/admin':`/admin?view=${key}`}><Icon size={17}/>{label}</Link>)}</nav>
   {view==='overview'?<>
+   <AdminServiceSummary />
    {overview.error&&<LoadState state={overview} retry={refresh}/>}
    <div className="ad-metrics">{[
     ['Tài khoản hệ thống',data?.totalAccounts,data?`${count(data.activeAccounts)} tài khoản đang hoạt động`:'Đang lấy số liệu',Users,'teal','/admin?view=accounts'],

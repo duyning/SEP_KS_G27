@@ -20,7 +20,7 @@ export const screens = [
   screen(null, '/favorites/compare', 'favorites', 'So sánh phòng đã lưu', 'comparison', {integration:'connected'}),
   screen('bookings.html', '/bookings', 'member', 'Lịch xem phòng', 'list', { columns: ['Nhà trọ', 'Chủ trọ', 'Lịch hẹn', 'Trạng thái'], filters: ['Tất cả lịch hẹn', 'Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'] }),
   screen('community.html', '/community', 'public', 'Cộng đồng Cư dân & Sinh viên Hòa Lạc', 'community'),
-  screen('services.html', '/services', 'public', 'Dịch vụ quanh trọ', 'services'),
+  screen('services.html', '/services', 'public', 'Dịch vụ', 'services'),
   screen('service-detail.html', '/services/detail', 'public', 'Chi tiết dịch vụ', 'detail', { sections: ['Thông tin dịch vụ', 'Loại dịch vụ', 'Khu vực phục vụ', 'Nhà cung cấp'], actions: ['Liên hệ nhà cung cấp'] }),
   screen('notifications.html', '/notifications', 'member', 'Thông báo của bạn', 'notifications'),
   screen('become-host.html', '/become-host', 'member', 'Đăng ký làm chủ trọ', 'becomeHost', { integration: 'connected' }),
@@ -40,6 +40,7 @@ export const screens = [
   screen('staff-host-registration-detail.html', '/staff/host-registrations/detail', 'staff', 'Chi tiết đăng ký làm chủ trọ', 'hostApplicationDetail', { integration: 'connected' }),
 
   screen(null, '/staff/service-applications', 'staff', 'Xét duyệt hồ sơ dịch vụ', 'list', { integration: 'connected' }),
+  screen(null, '/staff/service-complaints', 'staff', 'Xử lý báo cáo dịch vụ', 'list', { integration: 'connected' }),
   screen('staff-property-verifications.html', '/staff/verifications', 'staff', 'Hồ sơ xác minh nhà trọ', 'list', { metrics: ['Tổng hồ sơ', 'Chờ xác minh', 'Cần bổ sung', 'Đã xử lý'], columns: ['Nhà trọ & mã hồ sơ', 'Chủ trọ / đại diện', 'Ngày gửi', 'Trạng thái', 'Cập nhật gần nhất', 'Thao tác'], filters: ['Tất cả trạng thái', 'Chờ xác minh', 'Cần bổ sung', 'Đã xác minh', 'Từ chối'] }),
   screen('staff-property-verification-detail.html', '/staff/verifications/detail', 'staff', 'Thẩm định hồ sơ xác minh', 'detail', { sections: ['Thông tin nhà trọ', 'Chủ trọ / Đại diện', 'Tài liệu xác minh', 'Lịch sử thẩm định'], actions: ['Yêu cầu bổ sung', 'Từ chối hồ sơ', 'Xác minh nhà trọ'] }),
   screen('staff-community-moderation.html', '/staff/community', 'staff', 'Kiểm duyệt cộng đồng', 'list', { metrics: ['Tổng bài viết', 'Chờ kiểm duyệt', 'Cần chỉnh sửa', 'Đã xử lý'], columns: ['Bài viết', 'Loại', 'Tác giả', 'Ngày gửi', 'Trạng thái', 'Thao tác'], filters: ['Tất cả trạng thái', 'Chờ kiểm duyệt', 'Cần chỉnh sửa', 'Đã duyệt', 'Từ chối'] }),

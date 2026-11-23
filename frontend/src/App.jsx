@@ -1,3 +1,4 @@
+import UIButton from './components/common/Button.jsx';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';

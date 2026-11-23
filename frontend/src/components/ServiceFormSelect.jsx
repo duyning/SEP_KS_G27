@@ -1,3 +1,5 @@
+import UIField from './common/Field.jsx';
+import UIButton from './common/Button.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 
@@ -25,14 +27,14 @@ export default function ServiceFormSelect({ label, name, value, options, onChang
     } else if (open && ['Enter', ' '].includes(event.key)) { event.preventDefault(); choose(active); }
   }
   return <div className="svc-select-field" ref={root}>
-    <label id={`${id}-label`} onClick={() => trigger.current?.focus()}>{label}{required && <span className="svc-required"> *</span>}</label>
-    <button ref={trigger} type="button" className={`svc-select-trigger${open ? ' is-open' : ''}`} role="combobox" aria-labelledby={`${id}-label`}
+    <UIField id={`${id}-label`} onClick={() => trigger.current?.focus()}>{label}{required && <span className="svc-required"> *</span>}</UIField>
+    <UIButton ref={trigger} type="button" className={`svc-select-trigger${open ? ' is-open' : ''}`} role="combobox" aria-labelledby={`${id}-label`}
       name={name} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined}
       aria-expanded={open} aria-controls={`${id}-list`} aria-haspopup="listbox" aria-required={required}
       aria-activedescendant={open && options.length ? `${id}-option-${active}` : undefined}
       onKeyDown={keyDown} onClick={() => { setActive(Math.max(0, selected)); setOpen(previous => !previous); }}>
       <span className={selected < 0 ? 'svc-select-placeholder' : ''}>{selected < 0 ? placeholder : options[selected].label}</span><ChevronDown size={18} />
-    </button>
+    </UIButton>
     {open && <div className="svc-select-menu" role="listbox" id={`${id}-list`} aria-labelledby={`${id}-label`}>
       {options.map((option, index) => <div key={option.value} id={`${id}-option-${index}`} role="option" aria-selected={selected === index}
         className={`svc-select-option${active === index ? ' is-active' : ''}`} data-index={index}
