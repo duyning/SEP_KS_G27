@@ -5,10 +5,6 @@ export function CommunitySupportLinks() {
   </>;
 }
 
-export function CommunityMenuSupport() {
-  return <li className="community-menu-support"><CommunitySupportLinks /></li>;
-}
-
 export default function CommunityFooter() {
   return <footer className="community-compact-footer">
     <div className="container">

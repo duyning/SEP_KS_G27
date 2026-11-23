@@ -40,12 +40,12 @@ async function mocked(browser){
  });
  const detailUrl=`${base}/properties/detail?propertyId=12&roomTypeId=34`;
  const detailFavorite=page.getByRole('button',{name:'Phòng yêu thích',exact:true});
- const favoriteMenu=page.locator('#navMenu').getByRole('link',{name:/^Phòng yêu thích/});
+ const favoriteHeader=page.locator('.site-header').getByRole('link',{name:/^Phòng yêu thích,/});
  await page.goto(detailUrl,{waitUntil:'domcontentloaded'});
  await detailFavorite.waitFor();
  await page.getByText('Điều hòa',{exact:true}).waitFor();
  assert.equal(await detailFavorite.getAttribute('aria-pressed'),'false');
- assert.match(await favoriteMenu.textContent(),/Phòng yêu thích\s*\(0\)/);
+ assert.equal(await favoriteHeader.getAttribute('aria-label'),'Phòng yêu thích, 0 phòng đã lưu');
  for(const width of [375,720,768,1024,1440]){
   await page.setViewportSize({width,height:1000});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Detail overflow at ${width}px`);
@@ -59,7 +59,7 @@ async function mocked(browser){
  await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('[data-id="34"] .btn-card-wishlist')?.getAttribute('aria-pressed')==='true');
  await page.goto(detailUrl,{waitUntil:'domcontentloaded'});
  await detailFavorite.and(page.locator('[aria-pressed="true"]')).waitFor();
- assert.match(await favoriteMenu.textContent(),/Phòng yêu thích\s*\(1\)/);
+ await page.locator('.site-header').getByRole('link',{name:'Phòng yêu thích, 1 phòng đã lưu',exact:true}).waitFor();
  await page.goto(`${base}/favorites`,{waitUntil:'domcontentloaded'});await page.locator('.favorites-grid .room-card').waitFor();
  await page.getByRole('heading',{name:'Phòng yêu thích (1)',exact:true}).waitFor();
  failRemove=true;await page.locator('.favorites-grid .btn-card-wishlist').click();await page.getByRole('alert').filter({hasText:'Chưa thể bỏ lưu'}).waitFor();await page.locator('.favorites-grid .room-card').waitFor();assert.equal(saved.size,1);

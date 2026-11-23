@@ -14,7 +14,7 @@ const base=process.env.HOST_BANNER_TEST_URL||'http://127.0.0.1:5198';
    if(p==='/api/auth/me')return ok({userId:1,fullName:'Người dùng kiểm thử',phoneNumber:'0912345678',email:'test@example.test',role});
    if(p==='/api/public/properties')return ok([]);
    if(p.startsWith('/api/favorites'))return ok({items:[],total:0});
-   if(p==='/api/host-applications/current')return ok(null);
+   if(p==='/api/host-onboarding/current')return ok({account:null,registration:null});
    return ok({items:[],unreadCount:0,totalElements:0});
   });
   return {page,errors};
@@ -29,6 +29,12 @@ const base=process.env.HOST_BANNER_TEST_URL||'http://127.0.0.1:5198';
   assert.equal(await page.locator('.navbar-wrapper > .host-entry-banner').count(),1);
   assert.equal(await page.locator('.top-announcement').count(),0);
   assert.equal(await page.locator('.host-entry-banner button').count(),0);
+  if(width<=600){
+   assert.equal(await banner.getByText('Hòa Lạc Campus',{exact:true}).isVisible(),true);
+   assert.equal(await banner.locator('.host-entry-viewport').isVisible(),false);
+   await page.screenshot({path:path.join(output,`home-${width}.png`),fullPage:false});
+   continue;
+  }
   await page.waitForFunction(()=>{const viewport=document.querySelector('.host-entry-viewport'),group=document.querySelector('.host-entry-group');return group&&group.getBoundingClientRect().width>=viewport.getBoundingClientRect().width;});
   const seam=await page.locator('.host-entry-track').evaluate(el=>{
    const animation=el.getAnimations()[0],duration=animation.effect.getTiming().duration,groups=el.children;
@@ -52,8 +58,8 @@ const base=process.env.HOST_BANNER_TEST_URL||'http://127.0.0.1:5198';
  // Check the added banner at 200%; the existing desktop navigation has separate zoom limitations.
  assert.ok(await banner.evaluate(el=>el.scrollWidth<=el.clientWidth+2));await page.evaluate(()=>document.documentElement.style.zoom='');
  await page.getByRole('link',{name:'Đăng ký làm chủ trọ',exact:true}).press('Enter');
- await page.waitForURL(base+'/become-host');await page.getByRole('heading',{name:'Đơn xin cấp quyền Chủ trọ',exact:true}).waitFor();
- assert.equal(await page.locator('.host-entry-banner').count(),0);
+ await page.waitForURL(base+'/become-host');await page.getByRole('heading',{name:'Thông tin tài khoản & CCCD',exact:true}).waitFor();
+ assert.equal(await page.locator('.navbar-wrapper > .host-entry-banner').count(),1);
  assert.deepEqual(errors,[]);await page.close();
  const guest=await setup(null);await guest.page.goto(base+'/');
  await guest.page.getByRole('link',{name:'Đăng ký làm chủ trọ',exact:true}).click();await guest.page.waitForURL(base+'/login');
