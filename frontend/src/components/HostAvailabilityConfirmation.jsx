@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { hostApi } from '../services/host.js';
 import AvailabilityNotice from './AvailabilityNotice.jsx';
 import { Modal } from './PortalUI.jsx';
+import { Clock3, CircleCheck, RefreshCw, TriangleAlert, DoorOpen, ArrowUpRight, Info } from 'lucide-react';
+import { AnimatePresence, MotionButton } from './motion/MotionUI.jsx';
+import { availabilityPresentation } from '../services/availability.js';
 
 export default function HostAvailabilityConfirmation({ type, onConfirmed }) {
   const [open, setOpen] = useState(false);
@@ -29,21 +32,32 @@ export default function HostAvailabilityConfirmation({ type, onConfirmed }) {
       if (!controller.signal.aborted) setBusy(false);
     }
   }
-  return <div className="host-availability-confirmation">
-    <AvailabilityNotice value={type}/>
-    <button type="button" className="hm-btn hm-btn-ghost" disabled={!type.totalRooms || busy}
-      onClick={() => {setOpen(true); setError(''); setSuccess('');}}>Xác nhận tình trạng phòng</button>
+  const { state } = availabilityPresentation(type);
+  const Icon = state === 'CURRENT' ? CircleCheck : state === 'STALE' ? TriangleAlert : Clock3;
+  return <div className="host-availability-confirmation" data-state={state}>
+    <div className="host-availability-summary">
+      <span className="host-availability-icon"><Icon size={19} aria-hidden="true"/></span>
+      <div className="host-availability-copy"><span className="host-availability-label">Thông tin phòng trống</span>
+        <strong>{state === 'CURRENT' ? 'Đã xác nhận' : state === 'STALE' ? 'Cần xác nhận lại' : 'Chưa được xác nhận'}</strong>
+        {state === 'UNCONFIRMED' ? <p>Kiểm tra danh sách phòng và xác nhận để cập nhật thông tin cho người thuê.</p> : <AvailabilityNotice value={type}/>}
+      </div>
+    </div>
+    <button type="button" className="hm-btn hm-btn-ghost host-availability-button" disabled={!type.totalRooms || busy}
+      onClick={() => {setOpen(true); setError(''); setSuccess('');}}><RefreshCw size={15} aria-hidden="true"/>Xác nhận tình trạng phòng</button>
     {!type.totalRooms && <small>Cần có phòng thực tế trước khi xác nhận.</small>}
     <span role="status">{success}</span>
-    {open && <Modal title={`Xác nhận tình trạng — ${type.roomType}`} onClose={() => {if (!busy) setOpen(false);}}>
-      <p>Hãy kiểm tra danh sách phòng trước khi xác nhận: <strong>{type.vacantRooms} phòng trống / {type.totalRooms} phòng</strong>.</p>
-      <p>Thao tác này cập nhật mốc xác nhận của loại phòng và tất cả phòng thuộc loại này, giữ nguyên trạng thái từng phòng. Nếu số lượng chưa đúng, hãy cập nhật danh sách phòng trước.</p>
-      <Link to={`/host/rooms?propertyId=${type.propertyId}&roomTypeId=${type.roomTypeId}`}>Kiểm tra danh sách phòng</Link>
+    <AnimatePresence>{open && <Modal className="availability-confirm-modal" title="Xác nhận tình trạng phòng" onClose={() => {if (!busy) setOpen(false);}}>
+      <div className="acm-body">
+        <div className="acm-context"><span className="acm-icon"><DoorOpen size={21} aria-hidden="true"/></span><div><span>Loại phòng</span><h3>{type.roomType}</h3></div></div>
+        <dl className="acm-stats"><div><dt>Phòng còn trống</dt><dd>{type.vacantRooms}<span>phòng</span></dd></div><div><dt>Tổng số phòng</dt><dd>{type.totalRooms}<span>phòng</span></dd></div></dl>
+        <div className="acm-note"><Info size={17} aria-hidden="true"/><p>Xác nhận sẽ cập nhật thời gian kiểm tra cho loại phòng và các phòng bên trong. Trạng thái từng phòng được giữ nguyên.</p></div>
+        <Link className="acm-room-link" to={`/host/rooms?propertyId=${type.propertyId}&roomTypeId=${type.roomTypeId}`} onClick={event => {if (busy) event.preventDefault();}} aria-disabled={busy || undefined}>Kiểm tra danh sách phòng<ArrowUpRight size={16} aria-hidden="true"/></Link>
       {error && <p role="alert" className="availability-error">{error}</p>}
-      <div className="availability-actions">
-        <button type="button" className="hm-btn hm-btn-ghost" disabled={busy} onClick={() => setOpen(false)}>Hủy</button>
-        <button type="button" className="hm-btn hm-btn-primary" disabled={busy} aria-busy={busy} onClick={confirm}>{busy ? 'Đang xác nhận…' : 'Thông tin hiện tại chính xác'}</button>
       </div>
-    </Modal>}
+      <div className="availability-actions acm-footer">
+        <MotionButton type="button" className="hm-btn hm-btn-ghost" disabled={busy} onClick={() => setOpen(false)}>Hủy</MotionButton>
+        <MotionButton type="button" className="hm-btn hm-btn-primary" disabled={busy} aria-busy={busy} onClick={confirm}><CircleCheck size={17} aria-hidden="true"/>{busy ? 'Đang xác nhận…' : 'Thông tin hiện tại chính xác'}</MotionButton>
+      </div>
+    </Modal>}</AnimatePresence>
   </div>;
 }

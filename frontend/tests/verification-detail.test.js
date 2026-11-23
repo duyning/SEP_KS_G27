@@ -1,3 +1,4 @@
+import {newestVerificationAttachments} from '../src/services/verification-detail.js';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {verificationLocation,attachmentSize} from '../src/services/verification-detail.js';
 test('staff map uses only explicit valid coordinates, never a default neighborhood pin',()=>{
@@ -9,3 +10,5 @@ test('staff map uses only explicit valid coordinates, never a default neighborho
 });
 test('map links encode untrusted address text as a query rather than opening supplied URLs',()=>{const result=verificationLocation({address:'javascript:alert(1)&query=other'},null);assert.ok(result.mapsUrl.startsWith('https://www.google.com/maps/search/?api=1&query=javascript'));assert.ok(result.mapsUrl.includes('%26query%3Dother'));});
 test('file sizes reflect actual persisted bytes and keep missing legacy metadata unknown',()=>{for(const value of [undefined,null,-1,'2048',NaN,Infinity])assert.equal(attachmentSize(value),null);assert.equal(attachmentSize(0),'0 B');assert.equal(attachmentSize(512),'512 B');assert.equal(attachmentSize(2048),'2 KB');assert.equal(attachmentSize(2621440),'2,5 MB');});
+
+test('verification files show latest upload first with stable document-ID ordering and unknown times last',()=>{const files=[{documentId:1,uploadedAt:'2026-11-01T10:00:00'},{documentId:4,uploadedAt:null},{documentId:2,uploadedAt:'2026-11-04T10:00:00'},{documentId:3,uploadedAt:'2026-11-04T10:00:00'}];assert.deepEqual(newestVerificationAttachments(files).map(file=>file.documentId),[3,2,1,4]);assert.deepEqual(files.map(file=>file.documentId),[1,4,2,3]);});

@@ -52,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider tokenProvider;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final RegistrationOtpService registrationOtp;
+    private final org.hlrcs.service.PhoneVerificationService phoneVerification;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
@@ -59,7 +60,9 @@ public class AuthServiceImpl implements AuthService {
                            AuthenticationManager authenticationManager,
                            JwtTokenProvider tokenProvider,
                            GoogleTokenVerifier googleTokenVerifier,
-                           RegistrationOtpService registrationOtp) {
+                           RegistrationOtpService registrationOtp,
+                           org.hlrcs.service.PhoneVerificationService phoneVerification) {
+
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
@@ -67,6 +70,7 @@ public class AuthServiceImpl implements AuthService {
         this.tokenProvider = tokenProvider;
         this.googleTokenVerifier = googleTokenVerifier;
         this.registrationOtp = registrationOtp;
+        this.phoneVerification = phoneVerification;
     }
 
     @Override
@@ -112,6 +116,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(savedUser.getAuthProvider()) || savedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(savedUser.getPhoneVerifiedAt())
                 .role(savedUser.getRole())
                 .status(savedUser.getStatus())
                 .capabilities(List.of())
@@ -145,6 +151,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -158,7 +166,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
-        GoogleUserInfo googleUser = googleTokenVerifier.verifyToken(request.idToken());
+        return loginWithVerifiedGoogleUser(googleTokenVerifier.verifyToken(request.idToken()));
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithVerifiedGoogleUser(GoogleUserInfo googleUser) {
         User user = userRepository.findByGoogleSubject(googleUser.subject()).orElse(null);
 
         if (user == null) {
@@ -206,6 +219,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -269,6 +284,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -282,15 +299,20 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserProfileResponse updateProfile(UpdateProfileRequest request) {
-        User user = getCurrentUser();
+        User user = userRepository.findForRegistrationUpdate(getCurrentUser().getUserId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName().trim());
         }
 
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            String newPhone = request.getPhoneNumber().trim();
-            if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberInAndUserIdNot(
+            String newPhone = org.hlrcs.service.PhoneVerificationService.normalize(request.getPhoneNumber());
+            if (org.hlrcs.service.PhoneVerificationService.requiresVerification(user, newPhone)) {
+                phoneVerification.consume(user,newPhone);
+            } else if (!newPhone.equals(org.hlrcs.service.PhoneVerificationService.normalize(user.getPhoneNumber()))) {
+                user.setPhoneVerifiedAt(null);
+            }
+            if (userRepository.existsByPhoneNumberInAndUserIdNot(
                     RegistrationContact.parse(newPhone).phoneVariants(), user.getUserId())) {
                 throw new BadRequestException("Số điện thoại này đã được sử dụng bởi tài khoản khác: " + newPhone);
             }
@@ -316,6 +338,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(updatedUser.getEmail())
                 .fullName(updatedUser.getFullName())
                 .phoneNumber(updatedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(updatedUser.getAuthProvider()) || updatedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(updatedUser.getPhoneVerifiedAt())
                 .organization(updatedUser.getOrganization())
                 .preferredArea(updatedUser.getPreferredArea())
                 .avatar(updatedUser.getAvatar())

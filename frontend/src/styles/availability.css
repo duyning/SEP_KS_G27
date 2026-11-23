@@ -12,3 +12,39 @@
 .availability-actions button{min-height:44px;white-space:normal}
 .availability-actions button:focus-visible,.host-availability-confirmation button:focus-visible{outline:2px solid #0f766e;outline-offset:3px}
 @media(max-width:480px){.availability-actions{flex-direction:column}.availability-actions button{width:100%}}
+
+/* Host inventory confirmation: operational status and action, scoped away from public notices. */
+.hm-workspace .host-availability-confirmation{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px}
+.host-availability-summary{display:flex;align-items:flex-start;gap:10px;flex:1 1 220px;min-width:0}
+.host-availability-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid #e2e8f0;border-radius:9px;color:#64748b;background:#fff}
+.host-availability-copy{min-width:0}.host-availability-label{display:block;font-size:.6875rem;font-weight:600;line-height:1.5;color:#64748b}
+.hm-workspace .host-availability-copy>strong{display:block;margin-top:2px;font-size:.875rem;line-height:1.5;color:#334155}
+.hm-workspace .host-availability-copy>p{margin:5px 0 0;font-size:.75rem;line-height:1.6;color:#64748b}
+.hm-workspace .host-availability-copy>.availability-notice{font-size:.75rem;margin:5px 0 0}
+.hm-workspace .host-availability-confirmation>.host-availability-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 1 auto;min-height:40px;padding:9px 12px;border:1px solid #99d5cc;border-radius:8px;color:#115e59;background:#fff;font-size:.75rem;font-weight:600;line-height:1.5;white-space:normal;text-align:center}
+.hm-workspace .host-availability-button:hover:not(:disabled){background:#f0fdfa;border-color:#0f766e}
+.host-availability-confirmation[data-state=CURRENT] .host-availability-icon{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}
+.host-availability-confirmation[data-state=STALE] .host-availability-icon{color:#92400e;background:#fffbeb;border-color:#fde68a}
+.hm-workspace .host-availability-confirmation>small,.hm-workspace .host-availability-confirmation>[role=status]:not(:empty){flex-basis:100%;font-size:.75rem}
+@media(max-width:480px){.hm-workspace .host-availability-confirmation{padding:12px;gap:12px}.hm-workspace .host-availability-confirmation>.host-availability-button{width:100%;min-height:44px}}
+
+/* Compact inventory review dialog; motion is supplied by MotionDialog. */
+.portal-modal.availability-confirm-modal{--acm-action:#0f766e;--acm-text:#0f172a;--acm-muted:#475569;--acm-border:#e2e8f0;max-width:520px;padding:0;border-radius:16px;max-height:calc(100dvh - 32px);overflow:auto;color:var(--acm-text)}
+.availability-confirm-modal>header{padding:20px 24px 16px;border-bottom:1px solid var(--acm-border);gap:12px}
+.availability-confirm-modal>header h2{font-size:1.0625rem;line-height:1.5;font-weight:700;overflow-wrap:anywhere}
+.availability-confirm-modal>header .p-icon{width:36px;height:36px;flex:none;border-radius:9px}
+.acm-body{padding:20px 24px}.acm-context{display:flex;align-items:center;gap:12px;min-width:0}
+.acm-icon{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:12px;background:#f0fdfa;color:var(--acm-action);border:1px solid #ccfbf1}
+.acm-context>div{min-width:0}.acm-context span:not(.acm-icon){font-size:.75rem;color:var(--acm-muted)}
+.availability-confirm-modal .acm-context h3{margin:3px 0 0;font-size:1rem;line-height:1.5;font-weight:650;overflow-wrap:anywhere}
+.acm-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:20px 0 16px;border:1px solid var(--acm-border);border-radius:12px;overflow:hidden;background:#f8fafc}
+.acm-stats>div{padding:14px 18px}.acm-stats>div:first-child{background:#f0fdfa;border-right:1px solid var(--acm-border);color:var(--acm-action)}
+.acm-stats dt{font-size:.8125rem;line-height:1.5}.acm-stats dd{display:flex;align-items:baseline;gap:7px;margin:6px 0 0;font-size:1.75rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}.acm-stats dd span{font-size:.75rem;font-weight:400;color:var(--acm-muted)}
+.acm-note{display:flex;align-items:flex-start;gap:8px;color:var(--acm-muted)}.acm-note svg{flex:none;margin-top:3px}.acm-note p{margin:0;font-size:.8125rem;line-height:1.65}
+.acm-room-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-top:8px;color:var(--acm-action);font-size:.8125rem;font-weight:600;text-decoration:none}
+.acm-room-link:focus-visible,.availability-confirm-modal button:focus-visible{outline:2px solid var(--acm-action);outline-offset:3px}.acm-room-link[aria-disabled=true]{opacity:.6;cursor:wait}
+.acm-body>.availability-error{padding:10px 12px;margin:12px 0 0;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:.8125rem;line-height:1.6}
+.availability-confirm-modal .acm-footer{padding:16px 24px;margin:0;border-top:1px solid var(--acm-border);background:#f8fafc;display:flex;gap:10px}
+.acm-footer .hm-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;font-size:.8125rem;font-weight:600;border-radius:9px}.acm-footer .hm-btn-primary{background:var(--acm-action);color:#fff;border:1px solid var(--acm-action)}.acm-footer .hm-btn-ghost{background:#fff;color:var(--acm-muted);border:1px solid #cbd5e1}.acm-footer button:disabled{opacity:.6;cursor:wait}
+@media(hover:hover) and (pointer:fine){.acm-room-link:hover{text-decoration:underline;text-underline-offset:4px}.acm-footer .hm-btn-primary:hover:not(:disabled){background:#115e59}}
+@media(max-width:480px){.availability-confirm-modal>header{padding:16px}.acm-body{padding:16px}.availability-confirm-modal .acm-footer{padding:14px 16px;flex-direction:column-reverse}.acm-footer .hm-btn{width:100%}.acm-stats>div{padding:12px}.availability-confirm-modal>header h2{font-size:1rem}}

@@ -50,7 +50,7 @@ class FavoriteTests {
         property=properties.save(Property.builder().owner(host).registration(registration).name("Public favorite test")
                 .address("Tân Xã").status("ACTIVE").build());
         type=type("Studio A");
-        rooms.save(Room.builder().roomType(type).property(property).roomNumber("A01").floor("1").status("VACANT").build());
+        rooms.save(Room.builder().publicVisible(true).roomType(type).property(property).roomNumber("A01").floor("1").status("VACANT").build());
     }
     private RoomType type(String name) {
         return types.save(RoomType.builder().property(property).roomType(name).price(BigDecimal.valueOf(2100000)).areaSqm(25F).build());
@@ -77,7 +77,10 @@ class FavoriteTests {
         assertEquals(first.path("createdAt"),second.path("createdAt"));
         assertFalse(first.path("createdAt").isNull());
         assertEquals(1,favorites.countByUser_UserId(member.getUserId()));
-        var another=type("Studio B");save(member,another);save(host,type);
+        var another=type("Studio B");
+        rooms.save(Room.builder().publicVisible(true).roomType(another).property(property)
+                .roomNumber("B01").floor("1").status("VACANT").build());
+        save(member,another);save(host,type);
         type.setPrice(BigDecimal.valueOf(2600000));types.save(type);
         var response=call("GET","/api/favorites?page=0&size=1",member,null);
         var page=json.readTree(response.body()).path("data");

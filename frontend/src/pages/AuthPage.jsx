@@ -114,13 +114,13 @@ export default function AuthPage({ registerMode = false }) {
   const goToRegister = () => {
     setLoginAlert('');
     setRegAlert('');
-    navigate('/register');
+    navigate('/register', { state: { from: location.state?.from, role } });
   };
 
   const goToLogin = () => {
     setLoginAlert('');
     setRegAlert('');
-    navigate('/login');
+    navigate('/login', { state: { from: location.state?.from } });
   };
 
   // Login Handler

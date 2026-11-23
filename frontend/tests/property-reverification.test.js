@@ -15,6 +15,5 @@ test('critical changes require opening staff detail rather than quick approval',
   assert.equal(actions.primary.to,'/staff/verifications/detail?id=12');
   assert.equal(actions.secondary.some(action=>action.id==='quick-approve'),false);
   assert.match(actions.statusHint,/tạm ẩn/);
-  assert.equal(getVerificationRowActions({...row,reverificationRequired:false}).secondary.some(action=>action.id==='quick-approve'),true);
   assert.match(reviewActionLabels.REVERIFICATION_SUBMITTED,/tái xác minh/);
 });

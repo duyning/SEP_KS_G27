@@ -12,6 +12,7 @@ import { HostHeaderTarget } from '../components/HostHeaderSlot.jsx';
 import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
 import useCommunityLive from '../components/useCommunityLive.js';
 import { staffHostApi } from '../services/staff-host-applications.js';
+import HostRegistrationBanner from '../components/HostRegistrationBanner.jsx';
 import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
 import '../styles/host-header.css';
@@ -84,7 +85,6 @@ export default function PortalLayout({ screen, children }) {
     : location.pathname;
   const topbarTitle = ['/host/property', '/host/room-types', '/host/rooms'].includes(screen.path) ? 'Quản lý nhà trọ' : screen.path === '/staff/host-registrations/detail' ? 'Chi tiết hồ sơ chủ trọ' : screen.path === '/staff' ? 'Bảng điều khiển Nhân viên' : screen.path === '/staff/verifications' ? 'Xác minh nhà trọ' : screen.path === '/staff/verifications/detail' ? 'Thẩm định hồ sơ xác minh' : screen.title;
   const [staffCounts, setStaffCounts] = useState(null);
-  const [pendingHostApplications, setPendingHostApplications] = useState(null);
   const [canRegister, setCanRegister] = useState(false);
   useEffect(() => {
     if (portal !== 'host') return;
@@ -104,17 +104,14 @@ export default function PortalLayout({ screen, children }) {
   useEffect(() => {
     if (portal !== 'staff') return;
     const controller = new AbortController();
-    Promise.allSettled([
-      staffApi.dashboard(controller.signal),
-      staffHostApi.list({ size: 1 }, controller.signal),
-    ]).then(([dashboard, applications]) => {
-      if (controller.signal.aborted) return;
-      setStaffCounts(dashboard.status === 'fulfilled' ? dashboard.value : null);
-      setPendingHostApplications(applications.status === 'fulfilled' ? applications.value.stats.pending : null);
+    staffApi.dashboard(controller.signal).then(data => {
+      if (!controller.signal.aborted) setStaffCounts(data);
+    }).catch(() => {
+      if (!controller.signal.aborted) setStaffCounts(null);
     });
     return () => controller.abort();
   }, [portal, user?.userId, location.pathname, staffRevision]);
-  const staffBadges = { '/staff/host-registrations': pendingHostApplications, '/staff/verifications': staffCounts?.pendingVerifications, '/staff?view=content-moderation': staffCounts?.pendingReports, '/staff/community': staffCounts?.pendingCommunity, '/staff?view=feedback-verification': staffCounts?.pendingFeedback, '/staff/assistance': staffCounts?.pendingSupport };
+  const staffBadges = { '/staff/verifications': staffCounts?.pendingVerifications, '/staff?view=content-moderation': staffCounts?.pendingReports, '/staff/community': staffCounts?.pendingCommunity, '/staff?view=feedback-verification': staffCounts?.pendingFeedback, '/staff/assistance': staffCounts?.pendingSupport };
   const closeMenu = () => { setOpen(false); toggle.current?.focus(); };
 
   useEffect(() => {
@@ -276,7 +273,7 @@ export default function PortalLayout({ screen, children }) {
 
       {portal === 'public' ? (
         <header className="public-header">
-          <div className="public-announcement">Hòa Lạc Campus <span>Kết nối cộng đồng thuê trọ tại Hòa Lạc</span></div>
+          <HostRegistrationBanner/>
           <div className="public-navbar">
             <Brand />
             <nav className="public-desktop-nav" aria-label="Điều hướng chính">

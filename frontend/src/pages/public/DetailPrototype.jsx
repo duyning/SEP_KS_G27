@@ -20,11 +20,11 @@ export default function DetailPrototype({room,item,origin,isWishlisted,onSave,on
  return <main id="detailApp" className="rtd-detail">
   <div className="container">
    <div className="rtd-back-row"><MotionButton className="btn-back-link" onClick={onBack}><ArrowLeft size={17}/>Quay lại tìm kiếm</MotionButton><nav aria-label="Đường dẫn"><Link to="/">Trang chủ</Link><span aria-hidden="true">/</span><Link to={withSearchOrigin('/search',origin)}>Phòng trọ</Link><span aria-hidden="true">/</span><span>Chi tiết</span></nav></div>
-   {item.availabilityStale===true&&<AvailabilityNotice value={item}/>}
    <header className="rtd-heading"><div><span className="rtd-property-name">{item.propertyName}</span><h1>{item.roomTypeName}</h1><p><MapPin size={17} aria-hidden="true"/>{room.location}</p></div><div className="rtd-actions"><MotionButton onClick={onShare}><Share2 size={18}/>Chia sẻ</MotionButton><MotionButton onClick={onReport}><Flag size={18}/>Báo cáo</MotionButton></div></header>
    <div className="rtd-layout"><div className="rtd-summary-column">
     <aside className="rtd-summary" aria-label="Thông tin thuê và liên hệ">
      <div className="rtd-status-row"><span className="rtd-approved"><ShieldCheck size={16}/>Hồ sơ đã duyệt</span><span className={`rtd-availability${item.availableRooms===0?' is-full':''}`}>{room.availability}</span></div>
+     <AvailabilityNotice value={item}/>
      <div className="rtd-price"><span>Giá thuê / tháng</span><strong>{room.priceDisplay}</strong></div>
      <dl className="rtd-key-facts">{[['Diện tích',room.area],['Sức chứa',room.specs.capacity],['Tiền cọc',room.deposit],['Nhận phòng',room.moveInDate]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
      <div className="rtd-upfront"><span>Tiền phòng + tiền cọc</span><strong>{room.estimateDisplay}</strong><small>Chưa gồm điện, nước và các phí khác.</small></div>

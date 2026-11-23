@@ -68,11 +68,14 @@ class AccommodationTests {
                 .address("Tân Xã, Hòa Lạc").status(state).build());
     }
     private RoomType type(Property property, int price) {
-        return types.save(RoomType.builder().property(property).roomType("Studio khép kín " + prefix)
+        var result=types.save(RoomType.builder().property(property).roomType("Studio khép kín " + prefix)
                 .price(BigDecimal.valueOf(price)).areaSqm(25F).build());
+        // This fixture represents an explicitly published listing; availability is seeded separately.
+        rooms.save(Room.builder().publicVisible(true).property(property).roomType(result).roomNumber("pub-"+result.getRoomTypeId()).floor("1").status("OCCUPIED").build());
+        return result;
     }
     private void room(RoomType type, String number, String status) {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type).roomNumber(number).floor("1").status(status).build());
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type).roomNumber(number).floor("1").status(status).build());
     }
     private HttpResponse<String> get(String path, String token) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + environment.getProperty("local.server.port") + path));
@@ -162,8 +165,10 @@ class AccommodationTests {
         var registration = eligible.getProperty().getRegistration();
         registration.setRegistrationDetails("{\"amenities\":[\"laundry\"]}");
         registrations.save(registration);
-        var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).get(0);
-        var partialUnit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(partial.getRoomTypeId()).get(0);
+        var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).stream()
+                .filter(room -> "VACANT".equals(room.getStatus())).findFirst().orElseThrow();
+        var partialUnit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(partial.getRoomTypeId()).stream()
+                .filter(room -> "VACANT".equals(room.getStatus())).findFirst().orElseThrow();
         var member = users.save(User.builder().email(prefix + "-ai@test.local").passwordHash("unused")
                 .role(UserRole.USER).status(UserStatus.ACTIVE).build());
         var token = jwt.generateTokenFromUser(member);

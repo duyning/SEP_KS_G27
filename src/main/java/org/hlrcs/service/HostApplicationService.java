@@ -18,27 +18,51 @@ public class HostApplicationService {
  private final UserRepository users;
  private final HostApplicationRepository applications;
  private final ModerationLogRepository logs;
- public record Submission(@NotBlank String targetCommune,@NotBlank String expectedScale,@NotBlank @Size(min=20,max=1000) String introduction,@NotNull @AssertTrue Boolean agreementAccepted,Long version,@NotBlank @Pattern(regexp="OWNER|AUTHORIZED_MANAGER|SUBLESSOR") String applicantCapacity,@NotBlank @Pattern(regexp="FIRST_TIME|UNDER_TWO_YEARS|TWO_YEARS_OR_MORE") String rentalExperience) {}
+ private final HostApplicationIdentityRepository identities;
+ public record Submission(@Size(max=100) String targetCommune,@Size(max=100) String expectedScale,@Size(max=1000) String introduction,@NotNull @AssertTrue Boolean agreementAccepted,Long version,@Size(max=40) String applicantCapacity,@Size(max=30) String rentalExperience,@Size(max=7_000_000) String identityImage,@Size(max=7_000_000) String identityBackImage) {}
  public record Decision(@NotBlank @Pattern(regexp="APPROVED|NEEDS_CHANGES|REJECTED") String decision,@Size(max=2000) String note,Boolean allowResubmit,@NotNull Long version,@Size(max=8) List<@NotBlank String> requestedFields) {}
- public record View(Integer id,Integer userId,String userName,String userPhone,String userEmail,String targetCommune,String expectedScale,String introduction,String status,boolean allowResubmit,String reviewerNote,String reviewedBy,LocalDateTime submittedAt,LocalDateTime reviewedAt,LocalDateTime updatedAt,Long version,List<String> requestedFields,String applicantCapacity,String rentalExperience) {}
- private static final Set<String> AREAS=Set.of("Tân Xã","Thạch Hòa","Bình Yên","Hạ Bằng","Đồng Trúc","Tiến Xuân","Khác");
- private static final Set<String> SCALES=Set.of("Dưới 5 phòng","5 - 15 phòng","16 - 30 phòng","31 - 50 phòng","Trên 50 phòng");
- private View view(HostApplication a){var u=a.getUser();return new View(a.getId(),u.getUserId(),u.getFullName(),u.getPhoneNumber(),u.getEmail(),a.getTargetCommune(),a.getExpectedScale(),a.getIntroduction(),a.getStatus(),a.isAllowResubmit(),a.getReviewerNote(),a.getReviewedBy()==null?null:a.getReviewedBy().getFullName(),a.getSubmittedAt(),a.getReviewedAt(),a.getUpdatedAt(),a.getVersion(),a.getRequestedFields()==null||a.getRequestedFields().isBlank()?List.of():List.of(a.getRequestedFields().split(",")),a.getApplicantCapacity(),a.getRentalExperience());}
+ public record View(Integer id,Integer userId,String userName,String userPhone,String userEmail,String targetCommune,String expectedScale,String introduction,String status,boolean allowResubmit,String reviewerNote,String reviewedBy,LocalDateTime submittedAt,LocalDateTime reviewedAt,LocalDateTime updatedAt,Long version,List<String> requestedFields,String applicantCapacity,String rentalExperience,boolean hasIdentityImage,boolean userPhoneVerified,boolean hasIdentityBackImage) {}
+ private View view(HostApplication a){var u=a.getUser();return new View(a.getId(),u.getUserId(),u.getFullName(),u.getPhoneNumber(),u.getEmail(),a.getTargetCommune(),a.getExpectedScale(),a.getIntroduction(),a.getStatus(),a.isAllowResubmit(),a.getReviewerNote(),a.getReviewedBy()==null?null:a.getReviewedBy().getFullName(),a.getSubmittedAt(),a.getReviewedAt(),a.getUpdatedAt(),a.getVersion(),a.getRequestedFields()==null||a.getRequestedFields().isBlank()?List.of():List.of(a.getRequestedFields().split(",")),a.getApplicantCapacity(),a.getRentalExperience(),identities.existsById(a.getId()),u.getPhoneVerifiedAt()!=null,identities.existsByApplicationIdAndBackContentIsNotNull(a.getId()));}
  @Transactional(readOnly=true) public View current(){return applications.findByUser_UserId(auth.getCurrentUser().getUserId()).map(this::view).orElse(null);}
  @Transactional public View submit(Submission input){
+  return submit(input,false);
+ }
+ @Transactional public View submitCombined(Submission input){return submit(input,true);}
+ private View submit(Submission input,boolean combined){
   var me=auth.getCurrentUser();var user=users.findForRegistrationUpdate(me.getUserId()).orElseThrow();
   if(user.getRole()!=UserRole.USER||user.getStatus()!=UserStatus.ACTIVE)throw new AppException("Chỉ người dùng đang hoạt động mới có thể đăng ký làm chủ trọ.",HttpStatus.FORBIDDEN);
   if(user.getFullName()==null||user.getFullName().isBlank()||user.getPhoneNumber()==null||!user.getPhoneNumber().matches("^(0|\\+84)[35789][0-9]{8}$"))throw new BadRequestException("Vui lòng cập nhật họ tên và số điện thoại hợp lệ tại Hồ sơ cá nhân trước khi đăng ký.");
-  if(!AREAS.contains(input.targetCommune())||!SCALES.contains(input.expectedScale())||input.introduction().strip().length()<20||!Boolean.TRUE.equals(input.agreementAccepted()))throw new BadRequestException("Vui lòng kiểm tra khu vực, quy mô, lời giới thiệu và cam kết.");
+  if(!Boolean.TRUE.equals(input.agreementAccepted()))throw new BadRequestException("Vui lòng đồng ý quy chế đối tác.");
+  var image=HostIdentityImages.parse(input.identityImage());
+  var backImage=HostIdentityImages.parse(input.identityBackImage());
   var existing=applications.findByUser_UserId(user.getUserId());
   HostApplication a=existing.orElseGet(HostApplication::new);
   if(existing.isPresent()){
-   if(!Set.of("NEEDS_CHANGES","REJECTED").contains(a.getStatus())||!a.isAllowResubmit())throw new AppException("Hồ sơ hiện tại không thể gửi thêm hoặc chỉnh sửa.",HttpStatus.CONFLICT);
+   if(!(combined?Set.of("PENDING_REVIEW","NEEDS_CHANGES","REJECTED","MERGED"):Set.of("NEEDS_CHANGES","REJECTED")).contains(a.getStatus())||!a.isAllowResubmit())throw new AppException("Hồ sơ hiện tại không thể gửi thêm hoặc chỉnh sửa.",HttpStatus.CONFLICT);
    if(!Objects.equals(a.getVersion(),input.version()))throw new AppException("Hồ sơ đã thay đổi. Vui lòng tải lại trang trước khi gửi.",HttpStatus.CONFLICT);
   }
-  a.setApplicantCapacity(input.applicantCapacity());a.setRentalExperience(input.rentalExperience());a.setUser(user);a.setTargetCommune(input.targetCommune());a.setExpectedScale(input.expectedScale());a.setIntroduction(input.introduction().strip());a.setAgreementAccepted(true);a.setStatus("PENDING_REVIEW");a.setSubmittedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setReviewedBy(null);a.setReviewedAt(null);a.setReviewerNote(null);a.setRequestedFields(null);a.setAllowResubmit(true);
-  return view(applications.saveAndFlush(a));
+  var savedIdentity=a.getId()==null?null:identities.findById(a.getId()).orElse(null);
+  if(image==null&&savedIdentity==null)throw new BadRequestException("Vui lòng cung cấp ảnh mặt trước CCCD.");
+  if(backImage==null&&(savedIdentity==null||savedIdentity.getBackContent()==null))throw new BadRequestException("Vui lòng cung cấp ảnh mặt sau CCCD.");
+  a.setUser(user);a.setIntroduction(input.introduction()==null?"":input.introduction().strip());a.setAgreementAccepted(true);a.setStatus("PENDING_REVIEW");a.setSubmittedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setReviewedBy(null);a.setReviewedAt(null);a.setReviewerNote(null);a.setRequestedFields(null);a.setAllowResubmit(true);
+  applications.saveAndFlush(a);
+  if(combined){a.setStatus("MERGED");applications.saveAndFlush(a);}
+  if(image!=null||backImage!=null){var document=savedIdentity==null?new HostApplicationIdentity():savedIdentity;document.setApplication(a);if(image!=null){document.setContentType(image.contentType());document.setContent(image.bytes());}if(backImage!=null){document.setBackContentType(backImage.contentType());document.setBackContent(backImage.bytes());}document.setUploadedAt(LocalDateTime.now());identities.saveAndFlush(document);}
+  return view(a);
  }
+ @Transactional(readOnly=true) public IdentityContent identity(Integer id){return identity(id,"front");}
+ @Transactional(readOnly=true) public IdentityContent identity(Integer id,String side){
+  var me=auth.getCurrentUser();var a=applications.findById(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
+  if(me.getStatus()!=UserStatus.ACTIVE||(!me.getUserId().equals(a.getUser().getUserId())&&!Set.of(UserRole.STAFF,UserRole.ADMIN).contains(me.getRole())))throw new AppException("Bạn không có quyền xem ảnh định danh này.",HttpStatus.FORBIDDEN);
+  var image=identities.findById(id).orElseThrow(()->new ResourceNotFoundException("Hồ sơ này chưa có ảnh định danh"));
+  if(!Set.of("front","back").contains(side))throw new BadRequestException("Mặt CCCD không hợp lệ.");
+  if("back".equals(side)){
+   if(image.getBackContent()==null)throw new ResourceNotFoundException("Hồ sơ này chưa có ảnh mặt sau CCCD.");
+   return new IdentityContent(image.getBackContentType(),image.getBackContent());
+  }
+  return new IdentityContent(image.getContentType(),image.getContent());
+ }
+ public record IdentityContent(String contentType,byte[] content) {}
  public record Stats(long total,long pending,long needsChanges,long approved,long rejected) {}
  public record Queue(List<View> content,long totalElements,int totalPages,int number,int size,Stats stats) {}
  public record Event(String action,String note,String reviewer,LocalDateTime createdAt) {}
@@ -52,6 +76,7 @@ public class HostApplicationService {
   if(status!=null&&!Set.of("ALL","PENDING_REVIEW","NEEDS_CHANGES","APPROVED","REJECTED","PROCESSED").contains(status))throw new BadRequestException("Trạng thái bộ lọc không hợp lệ");
   org.springframework.data.jpa.domain.Specification<HostApplication> spec=(root,query,cb)->{
    var predicates=new ArrayList<jakarta.persistence.criteria.Predicate>();
+   predicates.add(cb.notEqual(root.get("status"),"MERGED"));
    if("PROCESSED".equals(status))predicates.add(root.get("status").in("APPROVED","REJECTED"));
    else if(status!=null&&!status.equals("ALL"))predicates.add(cb.equal(root.get("status"),status));
    if(search!=null&&!search.isBlank()){
@@ -68,7 +93,7 @@ public class HostApplicationService {
   };
   var ordering=switch(sort==null?"NEWEST":sort){case "NEWEST"->Sort.by("submittedAt").descending();case "OLDEST"->Sort.by("submittedAt");case "UPDATED"->Sort.by("updatedAt").descending();case "NAME_ASC"->Sort.by("user.fullName");default->throw new BadRequestException("Thứ tự sắp xếp không hợp lệ");};
   var result=applications.findAll(spec,PageRequest.of(Math.max(0,page),Math.max(1,Math.min(size,50)),ordering.and(Sort.by("id"))));
-  var stats=new Stats(applications.count(),applications.countByStatus("PENDING_REVIEW"),applications.countByStatus("NEEDS_CHANGES"),applications.countByStatus("APPROVED"),applications.countByStatus("REJECTED"));
+  var stats=new Stats(applications.count()-applications.countByStatus("MERGED"),applications.countByStatus("PENDING_REVIEW"),applications.countByStatus("NEEDS_CHANGES"),applications.countByStatus("APPROVED"),applications.countByStatus("REJECTED"));
   return new Queue(result.map(this::view).getContent(),result.getTotalElements(),result.getTotalPages(),result.getNumber(),result.getSize(),stats);
  }
  @Transactional public View review(Integer id,Decision input){
@@ -80,7 +105,7 @@ public class HostApplicationService {
   if(owner.getRole()!=UserRole.USER||owner.getStatus()!=UserStatus.ACTIVE)throw new AppException("Tài khoản đăng ký không còn đủ điều kiện xét duyệt.",HttpStatus.CONFLICT);
   if(!input.decision().equals("APPROVED")&&(input.note()==null||input.note().isBlank()))throw new BadRequestException("Vui lòng nêu rõ lý do hoặc yêu cầu bổ sung.");
   var fields=input.requestedFields()==null?List.<String>of():input.requestedFields().stream().distinct().toList();
-  if(fields.size()>8||!Set.of("targetCommune","expectedScale","introduction","accPhone","accFullName","accEmail","applicantCapacity","rentalExperience").containsAll(fields))throw new BadRequestException("Mục yêu cầu bổ sung không hợp lệ");
+  if(fields.size()>8||!Set.of("targetCommune","expectedScale","introduction","accPhone","accFullName","accEmail","applicantCapacity","rentalExperience","identityImage").containsAll(fields))throw new BadRequestException("Mục yêu cầu bổ sung không hợp lệ");
   a.setRequestedFields(input.decision().equals("NEEDS_CHANGES")?String.join(",",fields):null);
   a.setStatus(input.decision());a.setReviewerNote(input.note()==null?null:input.note().strip());a.setReviewedBy(reviewer);a.setReviewedAt(LocalDateTime.now());a.setUpdatedAt(LocalDateTime.now());a.setAllowResubmit(!input.decision().equals("APPROVED")&&!Boolean.FALSE.equals(input.allowResubmit()));
   if(input.decision().equals("APPROVED")){owner.setRole(UserRole.ROOM_HOST);users.save(owner);}

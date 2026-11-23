@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HL-RCS Mobile API" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.hlrcs.HlRcsApplication" />
+    <module name="HL-RCS" />
+    <option name="PROGRAM_PARAMETERS" value="--spring.profiles.active=mysql,mobile --server.port=8081" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

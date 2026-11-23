@@ -56,6 +56,9 @@ export const authApi = {
   me: signal => request('/me', { signal }),
   logout: () => request('/logout', { method: 'POST' }),
   updateProfile: data => request('/profile', { method: 'PUT', body: data }),
+  sendPhoneOtp: phoneNumber => request('/profile/phone/send-otp', { method: 'POST', body: { phoneNumber } }),
+  verifyPhoneOtp: (phoneNumber, code) => request('/profile/phone/verify-otp', { method: 'POST', body: { phoneNumber, code } }),
+  confirmPhone: phoneNumber => request('/profile/phone/confirm', {method:'POST',body:{phoneNumber}}),
   changePassword: data => request('/change-password', { method: 'PUT', body: data }),
   googleLogin: idToken => request('/google', { method: 'POST', body: { idToken }, authenticated: false }),
 };

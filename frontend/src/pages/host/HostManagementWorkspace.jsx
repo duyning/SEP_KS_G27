@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useMotionTokens, useShouldReduceMotion } from '@animate-ui/react/utils/motion';
 import {
@@ -12,9 +13,11 @@ import HostRoomsPage from './HostRoomsPage.jsx';
 import '../../styles/host-management-saas.css';
 
 export default function HostManagementWorkspace({ activePath }) {
+  const [params] = useSearchParams();
   const [actionTarget, setActionTarget] = useState(null);
   const reduce = useShouldReduceMotion();
   const { transition, shift } = useMotionTokens();
+  const isUtilities = activePath === '/host/rooms' && params.get('utilities') === '1' && params.get('billing') !== '1';
 
   const currentIndex = Math.max(
     0,
@@ -32,7 +35,7 @@ export default function HostManagementWorkspace({ activePath }) {
   return (
     <HostWorkspaceContext.Provider value={{ actionTarget, activePath }}>
       <div className="hm-workspace">
-        <HostManagementChrome activePath={activePath} actionSlotRef={setActionTarget} />
+        {!isUtilities && <HostManagementChrome activePath={activePath} actionSlotRef={setActionTarget} />}
 
         <div className="hm-workspace-stage">
           <motion.div

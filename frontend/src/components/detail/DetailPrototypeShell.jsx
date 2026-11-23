@@ -1,3 +1,4 @@
+import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
 import {useFavorites} from '../../context/FavoritesContext.jsx';
 import {useEffect,useState} from 'react';
 import {Link,NavLink} from 'react-router-dom';
@@ -12,7 +13,7 @@ export default function DetailPrototypeShell({children,savedCount:providedSavedC
  useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
  const account=user?<>{user.role!=='USER'&&<Link to={landingFor(user)} className="btn-primary-sm shell-desktop-dashboard">Bảng điều khiển</Link>}<NotificationBell/><Link to="/favorites" className="btn-wishlist-top" aria-label="Phòng yêu thích"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link><div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
  return <div className={`prototype-home prototype-shared-shell ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
-    <div className="top-announcement">
+    <HostRegistrationBanner/><div className="top-announcement">
       <div className="container top-announcement-inner">
         <div className="announcement-left">
           <span className="badge-tag">Hòa Lạc Campus</span>

@@ -31,6 +31,11 @@ public class PropertyRegistrationController {
         return ApiResponse.success(locations.lookup(input.input()));
     }
 
+    @PostMapping("/location/resolve-mobile")
+    public ApiResponse<org.hlrcs.service.PropertyLocationService.MobileLookup> resolveMobileLocation(@Valid @RequestBody LocationInput input) {
+        return ApiResponse.success(locations.lookupMobile(input.input()));
+    }
+
     @GetMapping("/{id}/edit")
     public ApiResponse<PropertyEditService.Edit> edit(@PathVariable Integer id) { return ApiResponse.success(edits.edit(id)); }
 
@@ -50,7 +55,7 @@ public class PropertyRegistrationController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PropertyRegistrationResponse> submit(@Valid @RequestPart PropertyRegistrationRequest details,
             @RequestPart List<MultipartFile> photos, @RequestPart MultipartFile ownership,
-            @RequestPart MultipartFile idCard, @RequestPart(required = false) MultipartFile fireSafety) throws IOException {
+            @RequestPart(required = false) MultipartFile idCard, @RequestPart(required = false) MultipartFile fireSafety) throws IOException {
         return ApiResponse.success(service.submit(details, photos, ownership, idCard, fireSafety));
     }
 }

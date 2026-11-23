@@ -3,11 +3,12 @@ import { Check, Eye, FileCheck2, FileText, History, House, ImageOff, LockKeyhole
 import { MotionButton } from './motion/MotionUI.jsx';
 import { staffApi } from '../services/staff.js';
 import { AMENITIES, formatRuleLabel } from '../services/property-registration.js';
-import { attachmentSize, reviewActionLabels } from '../services/verification-detail.js';
+import { attachmentSize, reviewActionLabels, newestVerificationAttachments } from '../services/verification-detail.js';
 import { staffDate } from './StaffUI.jsx';
 import VerificationLocationMap from './VerificationLocationMap.jsx';
+import '../styles/verification-identity-documents.css';
 
-function SectionHeading({ number, title, icon: Icon, children }) {
+export function SectionHeading({ number, title, icon: Icon, children }) {
   return (
     <header className="svd-section-heading">
       <h3>
@@ -193,7 +194,7 @@ const documentTypes = [
   ],
   [
     'ID_CARD',
-    'Căn cước công dân (CCCD / CMND) chủ trọ',
+    'CCCD chủ trọ',
     'Giấy tờ định danh chủ trọ hoặc người đại diện được ủy quyền.',
   ],
   [
@@ -204,6 +205,10 @@ const documentTypes = [
 ];
 
 export function VerificationDocuments({ documents, onOpen, loading, error }) {
+  const orderedDocuments=newestVerificationAttachments(documents),order=new Map();
+  orderedDocuments.forEach((file,index)=>{if(!order.has(file.type))order.set(file.type,index);});
+  if(order.has('ID_CARD_BACK'))order.set('ID_CARD',Math.min(order.get('ID_CARD')??999,order.get('ID_CARD_BACK')));
+  const types=[...documentTypes].sort((a,b)=>(order.get(a[0])??999)-(order.get(b[0])??999));
   return (
     <section id="svd-section-documents" className="sw-panel svd-section">
       <SectionHeading number={3} title="Hồ sơ tài liệu xác minh đính kèm" icon={FileText}>
@@ -220,8 +225,20 @@ export function VerificationDocuments({ documents, onOpen, loading, error }) {
         </span>
       </p>
       <div className="svd-document-list">
-        {documentTypes.map(([type, label, description]) => {
-          const file = documents.find(item => item.type === type);
+        {types.map(([type, label, description]) => {
+          const file = orderedDocuments.find(item => item.type === type);
+          if(type==='ID_CARD'){
+            const back=orderedDocuments.find(item=>item.type==='ID_CARD_BACK');
+            const sides=back?[[file,'Mặt trước','Xem CCCD mặt trước'],[back,'Mặt sau','Xem CCCD mặt sau']]:[[file,'Tệp CCCD đã nộp','Xem CCCD']];
+            return <article className="svd-document svd-document-identity" key={type}>
+              <header><FileCheck2 size={24}/><div><h4>{label}</h4><p>{back?'Mặt trước và mặt sau CCCD được lưu chung trong một mục.':description}</p></div></header>
+              <div className={`svd-identity-files${back?' has-two-sides':''}`}>{sides.map(([image,side,action])=><section className="svd-identity-side" key={side} aria-label={`CCCD — ${side}`}>
+                <h5>{side}</h5>
+                <div className={`svd-document-file ${!image?'missing':image.verificationStatus==='REJECTED'?'rejected':''}`}><FileText size={18}/><div><strong>{image?.fileName||'Chưa đính kèm tài liệu'}</strong>{image&&<small>{attachmentSize(image.fileSize)||'Dung lượng chưa được lưu'} · Tải lên: {image.uploadedAt?staffDate(image.uploadedAt):'Chưa lưu thời điểm'}</small>}</div><span>{image&&['APPROVED','VERIFIED'].includes(image.verificationStatus)?'Đã xác minh':image?.verificationStatus==='REJECTED'?'Chưa hợp lệ':image?'Đã nộp':'Chưa nộp'}</span></div>
+                <MotionButton type="button" className="sw-outline small" disabled={!image||loading} onClick={()=>onOpen(image)}><Eye size={14}/>{action}</MotionButton>
+              </section>)}</div>
+            </article>;
+          }
           const approved = file && ['APPROVED', 'VERIFIED'].includes(file.verificationStatus);
           const rejected = file?.verificationStatus === 'REJECTED';
           return (

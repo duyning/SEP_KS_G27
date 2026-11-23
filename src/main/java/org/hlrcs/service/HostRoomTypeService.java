@@ -63,15 +63,18 @@ public class HostRoomTypeService {
     public RoomTypeSummary createWithRooms(RoomTypeRequest value,org.hlrcs.dto.request.RoomBatchRequest layout,List<MultipartFile> photos) {
         users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow();
         if(layout.rooms()==null||layout.rooms().isEmpty()||layout.rooms().size()>200)throw new BadRequestException("Cần từ 1 đến 200 phòng trong danh sách xem trước.");
-        var names=new java.util.HashSet<String>();
-        for(var draft:layout.rooms()){
-            String number=RoomRules.number(draft.roomNumber());RoomRules.floor(draft.floor());
-            if(!names.add(number))throw new BadRequestException("Trùng số phòng trong danh sách: "+number);
+        var submitted = new java.util.HashSet<String>();
+        for (var draft : layout.rooms()) {
+            var number = RoomRules.number(draft.roomNumber());
+            RoomRules.floor(draft.floor());
+            if (!submitted.add(RoomRules.numberKey(number))) throw new BadRequestException("Trùng số phòng trong danh sách: " + number);
         }
         var created=save(value,null,photos);
         var type=owned(created.roomTypeId());
-        var existing=rooms.findByProperty_Owner_UserIdOrderByRoomNumberAsc(authService.getCurrentUser().getUserId());
-        for(var room:existing)if(room.getProperty().getPropertyId().equals(type.getProperty().getPropertyId())&&names.contains(room.getRoomNumber().toUpperCase(java.util.Locale.ROOT)))throw new AppException("Số phòng đã tồn tại trong nhà trọ: "+room.getRoomNumber(),HttpStatus.CONFLICT);
+        var names = RoomRules.numberKeys(rooms.findRoomNumbers(type.getProperty().getPropertyId(), -1));
+        for(var draft:layout.rooms()){
+            RoomRules.reserveNumber(names, RoomRules.number(draft.roomNumber()));
+        }
         var now=java.time.LocalDateTime.now();
         for(var draft:layout.rooms())rooms.save(org.hlrcs.entity.Room.builder().property(type.getProperty()).roomType(type)
                 .roomNumber(RoomRules.number(draft.roomNumber())).floor(RoomRules.floor(draft.floor())).status("VACANT").confirmedAt(now).build());

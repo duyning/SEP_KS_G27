@@ -64,6 +64,7 @@ class ViewingFlowTests {
                 .name("Nhà trọ test").status("ACTIVE").build());
         type = types.save(RoomType.builder().property(property).roomType("Studio")
                 .price(BigDecimal.valueOf(2000000)).areaSqm(20F).build());
+        rooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("published").floor("1").status("OCCUPIED").build());
         appointment = LocalDateTime.now(ZONE).plusDays(1).withSecond(0).withNano(0);
     }
 
@@ -85,7 +86,7 @@ class ViewingFlowTests {
 
     @Test
     void memberSearchSortAndSummaryStayScopedToTheRequesterAcrossFilters() throws Exception {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("S101").floor("1").status("VACANT").build());
         int first = data(create(renter, payload(appointment.plusHours(3))).andExpect(status().isOk())).path("bookingId").asInt();
         decide(host, first, "APPROVED", "").andExpect(status().isOk());
@@ -111,7 +112,7 @@ class ViewingFlowTests {
 
     @Test
     void viewingAndNotificationsPersistAcrossBothRolesAndDoNotReserveRooms() throws Exception {
-        var room = rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        var room = rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         var request = data(create(renter, payload(appointment)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
@@ -189,7 +190,7 @@ class ViewingFlowTests {
 
     @Test
     void concurrentRetriesAndConflictingDecisionsCreateExactlyOneEventEach() throws Exception {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         var sent = race(() -> create(renter, payload(appointment)), () -> create(renter, payload(appointment)));
         int id = data(sent[0].andExpect(status().isOk())).path("bookingId").asInt();
@@ -222,7 +223,7 @@ class ViewingFlowTests {
         getAs(availability, account(UserRole.ROOM_HOST)).andExpect(status().isNotFound());
         getAs(availability, host).andExpect(jsonPath("$.data").value(0));
         decide(host, id, "APPROVED", "").andExpect(status().isConflict());
-        var room = rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        var room = rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         getAs(availability, host).andExpect(jsonPath("$.data").value(1));
         mvc.perform(post("/api/host/viewings/" + id + "/decision").header("Authorization", token(host))
@@ -306,7 +307,7 @@ class ViewingFlowTests {
 
     @Test
     void approvesSelectedViewingsAtomicallyWithinHostWindow() throws Exception {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         var firstSlot = appointment.toLocalDate().atTime(10, 0);
         int firstId = data(create(renter, payload(firstSlot)).andExpect(status().isOk())).path("bookingId").asInt();

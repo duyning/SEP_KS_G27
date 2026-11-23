@@ -72,6 +72,10 @@ public class PropertyEditService {
     }
     @Transactional(rollbackFor=Exception.class,isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public PropertyRegistrationResponse submit(Integer id,PropertyResubmissionRequest edit,List<MultipartFile> photos,MultipartFile ownership,MultipartFile idCard,MultipartFile fireSafety) throws IOException {
+        return submit(id,edit,photos,ownership,idCard,fireSafety,null);
+    }
+    @Transactional(rollbackFor=Exception.class,isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public PropertyRegistrationResponse submit(Integer id,PropertyResubmissionRequest edit,List<MultipartFile> photos,MultipartFile ownership,MultipartFile idCard,MultipartFile fireSafety,MultipartFile idCardBack) throws IOException {
         var owner=users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow();
         var row=registrations.findForReview(id).orElseThrow(()->new ResourceNotFoundException("Không tìm thấy hồ sơ."));
         if(!row.getUser().getUserId().equals(owner.getUserId()))throw new ResourceNotFoundException("Không tìm thấy hồ sơ.");
@@ -98,6 +102,12 @@ public class PropertyEditService {
         var replacements=new LinkedHashMap<String,MultipartFile>();
         if(ownership!=null&&!ownership.isEmpty())replacements.put("OWNERSHIP",ownership);
         if(idCard!=null&&!idCard.isEmpty())replacements.put("ID_CARD",idCard);
+        if(idCardBack!=null&&!idCardBack.isEmpty())replacements.put("ID_CARD_BACK",idCardBack);
+        boolean onboarding=row.isHostOnboarding()&&row.getStatus()!=RegistrationStatus.APPROVED;
+        if(onboarding)for(var key:List.of("ID_CARD","ID_CARD_BACK")){
+            var file=replacements.get(key);
+            if(file!=null)HostIdentityImages.parse("data:"+file.getContentType()+";base64,"+Base64.getEncoder().encodeToString(file.getBytes()));
+        }
         if(fireSafety!=null&&!fireSafety.isEmpty())replacements.put("FIRE_SAFETY",fireSafety);
         for(var key:replacements.keySet())if(!allowed.contains(key))throw new BadRequestException("Staff chưa yêu cầu thay đổi tài liệu này: "+key);
         if(!changed&&!photoChange&&replacements.isEmpty())throw new BadRequestException("Bạn chưa thay đổi thông tin hoặc bổ sung tài liệu nào.");
@@ -126,6 +136,7 @@ public class PropertyEditService {
         for(var file:current){
             boolean photo=Objects.toString(file.getDocumentType(),"").matches("PHOTO_\\d+");
             boolean keep=photo?retained.contains(file.getDocumentId()):!replacements.containsKey(file.getDocumentType());
+            if(!onboarding&&"ID_CARD_BACK".equals(file.getDocumentType())&&replacements.containsKey("ID_CARD"))keep=false;
             if(revision){if(keep)documents.save(PropertyDocument.builder().registration(destination).documentType(photo?"PHOTO_"+(photoIndex++):file.getDocumentType()).fileName(file.getFileName()).contentType(file.getContentType()).fileContent(file.getFileContent()).fileSize(file.getFileSize()).verificationStatus("PENDING").uploadedAt(file.getUploadedAt()).build());}
             else if(!keep)file.setArchivedAt(now);
             else if(photo)file.setDocumentType("PHOTO_"+(photoIndex++));

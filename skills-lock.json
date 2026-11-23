@@ -1,11 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "animate-ui": {
       "source": "imskyleen/animate-ui",
       "sourceType": "github",
       "skillPath": "skills/animate-ui/SKILL.md",
-      "computedHash": "bea74c688175a0a722fc280681a1fafe125933702dc05f8414709c17bfeec5cf"
+      "computedHash": "85ee2fc8886852ca2d1c4876154ff2a595103a09fbb9ab562cc550229a85d626"
+    },
+    "hallmark": {
+      "source": "Nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "e5d4ee5cf0af2dcc81a23ef49b587fbfd71236ff9f9df9da12d3bf347e26e572"
     }
   }
 }

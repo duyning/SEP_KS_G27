@@ -1,4 +1,4 @@
-import { googleMapsEnabled } from './GoogleMapCanvas.jsx';
+import { MAP_PROVIDER } from '../services/map-provider.js';
 import { Check, MapPin } from 'lucide-react';
 import { AREA_CENTERS, parsePropertyCoordinates } from '../services/property-registration.js';
 import { MapCanvas, LocationMarker } from './AccommodationMap.jsx';
@@ -6,7 +6,7 @@ import { MapCanvas, LocationMarker } from './AccommodationMap.jsx';
 export default function OpenStreetPropertyMap({ commune, latitude, longitude, address, error, onSelect, hideCoordinates=false }) {
   const point = parsePropertyCoordinates(latitude, longitude);
   return <div className={`registration-map-shell ${error ? 'invalid' : ''}`}>
-    <header><strong><MapPin size={16}/>{googleMapsEnabled?"Bản đồ vị trí nhà trọ":"OpenStreetMap"}</strong></header>
+    <header><strong><MapPin size={16}/>{MAP_PROVIDER==='osm'?"OpenStreetMap":"Bản đồ vị trí nhà trọ"}</strong></header>
     <MapCanvas onSelect={onSelect} markers={point?[{id:"property",point,title:"Vị trí nhà trọ"}]:[]} nearbyPoint={point} points={[point || AREA_CENTERS[commune] || AREA_CENTERS['Tân Xã']]} label="Bản đồ chọn vị trí nhà trọ">
       <LocationMarker point={point} onSelect={onSelect}/>
     </MapCanvas>

@@ -222,7 +222,8 @@ public class AccommodationService {
             var vacant = query.subquery(Integer.class);
             var room = vacant.from(org.hlrcs.entity.Room.class);
             vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root),
-                    cb.equal(room.get("property"), root.get("property")), cb.equal(room.get("status"), "VACANT"));
+                    cb.equal(room.get("property"), root.get("property")), cb.equal(room.get("status"), "VACANT"),
+                    cb.isTrue(room.get("publicVisible")));
             return cb.exists(vacant);
         });
         return filter;

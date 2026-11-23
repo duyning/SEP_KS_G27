@@ -7,6 +7,8 @@ import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 're
 import { MapPin, ArrowUpRight, Building2, Check, Navigation, Expand, Minimize, Focus, Map as MapIcon, Satellite, Plus, Minus, Tags } from 'lucide-react';
 import NearbyMapPlaces from './NearbyMapPlaces.jsx';
 import GoogleMapCanvas, { googleMapsEnabled } from './GoogleMapCanvas.jsx';
+import VietMapLayer from './VietMapLayer.jsx';
+import { MAP_PROVIDER, VIETMAP_KEY, vietmapSatelliteUrl } from '../services/map-provider.js';
 import { Effects } from '@animate-ui/react/primitives/effects/effect';
 import { useMotionTokens, useShouldReduceMotion } from '@animate-ui/react/utils/motion';
 import { MotionButton, AnimatePresence } from './motion/MotionUI.jsx';
@@ -27,16 +29,20 @@ const satelliteAttribution = import.meta.env.VITE_MAP_SATELLITE_ATTRIBUTION;
 const satelliteAvailable = Boolean(satelliteUrl && satelliteAttribution);
 const labelsUrl = import.meta.env.VITE_MAP_LABELS_URL;
 const labelsAttribution = import.meta.env.VITE_MAP_LABELS_ATTRIBUTION || '';
+const money = value => new Intl.NumberFormat('vi-VN').format(value);
 
 function focusPoints(map, points) {
   if (points.length === 1) map.setView(points[0], 16, { animate: false });
   else if (points.length > 1) map.fitBounds(points, { paddingTopLeft: [32, 145], paddingBottomRight: [85, 45], maxZoom: 16, animate: false });
   else map.setView(AREA_CENTERS['Tân Xã'], 14, { animate: false });
 }
-function priceIcon(rooms, selected=false) {
+function pinPrice(rooms) {
   const price = Math.min(...rooms.map(room => room.price));
   const text = new Intl.NumberFormat('vi-VN', {maximumFractionDigits:1}).format(price / 1000000);
-  return L.divIcon({className:`nh-map-price-marker${selected?' is-selected':''}`,html:`<span>${rooms.length>1?'Từ ':''}${text} tr<span class="nh-map-price-unit">/tháng</span></span>`,iconSize:[108,38],iconAnchor:[54,42],popupAnchor:[0,-40]});
+  return `${rooms.length>1?'Từ ':''}${text} tr`;
+}
+function priceIcon(rooms, selected=false) {
+  return L.divIcon({className:`nh-map-price-marker${selected?' is-selected':''}`,html:`<span>${pinPrice(rooms)}<span class="nh-map-price-unit">/tháng</span></span>`,iconSize:[108,38],iconAnchor:[54,42],popupAnchor:[0,-40]});
 }
 
 function Viewport({ points }) {
@@ -81,12 +87,15 @@ function MapTools({points,expanded,onExpand}) {
 
 export function MapCanvas(props) {
   if(googleMapsEnabled && !props.osmOnly)return <GoogleMapCanvas {...props} fallback={<LeafletMapCanvas {...props}/>}/>;
-  return <LeafletMapCanvas {...props}/>;
+  return <LeafletMapCanvas {...props} useVietmap={MAP_PROVIDER==='vietmap'&&!props.osmOnly}/>;
 }
 
-function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nhà trọ', nearbyPoint }) {
+function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nhà trọ', nearbyPoint, useVietmap=false }) {
   const [state,setState]=useState('loading');
-  const [view,setView]=useState(satelliteAvailable&&import.meta.env.VITE_MAP_DEFAULT_VIEW!=='street'?'satellite':'street');
+  const [vietmapFailed,setVietmapFailed]=useState({});
+  const [view,setView]=useState((useVietmap||satelliteAvailable)&&import.meta.env.VITE_MAP_DEFAULT_VIEW==='satellite'?'satellite':'street');
+  const vietmapActive=useVietmap&&!vietmapFailed[view];
+  const hasSatellite=(useVietmap&&!vietmapFailed.satellite)||satelliteAvailable;
   const [showLabels,setShowLabels]=useState(true),[expanded,setExpanded]=useState(false),[revision,setRevision]=useState(0);
   const timer=useRef();const failures=useRef(false);const shell=useRef();const expandButton=useRef();
   useEffect(()=>()=>clearTimeout(timer.current),[]);
@@ -105,25 +114,29 @@ function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nh�
     document.addEventListener('keydown',close);
     return()=>{document.body.style.overflow=previous;document.removeEventListener('keydown',close);};
   },[expanded]);
-  function loading(){clearTimeout(timer.current);failures.current=false;setState('loading');timer.current=setTimeout(()=>setState('error'),15000);}
-  const events={loading,load:()=>{clearTimeout(timer.current);setState(failures.current?'error':'ready');},tileerror:()=>{failures.current=true;clearTimeout(timer.current);setState('error');}};
-  const url=view==='satellite'?satelliteUrl:streetUrl;
+  function loading(){clearTimeout(timer.current);failures.current=false;setState('loading');timer.current=setTimeout(()=>{if(vietmapActive)failVietmap();else setState('error');},15000);}
+  function failVietmap(){clearTimeout(timer.current);setVietmapFailed(value=>({...value,[view]:true}));if(view==='satellite')setView('street');setState('loading');}
+  const events={loading,load:()=>{clearTimeout(timer.current);setState(failures.current?'error':'ready');},tileerror:()=>{failures.current=true;clearTimeout(timer.current);if(vietmapActive)failVietmap();else setState('error');}};
+  const url=view==='satellite'?(vietmapActive?vietmapSatelliteUrl(VIETMAP_KEY):satelliteUrl):streetUrl;
+  const attribution=vietmapActive?'&copy; <a href="https://vietmap.vn/">VIETMAP</a>':view==='satellite'?satelliteAttribution:streetAttribution;
   return <div ref={shell} className={`accommodation-map${expanded?' accommodation-map-expanded':''}`} role="region" aria-label={label}>
     <div className="nh-map-stage">
-      <MapContainer center={AREA_CENTERS['Tân Xã']} zoom={14} minZoom={3} maxZoom={19} scrollWheelZoom={false} zoomControl={false}>
-        <TileLayer key={`${view}-${revision}`} url={url} attribution={view==='satellite'?satelliteAttribution:streetAttribution} maxZoom={19} keepBuffer={1} eventHandlers={events}/>
-        {view==='satellite'&&showLabels&&labelsUrl&&<TileLayer key={`labels-${revision}`} url={labelsUrl} attribution={labelsAttribution} maxZoom={19} keepBuffer={1} zIndex={2}/>}
+      <MapContainer center={AREA_CENTERS['Tân Xã']} zoom={14} minZoom={3} maxZoom={19} maxBounds={[[-85.051129,-180],[85.051129,180]]} maxBoundsViscosity={1} scrollWheelZoom={false} zoomControl={false}>
+        {vietmapActive&&view==='street'?<VietMapLayer view={view} revision={revision} onLoading={()=>setState('loading')} onReady={()=>setState('ready')} onFailure={failVietmap}/>:
+          <TileLayer key={`${vietmapActive?'vietmap':'osm'}-${view}-${revision}`} url={url} attribution={attribution} maxZoom={19} keepBuffer={1} eventHandlers={events}/>}
+        {!vietmapActive&&view==='satellite'&&showLabels&&labelsUrl&&<TileLayer key={`labels-${revision}`} url={labelsUrl} attribution={labelsAttribution} maxZoom={19} keepBuffer={1} zIndex={2}/>}
         <Viewport points={points}/>{children}<NearbyMapPlaces point={nearbyPoint===undefined?points[0]:nearbyPoint}/>
         <MapTools points={points} expanded={expanded} onExpand={()=>{expandButton.current=document.activeElement;setExpanded(value=>!value);}}/>
       </MapContainer>
-      <div className={`nh-map-layers${!satelliteAvailable?' nh-map-layers-street':''}`} aria-label="Lớp nền bản đồ">
+      <div className={`nh-map-layers${!hasSatellite?' nh-map-layers-street':''}`} aria-label="Lớp nền bản đồ">
         <MotionButton type="button" aria-pressed={view==='street'} className={view==='street'?'active':''} onClick={()=>{if(view!=='street'){setView('street');setState('loading');}}}><MapIcon size={17}/>Bản đồ</MotionButton>
-        {satelliteAvailable&&<MotionButton type="button" aria-pressed={view==='satellite'} className={view==='satellite'?'active':''} disabled={!satelliteAvailable} title={satelliteAvailable?'Xem ảnh vệ tinh':'Ảnh vệ tinh chưa khả dụng'} onClick={()=>{if(view!=='satellite'){setView('satellite');setState('loading');}}}><Satellite size={17}/>Vệ tinh</MotionButton>}
-        {view==='satellite'&&labelsUrl&&<MotionButton type="button" aria-pressed={showLabels} title="Tên đường và địa điểm" onClick={()=>setShowLabels(value=>!value)}><Tags size={17}/><span>Nhãn</span></MotionButton>}
+        {hasSatellite&&<MotionButton type="button" aria-pressed={view==='satellite'} className={view==='satellite'?'active':''} title="Xem ảnh vệ tinh" onClick={()=>{if(view!=='satellite'){setView('satellite');setState('loading');}}}><Satellite size={17}/>Vệ tinh</MotionButton>}
+        {!vietmapActive&&view==='satellite'&&labelsUrl&&<MotionButton type="button" aria-pressed={showLabels} title="Tên đường và địa điểm" onClick={()=>setShowLabels(value=>!value)}><Tags size={17}/><span>Nhãn</span></MotionButton>}
       </div>
       <div className="nh-map-hint"><span className="nh-map-legend-pin"/>Vị trí nhà trọ <span>· Chạm ghim để xem thông tin</span></div>
       {state==='loading'&&<div className="nh-map-loading" role="status">Đang tải bản đồ…</div>}
     </div>
+    {useVietmap&&vietmapFailed[view]&&<div className="accommodation-map-status" role="status"><span>VietMap chưa tải được nền đường phố. Đang dùng OpenStreetMap; vị trí đã chọn được giữ nguyên.</span><MotionButton type="button" onClick={()=>{setRevision(value=>value+1);setState('loading');setVietmapFailed(value=>({...value,[view]:false}));}}>Thử lại VietMap</MotionButton></div>}
     {state==='error'&&<div className="accommodation-map-status" role="status"><span>Chưa tải được đầy đủ nền bản đồ.</span><div><MotionButton type="button" onClick={()=>{loading();setRevision(value=>value+1);}}>Thử lại</MotionButton>{view==='satellite'&&<MotionButton type="button" onClick={()=>{setView('street');setState('loading');}}>Dùng bản đồ đường phố</MotionButton>}</div></div>}
   </div>;
 }
@@ -152,6 +165,19 @@ function RoomMapPhoto({room}) {
   return <img src={room.imageUrl} alt="" loading="lazy" onError={()=>setFailed(true)}/>;
 }
 
+function RoomPinPopup({rooms,origin}) {
+  return <div className="accommodation-map-popup">
+    {rooms.map(room => <article key={room.roomTypeId}>
+      {room.imageUrl && <img src={room.imageUrl} alt="" loading="lazy" onError={event => { event.currentTarget.hidden = true; }}/>}
+      <strong>{room.propertyName} – {room.roomTypeName}</strong>
+      <p>{money(room.price)} đ/tháng</p>
+      {room.address && <p>{room.address}</p>}
+      {origin && <p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}
+      <Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link>
+    </article>)}
+  </div>;
+}
+
 function SelectedRoomSummary({room,origin}) {
   const {spring,transition,shift,blur}=useMotionTokens();
   const reduce=useShouldReduceMotion(),present=useIsPresent();
@@ -167,7 +193,16 @@ export default function RoomsMap({ rooms, origin }) {
   const groups=new Map();
   for(const room of located){const key=roomCoordinates(room).join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(room);}
   if(!located.length)return <p className="accommodation-map-empty" role="status">Các phòng trên trang này chưa có tọa độ hợp lệ. Hãy xem danh sách hoặc chuyển trang.</p>;
-  const money=value=>new Intl.NumberFormat('vi-VN').format(value);
+  const pins=[...groups.entries()].map(([id,group])=>{
+    const properties=[...new Set(group.map(room=>room.propertyName))];
+    return {
+      id,
+      point:roomCoordinates(group[0]),
+      title:properties.length===1?properties[0]:`${properties.length} nhà trọ cùng vị trí`,
+      price:`${pinPrice(group)}/tháng`,
+      popup:<RoomPinPopup rooms={group} origin={origin}/>,
+    };
+  });
   return <section className="nh-map-explorer" aria-label="Khám phá phòng trên bản đồ">
     <header className="nh-map-explorer-heading"><div><span className="nh-map-eyebrow"><Navigation size={14}/>KHÁM PHÁ KHU VỰC</span><h3>Tìm một nơi để gọi là nhà</h3><p>Chọn phòng, xem vị trí và khám phá khu vực xung quanh.</p></div><span className="nh-map-total"><Building2 size={17}/>{new Set(located.map(room=>room.propertyId)).size} nhà trọ <span>· {located.length} loại phòng</span></span></header>
     <div className="nh-map-workspace">
@@ -182,14 +217,12 @@ export default function RoomsMap({ rooms, origin }) {
         </Effects></div>
         <footer className="nh-map-panel-footer"><span className="nh-map-legend-pin"/>{located.length}/{rooms.length} loại phòng có tọa độ trên trang này</footer>
       </aside>
-      <div className="nh-map-explorer-canvas"><MapCanvas points={[...groups.values()].map(group=>roomCoordinates(group[0]))} nearbyPoint={selected?roomCoordinates(selected):undefined}
- markers={[...groups.entries()].map(([id,group])=>({id,point:roomCoordinates(group[0]),title:group[0].propertyName,price:new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(Math.min(...group.map(r=>r.price))/1000000)+' tr/tháng',popup:<div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}><strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link></article>)}</div>}))}
+      <div className="nh-map-explorer-canvas"><MapCanvas browse points={pins.map(pin=>pin.point)} nearbyPoint={selected?roomCoordinates(selected):undefined}
+ markers={pins}
  selectedKey={selected?roomCoordinates(selected).join(','):null} onMarkerSelect={id=>setSelectedId(groups.get(id)[0].roomTypeId)} focusRequest={focusRequest} focusPoint={selected?roomCoordinates(selected):null}>
         <SelectedRoomFocus room={selected} request={focusRequest}/>
         {[...groups.entries()].map(([key,group])=><Marker key={key} position={roomCoordinates(group[0])} icon={priceIcon(group,group.some(room=>room.roomTypeId===selectedId))} title={group[0].propertyName} eventHandlers={{click:()=>setSelectedId(group[0].roomTypeId)}}>
-          <Popup maxHeight={190}><div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}>
-            {room.imageUrl&&<img src={room.imageUrl} alt="" loading="lazy" onError={event=>{event.currentTarget.hidden=true;}}/>}<strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link>
-          </article>)}</div></Popup>
+          <Popup maxHeight={190}><RoomPinPopup rooms={group} origin={origin}/></Popup>
         </Marker>)}
       </MapCanvas></div>
     </div>

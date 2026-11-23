@@ -1,5 +1,6 @@
+import MultiFloorRoomSetup from '../../components/MultiFloorRoomSetup.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Download,
   DoorOpen,
@@ -140,6 +141,7 @@ function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
 }
 
 export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDeleted }) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const notify = useToast();
   const memory = getHostWorkspaceMemory(user?.userId);
@@ -256,6 +258,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
   }
 
   const canCreate = property.status === 'ACTIVE';
+  const openSetup = () => navigate('/host/room-types?propertyId=' + property.propertyId + '&layout=1');
   const hasRoomCounts = types.length > 0 && types.every(item => item.totalRooms != null);
   const totals = hasRoomCounts ? types.reduce((sum, item) => sum + item.totalRooms, 0) : 0;
   const vacancies =
@@ -266,13 +269,13 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 
   const created = record => {
     const wasEditing = Boolean(editing);
-    onCreated(record);
+    onCreated(record, !wasEditing);
     setCreate(false);
     setEditing(null);
     notify?.(
       wasEditing
         ? 'Đã cập nhật loại phòng thành công.'
-        : `Đã tạo loại phòng và ${(record.rooms || []).length} phòng thành công.`,
+        : record.rooms?.length ? `Đã tạo loại phòng và ${record.rooms.length} phòng thành công.` : 'Đã lưu loại phòng. Bạn có thể thiết lập phòng nhiều tầng.',
       'success'
     );
   };
@@ -303,11 +306,11 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
         type="button"
         className="hm-btn hm-btn-primary"
         disabled={!canCreate}
-        title={canCreate ? 'Thêm loại phòng mới' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
-        onClick={() => setCreate(true)}
+        title={canCreate ? 'Tạo loại phòng và thiết lập phòng' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
+        onClick={openSetup}
       >
         <Plus size={16} />
-        <span>Thêm loại phòng</span>
+        <span>Tạo loại phòng và phòng</span>
       </MotionButton>
     </>
   );
@@ -476,10 +479,10 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
               type="button"
               className="hm-btn hm-btn-primary"
               disabled={!canCreate}
-              onClick={() => setCreate(true)}
+              onClick={openSetup}
             >
               <Plus size={16} />
-              <span>Thêm loại phòng đầu tiên</span>
+              <span>Tạo loại phòng và phòng</span>
             </MotionButton>
           </div>
         ) : !shown.length ? (
@@ -658,6 +661,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 }
 
 export default function HostRoomTypesPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [params] = useSearchParams();
   const propertyId = params.get('propertyId');
@@ -695,13 +699,24 @@ export default function HostRoomTypesPage() {
             </MotionButton>
           </StateView>
         </HostManagementShell>
+      ) : params.get('layout')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
+        <MultiFloorRoomSetup key={user.userId + ':' + propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)}
+          types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId}
+          onDone={roomCount => {
+            if (roomCount) navigate(`/host/rooms?propertyId=${propertyId}&publication=1`);
+            else {
+              setRevision(value => value + 1);
+              navigate(`/host/room-types?propertyId=${propertyId}`);
+            }
+          }}/>
       ) : (
         <RoomTypesContent
           key={`${user?.userId}-${propertyId || ''}`}
           data={state.data}
           propertyId={propertyId}
           onRefresh={() => setRevision(value => value + 1)}
-          onCreated={record =>
+          onCreated={(record, created) => {
+            if(created&&record.rooms?.length) { navigate(`/host/rooms?propertyId=${record.propertyId}&publication=1`); return; }
             setState(previous => ({
               ...previous,
               data: {
@@ -711,8 +726,8 @@ export default function HostRoomTypesPage() {
                   ...previous.data.roomTypes.filter(type => type.roomTypeId !== record.roomTypeId),
                 ],
               },
-            }))
-          }
+            }));
+          }}
           onDeleted={id =>
             setState(previous => ({
               ...previous,

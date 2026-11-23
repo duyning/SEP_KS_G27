@@ -1,0 +1,3 @@
+export default function RoomLeaseFields({data,onChange,errors={},prefix='lease'}){
+ return <div className="hr-form-grid">{[['leaseStartDate','Ngày bắt đầu ở'],['leaseEndDate','Ngày kết thúc ở']].map(([key,label])=><div className="hr-field" key={key}><label htmlFor={`${prefix}-${key}`}>{label} <b>*</b></label><input id={`${prefix}-${key}`} type="date" required min={key==='leaseEndDate'&&data.leaseStartDate?data.leaseStartDate:'0001-01-01'} max="9999-12-31" value={data[key]||''} onChange={event=>onChange(key,event.target.value)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key]?`${prefix}-${key}-error`:undefined}/>{errors[key]&&<p className="hr-field-error" role="alert" id={`${prefix}-${key}-error`}>{errors[key]}</p>}</div>)}</div>;
+}

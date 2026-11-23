@@ -5,11 +5,50 @@ dùng worker Python/Playwright nội bộ, nháp trong MySQL, Staff/Admin chọn
 gỡ công khai; public feed riêng tải thêm bằng cursor. Xem tài liệu module để cấu
 hình, đối chiếu API và giới hạn kiểm thử; snapshot bên dưới giữ ngày gốc.
 
+Cập nhật 2026-11-18: [Hợp đồng thuê phòng](RENTAL_CONTRACTS.md) bổ sung tạo hợp
+đồng tùy chọn khi chuyển phòng sang Đang thuê: hai mẫu hệ thống hoặc đọc JPG/PNG/PDF
+bằng Gemini, chủ trọ kiểm tra trước khi lưu. Hợp đồng riêng cho mỗi phòng, lưu cùng
+transaction đổi trạng thái, giữ lịch sử khi trả phòng, API chỉ cho chủ sở hữu.
+Không đưa người thuê/CCCD/điều khoản vào DTO công khai; không tự xác nhận chữ ký.
+
 Ngày đối chiếu: **2026-11-05**. Commit làm mốc: `350dc13`.
 Phạm vi: mã nguồn, JPA mappings, cấu hình, API, frontend và test trong repository;
 không truy vấn database đang chạy và không xác minh triển khai thực tế.
 
+Cập nhật 2026-11-14: dòng đăng ký chủ trọ thay thanh thông báo Hòa Lạc Campus
+trong header các trang public, không tạo thêm banner riêng, đưa USER
+thẳng tới `/become-host`; khách qua `/login` với `state.from=/become-host`.
+Ẩn liên kết đăng ký với ROOM_HOST/STAFF/ADMIN và tại đơn chủ trọ. Không có nút
+dừng theo yêu cầu; chữ dừng khi hover/focus và hiển thị tĩnh khi giảm chuyển động.
+
+Cập nhật 2026-11-14: GoogleMapCanvas cô lập lỗi SDK bằng error boundary, bắt lỗi
+khi tạo/cập nhật ghim, đổi lớp nền và giải phóng listener; chuyển sang Leaflet
+khi Google từ chối quyền hoặc SDK lỗi để giữ nguyên trang nhà trọ. Ghim dùng
+`gmp-click`/`gmp-dragend` qua DOM events. Kiểm thử hồi quy ở
+`frontend/scripts/check-google-map-failure.cjs` dùng SDK/API giả lập, không sửa
+cấu hình quyền Google Cloud hay sử dụng khóa thật.
+
+Cập nhật 2026-11-14: [Chọn nhiều phòng và khoảng ngày thuê](ROOM_BULK_STATUS.md)
+thêm cập nhật trạng thái theo nhóm trong một transaction và ngày bắt đầu/kết thúc
+thuê theo phòng. Web hỗ trợ chọn phòng theo tầng hoặc bảng, xem/sửa ngày trong
+chi tiết và editor; không có cơ chế tự chuyển trạng thái theo ngày.
+
+Cập nhật 2026-11-14: tra vị trí từ liên kết Google Maps hỗ trợ khu vực Hạ Bằng
+và Hòa Lạc do dữ liệu bản đồ trả về. Backend dùng chung danh sách `PropertyAreas`
+cho gợi ý và kiểm tra hồ sơ; form đăng ký có các lựa chọn tương ứng. Đối chiếu
+theo trường hành chính, không lấy tên cơ sở lân cận làm xã, không chọn tự động
+khi dữ liệu mâu thuẫn. Chủ trọ vẫn kiểm tra và chỉnh lại gợi ý trước khi gửi.
+
 ## 1. Mục tiêu và nguồn đối chiếu
+
+
+Cập nhật 2026-11-13: [Đơn cấp quyền Chủ trọ và ảnh định danh](HOST_ACCOUNT_IDENTITY.md)
+bỏ các trường kế hoạch khỏi đơn mới, ghi chú tùy chọn; ảnh mặt trước JPG/PNG
+lưu riêng tư cùng đơn, xem qua endpoint có xác thực. Hồ sơ cũ giữ dữ liệu lịch sử.
+
+Cập nhật 2026-11-13: [OTP số điện thoại](PHONE_OTP.md) dùng eSMS mặc định (Twilio là tùy chọn),
+API gửi/kiểm tra mã và chặn lưu số mới cho tài khoản Google khi chưa xác minh.
+Web và mobile có hộp nhập OTP; cần cấu hình dịch vụ SMS để gửi số thật.
 
 Cập nhật 2026-11-11: [Tái xác minh N05–N08](PROPERTY_REVERIFICATION.md) phân loại
 địa chỉ/tọa độ/người quản lý/giấy tờ quan trọng. Property.reverificationRequired

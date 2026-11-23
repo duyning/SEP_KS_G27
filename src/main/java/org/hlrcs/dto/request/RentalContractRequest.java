@@ -1,0 +1,43 @@
+package org.hlrcs.dto.request;
+
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
+
+public record RentalContractRequest(
+        @NotNull @Positive Integer roomId,
+        @NotBlank @Pattern(regexp="BASIC|HOUSE_RENTAL|SHARED|OWNER_SCAN") String template,
+        @NotBlank @Size(max=150) String landlordName,
+        @NotBlank @Pattern(regexp="[+0-9 ()-]{8,20}") String landlordPhone,
+        @NotBlank @Size(max=150) String tenantName,
+        @NotBlank @Pattern(regexp="[+0-9 ()-]{8,20}") String tenantPhone,
+        @Size(max=30) String tenantIdentity,
+        @Size(max=300) String tenantAddress,
+        @NotNull @DecimalMin("1") @DecimalMax("9999999999") @Digits(integer=10,fraction=0) BigDecimal rent,
+        @NotNull @DecimalMin("0") @DecimalMax("9999999999") @Digits(integer=10,fraction=0) BigDecimal deposit,
+        @NotNull @Min(1) @Max(28) Integer paymentDay,
+        @NotBlank @Size(max=30000) String terms,
+        @Size(max=255) String sourceName,
+        @AssertTrue(message="Vui lòng kiểm tra và xác nhận nội dung hợp đồng.") boolean reviewed,
+        @Size(max=20) String contractDate,
+        @Size(max=20) String landlordBirthDate,
+        @Size(max=300) String landlordAddress,
+        @Size(max=30) String landlordIdentity,
+        @Size(max=20) String landlordIdentityDate,
+        @Size(max=150) String landlordIdentityPlace,
+        @Size(max=20) String tenantBirthDate,
+        @Size(max=20) String tenantIdentityDate,
+        @Size(max=150) String tenantIdentityPlace,
+        @Size(max=200) String paymentMethod,
+        @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal electricityPrice,
+        @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal waterPrice,
+        @Size(max=30) String waterUnit,
+        @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal internetPrice,
+        @DecimalMin("0") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal servicePrice,
+        @Size(max=60000) String fullScannedTranscript,
+        @Size(max=300) String rentalScope,
+        @Size(max=2000) String includedEquipment,
+        @Positive Integer occupantCount,
+        @Size(max=20) String firstPaymentDate,
+        @Size(max=300) String tenantCurrentAddress,
+        @Size(max=100) String paymentCycle,
+        Boolean scanFullDocument) { }
