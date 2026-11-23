@@ -3,7 +3,7 @@
    ========================================================================== */
 
 :root {
-  --auth-primary: #0d9488;
+  --auth-primary: #0f766e;
   --auth-primary-hover: #0f766e;
   --auth-primary-light: #f0fdfa;
   --auth-teal-glow: #5eead4;
@@ -503,7 +503,7 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #0d9488;
+  border-color: #0f766e;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
@@ -560,13 +560,13 @@
 .custom-checkbox input[type="checkbox"] {
   width: 15px;
   height: 15px;
-  accent-color: #0d9488;
+  accent-color: #0f766e;
   cursor: pointer;
   border-radius: 4px;
 }
 
 .forgot-link {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 600;
   text-decoration: none;
   font-size: 12.5px;
@@ -590,7 +590,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   border: none;
   border-radius: 10px;
@@ -626,7 +626,7 @@
 }
 
 .flip-trigger-btn {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
@@ -665,7 +665,7 @@
 
 .terms-text button,
 .terms-text a {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 600;
   background: none;
   border: none;
@@ -694,12 +694,12 @@
   width: 18px;
   height: 20px;
   margin: 3px 0 0;
-  accent-color: #0d9488;
+  accent-color: #0f766e;
   cursor: pointer;
 }
 
 .register-consent input:focus-visible {
-  outline: 2px solid #0d9488;
+  outline: 2px solid #0f766e;
   outline-offset: 3px;
 }
 
@@ -752,7 +752,7 @@
 }
 
 .demo-grid button:hover {
-  border-color: #0d9488;
+  border-color: #0f766e;
   background: #f0fdfa;
 }
 

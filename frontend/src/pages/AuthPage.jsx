@@ -1,3 +1,4 @@
+import UIField from '../components/common/Field.jsx';
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -114,13 +115,13 @@ export default function AuthPage({ registerMode = false }) {
   const goToRegister = () => {
     setLoginAlert('');
     setRegAlert('');
-    navigate('/register', { state: { from: location.state?.from, role } });
+    navigate('/register');
   };
 
   const goToLogin = () => {
     setLoginAlert('');
     setRegAlert('');
-    navigate('/login', { state: { from: location.state?.from } });
+    navigate('/login');
   };
 
   // Login Handler
@@ -388,9 +389,9 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="loginForm" onSubmit={handleLoginSubmit} noValidate aria-busy={loginBusy}>
                   {/* Email hoặc SĐT */}
                   <div className="form-group">
-                    <label htmlFor="loginIdentifier" className="field-label">
+                    <UIField htmlFor="loginIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Mail size={18} />
@@ -418,9 +419,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="loginPassword" className="field-label">
+                    <UIField htmlFor="loginPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Lock size={18} />
@@ -456,7 +457,7 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Ghi nhớ & Quên mật khẩu */}
                   <div className="form-options">
-                    <label className="custom-checkbox">
+                    <UIField className="custom-checkbox">
                       <input
                         id="remember"
                         name="remember"
@@ -465,7 +466,7 @@ export default function AuthPage({ registerMode = false }) {
                         onChange={(e) => setLoginRemember(e.target.checked)}
                       />
                       <span>Ghi nhớ đăng nhập</span>
-                    </label>
+                    </UIField>
                     <MotionButton
                       type="button"
                       className="forgot-link"
@@ -574,9 +575,9 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="registerForm" onSubmit={handleRegisterSubmit} noValidate aria-busy={regBusy}>
                   {/* Họ và tên */}
                   <div className="form-group">
-                    <label htmlFor="regFullName" className="field-label">
+                    <UIField htmlFor="regFullName" className="field-label">
                       Họ và tên
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <UserRound size={18} />
@@ -605,9 +606,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Email hoặc Số điện thoại */}
                   <div className="form-group">
-                    <label htmlFor="regIdentifier" className="field-label">
+                    <UIField htmlFor="regIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
+                    </UIField>
                     <div className="register-otp-row">
                       <div className="input-container">
                         <div className="input-icon"><Mail size={18} /></div>
@@ -694,9 +695,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regPassword" className="field-label">
+                    <UIField htmlFor="regPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <Lock size={18} />
@@ -736,9 +737,9 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Xác nhận mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regConfirmPassword" className="field-label">
+                    <UIField htmlFor="regConfirmPassword" className="field-label">
                       Xác nhận mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
                       <div className="input-icon">
                         <ShieldCheck size={18} />
@@ -788,7 +789,7 @@ export default function AuthPage({ registerMode = false }) {
                           setRegErrors((prev) => ({ ...prev, agree: undefined }));
                         }}
                       />
-                      <label htmlFor="regAgree" className="terms-text">
+                      <UIField htmlFor="regAgree" className="terms-text">
                         Tôi đồng ý với{' '}
                         <MotionButton type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
                           Điều khoản dịch vụ
@@ -798,7 +799,7 @@ export default function AuthPage({ registerMode = false }) {
                           Chính sách bảo mật
                         </MotionButton>{' '}
                         của HL_RCS.
-                      </label>
+                      </UIField>
                   </div>
                   {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: '12px' }} role="alert">{regErrors.agree}</p>}
 

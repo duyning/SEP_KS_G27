@@ -16,11 +16,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class NoticeTests {
  @Autowired MockMvc mvc; @Autowired UserRepository users;@Autowired UserNoticeRepository notices;@Autowired JwtTokenProvider jwt;
+ @Autowired PropertyRegistrationRepository registrations;
  User user,other;
  @BeforeEach void setup(){user=account(UserRole.USER);other=account(UserRole.USER);}
  User account(UserRole role){return users.save(User.builder().email(UUID.randomUUID()+"@test.local").fullName("Test").passwordHash("unused").role(role).status(UserStatus.ACTIVE).build());}
  String token(User u){return "Bearer "+jwt.generateTokenFromUser(u);}
  UserNotice notice(User u,String kind){var n=new UserNotice();n.setRecipient(u);n.setCategory("COMMUNITY");n.setKind(kind);n.setTitle("Bình luận mới");n.setContent("Nội dung");n.setCreatedAt(LocalDateTime.now());return notices.save(n);}
+ @Test void combinedOnboardingSupplementNoticeReturnsApplicantToAccessibleForm()throws Exception{
+  var staff=account(UserRole.STAFF);
+  var registration=registrations.save(PropertyRegistration.builder().user(user).name("Onboarding notice")
+    .status(RegistrationStatus.PENDING).hostOnboarding(true).assignedStaff(staff).assignmentVersion(1L).build());
+  mvc.perform(post("/api/staff/verifications/"+registration.getRegistrationId()+"/review")
+    .header("Authorization",token(staff)).contentType("application/json")
+    .content("{\"decision\":\"REQUEST_SUPPLEMENT\",\"note\":\"Vui lòng bổ sung mô tả nhà trọ chi tiết.\",\"requestedFields\":[\"description\"],\"assignmentVersion\":1}"))
+    .andExpect(status().isOk());
+  mvc.perform(get("/api/notifications?category=APPLICATION").header("Authorization",token(user)))
+    .andExpect(jsonPath("$.data.items[0].kind").value("NEEDS_SUPPLEMENT"))
+    .andExpect(jsonPath("$.data.items[0].target").value("/become-host"));
+  org.junit.jupiter.api.Assertions.assertEquals(UserRole.USER,users.findById(user.getUserId()).orElseThrow().getRole());
+ }
  @Test void ownershipReadAllAndCategoryCountsAreEnforced()throws Exception{
   var a=notice(user,"COMMENT");var b=notice(other,"REPLY");
   mvc.perform(get("/api/notifications")).andExpect(status().isUnauthorized());

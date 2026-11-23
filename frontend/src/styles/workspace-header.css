@@ -1,0 +1,43 @@
+/* Shared Host/Staff chrome, loaded after legacy page styles. */
+.portal-app .workspace-header{display:block;height:auto;min-height:var(--p-topbar-height);padding:0;background:var(--ui-surface);border-bottom:1px solid var(--p-border);box-shadow:none;font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:normal}
+.workspace-header .portal-topbar-inner{box-sizing:border-box;width:100%;min-height:var(--p-topbar-height);padding:12px 28px;gap:20px}
+.portal-app .workspace-header .portal-topbar-left{flex:1 1 0;min-width:0;gap:12px}
+.portal-app .workspace-header .portal-topbar-title{display:flex;align-items:center;flex-wrap:wrap;min-width:0;gap:6px 12px}
+.portal-app .workspace-header .portal-topbar-title h1{margin:0;color:var(--ui-text);font-size:1.125rem;font-weight:750;line-height:1.4;letter-spacing:-.025em;white-space:normal;overflow-wrap:anywhere}
+.portal-app .workspace-header .portal-topbar-right{flex:0 0 auto;align-items:center;gap:12px}
+.workspace-header .host-header-actions{display:flex;align-items:center}
+.portal-app .workspace-header :is(.p-icon,.btn-view-public-site,.host-user-btn,.hd-context-refresh){box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--ui-border);border-radius:12px;background:var(--ui-surface);color:var(--ui-text);font:inherit;font-size:.8125rem;font-weight:650;line-height:1.4;text-decoration:none;cursor:pointer}
+.portal-app .workspace-header .p-icon{width:44px;height:44px;padding:10px}
+.portal-app .workspace-header .portal-menu-toggle{display:none}
+.portal-app .workspace-header :is(.btn-view-public-site,.hd-context-refresh){padding:10px 12px;white-space:nowrap}
+.portal-app .workspace-header .host-user-btn{padding:5px 10px 5px 5px;max-width:244px}
+.portal-app .workspace-header .host-user-avatar{width:32px;height:32px;flex:0 0 32px;border:0;border-radius:50%;background:var(--ui-primary);color:var(--ui-surface);font-size:.8125rem;font-weight:750}
+.portal-app .workspace-header .host-user-text{min-width:0;display:flex;gap:2px}
+.portal-app .workspace-header .host-user-name{max-width:158px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8125rem;line-height:1.35}
+.portal-app .workspace-header .host-user-role{font-size:.75rem;line-height:1.35;color:var(--ui-muted)}
+.portal-app .workspace-header .topbar-status-chip{margin:0;font-size:.75rem;white-space:nowrap}
+.portal-app .workspace-header .workspace-notification{position:relative;overflow:visible}
+.workspace-header .workspace-notification .wishlist-count{position:absolute;top:-5px;right:-5px;display:grid;place-items:center;box-sizing:border-box;min-width:20px;height:20px;padding:0 4px;border:2px solid var(--ui-surface);border-radius:999px;background:var(--ui-primary);color:var(--ui-surface);font-size:.625rem;font-weight:750;line-height:1}
+.portal-app .workspace-header .notification-bell-active{background:var(--ui-tint);color:var(--ui-primary);border-color:var(--ui-primary)}
+.portal-app .workspace-header :is(button,a):focus-visible{outline:2px solid var(--ui-primary);outline-offset:3px}
+.portal-app .workspace-header button:disabled{cursor:wait;opacity:.6}
+.portal-app .workspace-header .host-user-popover{width:280px;max-width:calc(100vw - 32px);right:0}
+.portal-app .workspace-header :is(.popover-name,.popover-phone){overflow-wrap:anywhere}
+.portal-app .workspace-header .popover-links :is(a,button){min-height:44px;font-family:inherit;border-radius:8px}
+.portal-app:is(.host-portal,.staff-portal) .portal-sidebar-brand{box-sizing:border-box;min-height:var(--p-topbar-height);padding:12px 20px}
+.portal-app:is(.host-portal,.staff-portal) .brand-portal-title{font-size:22px;line-height:1.25}
+.portal-app:is(.host-portal,.staff-portal) .brand-portal-role{font-size:10px;line-height:1.4;letter-spacing:.04em}
+@media(hover:hover){.portal-app .workspace-header :is(.p-icon,.btn-view-public-site,.host-user-btn,.hd-context-refresh):hover:not(:disabled){background:var(--ui-tint);color:var(--ui-primary);border-color:var(--ui-primary)}}
+@media(max-width:1200px){
+ .portal-app .workspace-header :is(.host-user-text,.topbar-status-chip,.hd-context-refresh>span,.btn-view-public-site>span){display:none}
+ .portal-app .workspace-header :is(.hd-context-refresh,.btn-view-public-site,.host-user-btn){width:44px;height:44px;padding:5px}
+ .portal-app .workspace-header .host-user-btn>.chevron-icon{display:none}
+}
+@media(max-width:900px){.workspace-header .portal-topbar-inner{padding-inline:20px;gap:16px}.portal-app .workspace-header .portal-menu-toggle{display:inline-flex}}
+@media(max-width:600px){
+ .workspace-header .portal-topbar-inner{padding:12px 16px;gap:12px}
+ .portal-app .workspace-header :is(.portal-topbar-left,.portal-topbar-right){gap:8px}
+ .portal-app .workspace-header .portal-topbar-title h1{font-size:.9375rem;line-height:1.4}
+ /* Public navigation remains available in the account dropdown on phones. */
+ .portal-app .workspace-header .btn-view-public-site{display:none}
+}

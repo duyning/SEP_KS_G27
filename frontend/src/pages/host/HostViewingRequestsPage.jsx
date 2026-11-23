@@ -1,3 +1,5 @@
+import UIButton from '../../components/common/Button.jsx';
+import UIField from '../../components/common/Field.jsx';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -51,17 +53,17 @@ function ViewingDecision({ item, availableRooms, onDecision, onRefresh, onBusy }
 
   return <form className="viewing-decision" onSubmit={event => { event.preventDefault(); void decide('REJECTED'); }}>
     {!withinReviewWindow && <p>Lịch đã quá hạn phản hồi và sẽ được hệ thống hủy.</p>}
-    {rejecting && <label>Lý do từ chối<textarea autoFocus required rows={3} maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} /></label>}
+    {rejecting && <UIField>Lý do từ chối<textarea autoFocus required rows={3} maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} /></UIField>}
     {error && <p role="alert" className="viewing-error">{error.message}</p>}
     <div className="viewing-actions">
       {rejecting ? <>
-        <button type="button" className="p-button" disabled={busy} onClick={() => { setRejecting(false); setError(null); }}>Quay lại</button>
-        <button type="submit" className="p-button primary" disabled={busy || !withinReviewWindow}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</button>
+        <UIButton type="button" className="p-button" disabled={busy} onClick={() => { setRejecting(false); setError(null); }}>Quay lại</UIButton>
+        <UIButton type="submit" className="p-button primary" disabled={busy || !withinReviewWindow}>{busy ? 'Đang lưu…' : 'Gửi từ chối'}</UIButton>
       </> : <>
-        <button type="button" className="p-button primary" disabled={busy || !canApprove} onClick={() => decide('APPROVED')}>{busy ? 'Đang lưu…' : 'Xác nhận lịch'}</button>
-        <button type="button" className="p-button" disabled={busy || !withinReviewWindow} onClick={() => setRejecting(true)}>Từ chối</button>
+        <UIButton type="button" className="p-button primary" disabled={busy || !canApprove} onClick={() => decide('APPROVED')}>{busy ? 'Đang lưu…' : 'Xác nhận lịch'}</UIButton>
+        <UIButton type="button" className="p-button" disabled={busy || !withinReviewWindow} onClick={() => setRejecting(true)}>Từ chối</UIButton>
       </>}
-      {error?.status === 409 && <button type="button" className="p-button" onClick={onRefresh}>Tải lại kết quả</button>}
+      {error?.status === 409 && <UIButton type="button" className="p-button" onClick={onRefresh}>Tải lại kết quả</UIButton>}
     </div>
   </form>;
 }
@@ -72,7 +74,7 @@ function HostViewingDetail({ item, canDecide, onDecision, onRefresh, onBusy, onC
   return <>
     <ViewingDetails item={item} host onContactChange={onContactChange} />
     <div className="host-viewings-availability">
-      {error ? <><p role="alert">{error}</p><button type="button" className="p-button" onClick={reload}>Kiểm tra lại phòng trống</button></>
+      {error ? <><p role="alert">{error}</p><UIButton type="button" className="p-button" onClick={reload}>Kiểm tra lại phòng trống</UIButton></>
         : <p role="status">{availableRooms === undefined ? 'Đang kiểm tra phòng trống…' : availableRooms > 0
           ? `Còn ${availableRooms} phòng trống thuộc loại này.` : 'Loại phòng này hiện đã hết phòng trống.'}</p>}
     </div>
@@ -103,10 +105,10 @@ function ViewingCalendar({ day, today, month, requests, properties, propertyColo
     <div className="host-calendar-heading">
       <h2><CalendarDays size={20} aria-hidden="true" />Lịch xem phòng</h2>
       <div className="host-calendar-month">
-        <button type="button" className="p-button" aria-label="Tháng trước" onClick={() => onMonth(-1)}><ChevronLeft size={17} /></button>
+        <UIButton type="button" className="p-button" aria-label="Tháng trước" onClick={() => onMonth(-1)}><ChevronLeft size={17} /></UIButton>
         <strong aria-live="polite">Tháng {monthIndex + 1}/{year}</strong>
-        <button type="button" className="p-button" aria-label="Tháng sau" onClick={() => onMonth(1)}><ChevronRight size={17} /></button>
-        <button type="button" className="p-button" onClick={() => onDay(today)}>Hôm nay</button>
+        <UIButton type="button" className="p-button" aria-label="Tháng sau" onClick={() => onMonth(1)}><ChevronRight size={17} /></UIButton>
+        <UIButton type="button" className="p-button" onClick={() => onDay(today)}>Hôm nay</UIButton>
       </div>
     </div>
     <ul className="host-calendar-legend" aria-label="Màu theo nhà trọ">{properties.map(property =>
@@ -119,14 +121,14 @@ function ViewingCalendar({ day, today, month, requests, properties, propertyColo
         const key = dateKey(date);
         const items = byDay.get(key) || [];
         const propertyIds = [...new Set(items.map(item => item.propertyId))];
-        return <button type="button" key={key} className={key.startsWith(month) ? '' : 'outside'}
+        return <UIButton type="button" key={key} className={key.startsWith(month) ? '' : 'outside'}
           aria-pressed={key === day} aria-current={key === today ? 'date' : undefined}
           aria-label={`Ngày ${displayDate(key)}, ${items.length} yêu cầu`} onClick={() => onDay(key)}>
           <span>{date.getUTCDate()}</span>
           <span className="host-calendar-markers" aria-hidden="true">{propertyIds.slice(0, 3).map(id =>
             <i key={id} className="host-calendar-dot" style={{ backgroundColor: propertyColors.get(id) }} />)}
             {propertyIds.length > 3 && <small>+{propertyIds.length - 3}</small>}</span>
-        </button>;
+        </UIButton>;
       })}
     </div>
   </section>;
@@ -218,26 +220,26 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
         <span className="host-calendar-date">Ngày {displayDate(day)} · {daily.length} yêu cầu</span>
       </div>
       <div className="host-calendar-filters">
-        <label className="host-calendar-search">Tìm khách hoặc loại phòng
+        <UIField className="host-calendar-search">Tìm khách hoặc loại phòng
           <span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Tên, số điện thoại, loại phòng…" value={search} onChange={e => changeFilter(setSearch, e.target.value)} /></span>
-        </label>
-        <label>Nhà trọ<select value={property?.propertyId ?? ''} onChange={e => {
+        </UIField>
+        <UIField>Nhà trọ<select value={property?.propertyId ?? ''} onChange={e => {
           setChecked([]);
           changeParams({ propertyId: e.target.value, id: null, date: day });
-        }}><option value="">Tất cả nhà trọ</option>{data.properties.map(item => <option key={item.propertyId} value={item.propertyId}>{item.name}</option>)}</select></label>
-        <label>Trạng thái<select value={status} onChange={e => changeFilter(setStatus, e.target.value)}>
+        }}><option value="">Tất cả nhà trọ</option>{data.properties.map(item => <option key={item.propertyId} value={item.propertyId}>{item.name}</option>)}</select></UIField>
+        <UIField>Trạng thái<select value={status} onChange={e => changeFilter(setStatus, e.target.value)}>
           <option value="">Tất cả trạng thái</option><option value="processed">Đã xử lý</option>
           {Object.entries(viewingStatuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-        </select></label>
+        </select></UIField>
       </div>
       <div className="host-calendar-batch">
-        <label>Từ giờ {canDecide && '(giờ rảnh)'}<input type="time" value={from} onChange={e => changeFilter(setFrom, e.target.value)} /></label>
-        <label>Đến giờ<input type="time" value={to} onChange={e => changeFilter(setTo, e.target.value)} /></label>
+        <UIField>Từ giờ {canDecide && '(giờ rảnh)'}<input type="time" value={from} onChange={e => changeFilter(setFrom, e.target.value)} /></UIField>
+        <UIField>Đến giờ<input type="time" value={to} onChange={e => changeFilter(setTo, e.target.value)} /></UIField>
         {canDecide && <>
-          <button type="button" className="p-button" disabled={!validWindow || !eligible.length}
-            onClick={() => setChecked(eligible.slice(0, 50).map(item => item.bookingId))}>Chọn lịch phù hợp</button>
-          <button type="button" className="p-button primary" disabled={!validWindow || !chosen.length}
-            onClick={() => { setBatchError(''); setConfirm(true); }}>Xác nhận đã chọn ({chosen.length})</button>
+          <UIButton type="button" className="p-button" disabled={!validWindow || !eligible.length}
+            onClick={() => setChecked(eligible.slice(0, 50).map(item => item.bookingId))}>Chọn lịch phù hợp</UIButton>
+          <UIButton type="button" className="p-button primary" disabled={!validWindow || !chosen.length}
+            onClick={() => { setBatchError(''); setConfirm(true); }}>Xác nhận đã chọn ({chosen.length})</UIButton>
         </>}
       </div>
       {from && to && !validWindow && <p role="alert">Giờ kết thúc phải sau giờ bắt đầu.</p>}
@@ -255,7 +257,7 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
           <td><strong>{item.renterName || 'Chưa có tên'}</strong><small>{item.renterPhone}</small></td>
           <td><span className="host-calendar-dot" style={{ backgroundColor: propertyColors.get(item.propertyId) }} /> {item.propertyName}</td>
           <td>{item.roomType}</td><td><ViewingStatus status={item.status} /></td>
-          <td><button type="button" className="p-button" onClick={() => changeParams({ id: item.bookingId, date: day })}><Eye size={15} />Chi tiết</button></td>
+          <td><UIButton type="button" className="p-button" onClick={() => changeParams({ id: item.bookingId, date: day })}><Eye size={15} />Chi tiết</UIButton></td>
         </tr>)}</tbody></table>
       </div> : <p className="host-viewings-empty" role="status">Không có yêu cầu phù hợp trong ngày này.</p>}
     </section>
@@ -263,7 +265,7 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
       onClose={() => { if (!busy) changeParams({ id: null, date: day }); }}>
       <HostViewingDetail key={selected.bookingId} item={selected} canDecide={canDecide} onRefresh={onRefresh} onContactChange={setContactPhone}
         onBusy={setBusy} onDecision={item => { onDecision(item); setStatus(item.status); changeParams({ id: null, date: day }); }} />
-      <footer className="notice-viewing-footer"><CopyPhoneButton phone={contactPhone}/><button type="button" className="notice-button" disabled={busy} onClick={()=>changeParams({ id: null, date: day })}>Đóng</button></footer>
+      <footer className="notice-viewing-footer"><CopyPhoneButton phone={contactPhone}/><UIButton type="button" className="notice-button" disabled={busy} onClick={()=>changeParams({ id: null, date: day })}>Đóng</UIButton></footer>
     </Modal>}
     {confirm && <Modal className="viewing-dialog" title="Xác nhận các lịch đã chọn" onClose={() => { if (!busy) setConfirm(false); }}>
       <div className="viewing-details">
@@ -276,9 +278,9 @@ function ViewingSchedule({ data, property, selected, canDecide, onRefresh, onDec
         <p>Máy chủ sẽ kiểm tra lại thời hạn, giờ hẹn và phòng trống trước khi xác nhận cả nhóm.</p>
         {batchError && <p role="alert" className="viewing-error">{batchError}</p>}
         <div className="viewing-actions">
-          <button type="button" className="p-button" disabled={busy} onClick={() => setConfirm(false)}>Quay lại</button>
-          {batchError && <button type="button" className="p-button" disabled={busy} onClick={onRefresh}>Tải lại lịch</button>}
-          <button type="button" className="p-button primary" disabled={busy || !chosen.length} onClick={approve}>{busy ? 'Đang xác nhận…' : 'Xác nhận lịch'}</button>
+          <UIButton type="button" className="p-button" disabled={busy} onClick={() => setConfirm(false)}>Quay lại</UIButton>
+          {batchError && <UIButton type="button" className="p-button" disabled={busy} onClick={onRefresh}>Tải lại lịch</UIButton>}
+          <UIButton type="button" className="p-button primary" disabled={busy || !chosen.length} onClick={approve}>{busy ? 'Đang xác nhận…' : 'Xác nhận lịch'}</UIButton>
         </div>
       </div>
     </Modal>}

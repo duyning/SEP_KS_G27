@@ -69,12 +69,12 @@ export default function StaffAssistanceRequestsPage() {
           className="kpi-card"
           tabIndex={0}
           role="button"
-          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0d9488' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
+          style={{ background: '#fff', border: statusFilter === 'ALL' ? '2px solid #0f766e' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', cursor: 'pointer' }}
           onClick={() => { setStatusFilter('ALL'); setPage(1); }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Được giao cho tôi</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f0fdfa', color: '#0f766e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <User size={18} />
             </div>
           </div>
@@ -238,7 +238,7 @@ export default function StaffAssistanceRequestsPage() {
                       <div style={{ fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '380px' }}>
                         {item.description}
                       </div>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#0d9488', marginTop: '4px', display: 'inline-block' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#0f766e', marginTop: '4px', display: 'inline-block' }}>
                         {item.code}
                       </span>
                     </td>

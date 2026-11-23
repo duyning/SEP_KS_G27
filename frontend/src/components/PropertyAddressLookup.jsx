@@ -1,4 +1,6 @@
-import {useEffect,useId,useRef,useState} from 'react';
+import UIField from './common/Field.jsx';
+import UIButton from './common/Button.jsx';
+import {useEffect,useRef,useState,useId} from 'react';
 import {parseLocationInput} from '../services/location-lookup.js';
 import {lookupPropertyLocation} from '../services/property-location.js';
 import {vietmapLocation} from '../services/vietmap-location.js';
@@ -58,7 +60,7 @@ export default function PropertyAddressLookup({onApply,resolveDetails=false,coor
   }catch(e){if(!c.signal.aborted)setError(e.message);}finally{finish(c);}
  }
  return <section className="registration-address-lookup">
-  <label htmlFor="property-pasted-address">{enabled?'Tìm địa chỉ hoặc dán liên kết Google Maps':resolveDetails?'Dán liên kết Google Maps hoặc tọa độ':'Dán tọa độ hoặc liên kết có tọa độ'}</label>
+  <UIField htmlFor="property-pasted-address">{enabled?'Tìm địa chỉ hoặc dán liên kết Google Maps':resolveDetails?'Dán liên kết Google Maps hoặc tọa độ':'Dán tọa độ hoặc liên kết có tọa độ'}</UIField>
   <div className="registration-lookup-input">
    <div className="property-address-combobox">
     <input type="text" id="property-pasted-address" role={enabled?'combobox':undefined} aria-autocomplete={enabled?'list':undefined} aria-expanded={enabled?suggestions.length>0:undefined} aria-controls={enabled?listId:undefined} aria-activedescendant={active>=0?`${listId}-${active}`:undefined} autoComplete="off" maxLength={1500} disabled={disabled} value={query}
@@ -71,7 +73,7 @@ export default function PropertyAddressLookup({onApply,resolveDetails=false,coor
       else if(event.key==='Escape'){if(suggestions.length){event.preventDefault();event.stopPropagation();}cancel();setBusy(false);setSuggestions([]);setActive(-1);}
       else if(event.key==='Enter'){event.preventDefault();if(disabled||busy)return;if(active>=0&&suggestions[active])choose(suggestions[active]);else if(enabled&&plainAddress(query))search();else if(query.trim())apply(query);}
      }}/>
-    {suggestions.length>0&&<ul id={listId} role="listbox" aria-label="Địa chỉ gợi ý" className="property-address-options">{suggestions.map((item,index)=><li key={item.refId} role="presentation"><button id={`${listId}-${index}`} type="button" role="option" tabIndex={-1} aria-selected={active===index} className={active===index?'is-active':''} onMouseDown={event=>event.preventDefault()} onMouseEnter={()=>setActive(index)} onClick={()=>choose(item)}><span>{item.display}</span>{item.commune&&<small>Khu vực gợi ý: {item.commune}</small>}</button></li>)}</ul>}
+    {suggestions.length>0&&<ul id={listId} role="listbox" aria-label="Địa chỉ gợi ý" className="property-address-options">{suggestions.map((item,index)=><li key={item.refId} role="presentation"><UIButton id={`${listId}-${index}`} type="button" role="option" tabIndex={-1} aria-selected={active===index} className={active===index?'is-active':''} onMouseDown={event=>event.preventDefault()} onMouseEnter={()=>setActive(index)} onClick={()=>choose(item)}><span>{item.display}</span>{item.commune&&<small>Khu vực gợi ý: {item.commune}</small>}</UIButton></li>)}</ul>}
    </div>
    <MotionButton className="p-button primary" type="button" disabled={disabled||busy||!query.trim()} onClick={()=>enabled&&plainAddress(query)?search():apply(query)}>{busy?'Đang tìm vị trí…':enabled&&plainAddress(query)?'Tìm địa chỉ':resolveDetails?'Đặt ghim & điền thông tin':'Đặt ghim'}</MotionButton>
   </div>

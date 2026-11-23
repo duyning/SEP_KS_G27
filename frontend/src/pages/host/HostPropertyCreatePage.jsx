@@ -1,3 +1,4 @@
+import UIField from '../../components/common/Field.jsx';
 import PropertyTypeField from '../../components/PropertyTypeField.jsx';
 import PropertyPhotoGuide from '../../components/PropertyPhotoGuide.jsx';
 import PropertyDescriptionAssist from '../../components/PropertyDescriptionAssist.jsx';
@@ -20,7 +21,7 @@ import '../../styles/host-property-registration.css';
 const hintFields = new Set(['name', 'propertyType', 'description', 'managerName', 'contactPhone', 'zaloPhone', 'addressDetail', 'commune', 'nearby']);
 
 function Field({ name, label, required, count, max, hint, error, children }) {
-  return <div className="registration-field"><div className="registration-label"><label htmlFor={name}>{label}{required && <span className="registration-required"> *</span>}</label>{max && <span>{count}/{max}</span>}</div>{children}{hint && <p className="registration-hint" id={`${name}-hint`}>{hint}</p>}{error && <p className="registration-error" id={`${name}-error`} role="alert">{error}</p>}</div>;
+  return <div className="registration-field"><div className="registration-label"><UIField htmlFor={name}>{label}{required && <span className="registration-required"> *</span>}</UIField>{max && <span>{count}/{max}</span>}</div>{children}{hint && <p className="registration-hint" id={`${name}-hint`}>{hint}</p>}{error && <p className="registration-error" id={`${name}-error`} role="alert">{error}</p>}</div>;
 }
 
 function PhotoPreview({ file, onRemove, onCover, cover }) {
@@ -210,7 +211,7 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
         {step === 2 && <>
           <fieldset className="registration-contact registration-choice-group" aria-describedby={errors.amenities ? 'amenities-error' : undefined}>
             <legend><Building2 size={16} />Tiện ích & Cơ sở vật chất chung</legend>
-            <div className="registration-amenities">{AMENITIES.map(([key, label]) => <label key={key}><input type="checkbox" checked={data.amenities.includes(key)} onChange={event => update('amenities', event.target.checked ? [...data.amenities, key] : data.amenities.filter(value => value !== key))} />{label}</label>)}</div>
+            <div className="registration-amenities">{AMENITIES.map(([key, label]) => <UIField key={key}><input type="checkbox" checked={data.amenities.includes(key)} onChange={event => update('amenities', event.target.checked ? [...data.amenities, key] : data.amenities.filter(value => value !== key))} />{label}</UIField>)}</div>
             {errors.amenities && <p id="amenities-error" className="registration-error" role="alert">{errors.amenities}</p>}
           </fieldset>
           <fieldset className="registration-contact registration-choice-group" aria-describedby={errors.selectedRules ? 'selectedRules-error' : undefined}>
@@ -218,10 +219,10 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
             <div className="registration-amenities">
               {RULES.map(([key, label]) => key === 'quietHours'
                 ? <div key="quietHours" className={`registration-quiet-hours ${quietChecked ? 'selected' : ''}`}>
-                    <label>
+                    <UIField>
                       <input type="checkbox" checked={quietChecked} onChange={event => update('selectedRules', setQuietHoursRule(data.selectedRules, event.target.checked, activeQuietTime))} />
                       <span>Giữ trật tự sau</span>
-                    </label>
+                    </UIField>
                     <input
                       type="time"
                       className="registration-quiet-time"
@@ -234,7 +235,7 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
                       }}
                     />
                   </div>
-                : <label key={key}><input type="checkbox" checked={data.selectedRules.includes(key)} onChange={event => update('selectedRules', event.target.checked ? [...data.selectedRules, key] : data.selectedRules.filter(value => value !== key))} />{label}</label>)}
+                : <UIField key={key}><input type="checkbox" checked={data.selectedRules.includes(key)} onChange={event => update('selectedRules', event.target.checked ? [...data.selectedRules, key] : data.selectedRules.filter(value => value !== key))} />{label}</UIField>)}
             </div>
             {errors.selectedRules && <p id="selectedRules-error" className="registration-error" role="alert">{errors.selectedRules}</p>}
           </fieldset>
@@ -243,7 +244,7 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
         {step === 3 && <>
           <div className={`registration-upload ${dragging ? 'dragging' : ''}`} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); }} onDrop={event => { event.preventDefault(); setDragging(false); addPhotos(event.dataTransfer.files); }}>
             <span className="registration-upload-icon"><ImagePlus size={24} /></span><strong>Kéo thả hình ảnh vào đây hoặc bấm để chọn</strong><p id="photos-hint">Hỗ trợ JPG, PNG, WEBP. Tối đa 5MB mỗi ảnh, tối đa 10 ảnh. Tối thiểu 1 ảnh.</p>
-            <label className="registration-file-button" htmlFor="photos"><Upload size={16} />Chọn ảnh từ thiết bị</label><input className="registration-file-input" id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event => { addPhotos(event.target.files); event.target.value = ''; }} aria-label="Chọn ảnh nhà trọ" aria-invalid={Boolean(errors.photos)} aria-describedby={errors.photos ? 'photos-hint photos-error' : 'photos-hint'} />
+            <UIField className="registration-file-button" htmlFor="photos"><Upload size={16} />Chọn ảnh từ thiết bị</UIField><input className="registration-file-input" id="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event => { addPhotos(event.target.files); event.target.value = ''; }} aria-label="Chọn ảnh nhà trọ" aria-invalid={Boolean(errors.photos)} aria-describedby={errors.photos ? 'photos-hint photos-error' : 'photos-hint'} />
             <PropertyPhotoGuide embedded/>
           </div>
           {errors.photos && <p id="photos-error" className="registration-error" role="alert">{errors.photos}</p>}
@@ -252,9 +253,9 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
         {step === 4 && <>
           <div className="registration-info registration-privacy"><LockKeyhole size={22} /><p><strong>Cam kết bảo mật tài liệu:</strong> Các hồ sơ xác minh dưới đây là dữ liệu nhạy cảm, không được hiển thị công khai trên trang tìm kiếm của người thuê. Tài liệu chỉ phục vụ xét duyệt hồ sơ và được giới hạn truy cập theo vai trò trong hệ thống.</p></div>
           {DOCUMENTS.filter(([key])=>!onboarding||key!=='idCard').map(([key, label], displayIndex) => {const index=DOCUMENTS.findIndex(([item])=>item===key);return <section className="registration-document-section" key={key}>
-            <h4><label htmlFor={key}>{displayIndex + 1}. {label}</label><span className={REQUIRED_DOCUMENTS.includes(key) ? 'required' : ''}>{REQUIRED_DOCUMENTS.includes(key) ? 'BẮT BUỘC' : 'KHUYẾN KHÍCH'}</span></h4>
+            <h4><UIField htmlFor={key}>{displayIndex + 1}. {label}</UIField><span className={REQUIRED_DOCUMENTS.includes(key) ? 'required' : ''}>{REQUIRED_DOCUMENTS.includes(key) ? 'BẮT BUỘC' : 'KHUYẾN KHÍCH'}</span></h4>
             <p id={`${key}-hint`}>{['Bản chụp hoặc bản scan rõ nét Giấy phép kinh doanh hộ kinh doanh / cơ sở lưu trú hợp lệ. Nếu quản lý thay chủ cơ sở, đính kèm văn bản ủy quyền trong cùng một tệp.', 'Tự sử dụng ảnh CCCD đã nộp trong đơn đăng ký chủ trọ được duyệt. Bạn có thể thay tệp nếu cần cập nhật hoặc bổ sung.', 'Bản chụp hoặc bản scan rõ nét Chứng nhận an toàn phòng cháy chữa cháy (PCCC) của cơ sở lưu trú.'][index]} PDF, JPG, PNG, WEBP; tối đa 10MB.</p>
-            <div className="registration-document"><FileText size={19} /><span>{data.documents[key]?.name || 'Chưa tải lên tài liệu'}</span>{data.documents[key] && !data.documents[key].savedIdentity && <MotionButton type="button" className="p-icon" aria-label={`Xóa ${label}`} title={`Xóa ${label}`} onClick={() => { update('documents', { ...data.documents, [key]: key === 'idCard' && identityApplicationId ? { name: 'CCCD đã nộp khi đăng ký chủ trọ', savedIdentity: true } : undefined }); setErrors(previous => ({ ...previous, [key]: undefined })); }}><Trash2 size={16} /></MotionButton>}<label className="registration-file-button" htmlFor={key}>{data.documents[key] ? 'Thay đổi tệp' : 'Tải lên file (PDF/JPG)'}</label><input className="registration-file-input" id={key} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => addDocument(key, event)} aria-required={REQUIRED_DOCUMENTS.includes(key) && !data.documents[key]?.savedIdentity} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-hint ${key}-error` : `${key}-hint`} /></div>
+            <div className="registration-document"><FileText size={19} /><span>{data.documents[key]?.name || 'Chưa tải lên tài liệu'}</span>{data.documents[key] && !data.documents[key].savedIdentity && <MotionButton type="button" className="p-icon" aria-label={`Xóa ${label}`} title={`Xóa ${label}`} onClick={() => { update('documents', { ...data.documents, [key]: key === 'idCard' && identityApplicationId ? { name: 'CCCD đã nộp khi đăng ký chủ trọ', savedIdentity: true } : undefined }); setErrors(previous => ({ ...previous, [key]: undefined })); }}><Trash2 size={16} /></MotionButton>}<UIField className="registration-file-button" htmlFor={key}>{data.documents[key] ? 'Thay đổi tệp' : 'Tải lên file (PDF/JPG)'}</UIField><input className="registration-file-input" id={key} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => addDocument(key, event)} aria-required={REQUIRED_DOCUMENTS.includes(key) && !data.documents[key]?.savedIdentity} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `${key}-hint ${key}-error` : `${key}-hint`} /></div>
             {key === 'idCard' && data.documents.idCard?.savedIdentity && <><p className="registration-notice"><Check size={16} />Đã lấy CCCD từ đơn đăng ký chủ trọ. Không cần tải lên lại.</p><details className="registration-saved-identity"><summary>Xem CCCD đã nộp</summary><HostIdentityImage id={identityApplicationId} present backPresent={hasIdentityBackImage}/></details></>}
             {errors[key] && <p id={`${key}-error`} className="registration-error" role="alert">{errors[key]}</p>}
           </section>;})}
@@ -269,7 +270,7 @@ export function RegistrationForm({ user, accessBlocked = false, identityApplicat
             <ReviewSection title={`4. Hình ảnh nhà trọ (${data.photos.length} ảnh)`} onEdit={() => editStep(3)}><div className="registration-photos registration-review-photos">{data.photos.map((file, index) => <PhotoPreview key={`${file.name}-${file.lastModified}-${file.size}`} file={file} cover={index === 0} />)}</div></ReviewSection>
             <ReviewSection title="5. Hồ sơ xác minh" onEdit={() => editStep(4)}><ul className="registration-review-documents">{DOCUMENTS.map(([key, label]) => <li key={key}>{data.documents[key] ? <Check size={16} /> : <AlertCircle size={16} />}<span><strong>{label}</strong><br />{data.documents[key]?.name || (REQUIRED_DOCUMENTS.includes(key) ? 'Chưa đính kèm tài liệu bắt buộc.' : 'Chưa đính kèm tài liệu khuyến khích.')}</span></li>)}</ul></ReviewSection>
           </div>
-          <label className="registration-consent"><input id="termsAccepted" type="checkbox" checked={data.termsAccepted} onChange={event => update('termsAccepted', event.target.checked)} aria-invalid={Boolean(errors.termsAccepted)} aria-describedby={errors.termsAccepted ? 'termsAccepted-error' : undefined} />Tôi cam kết toàn bộ thông tin kê khai và tài liệu cung cấp là chính xác, đúng sự thật.</label>{errors.termsAccepted && <p id="termsAccepted-error" className="registration-error" role="alert">{errors.termsAccepted}</p>}
+          <UIField className="registration-consent"><input id="termsAccepted" type="checkbox" checked={data.termsAccepted} onChange={event => update('termsAccepted', event.target.checked)} aria-invalid={Boolean(errors.termsAccepted)} aria-describedby={errors.termsAccepted ? 'termsAccepted-error' : undefined} />Tôi cam kết toàn bộ thông tin kê khai và tài liệu cung cấp là chính xác, đúng sự thật.</UIField>{errors.termsAccepted && <p id="termsAccepted-error" className="registration-error" role="alert">{errors.termsAccepted}</p>}
           <div className="registration-info"><Info size={20} /><p>Sau khi gửi, hồ sơ sẽ ở trạng thái <strong>Chờ xét duyệt</strong>. Nhà trọ chỉ được hiển thị công khai sau khi được phê duyệt.</p></div>
         </>}
       </section>

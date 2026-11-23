@@ -2,13 +2,13 @@
    HL_RCS | ROOM HOST PORTAL - ROOM TYPES MANAGEMENT CSS
    Module: Quản lý loại phòng (Room Types Management)
    Business Hierarchy: 1 Host -> Max 1 Property -> Many Room Types -> Many Rooms
-   Clean design system: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488)
+   Clean design system: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e)
    ============================================================================= */
 
 :root {
   --rt-primary: #0f172a;
   --rt-primary-light: #1e293b;
-  --rt-teal: #0d9488;
+  --rt-teal: #0f766e;
   --rt-teal-hover: #0f766e;
   --rt-teal-light: #f0fdfa;
   --rt-teal-border: #99f6e4;
@@ -66,7 +66,7 @@ body.modal-open {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--rt-teal, #0d9488);
+  background: var(--rt-teal, #0f766e);
   color: #ffffff !important;
   font-family: inherit;
   font-size: 14px;

@@ -1,3 +1,6 @@
+import DetailPrototypeShell from './detail/DetailPrototypeShell.jsx';
+import '../styles/home-prototype.css';
+import '../styles/home-prototype-integration.css';
 import useServiceLive from '../hooks/useServiceLive.js';
 import ServiceRatings from './ServiceRatings.jsx';
 import ServiceComplaints, { ServiceReportForm } from './ServiceComplaints.jsx';
@@ -25,6 +28,8 @@ import { serviceRegistrationApi } from '../services/service-registration.js';
 import { filterPublicServices, serviceAreaOptions } from '../services/service-catalog.js';
 import '../styles/service-applications.css';
 import '../styles/service-detail-layout.css';
+import {discoverServices,resolveServiceCategory} from '../services/service-discovery.js';
+import Pagination from './common/Pagination.jsx';
 
 const categoryAliases = { moving: 'Chuyển phòng trọ', laundry: 'Giặt là sinh viên', cleaning: 'Dọn dẹp & Vệ sinh', repair: 'Sửa chữa điện nước, khóa cổng' };
 
@@ -68,12 +73,15 @@ export default function ServicesCatalog({ detail = false }) {
     return () => controller.abort();
   }, [detail, id, revision]);
   useServiceLive(signal => detail ? api.detail(id, signal) : api.list(signal), data => { detail ? setRow(data) : setRows(data); setError(''); }, { identity: String(detail) + id, onError: err => { if (detail && err.status === 404) { setRow(null); setError(err.message); } } });
-  const selectedCategory = String(categories.find(option => option.name === categoryAliases[category])?.categoryId || category);
+  const selectedCategory = resolveServiceCategory(category,categories);
   const areas = serviceAreaOptions(rows);
-  const filteredRows = filterPublicServices(rows, { category: selectedCategory, area, query });
+  const filteredRows = discoverServices(filterPublicServices(rows, { category: selectedCategory, area, query }), { sort: params.get('sort') || 'recommended' });
+  const pageSize=6,totalPages=Math.max(1,Math.ceil(filteredRows.length/pageSize));
+  const page=Math.min(totalPages,Math.max(1,Number.parseInt(params.get('page')||'1',10)||1));
+  const displayedRows=filteredRows.slice((page-1)*pageSize,page*pageSize);
   const categoryName = categories.find(option => String(option.categoryId) === selectedCategory)?.name || categoryAliases[category] || 'Danh mục đã chọn';
-  const updateFilter = (key, value) => setParams(previous => { const next = new URLSearchParams(previous); if (!value || value === 'all') next.delete(key); else next.set(key, value); return next; }, { replace: key === 'q' });
-  const clearFilters = () => setParams(previous => { const next = new URLSearchParams(previous); ['q', 'area', 'category'].forEach(key => next.delete(key)); return next; });
+  const updateFilter = (key, value) => setParams(previous => { const next = new URLSearchParams(previous); if (!value || value === 'all') next.delete(key); else next.set(key, value); if(key!=='page')next.delete('page');return next; }, { replace: key === 'q' });
+  const clearFilters = () => setParams(previous => { const next = new URLSearchParams(previous); ['q', 'area', 'category', 'sort', 'page'].forEach(key => next.delete(key)); return next; });
   const hasFilters = !!query || area !== 'all' || selectedCategory !== 'all';
   const content = row => <><span className="svc-badge" style={serviceCategoryStyle(row.categoryName)}><ShieldCheck size={12} aria-hidden="true" /> {row.categoryName}</span><h2 title={row.serviceName}>{row.serviceName}</h2><p className={detail ? 'service-text' : 'svc-description'}>{row.description}</p><div className="svc-meta" title={serviceAreaText(row)}><MapPin size={15} aria-hidden="true" /><span>{serviceAreaText(row)}</span></div>{detail ? <p>Nhà cung cấp: {row.providerName}</p> : <div className="svc-meta" title={row.providerName}><UserRound size={15} aria-hidden="true" /><span>{row.providerName}</span></div>}<div className="svc-price"><ServicePrice service={row} /></div></>;
   const refresh = () => setRevision(value => value + 1);
@@ -85,7 +93,7 @@ export default function ServicesCatalog({ detail = false }) {
     else if (ownState?.hasRecords) setManage(true);
     else setRegister(true);
   };
-  return <main className={`svc-catalog${detail ? ' svc-detail-page' : ' svc-catalog-list'}`}>
+  return <DetailPrototypeShell className="prototype-services"><main className={`svc-catalog${detail ? ' svc-detail-page' : ' svc-catalog-list'}`}>
     {!detail && <div className="svc-heading">
       <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Tìm và liên hệ các đối tác đã được xác minh, đang hoạt động tại khu vực của bạn.</p></div>
       <div className="svc-actions svc-heading-actions">
@@ -135,7 +143,7 @@ export default function ServicesCatalog({ detail = false }) {
       <section className="svc-detail-copy"><h2>Mô tả dịch vụ</h2><p>{row.description}</p></section>
     </section> : !error && <>
       {!filteredRows.length && <div className="svc-empty"><Search size={28} aria-hidden="true" /><h2>{hasFilters ? 'Không tìm thấy dịch vụ phù hợp' : 'Chưa có dịch vụ công khai'}</h2><p>{hasFilters ? 'Thử từ khóa khác hoặc bớt điều kiện lọc để xem thêm dịch vụ.' : 'Các dịch vụ sẽ xuất hiện tại đây sau khi được xét duyệt.'}</p>{hasFilters && <UIButton className="svc-btn" type="button" onClick={clearFilters}>Xem tất cả dịch vụ</UIButton>}</div>}
-      <div className="svc-grid">{filteredRows.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto url={row.imageUrl} alt={row.serviceName} /><div className="svc-card-body">{content(row)}<div className="svc-actions svc-card-footer"><Link className="svc-btn" to={`/services/detail?id=${row.serviceId}`}>Xem chi tiết<ArrowRight size={15} /></Link><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={15} />Liên hệ</UIButton></div></div></article>)}</div>
+      <label className="svc-sort">Sắp xếp <select value={params.get('sort')||'recommended'} onChange={event=>updateFilter('sort',event.target.value)}><option value="recommended">Đề xuất</option><option value="price-asc">Giá tăng dần</option><option value="price-desc">Giá giảm dần</option><option value="name">Tên dịch vụ</option></select></label><div className="svc-grid">{displayedRows.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto url={row.imageUrl} alt={row.serviceName} /><div className="svc-card-body">{content(row)}<div className="svc-actions svc-card-footer"><Link className="svc-btn" to={`/services/detail?id=${row.serviceId}`}>Xem chi tiết<ArrowRight size={15} /></Link><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={15} />Liên hệ</UIButton></div></div></article>)}</div><Pagination currentPage={page} totalPages={totalPages} totalItems={filteredRows.length} pageSize={pageSize} onPageChange={value=>updateFilter('page',value)}/>
     </>}
     {detail && row && !loading && !error && <>
       <ServiceRatings key={row.serviceId + "-" + user?.userId} service={row} />
@@ -152,5 +160,5 @@ export default function ServicesCatalog({ detail = false }) {
     {register && <ServiceRegistrationModal onClose={() => { setRegister(false); setRevision(value => value + 1); }} />}
     {manage && <ServiceManagement onClose={() => { setManage(false); refresh(); }} />}
     {contact && <Modal title={`Liên hệ ${contact.serviceName}`} onClose={() => setContact(null)}><div className="svc-form"><p>{contact.providerName} · {serviceAreaText(contact)}</p><a className="svc-btn svc-btn-primary" href={`tel:${contact.contactPhone}`}><Phone size={16} />Gọi {contact.contactPhone}</a>{contact.contactEmail && <a className="svc-btn" href={`mailto:${contact.contactEmail}`}>Gửi email · {contact.contactEmail}</a>}</div></Modal>}
-  </main>;
+  </main></DetailPrototypeShell>;
 }

@@ -19,6 +19,7 @@ import ServiceExpandableText from './ServiceExpandableText.jsx';
 import '../styles/service-registration-form.css';
 import { useAuth } from '../context/AuthContext.jsx';
 import { serviceRegistrationApi as api, validateServiceRegistrationFields, serviceRegistrationFieldErrors } from '../services/service-registration.js';
+import {validateRegistrationFile} from '../services/property-registration.js';
 
 
 const statuses = { PENDING: 'Chờ xét duyệt', NEEDS_SUPPLEMENT: 'Cần bổ sung hồ sơ', APPROVED: 'Đã được duyệt', REJECTED: 'Bị từ chối', CANCELLED: 'Đã hủy' };
@@ -31,6 +32,9 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
   const unitChosen = useRef(false);
   const [form, setForm] = useState({ applicantName: user?.fullName || '', contactPhone: user?.phoneNumber || '', contactEmail: user?.email || '', categoryId: '', serviceName: '', description: '', serviceArea: '', customServiceAreas: '', otherAreasEnabled: false, pricingType: 'FIXED', price: '', priceUnit: '' });
   const [image, setImage] = useState([]);
+  const [documents,setDocuments]=useState([]),[retained,setRetained]=useState([]);
+  const submission=useRef(null),inFlight=useRef(false);
+  useEffect(()=>()=>submission.current?.abort(),[]);
   const [preview, setPreview] = useState([]);
   useEffect(() => { const urls = image.map(file => URL.createObjectURL(file)); setPreview(urls); return () => urls.forEach(url => URL.revokeObjectURL(url)); }, [image]);
   const [categories, setCategories] = useState([]);
@@ -65,9 +69,10 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
     if (!user) { setLoading(false); return; }
     const controller = new AbortController();
     setLoading(true); setError(''); setFieldErrors({});
-    Promise.all([api.categories(controller.signal), (applicationId ? api.mine(controller.signal).then(rows => { const registration = rows.find(row => row.registrationId === applicationId); if (!registration) throw new Error('Không tìm thấy hồ sơ.'); return { canRegister: false, reason: 'IN_REVIEW', registration }; }) : api.current(controller.signal))]).then(([rows, current]) => {
+    Promise.all([api.categories(controller.signal), (applicationId ? api.mine(controller.signal).then(rows => { const registration = rows.find(row => String(row.registrationId) === String(applicationId)); if (!registration) throw new Error('Không tìm thấy hồ sơ.'); return { canRegister: false, reason: 'IN_REVIEW', registration }; }) : api.current(controller.signal))]).then(([rows, current]) => {
       if (controller.signal.aborted) return;
       setCategories(rows); setState(editService || createNew ? { canRegister: true, reason: 'ELIGIBLE', registration: null } : current); setStale(false);
+      setDocuments([]);setRetained((current.registration?.documents||[]).map(doc=>doc.documentId));
       const loadedUnit = (editService || current.registration)?.priceUnit || '';
       if (editService || (!createNew && current.registration?.status === 'NEEDS_SUPPLEMENT')) { setCustomUnit(!!loadedUnit && !PRICE_UNITS.includes(loadedUnit)); unitChosen.current = true; }
       if (editService) setForm(previous => ({ ...Object.fromEntries(Object.keys(previous).map(key => [key, editService[key] ?? ''])), ...splitServiceAreas(editService) }));
@@ -80,7 +85,7 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [user, reload, applicationId, createNew, editService]);
-  useServiceLive(signal => applicationId ? api.mine(signal).then(rows => ({ canRegister: false, reason: 'IN_REVIEW', registration: rows.find(row => row.registrationId === applicationId) })) : api.current(signal), fresh => {
+  useServiceLive(signal => applicationId ? api.mine(signal).then(rows => ({ canRegister: false, reason: 'IN_REVIEW', registration: rows.find(row => String(row.registrationId) === String(applicationId)) })) : api.current(signal), fresh => {
     if (fresh.registration?.status === 'NEEDS_SUPPLEMENT' && state?.registration?.status !== 'NEEDS_SUPPLEMENT') { setReload(v => v + 1); return; }
     setState(fresh); setError('');
   }, { enabled: !busy && !loading && !createNew && !editService && !!state?.registration && !supplement, identity: applicationId || user?.userId });
@@ -102,26 +107,29 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
   };
   const validateField = name => {
     if (!name) return;
-    const errors = validateServiceRegistrationFields(form, [], { customUnit,
+    const errors = validateServiceRegistrationFields(form, documents, { customUnit, retainedCount: supplement?retained.length:0,
       image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories,
     });
     setFieldErrors(previous => ({ ...previous, [name]: errors[name] }));
   };
   async function submit(event) {
     event.preventDefault();
-    if (busy) return;
-    const errors = validateServiceRegistrationFields(form, [], { customUnit,
+    if (inFlight.current) return;
+    const errors = validateServiceRegistrationFields(form, documents, { customUnit, retainedCount: supplement?retained.length:0,
       image, imageRequired: !editService && !supplement, note, noteRequired: !!(supplement || editService), categories,
     });
     setFieldErrors(errors); setError('');
     if (Object.keys(errors).length) { focusError.current = true; return; }
+    const controller=new AbortController();submission.current=controller;inFlight.current=true;
     setBusy(true); setError('');
     try {
       const details = { ...form, priceUnit: normalizePriceUnit(form.priceUnit) || null, customServiceAreas: areaList(form.customServiceAreas).join(', '), categoryId: Number(form.categoryId), price: form.pricingType === 'NEGOTIABLE' ? null : Number(form.price) };
-      const registration = editService ? await api.change(editService.serviceId, { operation: 'UPDATE', serviceRevision: editService.serviceRevision, details, note }, image) : supplement ? await api.resubmit(state.registration.registrationId,
-        { details, revision: state.registration.revision, retainedDocumentIds: state.registration.documents.map(doc => doc.documentId), note }, [], image) : await api.submit(details, [], image);
+      const registration = editService ? await api.change(editService.serviceId, { operation: 'UPDATE', serviceRevision: editService.serviceRevision, details, note }, image,controller.signal) : supplement ? await api.resubmit(state.registration.registrationId,
+        { details, revision: state.registration.revision, retainedDocumentIds: retained, note }, documents, image,controller.signal) : await api.submit(details, documents, image,controller.signal);
+      if(controller.signal.aborted)return;
       setState({ canRegister: false, reason: 'IN_REVIEW', registration }); setImage([]); setSubmitted(true);
     } catch (err) {
+      if(controller.signal.aborted)return;
       const errors = serviceRegistrationFieldErrors(err);
       focusError.current = true; setFieldErrors(errors);
       if (Object.keys(errors).length) { setError(''); }
@@ -131,7 +139,7 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
           setStale(true); if (!supplement && !editService && !createNew) { try { setState(await api.current()); } catch { /* Keep error visible. */ } }
         }
       }
-    } finally { setBusy(false); }
+    } finally { inFlight.current=false;if(!controller.signal.aborted)setBusy(false); }
   }
   async function download(document) {
     setError('');
@@ -196,6 +204,7 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
           {field('contactPhone', 'Số điện thoại liên hệ *', { type: 'tel', maxLength: 30 })}
           {field('contactEmail', 'Email liên hệ', { type: 'email', maxLength: 255, required: false })}
           {(supplement || editService) && <UIField><span>Nội dung thay đổi<span className="svc-required"> *</span></span><textarea name="note" aria-invalid={!!fieldErrors.note} aria-describedby={formId + '-note'} required minLength={10} maxLength={2000} rows={3} value={note} onChange={e => { setNote(e.target.value); clearFieldError('note'); }} className="svc-text-input" style={inputStyle} />{feedback('note', 'Mô tả thay đổi từ 10 đến 2000 ký tự.')}</UIField>}
+          {!editService&&<UIField><span>Tài liệu xác minh (không bắt buộc, tối đa 5 tệp)</span><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={event=>{const files=Array.from(event.target.files||[]);const invalid=files.map(file=>validateRegistrationFile(file,true)).find(Boolean);if(invalid)setFieldErrors(old=>({...old,documents:invalid}));else{setDocuments(files);clearFieldError('documents');}}}/>{documents.map((file,index)=><span key={`${file.name}-${index}`}>{file.name}<UIButton type="button" onClick={()=>setDocuments(old=>old.filter((_,i)=>i!==index))}>Bỏ tệp</UIButton></span>)}{supplement&&state.registration.documents.map(doc=><label key={doc.documentId}><input type="checkbox" checked={retained.includes(doc.documentId)} onChange={event=>setRetained(old=>event.target.checked?[...old,doc.documentId]:old.filter(id=>id!==doc.documentId))}/>{doc.name||doc.documentName||`Tài liệu #${doc.documentId}`}</label>)}{feedback('documents')}</UIField>}
           <UIButton type="submit" className="p-button primary">{busy ? 'Đang gửi hồ sơ...' : editService ? 'Gửi cập nhật cho nhân viên duyệt' : supplement ? 'Nộp lại hồ sơ xét duyệt' : 'Gửi hồ sơ xét duyệt'}</UIButton>
         </fieldset>
       </form>}

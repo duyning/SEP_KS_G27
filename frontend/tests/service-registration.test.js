@@ -93,7 +93,8 @@ test('submission sends multipart evidence and refuses unconfirmed success', asyn
 test('field errors identify each invalid control and allow optional email and negotiated price', () => {
   const errors = validateServiceRegistrationFields({ ...form, serviceName: ' ', applicantName: 'A', description: 'Short', serviceArea: '', contactEmail: 'bad-address', categoryId: '0', contactPhone: '12', price: '-5' }, []);
   for (const key of ['serviceName', 'applicantName', 'description', 'serviceArea', 'contactEmail', 'categoryId', 'contactPhone', 'price']) assert.ok(errors[key], key);
-  assert.equal(errors.documents, undefined, 'Verification documents are optional; uploaded files are still validated');
+  assert.equal(validateServiceRegistrationFields({ ...form }, []).documents, undefined);
+  assert.ok(validateServiceRegistrationFields({ ...form }, [file,file,file,file,file,file]).documents);
   assert.deepEqual(validateServiceRegistrationFields({ ...form, contactEmail: '', pricingType: 'NEGOTIABLE', price: '' }, [file]), {});
   assert.ok(validateServiceRegistrationFields({ ...form, serviceName: 'x'.repeat(256) }, [file]).serviceName);
   assert.ok(validateServiceRegistrationFields({ ...form, description: 'x'.repeat(5001) }, [file]).description);

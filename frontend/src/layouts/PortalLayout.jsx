@@ -13,6 +13,7 @@ import CommunityNotificationBell from '../components/CommunityNotificationBell.j
 import useCommunityLive from '../components/useCommunityLive.js';
 import { staffHostApi } from '../services/staff-host-applications.js';
 import HostRegistrationBanner from '../components/HostRegistrationBanner.jsx';
+import NotificationBell from '../components/NotificationBell.jsx';
 import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
 import '../styles/host-header.css';
@@ -47,6 +48,9 @@ const menus = {
   ],
 };
 const adminLinks = menus.admin.flatMap(([, links]) => links).filter(([, to]) => to.startsWith('/admin'));
+function HeaderRow({ workspace, children }) {
+  return workspace ? <div className="portal-topbar-inner">{children}</div> : children;
+}
 export function Brand({ portal = 'public', onClick }) {
   return (
     <Link className="sidebar-brand-link" to={portal === 'public' ? '/' : `/${portal}`} onClick={onClick}>
@@ -79,6 +83,7 @@ export default function PortalLayout({ screen, children }) {
   const sidebar = useRef();
   const popoverRef = useRef();
   const portal = ['host', 'staff', 'admin'].includes(screen.portal) ? screen.portal : 'public';
+  const workspace = portal === 'host' || portal === 'staff';
   const communityReports = screen.path === '/admin/community/reports';
   const adminDestination = location.pathname === '/admin'
     ? adminDashboardViews[getAdminDashboardView(new URLSearchParams(location.search))][1]
@@ -174,6 +179,7 @@ export default function PortalLayout({ screen, children }) {
         id="btnHostUserDropdown"
         aria-label={`Tài khoản ${user.fullName || user.email} · ${roleLabels[user.role] || ''}`}
         aria-expanded={userMenuOpen}
+        aria-controls={userMenuOpen ? 'hostUserPopover' : undefined}
         aria-haspopup="true"
         onClick={() => setUserMenuOpen((prev) => !prev)}
       >
@@ -286,13 +292,14 @@ export default function PortalLayout({ screen, children }) {
           </div>
         </header>
       ) : (
-        <header className={`portal-topbar${communityReports ? ' report-portal-topbar' : ''}`}>
+        <header className={`portal-topbar${workspace ? ' workspace-header' : ''}${communityReports ? ' report-portal-topbar' : ''}`}>
+          <HeaderRow workspace={workspace}>
           <div className="portal-topbar-left">
             <MotionButton ref={toggle} className="p-icon portal-menu-toggle" title="Mở menu" aria-label="Mở menu" aria-expanded={open} aria-controls="portal-navigation" onClick={() => setOpen(true)}>
               <Menu size={22} />
             </MotionButton>
             <div className="portal-topbar-title">
-              <h1>{topbarTitle}</h1>
+              <h1 title={topbarTitle}>{topbarTitle}</h1>
               {portal === 'staff' && staffCounts && <div className="topbar-status-chip hide-mobile"><span className="live-dot-green" /><span>{screen.path.startsWith('/staff/verifications') ? 'Thẩm định hồ sơ' : 'Hệ thống trực tuyến'}</span></div>}
             </div>
           </div>
@@ -301,12 +308,13 @@ export default function PortalLayout({ screen, children }) {
             <Link className="btn-view-public-site" to="/" title="Xem giao diện tìm kiếm phòng của người thuê">
               <ExternalLink size={15} /> <span className="hide-mobile">Trang người thuê</span>
             </Link>
-            <Link className="p-icon" title="Thông báo" aria-label="Thông báo" to={portal === 'host' ? '/host/notifications' : '/notifications'}>
+            {workspace ? <NotificationBell className="p-icon workspace-notification" to={portal === 'host' ? '/host/notifications' : '/notifications'} /> : <Link className="p-icon" title="Thông báo" aria-label="Thông báo" to="/notifications">
               <Bell size={18} />
-            </Link>
+            </Link>}
             {portal !== 'host' && portal !== 'staff' && topbarLogoutButton}
             {account}
           </div>
+          </HeaderRow>
         </header>
       )}
 
@@ -372,7 +380,7 @@ export default function PortalLayout({ screen, children }) {
         )}
       </aside>
 
-      <main id="main-content" tabIndex={-1} className={`portal-content ${portal === 'public' ? 'public-content' : ''} ${screen.path === '/properties/detail' ? 'detail-public-content' : ''}${communityReports ? ' report-portal-content' : ''}`}>
+      <main id="main-content" tabIndex={-1} className={`portal-content${portal === 'public' ? ' public-content' : workspace ? ' workspace-content' : ''}${screen.path === '/properties/detail' ? ' detail-public-content' : ''}${communityReports ? ' report-portal-content' : ''}`}>
         {!communityReports && !['host','staff'].includes(portal) && location.pathname !== '/' && screen.path !== '/properties/detail' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
             <Link to="/">HL_RCS</Link>

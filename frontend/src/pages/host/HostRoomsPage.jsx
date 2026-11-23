@@ -76,7 +76,7 @@ function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom, select
 
   return (
     <section className={`hm-floor-card ${expanded ? 'is-open' : ''}`} aria-label={group.floor}>
-      <button
+      <UIButton
         type="button"
         className="hm-floor-header"
         aria-expanded={expanded}
@@ -108,7 +108,7 @@ function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom, select
             </>
           )}
         </div>
-      </button>
+      </UIButton>
 
       <AnimatePresence initial={false}>
         {expanded && (
@@ -524,7 +524,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
             selectedPropertyId={property.propertyId}
           />
 
-          <label className="hm-search-box">
+          <UIField className="hm-search-box">
             <Search size={15} aria-hidden="true" />
             <input
               aria-label="Tìm phòng"
@@ -532,7 +532,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
-          </label>
+          </UIField>
 
           <MotionButton
             type="button"
@@ -557,7 +557,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
         </div>
 
         <HostFilterPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} triggerId="hm-room-filter-toggle">
-            <label className="hm-filter-field"><span>Tầng / khu vực</span><select
+            <UIField className="hm-filter-field"><span>Tầng / khu vực</span><select
               className="hm-select"
               aria-label="Lọc theo tầng"
               value={floor}
@@ -569,8 +569,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                   {item}
                 </option>
               ))}
-            </select></label>
-            <label className="hm-filter-field"><span>Loại phòng</span><select
+            </select></UIField>
+            <UIField className="hm-filter-field"><span>Loại phòng</span><select
               className="hm-select"
               aria-label="Lọc theo loại phòng"
               value={typeFilter}
@@ -582,8 +582,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                   {type.roomType}
                 </option>
               ))}
-            </select></label>
-            <label className="hm-filter-field"><span>Trạng thái</span><select
+            </select></UIField>
+            <UIField className="hm-filter-field"><span>Trạng thái</span><select
               className="hm-select"
               aria-label="Lọc theo trạng thái phòng"
               value={status}
@@ -593,8 +593,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
               <option value="VACANT">Còn trống ({vacant})</option>
               <option value="OCCUPIED">Đang thuê ({occupied})</option>
               {unconfirmed > 0 && <option value="UNCONFIRMED">Chưa xác nhận ({unconfirmed})</option>}
-            </select></label>
-            <label className="hm-filter-field"><span>Sắp xếp</span><select
+            </select></UIField>
+            <UIField className="hm-filter-field"><span>Sắp xếp</span><select
               className="hm-select"
               aria-label="Sắp xếp phòng"
               value={sort}
@@ -606,7 +606,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
               <option value="PRICE_ASC">Giá thấp → cao</option>
               <option value="PRICE_DESC">Giá cao → thấp</option>
               <option value="STATUS">Theo trạng thái</option>
-            </select></label>
+            </select></UIField>
           <div className="hm-filter-actions">
             {(search || activeFilterCount > 0) && <MotionButton type="button" className="hm-btn hm-btn-ghost" onClick={resetFilters}><RotateCcw size={14}/>Đặt lại</MotionButton>}
           </div>
@@ -703,9 +703,9 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                   <strong>{floorGroups.length}</strong> tầng
                 </span>
                 {floorGroups.length > 1 && (
-                  <button type="button" className="hm-text-btn" onClick={toggleAllFloors}>
+                  <UIButton type="button" className="hm-text-btn" onClick={toggleAllFloors}>
                     {allCollapsed ? 'Mở tất cả tầng' : 'Thu gọn tất cả'}
-                  </button>
+                  </UIButton>
                 )}
               </div>
             </div>
@@ -733,45 +733,45 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                   <tr>
                     <th scope="col">Chọn</th>
                     <th scope="col">
-                      <button
+                      <UIButton
                         type="button"
                         className="hm-th-sort"
                         onClick={() => toggleColumnSort('ROOM')}
                       >
                         <span>Số phòng</span>
                         <ArrowUpDown size={13} aria-hidden="true" />
-                      </button>
+                      </UIButton>
                     </th>
                     <th scope="col">
-                      <button
+                      <UIButton
                         type="button"
                         className="hm-th-sort"
                         onClick={() => toggleColumnSort('FLOOR')}
                       >
                         <span>Tầng</span>
                         <ArrowUpDown size={13} aria-hidden="true" />
-                      </button>
+                      </UIButton>
                     </th>
                     <th scope="col">Loại phòng</th>
                     <th scope="col">
-                      <button
+                      <UIButton
                         type="button"
                         className="hm-th-sort"
                         onClick={() => toggleColumnSort('PRICE')}
                       >
                         <span>Giá thuê</span>
                         <ArrowUpDown size={13} aria-hidden="true" />
-                      </button>
+                      </UIButton>
                     </th>
                     <th scope="col">
-                      <button
+                      <UIButton
                         type="button"
                         className="hm-th-sort"
                         onClick={() => toggleColumnSort('STATUS')}
                       >
                         <span>Trạng thái</span>
                         <ArrowUpDown size={13} aria-hidden="true" />
-                      </button>
+                      </UIButton>
                     </th>
                     <th scope="col" className="is-right">Thao tác</th>
                   </tr>
@@ -783,7 +783,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                       <tr key={room.roomId}>
                         <td><input type="checkbox" aria-label={`Chọn phòng ${room.roomNumber}`} checked={selectedIds.has(room.roomId)} disabled={!canManage||selectedIds.size>=200&&!selectedIds.has(room.roomId)} onChange={()=>toggleSelected(room.roomId)}/></td>
                         <td>
-                          <button
+                          <UIButton
                             type="button"
                             className="hm-room-code-btn"
                             onClick={() => setDetailId(room.roomId)}
@@ -796,7 +796,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId
                                 aria-hidden="true"
                               />
                             )}
-                          </button>
+                          </UIButton>
                         </td>
                         <td>{formatFloorHeading(room.floor)}</td>
                         <td>{room.roomType}</td>

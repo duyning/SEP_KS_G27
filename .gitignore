@@ -44,6 +44,9 @@ frontend/.env.*
 !frontend/.env.example
 frontend/migration/room-types-check/
 frontend/migration/supplement-check/
+.pnpm-store/
+frontend/.vite/
+**/__pycache__/
 
 # Local environment and generated verification artifacts
 .env

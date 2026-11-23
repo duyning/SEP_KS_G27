@@ -1,6 +1,6 @@
 .host-viewings-page { min-width: 0; }
 .host-viewings-state { box-sizing: border-box; max-width: 520px; margin: 40px auto; padding: 60px 24px; text-align: center; background: #fff; border: 1px solid #dce4ef; border-radius: 18px; box-shadow: 0 3px 5px #0f172a12; }
-.host-viewings-state-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; background: #fffbeb; color: #0d9488; font-size: 30px; }
+.host-viewings-state-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; background: #fffbeb; color: #0f766e; font-size: 30px; }
 .host-viewings-page .host-viewings-state h2 { margin: 0 0 14px; color: #0f172a; font-size: 22px; line-height: 1.4; font-weight: 800; }
 .host-viewings-page .host-viewings-state p { margin: 0 0 26px; color: #64748b; font-size: 14px; line-height: 1.6; }
 .host-viewings-register { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding: 10px 24px; border-radius: 10px; color: white; background: #10b981; font-size: 14px; line-height: 1.5; font-weight: 700; text-decoration: none; }

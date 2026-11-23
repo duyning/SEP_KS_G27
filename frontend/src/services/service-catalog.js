@@ -14,7 +14,7 @@ export function serviceAreas(rows = []) {
 export function filterPublicServices(rows, { category = 'all', area = 'all', query = '' } = {}) {
   const terms = normalize(query).split(' ').filter(Boolean);
   return rows.filter(row => {
-    const searchable = normalize(`${row.serviceName || ''} ${row.providerName || ''} ${serviceAreaText(row)}`);
+    const searchable = normalize(`${row.serviceName || ''} ${row.providerName || ''} ${row.description || ''} ${serviceAreaText(row)}`);
     return (category === 'all' || String(row.categoryId) === String(category))
       && (area === 'all' || normalize(row.serviceArea) === normalize(ALL_SERVICE_AREAS) || areaList(serviceAreaText(row)).some(value => normalize(value) === normalize(area)))
       && terms.every(term => searchable.includes(term));
