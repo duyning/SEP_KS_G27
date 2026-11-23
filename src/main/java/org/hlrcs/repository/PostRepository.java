@@ -7,6 +7,13 @@ import org.springframework.data.jpa.repository.*;
 import java.util.List;
 import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Integer> {
+    @Query("select coalesce(max(p.postId), 0) from Post p")
+    Integer latestPostId();
+
+    @Query("select p.postId from Post p where p.status = :status and p.postId > :afterId and p.postId <= :throughId order by p.postId")
+    List<Integer> pendingBacklogIds(@Param("status") PostStatus status, @Param("afterId") int afterId,
+                                   @Param("throughId") int throughId, org.springframework.data.domain.Pageable page);
+
     long countByAuthor_UserId(Integer userId);
     @EntityGraph(attributePaths = "author")
     List<Post> findAllByOrderByCreatedAtAsc();
