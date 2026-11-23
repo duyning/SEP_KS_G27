@@ -45,6 +45,22 @@ class HostDashboardTests {
             assertEquals(test.get("status"),response.statusCode(),response.body());
         }
     }
+    @Test void onboardingMobileLocationReturnsAnAddressQueryForAnAuthenticatedApplicant() throws Exception {
+        var endpoint = uri("/api/host-onboarding/location/resolve-mobile");
+        var input = Map.of("input", "https://maps.google.com?q=Eco+Hostel,+Th%C3%B4n+C%E1%BA%A7u+S%C3%B4ng,+H%E1%BA%A1+B%E1%BA%B1ng,+H%C3%A0+N%E1%BB%99i");
+        String body = json.writeValueAsString(input);
+        var unauthenticated = HttpRequest.newBuilder(endpoint).header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        assertEquals(401, client.send(unauthenticated.build(), HttpResponse.BodyHandlers.ofString()).statusCode());
+        var applicant = HttpRequest.newBuilder(endpoint).header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + token(account(UserRole.USER)))
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        var response = client.send(applicant.build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode(), response.body());
+        var data = json.readTree(response.body()).path("data");
+        assertEquals("Eco Hostel, Thôn Cầu Sông, Hạ Bằng, Hà Nội", data.path("addressQuery").asString());
+        assertFalse(data.hasNonNull("location"));
+    }
     @Test void multiFloorLayoutCreatesMixedTypesAtomicallyPrivateAndRejectsForeignTypesAndRetries() throws Exception {
         var owner=account(UserRole.ROOM_HOST);String jwt=token(owner);
         var registration=registrations.save(PropertyRegistration.builder().user(owner).name("Mixed layout").status(RegistrationStatus.APPROVED).registrationDetails(json.writeValueAsString(registrationDetails())).build());
@@ -62,7 +78,7 @@ class HostDashboardTests {
         for(int i=0;i<rows.size();i++){assertEquals(rows.get(i).get("roomTypeId"),result.get(i).path("roomTypeId").asInt());assertFalse(result.get(i).path("publicVisible").asBoolean());assertEquals("VACANT",result.get(i).path("status").asString());}
         assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),rows).statusCode());assertEquals(5,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
         assertEquals(404,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"301","Tầng 3"),mixedRoom(foreign.getRoomTypeId(),"302","Tầng 3"))).statusCode());
-        assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"p.301","Tầng 3"),mixedRoom(b.getRoomTypeId(),"P.301","Tầng 3"))).statusCode());
+        assertEquals(409,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of(mixedRoom(a.getRoomTypeId(),"p.301","Tầng 3"),mixedRoom(b.getRoomTypeId(),"301","Tầng 3"))).statusCode());
         assertEquals(5,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
         assertEquals(400,createMixedLayout(jwt,property.getPropertyId(),java.util.List.of()).statusCode());
         property.setStatus("INACTIVE");properties.save(property);
@@ -899,16 +915,61 @@ class HostDashboardTests {
         return new TestImage("room.png","image/png",java.util.Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jz2kAAAAASUVORK5CYII="));
     }
     private HttpResponse<String> typeMultipart(String token,Integer id,Map<String,Object> value,java.util.List<TestImage> files) throws Exception {
+        return hostMultipart(token, "/api/host/room-types" + (id == null ? "" : "/" + id), id == null ? "POST" : "PUT",
+                "details", value, files);
+    }
+    private HttpResponse<String> hostMultipart(String token, String path, String method, String partName,
+            Map<String,Object> value, java.util.List<TestImage> files) throws Exception {
         String boundary="room-type-"+System.nanoTime();var body=new java.io.ByteArrayOutputStream();
-        body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"details\"\r\nContent-Type: application/json\r\n\r\n").getBytes());
+        body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+partName+"\"; filename=\"blob\"\r\nContent-Type: application/json\r\n\r\n").getBytes());
         body.writeBytes(json.writeValueAsBytes(value));body.writeBytes("\r\n".getBytes());
         for(var file:files){
             body.writeBytes(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"photos\"; filename=\""+file.name()+"\"\r\nContent-Type: "+file.mime()+"\r\n\r\n").getBytes());
             body.writeBytes(file.bytes());body.writeBytes("\r\n".getBytes());
         }
         body.writeBytes(("--"+boundary+"--\r\n").getBytes());
-        return client.send(HttpRequest.newBuilder(uri("/api/host/room-types"+(id==null?"":"/"+id))).header("Authorization","Bearer "+token).header("Content-Type","multipart/form-data; boundary="+boundary)
-                .method(id==null?"POST":"PUT",HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+        return client.send(HttpRequest.newBuilder(uri(path)).header("Authorization","Bearer "+token).header("Content-Type","multipart/form-data; boundary="+boundary)
+                .method(method,HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void unifiedRoomSetupRollsBackTypesAndImagesOnRoomConflict() throws Exception {
+        var owner = account(UserRole.ROOM_HOST);
+        String jwt = token(owner);
+        var property = properties.save(Property.builder().owner(owner).name("Unified setup").status("ACTIVE").build());
+        var existing = roomTypes.save(RoomType.builder().property(property).roomType("Existing studio").price(new BigDecimal("2000000")).build());
+        physicalRooms.save(Room.builder().property(property).roomType(existing).roomNumber("P.101").floor("Tầng 1").status("VACANT").build());
+        var typeA = typeDetails(property.getPropertyId());
+        typeA.put("roomType", "Studio A");
+        var typeB = typeDetails(property.getPropertyId());
+        typeB.put("roomType", "Studio B");
+        var payload = new java.util.HashMap<String,Object>();
+        payload.put("propertyId", property.getPropertyId());
+        payload.put("types", java.util.List.of(Map.of("localId", -1, "details", typeA, "photoCount", 0),
+                Map.of("localId", -2, "details", typeB, "photoCount", 1)));
+        payload.put("rooms", java.util.List.of(mixedRoom(-1, "P.102", "Tầng 1"), mixedRoom(-2, "101", "Tầng 01")));
+        long imageCount = typeImages.count();
+        String path = "/api/host/rooms/setup";
+        var rejected = hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage()));
+        assertEquals(409, rejected.statusCode(), rejected.body());
+        assertEquals(1, roomTypes.findByProperty_PropertyId(property.getPropertyId()).size());
+        assertEquals(1, physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
+        assertEquals(imageCount, typeImages.count());
+
+        payload.put("rooms", java.util.List.of(mixedRoom(-1, "P.102", "Tầng 1"), mixedRoom(-2, "P.103", "Tầng 1"),
+                mixedRoom(existing.getRoomTypeId(), "P.104", "Tầng 1")));
+        var response = hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage()));
+        assertEquals(200, response.statusCode(), response.body());
+        var result = json.readTree(response.body()).path("data");
+        int idA = result.path("createdTypes").path("-1").asInt();
+        int idB = result.path("createdTypes").path("-2").asInt();
+        assertTrue(idA > 0 && idB > 0 && idA != idB);
+        assertEquals(idA, result.path("rooms").path(0).path("roomTypeId").asInt());
+        assertEquals(idB, result.path("rooms").path(1).path("roomTypeId").asInt());
+        assertEquals(existing.getRoomTypeId().intValue(), result.path("rooms").path(2).path("roomTypeId").asInt());
+        assertFalse(result.path("rooms").path(0).path("publicVisible").asBoolean());
+        assertTrue(typeImages.findByRoomType_RoomTypeIdOrderByImageIdAsc(idA).isEmpty());
+        assertEquals(1, typeImages.findByRoomType_RoomTypeIdOrderByImageIdAsc(idB).size());
+        assertEquals(409, hostMultipart(jwt, path, "POST", "setup", payload, java.util.List.of(testImage())).statusCode());
+        assertEquals(4, physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
     }
     private HttpResponse<String> deleteType(String token,int id) throws Exception {
         return client.send(HttpRequest.newBuilder(uri("/api/host/room-types/"+id)).header("Authorization","Bearer "+token).DELETE().build(),HttpResponse.BodyHandlers.ofString());
@@ -934,7 +995,7 @@ class HostDashboardTests {
         for(var room:created.path("rooms")){assertEquals("VACANT",room.path("status").asString());assertEquals(2200000,room.path("price").asInt());assertEquals(created.path("roomTypeId").asInt(),room.path("roomTypeId").asInt());}
         var conflict=typeDetails(property.getPropertyId());conflict.put("roomType","Must rollback batch");
         long imagesBefore=typeImages.count();
-        assertEquals(409,batchType(auth,conflict,drafts,java.util.List.of(testImage())).statusCode());
+        assertEquals(409,batchType(auth,conflict,java.util.List.of(Map.of("roomNumber","301","floor","Tầng 03")),java.util.List.of(testImage())).statusCode());
         assertEquals(1,roomTypes.findByProperty_Owner_UserId(owner.getUserId()).size());assertEquals(imagesBefore,typeImages.count());
         assertEquals(2,physicalRooms.findByProperty_Owner_UserIdOrderByRoomNumberAsc(owner.getUserId()).size());
         assertEquals(404,batchType(token(account(UserRole.ROOM_HOST)),conflict,drafts,java.util.List.of()).statusCode());
@@ -945,6 +1006,7 @@ class HostDashboardTests {
         var draft=Map.of("roomNumber","A.1","floor","Tầng 1");
         assertEquals(400,batchType(auth,typeDetails(property.getPropertyId()),java.util.List.of(),java.util.List.of()).statusCode());
         assertEquals(400,batchType(auth,typeDetails(property.getPropertyId()),java.util.List.of(draft,Map.of("roomNumber","a.1","floor","2")),java.util.List.of()).statusCode());
+        assertEquals(400,batchType(auth,typeDetails(property.getPropertyId()),java.util.List.of(Map.of("roomNumber","P.101","floor","1"),Map.of("roomNumber","0101","floor","2")),java.util.List.of()).statusCode());
         assertEquals(400,batchType(auth,typeDetails(property.getPropertyId()),java.util.Collections.nCopies(201,draft),java.util.List.of()).statusCode());
         assertEquals(400,batchType(auth,typeDetails(property.getPropertyId()),java.util.List.of(draft),java.util.List.of(new TestImage("bad.jpg","image/jpeg","bad".getBytes()))).statusCode());
         assertEquals(0,roomTypes.findByProperty_Owner_UserId(owner.getUserId()).size());assertEquals(0,physicalRooms.findByProperty_Owner_UserIdOrderByRoomNumberAsc(owner.getUserId()).size());
@@ -1076,6 +1138,18 @@ class HostDashboardTests {
         }
         assertEquals(0,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));
         assertEquals(200,roomWrite(auth,"POST",null,details).statusCode());assertEquals(409,roomWrite(auth,"POST",null,roomDetails(typeId," p.101 ")).statusCode());
+        assertEquals(409, roomWrite(auth, "POST", null, roomDetails(typeId,"0101")).statusCode());
+        var second = roomWrite(auth, "POST", null, roomDetails(typeId,"P.102"));
+        assertEquals(200, second.statusCode(), second.body());
+        var secondId = json.readTree(second.body()).path("data").path("roomId").asInt();
+        assertEquals(409, roomWrite(auth, "PUT", secondId, roomDetails(typeId,"101")).statusCode());
+        var otherProperty = properties.save(Property.builder().owner(owner).name("Separate inventory").status("ACTIVE").build());
+        var otherType = roomTypes.save(RoomType.builder().property(otherProperty).roomType("Studio").price(new BigDecimal("2000000")).build());
+        assertEquals(200, roomWrite(auth, "POST", null, roomDetails(otherType.getRoomTypeId(), "101")).statusCode());
+        var type = roomTypes.findById(typeId).orElseThrow();
+        var legacy = physicalRooms.save(Room.builder().property(property).roomType(type).roomNumber("101").floor("Tầng 01").status("VACANT").build());
+        assertEquals(200, roomWrite(auth, "PUT", legacy.getRoomId(), roomDetails(typeId,"101")).statusCode());
+        assertEquals(200, roomWrite(auth, "PUT", legacy.getRoomId(), roomDetails(typeId,"P.103")).statusCode());
         assertEquals(404,hostGet(token(account(UserRole.ROOM_HOST)),"/rooms?roomTypeId="+typeId).statusCode());
         assertEquals(400,hostGet(auth,"/rooms?roomTypeId=abc").statusCode());
         property.setStatus("INACTIVE");properties.save(property);assertEquals(409,roomWrite(auth,"POST",null,roomDetails(typeId,"P.102")).statusCode());
@@ -1084,7 +1158,12 @@ class HostDashboardTests {
         var owner=account(UserRole.ROOM_HOST);var property=properties.save(Property.builder().owner(owner).name("Concurrent rooms").status("ACTIVE").build());String auth=token(owner);
         int typeId=json.readTree(createType(auth,typeDetails(property.getPropertyId())).body()).path("data").path("roomTypeId").asInt();
         var operation=(java.util.function.Supplier<Integer>)()->{try{return roomWrite(auth,"POST",null,roomDetails(typeId,"P.101")).statusCode();}catch(Exception error){throw new RuntimeException(error);}};
-        var first=java.util.concurrent.CompletableFuture.supplyAsync(operation);var second=java.util.concurrent.CompletableFuture.supplyAsync(operation);
+        var first=java.util.concurrent.CompletableFuture.supplyAsync(operation);
+        var second=java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            try {
+                return createMixedLayout(auth, property.getPropertyId(), java.util.List.of(mixedRoom(typeId,"101","Tầng 1"))).statusCode();
+            } catch (Exception error) { throw new RuntimeException(error); }
+        });
         var codes=new java.util.ArrayList<>(java.util.List.of(first.get(),second.get()));codes.sort(Integer::compareTo);assertEquals(java.util.List.of(200,409),codes);
         assertEquals(1,physicalRooms.countByProperty_PropertyId(property.getPropertyId()));assertEquals(409,deleteType(auth,typeId).statusCode());
     }

@@ -1,9 +1,9 @@
 import {Link} from 'react-router-dom';
-import AvailabilityNotice from './AvailabilityNotice.jsx';
 import {Heart,MapPin,Phone,Check} from 'lucide-react';
 import {DetailImage} from './detail/DetailPrototypeParts.jsx';
 import {ROOM_AMENITIES} from '../services/room-types.js';
 import {detailMoney} from '../services/detail-prototype.js';
+import AvailabilityNotice from './AvailabilityNotice.jsx';
 import {formatDistance,withSearchOrigin} from '../services/search-origin.js';
 import {accommodationDetailUrl} from '../services/map-location.js';
 

@@ -28,6 +28,16 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CommunityReportService {
+    private java.util.function.Consumer<CommunityNotificationEvent> notificationEvents = event -> {};
+    private java.util.function.Consumer<CommunityRealtimeEvent> liveEvents = event -> {};
+    private java.util.function.Consumer<CommunityReportSubmitted> reportSubmitted = event -> {};
+    @org.springframework.beans.factory.annotation.Autowired
+    void notificationPublisher(org.springframework.context.ApplicationEventPublisher publisher) {
+        notificationEvents = publisher::publishEvent;
+        liveEvents = publisher::publishEvent;
+        reportSubmitted = publisher::publishEvent;
+    }
+
     private static final ReportTargetType TARGET = ReportTargetType.POST;
     private static final Set<ReportStatus> OPEN = Set.of(ReportStatus.OPEN, ReportStatus.PENDING);
     private final ReportRepository reports;
@@ -45,6 +55,24 @@ public class CommunityReportService {
     public record Detail(Summary report, String details, CommunityPostResponse post, boolean hasEvidence,
                          String handler, String resolutionNote, LocalDateTime resolvedAt, List<Summary> relatedReports) {}
     public record Page<T>(List<T> content, int number, int totalPages, long totalElements) {}
+    public record FilterCount(long posts, long reports) {}
+
+    @Transactional(readOnly = true)
+    public java.util.Map<String, FilterCount> stats() {
+        admin();
+        var counts = new java.util.LinkedHashMap<String, FilterCount>();
+        for (String key : List.of("OPEN", "ALL", "RESOLVED", "DISMISSED")) {
+            var statuses = switch (key) {
+                case "ALL" -> EnumSet.allOf(ReportStatus.class);
+                case "OPEN" -> OPEN;
+                case "RESOLVED" -> Set.of(ReportStatus.RESOLVED);
+                default -> Set.of(ReportStatus.DISMISSED);
+            };
+            var total = reports.communityTotals(TARGET, statuses);
+            counts.put(key, new FilterCount(total.getPosts(), total.getReports()));
+        }
+        return counts;
+    }
 
     @Transactional
     public Receipt submit(Integer postId, CommunityReportRequest request, List<MultipartFile> attachments) {
@@ -71,6 +99,9 @@ public class CommunityReportService {
             evidence.save(CommunityReportEvidence.builder().report(report).fileName(image.fileName())
                     .contentType(image.contentType()).fileContent(image.bytes()).build());
         }
+        liveEvents.accept(CommunityRealtimeEvent.reports(postId));
+        reportSubmitted.accept(new CommunityReportSubmitted(report.getReportId(), postId));
+        liveEvents.accept(new CommunityRealtimeEvent("my-reports", null, reporter.getUserId(), false, false, false));
         return receipt(report);
     }
 
@@ -137,6 +168,8 @@ public class CommunityReportService {
                 throw new AppException("Bài viết không còn công khai để ẩn.", HttpStatus.CONFLICT);
             }
             post.setStatus(PostStatus.HIDDEN);
+            liveEvents.accept(CommunityRealtimeEvent.post(post, true));
+            notificationEvents.accept(CommunityNotificationEvent.hidden(post, note));
             logs.save(ModerationLog.builder().staff(handler).targetType("COMMUNITY_POST")
                     .targetId(postId).action("HIDDEN").note(note).build());
         }
@@ -144,6 +177,7 @@ public class CommunityReportService {
         for (Report row : related) {
             if (OPEN.contains(row.getStatus())) close(row, outcome, handler, note, resolvedAt);
         }
+        liveEvents.accept(CommunityRealtimeEvent.reports(postId));
         return detail(report, post, related);
     }
 

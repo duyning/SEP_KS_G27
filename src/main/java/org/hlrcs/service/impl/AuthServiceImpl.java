@@ -51,8 +51,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final GoogleTokenVerifier googleTokenVerifier;
-    private final org.hlrcs.service.PhoneVerificationService phoneVerification;
     private final RegistrationOtpService registrationOtp;
+    private final org.hlrcs.service.PhoneVerificationService phoneVerification;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
@@ -60,16 +60,17 @@ public class AuthServiceImpl implements AuthService {
                            AuthenticationManager authenticationManager,
                            JwtTokenProvider tokenProvider,
                            GoogleTokenVerifier googleTokenVerifier,
-                           org.hlrcs.service.PhoneVerificationService phoneVerification,
-                           RegistrationOtpService registrationOtp) {
+                           RegistrationOtpService registrationOtp,
+                           org.hlrcs.service.PhoneVerificationService phoneVerification) {
+
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.googleTokenVerifier = googleTokenVerifier;
-        this.phoneVerification = phoneVerification;
         this.registrationOtp = registrationOtp;
+        this.phoneVerification = phoneVerification;
     }
 
     @Override
@@ -165,7 +166,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
-        GoogleUserInfo googleUser = googleTokenVerifier.verifyToken(request.idToken());
+        return loginWithVerifiedGoogleUser(googleTokenVerifier.verifyToken(request.idToken()));
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithVerifiedGoogleUser(GoogleUserInfo googleUser) {
         User user = userRepository.findByGoogleSubject(googleUser.subject()).orElse(null);
 
         if (user == null) {
@@ -306,7 +312,8 @@ public class AuthServiceImpl implements AuthService {
             } else if (!newPhone.equals(org.hlrcs.service.PhoneVerificationService.normalize(user.getPhoneNumber()))) {
                 user.setPhoneVerifiedAt(null);
             }
-            if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberInAndUserIdNot(RegistrationContact.parse(newPhone).phoneVariants(),user.getUserId())) {
+            if (userRepository.existsByPhoneNumberInAndUserIdNot(
+                    RegistrationContact.parse(newPhone).phoneVariants(), user.getUserId())) {
                 throw new BadRequestException("Số điện thoại này đã được sử dụng bởi tài khoản khác: " + newPhone);
             }
             user.setPhoneNumber(newPhone);

@@ -1,6 +1,6 @@
 import UIField from '../../components/common/Field.jsx';
 import UIButton from '../../components/common/Button.jsx';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, useIsPresent } from 'motion/react';
 import { Highlight, HighlightItem } from '@animate-ui/react/primitives/effects/highlight';

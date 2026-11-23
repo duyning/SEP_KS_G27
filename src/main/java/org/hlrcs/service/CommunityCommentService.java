@@ -27,10 +27,17 @@ import org.springframework.data.domain.Pageable;
 @Service
 @RequiredArgsConstructor
 public class CommunityCommentService {
+    private java.util.function.Consumer<CommunityNotificationEvent> notificationEvents = event -> {};
+    private java.util.function.Consumer<CommunityRealtimeEvent> liveEvents = event -> {};
+    @org.springframework.beans.factory.annotation.Autowired
+    void notificationPublisher(org.springframework.context.ApplicationEventPublisher publisher) {
+        notificationEvents = publisher::publishEvent;
+        liveEvents = publisher::publishEvent;
+    }
+
     private final CommentRepository comments;
     private final PostRepository posts;
     private final AuthService auth;
-    private final NoticeService notices;
 
     @Transactional(readOnly = true)
     public CommentPage list(Integer postId, int page, int size) {
@@ -54,17 +61,26 @@ public class CommunityCommentService {
         Comment target = comment(postId, commentId);
         Integer rootId = target.getParentCommentId() == null ? target.getCommentId() : target.getParentCommentId();
         comment(postId, rootId);
-        var saved=comments.saveAndFlush(Comment.builder().post(post).author(auth.getCurrentUser())
+        var saved = comments.saveAndFlush(Comment.builder().post(post).author(auth.getCurrentUser())
                 .content(request.content()).parentCommentId(rootId).replyToCommentId(commentId).build());
-        if(!target.getAuthor().getUserId().equals(saved.getAuthor().getUserId())) notices.send(target.getAuthor(),"COMMUNITY","REPLY",saved.getAuthor().getFullName(),saved.getContent(),target.getContent(),"/community#post-"+postId,postId,postId,saved.getCommentId());
+        var actorId = saved.getAuthor().getUserId();
+        liveEvents.accept(CommunityRealtimeEvent.comments(postId));
+        var targetAuthor = target.getAuthor();
+        if (!targetAuthor.getUserId().equals(actorId))
+            notificationEvents.accept(CommunityNotificationEvent.commented(saved, targetAuthor, true));
+        if (!post.getAuthor().getUserId().equals(actorId) && !post.getAuthor().getUserId().equals(targetAuthor.getUserId()))
+            notificationEvents.accept(CommunityNotificationEvent.commented(saved, post.getAuthor(), false));
         return response(saved);
     }
 
     @Transactional
     public CommunityCommentResponse create(Integer postId, CommunityCommentRequest request) {
         Post post = approvedPost(postId, true);
-        var saved=comments.saveAndFlush(Comment.builder().post(post).author(auth.getCurrentUser()).content(request.content()).build());
-        if(!post.getAuthor().getUserId().equals(saved.getAuthor().getUserId())) notices.send(post.getAuthor(),"COMMUNITY","COMMENT",saved.getAuthor().getFullName(),request.content(),post.getTitle(),"/community#post-"+postId,postId,postId,saved.getCommentId());
+        var saved = comments.saveAndFlush(Comment.builder().post(post).author(auth.getCurrentUser())
+                .content(request.content()).build());
+        if (!post.getAuthor().getUserId().equals(saved.getAuthor().getUserId()))
+            notificationEvents.accept(CommunityNotificationEvent.commented(saved, post.getAuthor(), false));
+        liveEvents.accept(CommunityRealtimeEvent.comments(postId));
         return response(saved);
     }
 
@@ -79,7 +95,9 @@ public class CommunityCommentService {
             comment.setContent(request.content());
             comment.setUpdatedAt(LocalDateTime.now().withNano(0));
         }
-        return response(comments.saveAndFlush(comment));
+        var updated = comments.saveAndFlush(comment);
+        liveEvents.accept(CommunityRealtimeEvent.comments(postId));
+        return response(updated);
     }
 
     @Transactional
@@ -95,6 +113,7 @@ public class CommunityCommentService {
         else comments.clearReplyTargets(postId, commentId);
         comments.delete(comment);
         comments.flush();
+        liveEvents.accept(CommunityRealtimeEvent.comments(postId));
     }
 
     private Post approvedPost(Integer postId, boolean lock) {

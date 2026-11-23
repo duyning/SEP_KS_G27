@@ -1985,13 +1985,7 @@
   }
 }
 
-@media (max-width: 900px) {
-  .prototype-home .top-announcement-inner {
-    flex-direction: column;
-    gap: 4px;
-    text-align: center;
-  }
-
+@media (max-width: 1200px) {
   .prototype-home .nav-menu {
     display: none;
     position: absolute;
@@ -2030,6 +2024,14 @@
 
   .prototype-home .mobile-toggle {
     display: block;
+  }
+}
+
+@media (max-width: 900px) {
+  .prototype-home .top-announcement-inner {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
   }
 
   .prototype-home .search-form-grid {

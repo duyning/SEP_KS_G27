@@ -66,7 +66,7 @@ export default function SearchPage({mapView=false}){
  for(const key of filters.amenities)chips.push({key,text:searchAmenities.find(([id])=>id===key)?.[1],remove:()=>toggleAmenity(key)});
  if(origin)chips.push({key:'origin',text:filters.radiusKm?`Quanh địa điểm đã chọn · ${filters.radiusKm} km`:'Địa điểm tính khoảng cách',remove:clearOrigin});
  if(filters.availableOnly)chips.push({key:'availableOnly',text:'Chỉ phòng còn trống',remove:()=>change({availableOnly:false})});
- return <DetailPrototypeShell savedCount={favorites.total??0} className="prototype-search"><main className={selected.length?'has-comparison-selection':undefined}>
+ return <DetailPrototypeShell className="prototype-search"><main className={selected.length?'has-comparison-selection':undefined}>
   <div className="search-breadcrumb-bar"><div className="container search-breadcrumb-inner"><ul className="search-breadcrumb-list"><li><Link to="/">Trang chủ</Link></li><li className="search-breadcrumb-sep">/</li><li className="search-breadcrumb-active">Tìm kiếm phòng trọ Hòa Lạc</li></ul><span className="search-breadcrumb-note">Dữ liệu niêm yết trực tiếp chính chủ</span></div></div>
   <section className="search-header-section"><div className="container"><div className="search-headline-group"><h1 className="search-main-title">Khám phá nhà trọ &amp; Căn hộ tại Hòa Lạc</h1><p className="search-subtitle">Tìm không gian sống phù hợp với nhu cầu học tập và làm việc của bạn quanh ĐH FPT, ĐH Quốc Gia và Khu Công nghệ cao.</p></div>
    <div className="search-controls-box"><form id="searchControlsForm" onSubmit={event=>{event.preventDefault();document.getElementById('resultsArea')?.scrollIntoView({block:'start'});}}><div className="search-main-inputs-row">

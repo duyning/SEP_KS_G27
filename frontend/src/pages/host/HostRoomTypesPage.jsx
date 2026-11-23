@@ -1,5 +1,3 @@
-import UIField from '../../components/common/Field.jsx';
-import UIButton from '../../components/common/Button.jsx';
 import MultiFloorRoomSetup from '../../components/MultiFloorRoomSetup.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -79,7 +77,7 @@ function renderRoomTypeStatusBadge(type) {
 }
 
 function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
-  return <><UIField className="hm-filter-field"><span>Trạng thái phòng</span><select
+  return <><label className="hm-filter-field"><span>Trạng thái phòng</span><select
               className="hm-select hm-type-status"
               aria-label="Lọc trạng thái loại phòng"
               value={filter}
@@ -96,7 +94,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
               <option value="EMPTY">
                 Chưa tạo phòng ({types.filter(item => (item.totalRooms ?? 0) === 0).length})
               </option>
-            </select></UIField><UIField className="hm-filter-field"><span>Sắp xếp</span><select
+            </select></label><label className="hm-filter-field"><span>Sắp xếp</span><select
               className="hm-select hm-type-sort"
               aria-label="Sắp xếp loại phòng"
               value={sort}
@@ -107,7 +105,7 @@ function RoomTypeFilters({ types, filter, setFilter, sort, setSort }) {
               <option value="PRICE_DESC">Giá cao → thấp</option>
               <option value="ROOMS_DESC">Nhiều phòng nhất</option>
               <option value="NAME">Tên A–Z</option>
-            </select></UIField></>;
+            </select></label></>;
 }
 
 function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
@@ -117,10 +115,10 @@ function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
   const roomLink = `/host/rooms?propertyId=${type.propertyId}&roomTypeId=${type.roomTypeId}`;
   return <article className="hm-rt-card">
     <div className="hm-rt-card-hero">
-      <UIButton type="button" className="hm-rt-thumb-trigger" onClick={() => onSelect(type)} aria-label={`Xem chi tiết ${type.roomType}`}><TypeImage type={type}/></UIButton>
+      <button type="button" className="hm-rt-thumb-trigger" onClick={() => onSelect(type)} aria-label={`Xem chi tiết ${type.roomType}`}><TypeImage type={type}/></button>
       <div className="hm-rt-card-info">
         <header className="hm-rt-card-top">
-          <h2 className="hm-rt-card-title"><UIButton type="button" onClick={() => onSelect(type)} title={type.roomType}>{type.roomType}</UIButton></h2>
+          <h2 className="hm-rt-card-title"><button type="button" onClick={() => onSelect(type)} title={type.roomType}>{type.roomType}</button></h2>
           <div className="hm-rt-card-status">{renderRoomTypeStatusBadge(type)}</div>
         </header>
         <div className="hm-rt-card-body">
@@ -143,6 +141,7 @@ function RoomTypeCard({ type, onSelect, actions, onConfirmed }) {
 }
 
 export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDeleted }) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const notify = useToast();
   const memory = getHostWorkspaceMemory(user?.userId);
@@ -259,6 +258,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
   }
 
   const canCreate = property.status === 'ACTIVE';
+  const openSetup = () => navigate('/host/room-types?propertyId=' + property.propertyId + '&layout=1');
   const hasRoomCounts = types.length > 0 && types.every(item => item.totalRooms != null);
   const totals = hasRoomCounts ? types.reduce((sum, item) => sum + item.totalRooms, 0) : 0;
   const vacancies =
@@ -282,7 +282,6 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
 
   const headerActions = (
     <>
-      <Link className="hm-btn hm-btn-primary" to={`/host/room-types?propertyId=${property.propertyId}&layout=1`}><Layers size={16}/>Thiết lập phòng nhiều tầng</Link>
       <MotionButton
         type="button"
         className="hm-btn hm-btn-subtle"
@@ -307,11 +306,11 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
         type="button"
         className="hm-btn hm-btn-primary"
         disabled={!canCreate}
-        title={canCreate ? 'Thêm loại phòng mới' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
-        onClick={() => setCreate(true)}
+        title={canCreate ? 'Tạo loại phòng và thiết lập phòng' : 'Nhà trọ cần được phê duyệt và đang hoạt động'}
+        onClick={openSetup}
       >
         <Plus size={16} />
-        <span>Thêm loại phòng</span>
+        <span>Tạo loại phòng và phòng</span>
       </MotionButton>
     </>
   );
@@ -427,7 +426,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
             selectedPropertyId={property.propertyId}
           />
 
-          <UIField className="hm-search-box">
+          <label className="hm-search-box">
             <Search size={15} aria-hidden="true" />
             <input
               aria-label="Tìm loại phòng"
@@ -435,7 +434,7 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
-          </UIField>
+          </label>
 
           <div className="hm-toolbar-controls">
             {compactFilters ? <MotionButton type="button" id="hm-type-filter-toggle" className={`hm-btn hm-btn-subtle hm-type-filter-toggle ${filter !== 'ALL' || sort !== 'NEWEST' ? 'is-active' : ''}`} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(value => !value)}><Filter size={15}/>Bộ lọc{filter !== 'ALL' || sort !== 'NEWEST' ? ' •' : ''}</MotionButton> : <RoomTypeFilters {...{types, filter, setFilter, sort, setSort}} />}
@@ -480,10 +479,10 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
               type="button"
               className="hm-btn hm-btn-primary"
               disabled={!canCreate}
-              onClick={() => setCreate(true)}
+              onClick={openSetup}
             >
               <Plus size={16} />
-              <span>Thêm loại phòng đầu tiên</span>
+              <span>Tạo loại phòng và phòng</span>
             </MotionButton>
           </div>
         ) : !shown.length ? (
@@ -519,13 +518,13 @@ export function RoomTypesContent({ data, propertyId, onRefresh, onCreated, onDel
                       <div className="hm-entity-cell">
                         <TypeImage type={type} className="hm-rt-row-thumb" />
                         <div className="hm-entity-copy">
-                          <UIButton
+                          <button
                             type="button"
                             className="hm-entity-title-btn"
                             onClick={() => setSelected(type)}
                           >
                             {type.roomType}
-                          </UIButton>
+                          </button>
                           <span className="hm-entity-sub">
                             {type.areaSqm != null ? `${type.areaSqm}m²` : '—'} · Tối đa{' '}
                             {type.capacity ?? '—'} người
@@ -701,7 +700,15 @@ export default function HostRoomTypesPage() {
           </StateView>
         </HostManagementShell>
       ) : params.get('layout')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
-        <MultiFloorRoomSetup key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId} onDone={()=>navigate(`/host/rooms?propertyId=${propertyId}&publication=1`)}/>
+        <MultiFloorRoomSetup key={user.userId + ':' + propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)}
+          types={state.data.roomTypes.filter(t=>String(t.propertyId)===propertyId)} userId={user.userId}
+          onDone={roomCount => {
+            if (roomCount) navigate(`/host/rooms?propertyId=${propertyId}&publication=1`);
+            else {
+              setRevision(value => value + 1);
+              navigate(`/host/room-types?propertyId=${propertyId}`);
+            }
+          }}/>
       ) : (
         <RoomTypesContent
           key={`${user?.userId}-${propertyId || ''}`}

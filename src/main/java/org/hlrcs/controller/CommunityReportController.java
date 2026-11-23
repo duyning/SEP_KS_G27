@@ -41,6 +41,11 @@ public class CommunityReportController {
         return ApiResponse.success(reports.detail(id));
     }
 
+    @GetMapping("/api/admin/community/reports/stats")
+    public ApiResponse<java.util.Map<String, CommunityReportService.FilterCount>> stats() {
+        return ApiResponse.success(reports.stats());
+    }
+
     @PostMapping("/api/admin/community/reports/{id}/decision")
     public ApiResponse<Detail> resolve(@PathVariable Integer id, @Valid @RequestBody CommunityReportDecision decision) {
         return ApiResponse.success(reports.resolve(id, decision));

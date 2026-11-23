@@ -1,5 +1,3 @@
-import UIField from '../../components/common/Field.jsx';
-import UIButton from '../../components/common/Button.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -12,7 +10,9 @@ import {
   ChevronRight,
   Clock3,
   DoorOpen,
+  Droplets,
   Eye,
+  Receipt,
   Filter,
   House,
   Info,
@@ -36,6 +36,8 @@ import RoomDetailModal from '../../components/RoomDetailModal.jsx';
 import RoomEditorModal from '../../components/RoomEditorModal.jsx';
 import RoomStatusModal from '../../components/RoomStatusModal.jsx';
 import RoomPublicationPage from '../../components/RoomPublicationPage.jsx';
+import RoomUtilitiesPage from '../../components/RoomUtilitiesPage.jsx';
+import RoomBillingPage from '../../components/RoomBillingPage.jsx';
 import HostSetupRequired from '../../components/HostSetupRequired.jsx';
 import HostActionMenu from '../../components/HostActionMenu.jsx';
 import HostManagementShell, {
@@ -46,6 +48,8 @@ import HostManagementShell, {
   HostSegmentedToggle,
 } from '../../components/HostManagementShell.jsx';
 import { money } from '../../services/room-types.js';
+import { roomUtilitiesPath } from '../../services/room-utilities.js';
+import { roomBillingPath } from '../../services/room-billing.js';
 import {
   ROOM_TABLE_PAGE_SIZE,
   compareFloorNames,
@@ -171,7 +175,7 @@ function FloorAccordionSection({ group, expanded, onToggle, onSelectRoom, select
   );
 }
 
-export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved, onDeleted }) {
+export function RoomsContent({ data, propertyId, roomTypeId, initialDetailRoomId, onRefresh, onSaved, onDeleted }) {
   const { user } = useAuth();
   const notify = useToast();
   const memory = getHostWorkspaceMemory(user?.userId);
@@ -187,7 +191,7 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
   const [collapsedFloors, setCollapsedFloors] = useState(() => new Set());
 
   const [editor, setEditor] = useState(null);
-  const [detailId, setDetailId] = useState(null);
+  const [detailId, setDetailId] = useState(initialDetailRoomId || null);
   const [deleting, setDeleting] = useState(null);
   const [failure, setFailure] = useState('');
   const [busy, setBusy] = useState(false);
@@ -389,6 +393,8 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
 
   const headerActions = (
     <>
+      <Link className="hm-btn" to={roomBillingPath(property.propertyId)}><Receipt size={16} aria-hidden="true" /> Phiếu thu &amp; công nợ</Link>
+      <Link className="hm-btn" to={roomUtilitiesPath(property.propertyId)}><Droplets size={16} aria-hidden="true" /> Ghi điện nước</Link>
       <Link className="hm-btn hm-btn-primary" to={`/host/rooms?propertyId=${property.propertyId}&publication=1`}><Eye size={16}/>Chọn phòng công khai</Link>
       <Link
         className="hm-btn hm-btn-subtle"
@@ -874,7 +880,9 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
       <AnimatePresence>
         {detailRoom && (
           <RoomDetailModal
+            key={detailRoom.roomId}
             room={detailRoom}
+            initialSection={detailRoom.roomId === initialDetailRoomId ? 'current' : 'room'}
             canManage={canManage}
             onClose={() => setDetailId(null)}
             onEdit={room => {
@@ -886,12 +894,16 @@ export function RoomsContent({ data, propertyId, roomTypeId, onRefresh, onSaved,
               setDeleting(room);
             }}
             onQuickSaved={handleQuickSaved}
-            onChangeStatus={(room,nextStatus)=>{setDetailId(null);setStatusChange({rooms:[room],initialStatus:nextStatus});}}
+            onTenancySaved={onSaved}
+            onChangeStatus={(room, nextStatus, createContract = false, tenancy = null) => {
+              setDetailId(null);
+              setStatusChange({ rooms: [room], initialStatus: nextStatus, initialCreateContract: createContract, initialTenancy: tenancy });
+            }}
           />
         )}
       </AnimatePresence>
 
-      {statusChange&&<RoomStatusModal {...statusChange} propertyId={property.propertyId} onClose={()=>setStatusChange(null)} onSaved={updated=>{updated.forEach(onSaved);setSelectedIds(new Set());setStatusChange(null);notify?.(`Đã cập nhật trạng thái ${updated.length} phòng.`,'success');}}/>}
+      {statusChange&&<RoomStatusModal {...statusChange} propertyId={property.propertyId} property={property} roomTypes={types} onClose={()=>setStatusChange(null)} onSaved={updated=>{updated.forEach(onSaved);setSelectedIds(new Set());setStatusChange(null);notify?.(`Đã lưu thông tin và cập nhật trạng thái ${updated.length} phòng.`,'success');}}/>}
       <AnimatePresence>
         {deleting && (
           <Modal
@@ -936,6 +948,7 @@ export default function HostRoomsPage() {
   const [params] = useSearchParams();
   const propertyId = params.get('propertyId');
   const roomTypeId = params.get('roomTypeId');
+  const initialDetailRoomId = Number(params.get('detailRoomId')) || null;
   const [state, setState] = useState({ loading: true, data: null, error: '' });
   const [revision, setRevision] = useState(0);
 
@@ -970,14 +983,19 @@ export default function HostRoomsPage() {
             </MotionButton>
           </StateView>
         </HostManagementShell>
+      ) : params.get('billing') === '1' && state.data.properties.some(item => String(item.propertyId) === propertyId) ? (
+        <RoomBillingPage key={propertyId} property={state.data.properties.find(item => String(item.propertyId) === propertyId)} properties={state.data.properties} />
+      ) : params.get('utilities') === '1' && state.data.properties.some(item => String(item.propertyId) === propertyId) ? (
+        <RoomUtilitiesPage key={propertyId} property={state.data.properties.find(item => String(item.propertyId) === propertyId)} properties={state.data.properties} />
       ) : params.get('publication')==='1' && state.data.properties.some(p=>String(p.propertyId)===propertyId) ? (
         <RoomPublicationPage key={propertyId} property={state.data.properties.find(p=>String(p.propertyId)===propertyId)} rooms={state.data.rooms.filter(r=>String(r.propertyId)===propertyId)} onSaved={rooms=>setState(previous=>({...previous,data:{...previous.data,rooms:[...previous.data.rooms.filter(r=>String(r.propertyId)!==propertyId),...rooms]}}))}/>
       ) : (
         <RoomsContent
-          key={`${user?.userId}-${propertyId || ''}-${roomTypeId || ''}`}
+          key={`${user?.userId}-${propertyId || ''}-${roomTypeId || ''}-${initialDetailRoomId || ''}`}
           data={state.data}
           propertyId={propertyId}
           roomTypeId={roomTypeId}
+          initialDetailRoomId={initialDetailRoomId}
           onRefresh={() => setRevision(value => value + 1)}
           onSaved={record =>
             setState(previous => {

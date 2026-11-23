@@ -28,7 +28,8 @@ public class PublicPropertyService {
     private final RoomTypeImageRepository images;
     private final ObjectMapper json;
     public record Type(Integer roomTypeId,String name,BigDecimal price,Float area,Integer capacity,
-                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms,java.time.Instant availabilityConfirmedAt,String availabilityConfirmationStatus,boolean availabilityStale) {}
+                       BigDecimal electricityPrice,BigDecimal waterPrice,List<String> amenities,int totalRooms,int vacantRooms,
+                       java.time.Instant availabilityConfirmedAt,String availabilityConfirmationStatus,boolean availabilityStale) {}
     public record Listing(Integer propertyId,String name,String address,String commune,String propertyType,
                           String description,List<String> photos,List<String> amenities,
                           List<String> rules,List<Type> roomTypes,BigDecimal minPrice,int totalRooms,int vacantRooms,
@@ -41,7 +42,8 @@ public class PublicPropertyService {
         catch(Exception ignored){return null;}
     }
     private boolean published(Property property) {
-        if(property.isReverificationRequired()||!"ACTIVE".equals(property.getStatus())||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
+        if(!"ACTIVE".equals(property.getStatus())||property.isReverificationRequired()
+                ||property.getRegistration()==null||property.getRegistration().getStatus()!=RegistrationStatus.APPROVED)return false;
         var form=submission(property);
         return form!=null&&Boolean.TRUE.equals(form.termsAccepted())&&rooms.existsByProperty_PropertyIdAndPublicVisibleTrue(property.getPropertyId());
     }

@@ -1,7 +1,7 @@
 import { useRoomSearch } from '@/context/room-search-context';
 import { applyCategory, filterGroupCount } from '@/services/room-search';
-import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth-context';
+import { useHostMode } from '@/context/host-mode-context';
 import { useListingFavorites } from '@/hooks/use-listing-favorites';
 import { authColors, authSpacing } from '@/components/auth/tokens';
 import { AnimatedPressable } from '@/components/home/animated-pressable';
@@ -30,19 +31,67 @@ import {
   fetchAccommodations,
   SearchFilters,
 } from '@/services/accommodations';
+import { tokenStore } from '@/services/auth';
+import {
+  resolveOnboardingBannerState,
+  type HostOnboardingCurrent,
+} from '@/services/host-onboarding';
+import { hasOnboardingDraft } from '@/services/host-onboarding-draft';
+import { fetchOnboardingCurrent } from '@/services/host-onboarding-upload';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { setDiscovery } = useHostMode();
   const [accommodations, setAccommodations] = useState<AccommodationSummary[]>([]);
   const { favorites: favoritesMap, pendingFavorites, canFavorite, toggle: handleToggleFavorite } = useListingFavorites(accommodations.map(item => item.roomTypeId));
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [onboardingCurrent, setOnboardingCurrent] = useState<HostOnboardingCurrent | null>(null);
+  const [hasLocalOnboardingDraft, setHasLocalOnboardingDraft] = useState(false);
 
   const { query: searchQuery, setQuery: setSearchQuery, filters, setFilters, submit, reset } = useRoomSearch();
   const selectedCategory = filters.type || 'all';
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+
+  const syncOnboardingBanner = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!user || user.role !== 'USER') {
+        setOnboardingCurrent(null);
+        setHasLocalOnboardingDraft(false);
+        return;
+      }
+      try {
+        const [token, draftExists] = await Promise.all([
+          tokenStore.get(),
+          hasOnboardingDraft(user.userId),
+        ]);
+        if (signal?.aborted) return;
+        setHasLocalOnboardingDraft(draftExists);
+        if (!token) {
+          setOnboardingCurrent(null);
+          return;
+        }
+        const current = await fetchOnboardingCurrent(token, signal);
+        if (!signal?.aborted) setOnboardingCurrent(current);
+      } catch {
+        // Never block Home screen rendering if onboarding status check fails.
+      }
+    },
+    [user]
+  );
+
+  // Lightweight non-blocking check of host onboarding status & local draft on focus
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      void syncOnboardingBanner(controller.signal);
+      return () => {
+        controller.abort();
+      };
+    }, [syncOnboardingBanner])
+  );
 
 
   // Fetch accommodations with React 19 safe async pattern
@@ -84,6 +133,7 @@ export default function HomeScreen() {
   const handleRefresh = () => {
     setRefreshing(true);
     setRefreshIndex(prev => prev + 1);
+    void syncOnboardingBanner();
   };
 
   const handleRetry = () => {
@@ -126,6 +176,31 @@ export default function HomeScreen() {
     return accommodations.slice(4);
   }, [accommodations]);
 
+  const hostBanner = useMemo(
+    () =>
+      resolveOnboardingBannerState({
+        user,
+        current: onboardingCurrent,
+        hasLocalDraft: hasLocalOnboardingDraft,
+      }),
+    [user, onboardingCurrent, hasLocalOnboardingDraft]
+  );
+
+  const handleHostBannerPress = () => {
+    if (hostBanner.action === 'switch_host') {
+      setDiscovery(false);
+      router.replace('/home');
+      return;
+    }
+    if (hostBanner.action === 'login_redirect') {
+      router.push('/login?redirect=%2Fbecome-host');
+      return;
+    }
+    if (hostBanner.href) {
+      router.push('/become-host');
+    }
+  };
+
   const activeFilterCount = filterGroupCount(filters);
 
   // List Header with all primary top sections
@@ -148,7 +223,11 @@ export default function HomeScreen() {
         activeFilterCount={activeFilterCount}
       />
 
-      <HomeHeroBanner onExplorePress={handleNavigateExplore} />
+      <HomeHeroBanner
+        onExplorePress={handleNavigateExplore}
+        hostBanner={hostBanner}
+        onHostBannerPress={handleHostBannerPress}
+      />
 
       <HomeCategories
         selectedCategory={selectedCategory} availableOnly={Boolean(filters.availableOnly)}

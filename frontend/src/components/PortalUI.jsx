@@ -1,3 +1,4 @@
+import UIButton from './common/Button.jsx';
 import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Database, LoaderCircle, X } from 'lucide-react';
 import { AnimatePresence, MotionButton, MotionDialog, MotionToast } from './motion/MotionUI.jsx';
@@ -12,7 +13,7 @@ export function ToastProvider({ children }) {
     clearTimeout(timer.current); setToast({ message, type, action, id: ++sequence.current });
     if (!action) timer.current = setTimeout(() => setToast(null), 6000);
   };
-  return <ToastContext.Provider value={notify}>{children}<AnimatePresence>{toast && <MotionToast key={toast.id} className={`portal-toast ${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}>{toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}<span>{toast.message}</span>{toast.action && <MotionButton className="svc-btn" onClick={()=>{setToast(null);toast.action.onClick();}}>{toast.action.label}</MotionButton>}<MotionButton className="p-icon" title="Đóng thông báo" aria-label="Đóng thông báo" onClick={() => setToast(null)}><X size={18} /></MotionButton></MotionToast>}</AnimatePresence></ToastContext.Provider>;
+  return <ToastContext.Provider value={notify}>{children}<AnimatePresence>{toast && <MotionToast key={toast.id} className={`portal-toast ${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}>{toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}<span>{toast.message}</span>{toast.action && <UIButton className="svc-btn" onClick={() => { setToast(null); toast.action.onClick(); }}>{toast.action.label}</UIButton>}<MotionButton className="p-icon" title="Đóng thông báo" aria-label="Đóng thông báo" onClick={() => setToast(null)}><X size={18} /></MotionButton></MotionToast>}</AnimatePresence></ToastContext.Provider>;
 }
 export const useToast = () => useContext(ToastContext);
 

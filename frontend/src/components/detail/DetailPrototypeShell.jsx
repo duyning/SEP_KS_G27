@@ -1,67 +1,7 @@
-import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
-import {useFavorites} from '../../context/FavoritesContext.jsx';
-import {useEffect,useState} from 'react';
-import {Link,NavLink} from 'react-router-dom';
-import NotificationBell from '../NotificationBell.jsx';
-import {Bell,Heart,LogOut} from 'lucide-react';
-import {useAuth} from '../../context/AuthContext.jsx';
-import {landingFor,roleLabels} from '../../routing/screens.js';
-import {MotionButton} from '../motion/MotionUI.jsx';
-export default function DetailPrototypeShell({children,savedCount:providedSavedCount=0,className='prototype-detail',footer,menuExtras}){
- const favorites=useFavorites(),savedCount=favorites?.total??providedSavedCount;
- const {user,logout}=useAuth();const [mobileOpen,setMobileOpen]=useState(false);
- useEffect(()=>{const close=e=>{if(e.key==='Escape')setMobileOpen(false)};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[]);
- const account=user?<>{user.role!=='USER'&&<Link to={user.role==='ROOM_HOST'?'/host/property':landingFor(user)} className="btn-primary-sm shell-desktop-dashboard">{user.role==='ROOM_HOST'?'Nhà trọ của tôi':'Bảng điều khiển'}</Link>}<NotificationBell/><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{savedCount}</span></Link><div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{user.avatar?<img src={user.avatar} alt="Ảnh đại diện"/>:(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><MotionButton className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></MotionButton></div></>:null;
- return <div className={`prototype-home prototype-shared-shell ${className}`} onClick={event=>{if(event.target.closest('#mobileMenuBtn'))setMobileOpen(v=>!v);else if(event.target.closest('#navMenu a'))setMobileOpen(false)}}><header className="navbar-wrapper">
-    <HostRegistrationBanner/>
+import { Link } from 'react-router-dom';
 
-    <nav className="main-navbar">
-      <div className="container navbar-container">
-
-        <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">
-          <div className="brand-logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
-          </div>
-        </Link>
-
-
-        <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
-          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/search">Tìm phòng</NavLink></li>
-          <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
-          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/bookings">Lịch xem phòng</NavLink></li>
-          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/services">Dịch vụ</NavLink></li>
-          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/community">Cộng đồng</NavLink></li>
-          <li><NavLink className={({isActive})=>`nav-item${isActive?' active':''}`} to="/collected-posts">Bài tổng hợp</NavLink></li>
-          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
-          {menuExtras}
-          {user && user.role !== 'USER' && <li className="shell-mobile-dashboard"><Link className="nav-item" to={landingFor(user)}>Bảng điều khiển</Link></li>}
-        </ul>
-
-
-        <div className="nav-actions">{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Phòng yêu thích" style={{"textDecoration": "none"}} to="/favorites">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-            <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
-          </Link>
-          <Link className="btn-ghost" to="/login">Đăng nhập</Link>
-          <Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link>
-        </>}</div>
-
-
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" aria-label="Mở thực đơn" aria-expanded={mobileOpen}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </MotionButton>
-      </div>
-    </nav>
-  </header>{children}{footer ?? <footer className="footer-wrapper">
+export default function DetailPrototypeShell({ children, className = 'prototype-detail', footer }) {
+  return <div className={`prototype-home prototype-shared-shell ${className}`}>{children}{footer ?? <footer className="footer-wrapper">
     <div className="container footer-grid">
 
       <div className="footer-col col-brand">

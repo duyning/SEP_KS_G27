@@ -4,19 +4,31 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from './PortalUI.jsx';
 import Comments from './CommunityPostComments.jsx';
 import { canReportCommunityPost, isOwnCommunityPost } from '../services/community.js';
+import { communityApi } from '../services/community.js';
+import useCommunityLive from './useCommunityLive.js';
 
-export default function CommunityPostFooter({ post, deleting, onDelete, onReport, preview = false }) {
+export default function CommunityPostFooter({ post, deleting, onDelete, onReport, preview = false, focus = null }) {
   const { user } = useAuth();
   const notify = useToast();
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [count, setCount] = useState(post.commentCount);
   const menuRef = useRef(null);
+  const countRequest = useRef(null);
   const trigger = useRef(null);
   const panelId = useId();
   const menuId = useId();
   const approved = post.status === 'APPROVED';
   const owner = isOwnCommunityPost(post, user);
+  useEffect(() => () => countRequest.current?.abort(), [post.id, owner]);
+  useCommunityLive('comments', () => {
+    countRequest.current?.abort();
+    const controller = new AbortController(); countRequest.current = controller;
+    communityApi.feedPost(post.id, owner, controller.signal).then(value => {
+      if (!controller.signal.aborted) setCount(value.commentCount);
+    }).catch(() => {});
+  }, post.id);
+  useEffect(() => { if (focus?.commentId) setExpanded(true); }, [focus?.commentId]);
   useEffect(() => setCount(post.commentCount), [post.commentCount]);
   useEffect(() => {
     if (!menuOpen) return;
@@ -68,6 +80,6 @@ export default function CommunityPostFooter({ post, deleting, onDelete, onReport
         </div>
       </div>
     </footer>
-    {expanded && approved && <Comments postId={post.id} panelId={panelId} user={user} onCount={setCount} />}
+    {expanded && approved && <Comments key={focus?.commentId || 'comments'} postId={post.id} panelId={panelId} user={user} onCount={setCount} focus={focus} />}
   </>;
 }

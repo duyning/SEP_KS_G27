@@ -5,9 +5,17 @@ import org.hlrcs.exception.BadRequestException;
 import org.junit.jupiter.api.*;
 import tools.jackson.databind.ObjectMapper;
 import java.net.InetSocketAddress;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class PropertyLocationServiceTests {
     private HttpServer provider;
@@ -46,6 +54,24 @@ class PropertyLocationServiceTests {
         assertTrue(result.nearby().contains("đường chim bay"));assertTrue(result.warnings().isEmpty());
         assertEquals(result,service.lookup("21.0188,105.5215"));assertEquals(1,reverseCalls.get());assertEquals(1,nearbyCalls.get());
         assertEquals(result.places(),service.nearby(21.0188,105.5215).places());
+    }
+    @Test void shortGoogleLinkCanReturnAnAddressWithoutInventingACoordinate() throws Exception {
+        var http = mock(HttpClient.class);
+        HttpResponse<InputStream> redirect = mock(HttpResponse.class);
+        when(redirect.statusCode()).thenReturn(302);
+        when(redirect.body()).thenAnswer(call -> InputStream.nullInputStream());
+        when(redirect.headers()).thenReturn(HttpHeaders.of(Map.of("location", List.of(
+                "https://maps.google.com?q=Eco+Hostel,+Th%C3%B4n+C%E1%BA%A7u+S%C3%B4ng,+H%E1%BA%A1+B%E1%BA%B1ng,+H%C3%A0+N%E1%BB%99i")),
+                (name, value) -> true));
+        when(http.send(any(HttpRequest.class), org.mockito.ArgumentMatchers.<HttpResponse.BodyHandler<InputStream>>any()))
+                .thenReturn(redirect);
+        var service = new PropertyLocationService(new ObjectMapper(), "", "", "NestHub-tests", "nominatim", http);
+        var result = service.lookupMobile("https://maps.app.goo.gl/VFeLzccerdHZXuoPA?g_st=ic");
+        assertEquals("Eco Hostel, Thôn Cầu Sông, Hạ Bằng, Hà Nội", result.addressQuery());
+        assertNull(result.location());
+        verify(http, times(1)).send(any(HttpRequest.class), any());
+        assertThrows(BadRequestException.class, () -> service.lookupMobile("https://www.google.com/?q=Eco+Hostel"));
+        assertThrows(BadRequestException.class, () -> service.lookupMobile("https://www.google.com/maps/@21,105,15z"));
     }
     @Test void providerFailureDoesNotLoseTheSelectedCoordinatesOrInventAddress(){
         var service=new PropertyLocationService(new ObjectMapper(),base+"/missing",base+"/missing","NestHub-tests/1.0","nominatim");

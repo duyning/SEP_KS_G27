@@ -41,12 +41,17 @@ class CommunityTests extends RegistrationOtpTestSupport {
     @Autowired PostRepository posts;
     @Autowired ModerationLogRepository logs;
     @Autowired CommunityAutoModeration autoModeration;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @MockitoBean GeminiCommunityScanner scanner;
     private String author;
     private String staff;
 
     @BeforeEach
     void actors() throws Exception {
+        // AUTO now includes older pending posts; isolate each test's queue.
+        autoModeration.changeMode(Mode.OFF);
+        jdbc.update("update community_scans set state = 'SKIPPED' where state in ('QUEUED','RUNNING')");
+        jdbc.update("update posts set status = 'REJECTED' where status = 'PENDING'");
         author = register();
         staff = login("staff@hlrcs.com", "123456");
     }
@@ -217,7 +222,7 @@ class CommunityTests extends RegistrationOtpTestSupport {
     }
 
     @Test
-    void onlyAutoModePublishesClearResultsAndRecordsOneSystemDecision() throws Exception {
+    void switchingFromAssistToAutoPublishesOldClearPostsAndRecordsOneSystemDecision() throws Exception {
         when(scanner.configured()).thenReturn(true);
         try {
             autoModeration.changeMode(Mode.ASSIST);
@@ -226,8 +231,8 @@ class CommunityTests extends RegistrationOtpTestSupport {
             autoModeration.processNext();
             var detail = data(request("GET", "/api/staff/community/posts/" + assisted, null, staff), 200);
             assertEquals("CLEAR", detail.path("scan").path("state").asString());
-            assertEquals("PENDING", detail.path("post").path("status").asString());
-            assertTrue(detail.path("history").isEmpty());
+            assertEquals("APPROVED", detail.path("post").path("status").asString());
+            assertEquals(1, detail.path("history").size());
 
             int automated = create("SECOND_HAND");
             autoModeration.processNext();

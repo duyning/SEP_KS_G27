@@ -6,9 +6,10 @@
 
 - Tên nhà trọ, loại phòng đang xem và địa chỉ.
 - Desktop: cột nội dung bên trái; bảng quyết định thuê sticky xuyên suốt bên phải gồm giá/tháng, tình trạng trống, diện tích, sức chứa, cọc, chi phí ban đầu và liên hệ. Nội dung này đứng trước cột chính trong DOM để đọc bằng công nghệ hỗ trợ.
-- Bảng phí điện/nước/Internet/cọc/dịch vụ/gửi xe ngay sau phần đầu; mỗi khoản giữ nguyên đơn vị và ghi chú từ dữ liệu.
+- Các loại phòng nằm ngay dưới bộ ảnh. Mỗi thẻ có ảnh rộng, giá/tháng, diện tích và tình trạng phòng trống. Thẻ của loại phòng hiện tại có nhãn “Đang xem”. Màn hình hẹp hiển thị một cột.
+- Bảng phí điện/nước/Internet/cọc/dịch vụ/gửi xe theo sau các loại phòng; mỗi khoản giữ nguyên đơn vị và ghi chú từ dữ liệu.
 - Tiện nghi dùng icon theo khóa dữ liệu; mô tả, quy định và vị trí theo sau. Trạng thái chưa có đánh giá là một dòng thay vì biểu đồ toàn 0. Bảng phí có nền nhấn và số liệu 16–18px.
-- Phòng hiện tại được ghi riêng trong một hàng; các loại phòng khác có thẻ riêng không lặp thẻ đang xem. Nhà trọ tương tự ở cuối.
+- Nhà trọ tương tự ở cuối.
 
 ## Hành vi và dữ liệu
 

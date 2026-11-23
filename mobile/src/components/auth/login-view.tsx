@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useRef, useState } from 'react';
 import {
@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/context/auth-context';
 import { validateLogin } from '@/services/auth';
+import { resolveSafeRedirect } from '@/services/host-onboarding';
 import { AuthInput } from './auth-input';
 import { InlineError } from './inline-error';
 import { PasswordInput } from './password-input';
@@ -34,8 +35,10 @@ export function LoginView() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const isCompact = height < 720;
+  const params = useLocalSearchParams<{ redirect?: string | string[] }>();
+  const postLoginTarget = resolveSafeRedirect(params.redirect) as '/home' | '/become-host';
 
-  const { user, loading, signIn, signInWithGoogle } = useAuth();
+  const { user, loading, signIn, signInWithGoogle, signInWithGoogleCode } = useAuth();
 
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -48,7 +51,7 @@ export function LoginView() {
   const passwordRef = useRef<TextInputInstance | null>(null);
 
   if (user) {
-    return <Redirect href="/home" />;
+    return <Redirect href={postLoginTarget} />;
   }
 
   const handleUpdate = (field: LoginFields, text: string) => {
@@ -81,7 +84,7 @@ export function LoginView() {
 
     try {
       await signIn(values);
-      router.replace('/home');
+      router.replace(postLoginTarget);
     } catch (error) {
       const failure = error as { message?: string; fields?: LoginErrors };
       setErrors(failure.fields || {});
@@ -101,7 +104,7 @@ export function LoginView() {
     setBusy(true); setAlertMessage(null);
     try {
       await signInWithGoogle(idToken);
-      router.replace('/home');
+      router.replace(postLoginTarget);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Đăng nhập Google không thành công.';
       setAlertMessage(message);
@@ -222,7 +225,7 @@ export function LoginView() {
                 style={styles.submitBtn}
               />
               <View style={styles.googleDivider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>hoặc</Text><View style={styles.dividerLine} /></View>
-              <GoogleSignInButton disabled={isActionDisabled} onCredential={handleGoogleCredential} onError={setAlertMessage} onBusyChange={setGoogleProviderBusy} />
+              <GoogleSignInButton disabled={isActionDisabled} onCredential={handleGoogleCredential} onBrowserCode={signInWithGoogleCode} onError={setAlertMessage} onBusyChange={setGoogleProviderBusy} />
             </View>
 
             {/* Switch to Register */}

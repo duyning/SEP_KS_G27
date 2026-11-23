@@ -38,7 +38,7 @@ test('phone OTP endpoints require a verified server result and preserve Google a
  const bad=service.createAuthApi(async()=>new Response(JSON.stringify({success:true,data:{verified:false}})));
  await assert.rejects(bad.verifyPhoneOtp('0934567812','000000','account-token'),{code:'response'});
 });
-const register = { ...login, fullName: 'Nguyễn An', confirmPassword: 'secret1' };
+const register = { ...login, fullName: 'Nguyễn An', confirmPassword: 'secret1', verificationToken: 'verified-registration' };
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
@@ -54,6 +54,9 @@ function fixture() {
     sendPhoneOtp: async phone => ({phoneNumber:phone,expiresAt:new Date(Date.now()+300000).toISOString(),resendAt:new Date(Date.now()+60000).toISOString()}), verifyPhoneOtp: async () => {},
     login: async () => ({ user, accessToken: 'fresh-token' }),
     googleLogin: async () => ({ user, accessToken: 'google-session-token' }),
+    startGoogleBrowser: async () => ({ id: 'A'.repeat(43), proof: 'B'.repeat(43) }),
+    redeemGoogleBrowser: async () => ({ user, accessToken: 'google-browser-session-token' }),
+    sendRegistrationOtp: async () => {}, verifyRegistrationOtp: async () => 'verified-registration',
     register: async () => ({ user, accessToken: 'fresh-token' }),
     me: async () => user, logout: async () => {},
     updateProfile: async values => ({ ...user, ...values }), changePassword: async () => {},
@@ -63,15 +66,40 @@ function fixture() {
 }
 function response(data: unknown, status = 200) { return new Response(JSON.stringify(data), { status }); }
 
-test('validates exact field keys, six-character passwords and optional Vietnamese mobile number', () => {
+test('browser Google exchange requires HTTPS, sends a one-time proof and saves only the server session', async () => {
+  const { service, env } = load();
+  env.EXPO_PUBLIC_API_URL = 'http://192.168.1.4:8081';
+  const attempt = { id: 'A'.repeat(43), proof: 'B'.repeat(43) };
+  const calls: { url: string; body: unknown }[] = [];
+  const api = service.createAuthApi(async (url, options) => {
+    calls.push({ url: String(url), body: options?.body ? JSON.parse(String(options.body)) : null });
+    const data = String(url).endsWith('/start') ? attempt : { ...user, accessToken: 'browser-jwt' };
+    return response({ success: true, data });
+  });
+  await assert.rejects(api.startGoogleBrowser(), { code: 'config' });
+  assert.equal(calls.length, 0);
+  env.EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN = 'https://login.example.test';
+  const started = await api.startGoogleBrowser();
+  await assert.rejects(api.redeemGoogleBrowser(started, '1234'), { code: 'validation' });
+  const { session, token, api: fixtureApi } = fixture();
+  fixtureApi.redeemGoogleBrowser = api.redeemGoogleBrowser;
+  session.start();
+  await tick();
+  await session.signInWithGoogleCode(started, '01234567');
+  assert.deepEqual(calls, [
+    { url: 'https://login.example.test/api/auth/google/mobile/start', body: null },
+    { url: 'https://login.example.test/api/auth/google/mobile/redeem', body: { ...attempt, code: '01234567' } },
+  ]);
+  assert.equal(token(), 'browser-jwt');
+  assert.equal(session.getSnapshot().user?.userId, user.userId);
+});
+
+test('validates exact field keys, six-character passwords', () => {
   const { service } = load();
   assert.deepEqual(Object.keys(service.validateLogin({ email: '', password: '' })), ['email', 'password']);
   assert.equal(Object.keys(service.validateRegister(register)).length, 0);
-  for (const phoneNumber of ['0912345678', '+84912345678', '']) {
-    assert.equal(service.validateRegister({ ...register, phoneNumber }).phoneNumber, undefined);
-  }
-  const errors = service.validateRegister({ ...register, fullName: '', phoneNumber: '123', confirmPassword: 'wrong', password: '12345' });
-  assert.deepEqual(Object.keys(errors).sort(), ['confirmPassword', 'fullName', 'password', 'phoneNumber']);
+  const errors = service.validateRegister({ ...register, fullName: '', confirmPassword: 'wrong', password: '12345' });
+  assert.deepEqual(Object.keys(errors).sort(), ['confirmPassword', 'fullName', 'password']);
 });
 
 test('requires explicit API configuration and rejects malformed configuration before fetch', async () => {
@@ -93,12 +121,32 @@ test('sends exact endpoint bodies, hardcodes USER, preserves password and omits 
     return response({ success: true, data: { ...user, accessToken: 'token' } });
   });
   await api.login({ ...login, email: ' an@example.test ', password: ' secret ' });
-  await api.register({ ...register, phoneNumber: '', role: 'ADMIN' } as typeof register);
+  await api.register({ ...register, role: 'ADMIN' } as typeof register);
   assert.equal(calls[0].url, 'https://api.example.test/api/auth/login');
   assert.deepEqual(JSON.parse(String(calls[0].options.body)), { email: login.email, password: ' secret ' });
-  assert.deepEqual(JSON.parse(String(calls[1].options.body)), { ...login, fullName: user.fullName, role: 'USER' });
+  assert.deepEqual(JSON.parse(String(calls[1].options.body)), { ...login, fullName: user.fullName, verificationToken: register.verificationToken, role: 'USER' });
   assert.equal(calls[1].options.credentials, 'omit');
   assert.equal(calls[1].options.method, 'POST');
+});
+
+test('sends and verifies the registration OTP against the same email', async () => {
+  const { service } = load();
+  const calls: [string, unknown][] = [];
+  const api = service.createAuthApi(async (url, options) => {
+    const path = new URL(String(url)).pathname;
+    calls.push([path, JSON.parse(String(options?.body))]);
+    const data = path.endsWith('/send')
+      ? { expiresInSeconds: 300, resendAfterSeconds: 60 }
+      : { verificationToken: register.verificationToken, expiresInSeconds: 600 };
+    return response({ success: true, data });
+  });
+
+  await api.sendRegistrationOtp(` ${login.email} `);
+  assert.equal(await api.verifyRegistrationOtp(login.email, '123456'), register.verificationToken);
+  assert.deepEqual(calls, [
+    ['/api/auth/register/otp/send', { identifier: login.email }],
+    ['/api/auth/register/otp/verify', { identifier: login.email, code: '123456' }],
+  ]);
 });
 
 test('rejects invalid envelopes, missing token, malformed user and failed envelopes on HTTP 200', async () => {

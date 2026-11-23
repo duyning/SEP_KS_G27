@@ -1,0 +1,45 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #fafaf7;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+#root .accommodation-map,
+#root .nh-map-stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#root .nh-map-stage {
+  border: 0;
+  border-radius: 0;
+}
+
+#root .leaflet-container,
+#root .nh-google-canvas {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+#root .nh-map-hint,
+#root .nh-nearby-control,
+#root .nh-map-actions button[aria-label="Mở rộng bản đồ"] {
+  display: none;
+}
+
+#root .accommodation-map-status {
+  margin: 0;
+  border-radius: 0;
+}

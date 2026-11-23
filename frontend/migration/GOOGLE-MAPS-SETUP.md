@@ -1,4 +1,4 @@
-# Google Maps: Step 2 of Property Registration
+# Google Maps for public search and property registration
 
 ## Local Configuration
 
@@ -9,7 +9,7 @@ VITE_GOOGLE_MAPS_API_KEY=YOUR_BROWSER_RESTRICTED_KEY
 VITE_GOOGLE_MAPS_MAP_ID=YOUR_MAP_ID
 ```
 
-The file already exists with an empty key. Restart the Vite dev server after filling it. Rebuild the frontend for a deployment: VITE variables are included at build time. Keep API_TARGET settings unchanged if already customized.
+Reuse the browser key if it is already configured. Restart the Vite dev server after changing it. Rebuild the frontend for a deployment because VITE variables are included at build time. Keep API_TARGET settings unchanged if already customized.
 
 In Google Cloud, configure Maps JavaScript API and Geocoding API in the same project, then create a browser key restricted to Websites/HTTP referrers:
 
@@ -19,10 +19,12 @@ In Google Cloud, configure Maps JavaScript API and Geocoding API in the same pro
 
 Restrict API access to Maps JavaScript API and Geocoding API; set suitable quotas/alerts in the project's account. Follow Google's project/billing prerequisites. This change does not enable billing, create a cloud project or purchase services. Browser API keys are visible in the browser by design, so referrer/API restrictions are essential. Do not use an unrestricted server key. Do not send the key through chat or commit it to Git.
 
-The map uses AdvancedMarkerElement. `DEMO_MAP_ID` is the default for local testing; use your own map ID when deploying.
+The public search map and the property location picker use `google-map-react` with the shared SDK loader and browser key. Search renders React price pins at stored coordinates. The picker uses Google's AdvancedMarkerElement for a draggable pin and centers on the form's selected coordinates. `DEMO_MAP_ID` is the default for local testing. Use your own map ID when deploying the picker.
 
 ## Behavior
 
+- Public search (`/map`): price pins use the coordinates returned for the current search results. Several room types at identical coordinates share a pin. Selecting a pin opens room names, prices, addresses and links to details. Selecting a room card centers the map. Invalid or missing coordinates are omitted.
+- Public search and the location picker switch to OpenStreetMap when Google fails to load or rejects authorization. The picker continues to use the coordinates already entered in the form. Setting `VITE_MAP_PROVIDER=osm` forces the OpenStreetMap provider.
 - Empty key: preserve the existing OpenStreetMap map and manual address/coordinate entry. The app explicitly shows that Google Maps has not been configured. No Google requests are made with a blank key.
 - Configured key: Google Maps click/drag updates actual coordinates. Pasting into the new address/link field starts geocoding; typing can use the Find Location button.
 - A single result fills address, recognized business area and coordinates in one update, and moves the pin. Multiple results require choosing an address. Ambiguous/approximate geocodes carry a warning to verify the pin. No claim of guaranteed building-level accuracy is made.
@@ -40,4 +42,4 @@ The map uses AdvancedMarkerElement. `DEMO_MAP_ID` is the default for local testi
 
 ## Verification Limit
 
-No real Google API key was supplied. Live Google geocoding/billing/authorized-domain behavior cannot be confirmed until the project owner adds a working restricted key. Automated UI checks use an isolated SDK double and do not contact Google's APIs or write MySQL registrations.
+Automated UI checks run the installed `google-map-react` package with an isolated Google SDK double. They do not contact Google's APIs or write MySQL registrations. Confirm live authorization on an allowed referrer with the project's browser key.

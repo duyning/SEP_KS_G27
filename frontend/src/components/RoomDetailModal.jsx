@@ -13,6 +13,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import HostDrawer from './HostDrawer.jsx';
+import RoomContractsPanel from './RoomContractsPanel.jsx';
+import RoomTenancyPanel from './RoomTenancyPanel.jsx';
 import { MotionButton } from './motion/MotionUI.jsx';
 import { hostApi } from '../services/host.js';
 import { ROOM_AMENITIES, money } from '../services/room-types.js';
@@ -22,14 +24,17 @@ import { formatFloorHeading, getRoomVisualState } from '../services/host-managem
 export default function RoomDetailModal({
   room,
   canManage = true,
+  initialSection = 'room',
   onClose,
   onEdit,
   onDelete,
   onQuickSaved,
+  onTenancySaved,
   onChangeStatus,
 }) {
   const [quickBusy, setQuickBusy] = useState('');
   const [quickError, setQuickError] = useState('');
+  const [section, setSection] = useState(initialSection);
   const requestRef = useRef(null);
 
   useEffect(() => () => requestRef.current?.abort(), []);
@@ -90,7 +95,7 @@ export default function RoomDetailModal({
             <MotionButton type="button" className="hm-btn" onClick={onClose}>
               Đóng
             </MotionButton>
-            {onDelete && (
+            {section === 'room' && onDelete && (
               <MotionButton
                 type="button"
                 className="hm-btn hm-btn-danger-outline"
@@ -107,7 +112,7 @@ export default function RoomDetailModal({
               </MotionButton>
             )}
           </div>
-          {onEdit && (
+          {section === 'room' && onEdit && (
             <MotionButton
               type="button"
               className="hm-btn hm-btn-primary"
@@ -121,7 +126,18 @@ export default function RoomDetailModal({
         </div>
       }
     >
-      <div className="hm-drawer-sections">
+      <nav className="ht-lease-nav" aria-label="Chi tiết phòng">
+        {[
+          ['room', 'Thông tin phòng'],
+          ['current', 'Hồ sơ đợt thuê'],
+          ['history', 'Lịch sử đợt thuê'],
+        ].map(([key, label]) => <button key={key} type="button" aria-pressed={section === key} onClick={() => setSection(key)}>{label}</button>)}
+      </nav>
+      {section !== 'room' ? <RoomTenancyPanel room={room} canManage={canManage} section={section}
+        onSectionChange={setSection} onRoomSaved={onTenancySaved}
+        onCreateContract={onChangeStatus ? tenancy => onChangeStatus(room, 'OCCUPIED', true, tenancy) : undefined}
+      /> : <div className="hm-drawer-sections">
+        {canManage&&<RoomContractsPanel room={room} onCreate={onChangeStatus?()=>onChangeStatus(room,'OCCUPIED',true):undefined}/>}
         <dl className="hm-drawer-stat-grid is-three">
           <div className="hm-drawer-stat">
             <dt>
@@ -255,7 +271,7 @@ export default function RoomDetailModal({
             <p className="hm-muted">Chưa cập nhật tiện nghi cho loại phòng này.</p>
           )}
         </section>
-      </div>
+      </div>}
     </HostDrawer>
   );
 }

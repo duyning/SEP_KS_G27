@@ -59,18 +59,6 @@ export default function StaffCommunityModerationDetailPage() {
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [noteDecision, setNoteDecision] = useState(null);
   const [decisionNote, setDecisionNote] = useState('');
-  const dialogOpen = isApproveOpen || Boolean(noteDecision);
-  const scanPending = scan?.state === 'QUEUED' || scan?.state === 'RUNNING';
-  const reloadRef = useRef(state.reload);
-  reloadRef.current = state.reload;
-  useEffect(() => {
-    if (!scanPending || dialogOpen || busy) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'visible') reloadRef.current();
-    }, 4500);
-    return () => window.clearInterval(timer);
-  }, [postId, scanPending, dialogOpen, busy]);
-
   if (state.loading) return <p role="status">Đang tải chi tiết bài viết...</p>;
   if (state.error || !currentPost) {
     return (

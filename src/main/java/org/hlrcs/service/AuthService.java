@@ -10,6 +10,7 @@ import org.hlrcs.dto.request.UpdateProfileRequest;
 import org.hlrcs.dto.response.AuthResponse;
 import org.hlrcs.dto.response.UserProfileResponse;
 import org.hlrcs.entity.User;
+import org.hlrcs.security.GoogleUserInfo;
 
 public interface AuthService {
 
@@ -18,6 +19,7 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
 
     AuthResponse loginWithGoogle(GoogleLoginRequest request);
+    AuthResponse loginWithVerifiedGoogleUser(GoogleUserInfo googleUser);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 

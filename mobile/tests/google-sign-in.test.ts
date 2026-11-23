@@ -11,6 +11,7 @@ class AuthError extends Error { code: string; constructor(message: string, code:
 function load(environment = 'bare', platform = 'android', response: unknown = { type: 'success', data: { idToken: 'google-id-token' } }) {
   const module = { exports: {} }; let nativeLoads = 0; let configuration: Record<string, unknown> | undefined; let signouts = 0;
   const env: Record<string, string> = { EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 'web-client.apps.googleusercontent.com' };
+  const urls: string[] = [];
   const sdk = {
     GoogleSignin: { configure: (options: Record<string, unknown>) => { configuration = options; }, hasPlayServices: async () => true, signIn: async () => response, signOut: async () => { signouts++; } },
     isSuccessResponse: (data: { type: string }) => data.type === 'success', isErrorWithCode: () => false, statusCodes: {},
@@ -20,15 +21,30 @@ function load(environment = 'bare', platform = 'android', response: unknown = { 
     require: (name: string) => {
       if (name === 'expo-constants') return { __esModule: true, default: { executionEnvironment: environment, expoConfig: { android: { package: 'com.hlrcs.test' } } }, ExecutionEnvironment: { StoreClient: 'storeClient' } };
       if (name === 'react-native') return { Platform: { OS: platform } };
-      if (name === './auth') return { AuthError };
+      if (name === 'expo-linking') return { openURL: async (url: string) => { urls.push(url); } };
+      if (name === './auth') return {
+        AuthError,
+        googleBrowserOrigin: () => env.EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN || null,
+        authApi: { startGoogleBrowser: async () => ({ id: 'a'.repeat(43), proof: 'b'.repeat(43) }) },
+      };
       nativeLoads++; return sdk;
     },
   });
-  return { api: module.exports as typeof import('../src/services/google-sign-in'), env, nativeLoads: () => nativeLoads, configuration: () => configuration, signouts: () => signouts };
+  return { api: module.exports as typeof import('../src/services/google-sign-in'), env, urls, nativeLoads: () => nativeLoads, configuration: () => configuration, signouts: () => signouts };
 }
 test('Expo Go never imports native Google SDK and returns a clear configuration limitation', async () => {
   const f = load('storeClient');
   assert.equal(f.api.googleSignInAvailability().available, false);
+  await assert.rejects(f.api.requestGoogleIdToken(), { code: 'config' });
+  assert.equal(f.nativeLoads(), 0);
+});
+test('Expo Go opens the browser handoff without sharing the redemption proof or loading the native SDK', async () => {
+  const f = load('storeClient', 'ios');
+  f.env.EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN = 'https://login.example.com';
+  assert.equal(f.api.googleSignInAvailability().mode, 'browser');
+  const attempt = await f.api.startGoogleBrowser(new AbortController().signal);
+  assert.equal(f.urls[0], `https://login.example.com/api/auth/google/mobile/browser#${attempt.id}`);
+  assert.ok(!f.urls[0].includes(attempt.proof));
   await assert.rejects(f.api.requestGoogleIdToken(), { code: 'config' });
   assert.equal(f.nativeLoads(), 0);
 });

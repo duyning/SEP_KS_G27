@@ -5,6 +5,12 @@ dùng worker Python/Playwright nội bộ, nháp trong MySQL, Staff/Admin chọn
 gỡ công khai; public feed riêng tải thêm bằng cursor. Xem tài liệu module để cấu
 hình, đối chiếu API và giới hạn kiểm thử; snapshot bên dưới giữ ngày gốc.
 
+Cập nhật 2026-11-18: [Hợp đồng thuê phòng](RENTAL_CONTRACTS.md) bổ sung tạo hợp
+đồng tùy chọn khi chuyển phòng sang Đang thuê: hai mẫu hệ thống hoặc đọc JPG/PNG/PDF
+bằng Gemini, chủ trọ kiểm tra trước khi lưu. Hợp đồng riêng cho mỗi phòng, lưu cùng
+transaction đổi trạng thái, giữ lịch sử khi trả phòng, API chỉ cho chủ sở hữu.
+Không đưa người thuê/CCCD/điều khoản vào DTO công khai; không tự xác nhận chữ ký.
+
 Ngày đối chiếu: **2026-11-05**. Commit làm mốc: `350dc13`.
 Phạm vi: mã nguồn, JPA mappings, cấu hình, API, frontend và test trong repository;
 không truy vấn database đang chạy và không xác minh triển khai thực tế.
@@ -34,6 +40,7 @@ theo trường hành chính, không lấy tên cơ sở lân cận làm xã, kh�
 khi dữ liệu mâu thuẫn. Chủ trọ vẫn kiểm tra và chỉnh lại gợi ý trước khi gửi.
 
 ## 1. Mục tiêu và nguồn đối chiếu
+
 
 Cập nhật 2026-11-13: [Đơn cấp quyền Chủ trọ và ảnh định danh](HOST_ACCOUNT_IDENTITY.md)
 bỏ các trường kế hoạch khỏi đơn mới, ghi chú tùy chọn; ảnh mặt trước JPG/PNG
@@ -359,3 +366,11 @@ Service và ServiceRegistration thêm `custom_service_areas` tách khu vực t�
 ## Đánh giá và báo cáo dịch vụ (2026-11-18)
 
 Đã nối đánh giá 0–5 sao, ảnh và phản hồi chủ dịch vụ; báo cáo riêng tư, giải trình và staff gỡ công khai qua moderationHidden. Chi tiết API, phân quyền, trạng thái và migration: [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
+
+## 12. AI hỗ trợ report Community (2026-11-22)
+
+Bộ lọc Admin có API `GET /api/admin/community/reports/stats` dành cho Admin ACTIVE: mỗi trạng thái trả số bài riêng biệt và số lượt báo cáo trên toàn bộ dữ liệu, không phụ thuộc trang đang xem. Một bài có thể có báo cáo thuộc nhiều trạng thái nên không cộng các nhóm trạng thái để suy ra tổng số bài. Danh sách và bộ đếm tự đồng bộ qua sự kiện realtime `reports`; trang chi tiết lọc theo lý do kèm số đếm nhưng quyết định vẫn xử lý toàn bộ báo cáo đang mở của bài.
+
+Đã thêm phân tích report dành riêng cho Admin ACTIVE, dùng chung Gemini key/model/transport với kiểm duyệt bài nhưng prompt và hàng đợi riêng. Mỗi report mới có tác vụ; ảnh/video của bài và ảnh bằng chứng được kiểm tra lần lượt, kết quả tổng hợp theo bài. AI không tự giữ/ẩn bài hoặc đóng report. Admin vẫn xử lý một lần cho các report đang mở, kể cả khi AI lỗi/chưa xong. Dấu vân tay snapshot, generation và kiểm tra trạng thái khi hoàn tất loại bỏ kết quả trễ/cũ. Tác vụ/kết quả lưu tại `community_report_analyses`; API `/api/admin/community/reports/{id}/ai` (GET/POST), kết quả/tiến độ cập nhật qua realtime admin hiện có.
+
+Rule, giới hạn và cấu hình: [COMMUNITY_REPORT_AI_RULES.md](COMMUNITY_REPORT_AI_RULES.md). Kiểm thử model dùng giả lập, không phải kết quả đo độ chính xác Gemini thật.

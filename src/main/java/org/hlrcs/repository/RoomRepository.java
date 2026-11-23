@@ -17,12 +17,17 @@ public interface RoomRepository extends JpaRepository<Room,Integer> {
     @Query("select r.roomType.roomTypeId as roomTypeId, count(r) as availableRooms from Room r " +
             "where r.roomType.roomTypeId in :ids and r.property = r.roomType.property and r.publicVisible = true and r.status = 'VACANT' group by r.roomType.roomTypeId")
     List<VacancyCount> countPublicVacancies(@org.springframework.data.repository.query.Param("ids") List<Integer> ids);
+    @EntityGraph(attributePaths={"property","property.owner"})
+    java.util.Optional<Room> findByRoomIdAndProperty_Owner_UserId(Integer roomId, Integer ownerId);
     @EntityGraph(attributePaths={"property","roomType"})
     List<Room> findByProperty_Owner_UserIdOrderByRoomNumberAsc(Integer ownerId);
+    @EntityGraph(attributePaths = {"property", "roomType"})
+    List<Room> findByProperty_PropertyIdAndProperty_Owner_UserIdOrderByRoomNumberAsc(Integer propertyId, Integer ownerId);
     @EntityGraph(attributePaths={"roomType"})
     List<Room> findByRoomType_RoomTypeIdOrderByRoomNumberAsc(Integer typeId);
     boolean existsByRoomType_RoomTypeId(Integer typeId);
-    boolean existsByProperty_PropertyIdAndRoomNumberIgnoreCaseAndRoomIdNot(Integer propertyId,String number,Integer id);
+    @Query("select r.roomNumber from Room r where r.property.propertyId = :propertyId and r.roomId <> :excludedId")
+    List<String> findRoomNumbers(Integer propertyId, Integer excludedId);
     boolean existsByProperty_PropertyIdAndPublicVisibleTrue(Integer propertyId);
     boolean existsByRoomType_RoomTypeIdAndPublicVisibleTrue(Integer roomTypeId);
     long countByProperty_PropertyId(Integer propertyId);

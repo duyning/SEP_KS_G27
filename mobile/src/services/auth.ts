@@ -17,9 +17,9 @@ export interface AuthUser {
 export interface LoginValues { email: string; password: string }
 export interface RegisterValues extends LoginValues {
   fullName: string;
-  phoneNumber?: string;
   confirmPassword: string;
 }
+export interface VerifiedRegisterValues extends RegisterValues { verificationToken: string }
 export type AuthField = 'email' | 'password' | 'fullName' | 'phoneNumber' | 'confirmPassword' | 'organization' | 'preferredArea' | 'avatar' | 'oldPassword' | 'newPassword' | 'confirmNewPassword';
 export type AuthFieldErrors = Partial<Record<AuthField, string>>;
 export class AuthError extends Error {
@@ -42,9 +42,6 @@ export function validateLogin(values: LoginValues): AuthFieldErrors {
 export function validateRegister(values: RegisterValues): AuthFieldErrors {
   const errors = validateLogin(values);
   if (!values.fullName.trim()) errors.fullName = 'Họ và tên không được để trống';
-  if (values.phoneNumber?.trim() && !/^(?:0|\+84)(?:3|5|7|8|9)\d{8}$/.test(values.phoneNumber.trim())) {
-    errors.phoneNumber = 'Số điện thoại Việt Nam không hợp lệ';
-  }
   if (!values.confirmPassword) errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
   else if (values.confirmPassword !== values.password) errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
   return errors;
@@ -126,13 +123,33 @@ function apiBase(): string {
 
 const fields: AuthField[] = ['email', 'password', 'fullName', 'phoneNumber', 'confirmPassword', 'organization', 'preferredArea', 'avatar', 'oldPassword', 'newPassword', 'confirmNewPassword'];
 export interface AuthSessionResponse { user: AuthUser; accessToken: string }
+export interface GoogleBrowserAttempt { id: string; proof: string }
 export interface PhoneChallenge { phoneNumber: string; expiresAt: string; resendAt: string }
+
+export function googleBrowserOrigin(): string | null {
+  const base = (process.env.EXPO_PUBLIC_GOOGLE_BROWSER_ORIGIN?.trim() ||
+    process.env.EXPO_PUBLIC_API_URL?.trim())?.replace(/\/$/, '');
+  // The browser exchange must use an explicit HTTPS origin with no path or credentials.
+  return base && /^https:\/\/[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(base) ? base : null;
+}
+
+const googleAttemptToken = /^[A-Za-z0-9_-]{43}$/;
+function googleBrowserBase(): string {
+  const base = googleBrowserOrigin();
+  if (!base) throw new AuthError('Đăng nhập Google trên Expo Go cần địa chỉ HTTPS của HL_RCS.', 'config');
+  return base;
+}
+
 export interface AuthApi {
   sendPhoneOtp(phone: string, token: string, signal?: AbortSignal): Promise<PhoneChallenge>;
   verifyPhoneOtp(phone: string, code: string, token: string, signal?: AbortSignal): Promise<void>;
   login(values: LoginValues, signal?: AbortSignal): Promise<AuthSessionResponse>;
   googleLogin(idToken: string, signal?: AbortSignal): Promise<AuthSessionResponse>;
-  register(values: RegisterValues, signal?: AbortSignal): Promise<AuthSessionResponse>;
+  startGoogleBrowser(signal?: AbortSignal): Promise<GoogleBrowserAttempt>;
+  redeemGoogleBrowser(attempt: GoogleBrowserAttempt, code: string, signal?: AbortSignal): Promise<AuthSessionResponse>;
+  sendRegistrationOtp(email: string, signal?: AbortSignal): Promise<void>;
+  verifyRegistrationOtp(email: string, code: string, signal?: AbortSignal): Promise<string>;
+  register(values: VerifiedRegisterValues, signal?: AbortSignal): Promise<AuthSessionResponse>;
   me(token: string, signal?: AbortSignal): Promise<AuthUser>;
   updateProfile(values: ProfileValues, token: string, signal?: AbortSignal): Promise<AuthUser>;
   changePassword(values: PasswordValues, token: string, signal?: AbortSignal): Promise<void>;
@@ -140,8 +157,8 @@ export interface AuthApi {
 }
 
 export function createAuthApi(fetcher: typeof fetch = (...args) => fetch(...args), timeoutMs = 15000): AuthApi {
-  async function request(path: string, method: string, body?: unknown, token?: string, signal?: AbortSignal): Promise<unknown> {
-    const base = apiBase();
+  async function request(path: string, method: string, body?: unknown, token?: string, signal?: AbortSignal, origin?: string): Promise<unknown> {
+    const base = origin ?? apiBase();
     const controller = new AbortController();
     let timedOut = false;
     const abort = () => controller.abort();
@@ -152,6 +169,7 @@ export function createAuthApi(fetcher: typeof fetch = (...args) => fetch(...args
       if (controller.signal.aborted) throw new AuthError('Yêu cầu đã bị hủy.', 'cancelled');
       const response = await fetcher(`${base}/api/auth${path}`, {
         method, signal: controller.signal, credentials: 'omit',
+        ...(origin ? { redirect: 'error' as const } : {}),
         headers: { Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
@@ -220,15 +238,35 @@ export function createAuthApi(fetcher: typeof fetch = (...args) => fetch(...args
       }
       return parseSession(await request('/google', 'POST', { idToken }, undefined, signal));
     },
+    async startGoogleBrowser(signal) {
+      const data = await request('/google/mobile/start', 'POST', undefined, undefined, signal, googleBrowserBase());
+      if (!record(data) || typeof data.id !== 'string' || typeof data.proof !== 'string' ||
+        !googleAttemptToken.test(data.id) || !googleAttemptToken.test(data.proof)) throw invalidResponse();
+      return { id: data.id, proof: data.proof };
+    },
+    async redeemGoogleBrowser(attempt, code, signal) {
+      if (!/^[0-9]{8}$/.test(code)) throw new AuthError('Nhập đủ 8 chữ số của mã xác nhận.', 'validation');
+      return parseSession(await request('/google/mobile/redeem', 'POST',
+        { id: attempt.id, proof: attempt.proof, code }, undefined, signal, googleBrowserBase()));
+    },
     async login(values, signal) {
       validate(validateLogin(values));
       return parseSession(await request('/login', 'POST', { email: values.email.trim(), password: values.password }, undefined, signal));
+    },
+    async sendRegistrationOtp(email, signal) {
+      const data = await request('/register/otp/send', 'POST', { identifier: email.trim() }, undefined, signal);
+      if (!record(data) || !Number.isInteger(data.expiresInSeconds)) throw invalidResponse();
+    },
+    async verifyRegistrationOtp(email, code, signal) {
+      const data = await request('/register/otp/verify', 'POST', { identifier: email.trim(), code }, undefined, signal);
+      if (!record(data) || typeof data.verificationToken !== 'string' || !data.verificationToken.trim()) throw invalidResponse();
+      return data.verificationToken;
     },
     async register(values, signal) {
       validate(validateRegister(values));
       return parseSession(await request('/register', 'POST', {
         fullName: values.fullName.trim(), email: values.email.trim(), password: values.password,
-        ...(values.phoneNumber?.trim() ? { phoneNumber: values.phoneNumber.trim() } : {}), role: 'USER',
+        verificationToken: values.verificationToken, role: 'USER',
       }, undefined, signal));
     },
     async me(token, signal) { return parseUser(await request('/me', 'GET', undefined, token, signal)); },
@@ -343,7 +381,9 @@ export class AuthSession {
   }
   signIn = (values: LoginValues): Promise<void> => this.authenticate(signal => this.api.login(values, signal));
   signInWithGoogle = (idToken: string): Promise<void> => this.authenticate(signal => this.api.googleLogin(idToken, signal));
-  signUp = (values: RegisterValues): Promise<void> => this.authenticate(signal => this.api.register(values, signal));
+  signInWithGoogleCode = (attempt: GoogleBrowserAttempt, code: string): Promise<void> =>
+    this.authenticate(signal => this.api.redeemGoogleBrowser(attempt, code, signal));
+  signUp = (values: VerifiedRegisterValues): Promise<void> => this.authenticate(signal => this.api.register(values, signal));
   sendPhoneOtp = async (phone: string): Promise<PhoneChallenge> => {
     let result: PhoneChallenge | undefined;
     await this.submit(async (signal,id)=>{

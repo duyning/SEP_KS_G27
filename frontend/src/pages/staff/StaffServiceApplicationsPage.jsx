@@ -24,7 +24,7 @@ const reviewChoices = [
   { value: 'SUPPLEMENT', label: 'Yêu cầu bổ sung', description: 'Trả hồ sơ để người đăng ký hoàn thiện.' },
   { value: 'REJECT', label: 'Từ chối hồ sơ', description: 'Không chấp nhận hồ sơ, kèm lý do.' },
 ];
-const statusBadge = value => <StatusBadge status={value} label={status[value] || value} />;
+const statusBadge = value => <StatusBadge status={value} tone={value === 'NEEDS_SUPPLEMENT' ? 'supplement' : undefined} label={status[value] || value} />;
 const labels = { FIXED: 'Giá cố định', FROM: 'Giá từ', NEGOTIABLE: 'Thỏa thuận', CREATE: 'Thêm dịch vụ', UPDATE: 'Cập nhật dịch vụ', DELETE: 'Xóa dịch vụ', CANCELLED: 'Đã hủy hồ sơ', CHANGE_REQUESTED: 'Yêu cầu thay đổi', RESUBMITTED: 'Đã nộp lại hồ sơ', APPROVED: 'Đã duyệt', REJECTED: 'Đã từ chối', REQUESTED_SUPPLEMENT: 'Yêu cầu bổ sung', APPROVE: 'Duyệt', REJECT: 'Từ chối', ACTIVE: 'Đang công khai', DELETED: 'Đã ngừng công khai', INACTIVE: 'Ngừng hoạt động' };
 const textValue = value => labels[value] || value || '—';
 const money = value => value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} VNĐ`;

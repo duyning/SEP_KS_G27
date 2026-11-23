@@ -86,8 +86,8 @@ class ViewingFlowTests {
 
     @Test
     void memberSearchSortAndSummaryStayScopedToTheRequesterAcrossFilters() throws Exception {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
-                .roomNumber("S101").floor("1").status("VACANT").publicVisible(true).build());
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
+                .roomNumber("S101").floor("1").status("VACANT").build());
         int first = data(create(renter, payload(appointment.plusHours(3))).andExpect(status().isOk())).path("bookingId").asInt();
         decide(host, first, "APPROVED", "").andExpect(status().isOk());
         int second = data(create(renter, payload(appointment.plusHours(2))).andExpect(status().isOk())).path("bookingId").asInt();

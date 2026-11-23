@@ -165,8 +165,10 @@ class AccommodationTests {
         var registration = eligible.getProperty().getRegistration();
         registration.setRegistrationDetails("{\"amenities\":[\"laundry\"]}");
         registrations.save(registration);
-        var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).stream().filter(r->"VACANT".equals(r.getStatus())).findFirst().orElseThrow();
-        var partialUnit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(partial.getRoomTypeId()).stream().filter(r->"VACANT".equals(r.getStatus())).findFirst().orElseThrow();
+        var unit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(eligible.getRoomTypeId()).stream()
+                .filter(room -> "VACANT".equals(room.getStatus())).findFirst().orElseThrow();
+        var partialUnit = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(partial.getRoomTypeId()).stream()
+                .filter(room -> "VACANT".equals(room.getStatus())).findFirst().orElseThrow();
         var member = users.save(User.builder().email(prefix + "-ai@test.local").passwordHash("unused")
                 .role(UserRole.USER).status(UserStatus.ACTIVE).build());
         var token = jwt.generateTokenFromUser(member);

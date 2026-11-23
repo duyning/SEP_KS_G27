@@ -29,6 +29,11 @@ public class HostOnboardingController {
     }
     @PostMapping("/location/resolve")
     public ApiResponse<PropertyLocationService.Location> location(@Valid @RequestBody PropertyRegistrationController.LocationInput input){return ApiResponse.success(locations.lookup(input.input()));}
+    @PostMapping("/location/resolve-mobile")
+    public ApiResponse<PropertyLocationService.MobileLookup> resolveMobileLocation(
+            @Valid @RequestBody PropertyRegistrationController.LocationInput input) {
+        return ApiResponse.success(locations.lookupMobile(input.input()));
+    }
     @GetMapping("/{id}/edit") public ApiResponse<PropertyEditService.Edit> edit(@PathVariable Integer id){onboarding.requireOwned(id);return ApiResponse.success(edits.edit(id));}
     @PostMapping(value="/{id}/resubmit",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PropertyRegistrationResponse> resubmit(@PathVariable Integer id,@Valid @RequestPart PropertyResubmissionRequest edit,

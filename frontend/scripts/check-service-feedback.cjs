@@ -55,6 +55,9 @@ async function main() {
     else if (p === '/api/services') data = [listing];
     else if (p === '/api/services/categories') data = [{ categoryId: 1, name: listing.categoryName }];
     else if (['/api/service-registrations/mine', '/api/service-registrations/services'].includes(p)) data = actor === 'owner' ? [registration] : [];
+    else if (p === '/api/favorites/state') data = { items: [] };
+    else if (p === '/api/host-applications') data = { content: [], totalElements: 0, totalPages: 0 };
+    else if (p === '/api/staff/dashboard') data = { queue: [], activities: [], pendingVerifications: 0, pendingReports: 0, pendingSupport: 0, pendingCommunity: 0, activeProperties: 0, processedTasks: 0 };
     else throw new Error(`Unexpected API ${req.method()} ${p}`);
     await route.fulfill({ status: 200, json: { success: true, data } });
   });
@@ -62,7 +65,7 @@ async function main() {
   try {
     await page.goto(base + '/services/detail?id=1');
     await page.getByRole('heading', { name: 'Chia sẻ trải nghiệm của bạn' }).waitFor();
-    await page.locator('input[name="rating-score"][value="0"]').check();
+    await page.locator('.svc-ratings-zero').click();
     await page.getByLabel('Nội dung đánh giá').fill('Không đến đúng hẹn, tôi mong nhận được lời giải thích.');
     await page.getByLabel('Ảnh đính kèm (không bắt buộc)').setInputFiles({ name: 'review.png', mimeType: 'image/png', buffer: png });
     await page.getByRole('button', { name: 'Gửi đánh giá', exact: true }).click();
@@ -96,7 +99,7 @@ async function main() {
     await page.getByRole('button', { name: 'Gửi giải trình cho nhân viên' }).click();
     await page.getByText('Đã lưu và gửi kết quả xử lý.').waitFor();
     actor = 'staff'; await page.goto(base + '/staff/service-complaints?id=1');
-    await page.getByLabel('Quyết định').selectOption('REMOVE');
+    await page.getByRole('radio', { name: /Gỡ dịch vụ khỏi công khai/ }).check();
     await page.getByLabel('Lý do xử lý').fill('Đã xác minh hành vi vi phạm, cần gỡ dịch vụ khỏi công khai.');
     assert.equal(await page.getByRole('button', { name: 'Lưu quyết định' }).isDisabled(), true);
     await page.getByRole('checkbox').check();

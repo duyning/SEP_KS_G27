@@ -1,3 +1,4 @@
+import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
 import HostIdentityImage from '../components/HostIdentityImage.jsx';
 import HostAccountApplicationForm from '../components/HostAccountApplicationForm.jsx';
 import { useState } from 'react';
@@ -338,7 +339,7 @@ export default function BecomeHostPrototype({
               <li className="bm-menu-account">{account}</li>
             </ul>
 
-            <div className="nav-actions">{account}</div>
+            <div className="nav-actions"><CommunityNotificationBell />{account}</div>
 
             <MotionButton
               className="mobile-toggle"

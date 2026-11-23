@@ -1,7 +1,7 @@
 /* =============================================================================
    HL_RCS | ROOM HOST PORTAL - NOTIFICATIONS CENTER CSS (host-notifications.css)
    Module: Trung tâm thông báo Chủ trọ (Notification Center)
-   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e), Emerald (#10b981), Amber (#d97706)
+   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488), Emerald (#10b981), Amber (#d97706)
    ============================================================================= */
 
 :root {
@@ -9,7 +9,7 @@
   --hn-slate-dark: #1e293b;
   --hn-slate-muted: #64748b;
   --hn-slate-subtle: #94a3b8;
-  --hn-teal: #0f766e;
+  --hn-teal: #0d9488;
   --hn-teal-hover: #0f766e;
   --hn-teal-light: #f0fdfa;
   --hn-teal-border: #99f6e4;

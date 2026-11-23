@@ -40,8 +40,8 @@ class AvailabilityConfirmationTests {
         var registration=registrations.save(PropertyRegistration.builder().user(owner).name("Availability test").status(RegistrationStatus.APPROVED).build());
         var property=properties.save(Property.builder().owner(owner).registration(registration).name("Availability test").address("Tân Xã").status("ACTIVE").build());
         type=types.save(RoomType.builder().property(property).roomType("Studio").price(BigDecimal.valueOf(2000000)).areaSqm(25F).build());
-        vacant=rooms.save(Room.builder().property(property).roomType(type).roomNumber("101").floor("1").status("VACANT").publicVisible(true).build());
-        occupied=rooms.save(Room.builder().property(property).roomType(type).roomNumber("102").floor("1").status("OCCUPIED").publicVisible(true).build());
+        vacant=rooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("101").floor("1").status("VACANT").build());
+        occupied=rooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("102").floor("1").status("OCCUPIED").build());
     }
     User user(UserRole role) { return users.save(User.builder().email(UUID.randomUUID()+"@test.local").passwordHash("unused").role(role).status(UserStatus.ACTIVE).build()); }
     HttpResponse<String> call(String method,String path,User actor,String body) throws Exception {
@@ -106,14 +106,14 @@ class AvailabilityConfirmationTests {
         String body="{\"roomTypeId\":"+type.getRoomTypeId()+",\"roomNumber\":\"101\",\"floor\":\"1\",\"status\":\"VACANT\",\"customPrice\":2100000}";
         assertEquals(200,call("PUT","/api/host/rooms/"+vacant.getRoomId(),owner,body).statusCode());
         assertEquals(stamp,types.findById(type.getRoomTypeId()).orElseThrow().getAvailabilityConfirmedAt());
-        assertEquals(200,call("PUT","/api/host/rooms/"+vacant.getRoomId(),owner,body.replace("VACANT","OCCUPIED").replace("}",",\"leaseStartDate\":\"2026-11-01\",\"leaseEndDate\":\"2027-11-01\"}")).statusCode());
+        assertEquals(200,call("PUT","/api/host/rooms/"+vacant.getRoomId(),owner,body.replace("VACANT","OCCUPIED").replace("\"customPrice\"","\"leaseStartDate\":\"2026-11-01\",\"leaseEndDate\":\"2026-12-01\",\"customPrice\"")).statusCode());
         assertEquals("UNCONFIRMED",publicDetail().path("availabilityConfirmationStatus").asString());
         assertNull(types.findById(type.getRoomTypeId()).orElseThrow().getAvailabilityConfirmedAt());
         assertNotNull(rooms.findById(vacant.getRoomId()).orElseThrow().getConfirmedAt());
     }
     @Test void movingAndDeletingRoomsInvalidatesAffectedTypes() throws Exception {
         var other=types.save(RoomType.builder().property(type.getProperty()).roomType("Other studio").price(BigDecimal.valueOf(2500000)).areaSqm(30F).build());
-        rooms.save(Room.builder().property(type.getProperty()).roomType(other).roomNumber("201").floor("2").status("VACANT").publicVisible(true).build());
+        rooms.save(Room.builder().property(type.getProperty()).roomType(other).roomNumber("201").floor("2").status("VACANT").build());
         assertEquals(200,call("POST",confirmation(),owner,null).statusCode());
         assertEquals(200,call("POST","/api/host/room-types/"+other.getRoomTypeId()+"/availability-confirmation",owner,null).statusCode());
         String body="{\"roomTypeId\":"+other.getRoomTypeId()+",\"roomNumber\":\"101\",\"floor\":\"1\",\"status\":\"VACANT\"}";

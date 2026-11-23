@@ -1,16 +1,19 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useId, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {Activity, ArrowRight, ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Clock3, FolderOpen, LoaderCircle, LockKeyhole, RefreshCw, Search, ShieldCheck, Users, UserRound, UserRoundCheck, AlertCircle} from 'lucide-react';
-import {MotionButton} from '../../components/motion/MotionUI.jsx';
+import {MotionButton, MotionDialog} from '../../components/motion/MotionUI.jsx';
+import {useToast} from '../../components/PortalUI.jsx';
+import AdminServiceSummary from '../../components/AdminServiceSummary.jsx';
 import {useAuth} from '../../context/AuthContext.jsx';
 import {adminDashboardViews, getAdminDashboardView} from '../../routing/admin-navigation.js';
 import {roleLabels} from '../../routing/screens.js';
 import {adminApi} from '../../services/admin.js';
+import useCommunityLive from '../../components/useCommunityLive.js';
 import '../../styles/admin-dashboard.css';
 
-const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Ngừng hoạt động'};
-const actions={APPROVED:'Phê duyệt',REJECTED:'Từ chối',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',REQUEST_SUPPLEMENT:'Yêu cầu bổ sung',RESOLVED:'Đã xử lý',COMPLETED:'Hoàn tất',DISMISSED:'Bỏ qua báo cáo',HIDDEN:'Ẩn bài viết'};
-const types={PROPERTY_REGISTRATION:'Hồ sơ nhà trọ',SERVICE_REGISTRATION:'Hồ sơ dịch vụ',HOST_APPLICATION:'Đăng ký chủ trọ',COMMUNITY_POST:'Bài đăng cộng đồng',COMMUNITY_POST_REPORT:'Báo cáo cộng đồng'};
+const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Đã vô hiệu hóa'};
+const actions={APPROVED:'Phê duyệt',REJECTED:'Từ chối',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',REQUEST_SUPPLEMENT:'Yêu cầu bổ sung',RESOLVED:'Đã xử lý',COMPLETED:'Hoàn tất',DISMISSED:'Bỏ qua báo cáo',HIDDEN:'Ẩn bài viết',ACTIVATED:'Kích hoạt',DEACTIVATED:'Vô hiệu hóa'};
+const types={PROPERTY_REGISTRATION:'Hồ sơ nhà trọ',SERVICE_REGISTRATION:'Hồ sơ dịch vụ',HOST_APPLICATION:'Đăng ký chủ trọ',COMMUNITY_POST:'Bài đăng cộng đồng',COMMUNITY_POST_REPORT:'Báo cáo cộng đồng',USER_ACCOUNT:'Tài khoản'};
 const date=value=>value&&!Number.isNaN(Date.parse(value))?new Date(value).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Chưa có thời gian';
 const count=value=>value==null?'—':value.toLocaleString('vi-VN');
 function Status({value}){return <span className={`ad-status ${value?.toLowerCase()}`}><span/>{statuses[value]||value||'Chưa cập nhật'}</span>;}
@@ -24,21 +27,114 @@ function PanelTitle({icon:Icon,title,subtitle,to,link='Xem tất cả'}){return 
 function AssignmentTable({rows,compact=false}){return <div className="ad-table-wrap"><table className={`ad-table ad-assignments${compact?' compact':''}`}><thead><tr><th>Hồ sơ nhà trọ</th><th>Staff phụ trách</th><th>Trạng thái</th><th><span className="ad-sr-only">Chi tiết</span></th></tr></thead><tbody>{rows.map(row=><tr key={row.registrationId}><td data-label="Hồ sơ"><strong>{row.name}</strong><small>HS-{row.registrationId} · {row.ownerName||'Chưa có tên người nộp'}</small></td><td data-label="Phụ trách">{row.assignedStaffId?<><span className="ad-assignee"><UserRound size={14}/>{row.assignedStaffName||`Staff #${row.assignedStaffId}`}</span>{row.assignedStaffStatus!=='ACTIVE'&&<small className="ad-warning">Tài khoản không hoạt động</small>}</>:<span className="ad-unassigned">Chưa phân công</span>}</td><td data-label="Trạng thái"><Status value={row.status}/></td><td><Link className="ad-row-link" to={`/staff/verifications/detail?id=${row.registrationId}`} aria-label={`Xem hồ sơ HS-${row.registrationId}`}><span>Xem hồ sơ</span><ArrowRight size={15}/></Link></td></tr>)}</tbody></table></div>;}
 function ActivityList({rows}){return <ol className="ad-activity">{rows.map(row=><li key={row.logId}><span className={`ad-event-icon ${row.action==='REJECTED'?'rose':''}`}>{row.action==='APPROVED'?<CheckCircle2 size={17}/>:<Activity size={17}/>}</span><div><div className="ad-event-line"><strong>{row.actor||'Chưa lưu người xử lý'}</strong><time>{date(row.createdAt)}</time></div><p><span>{actions[row.action]||row.action}</span> · {types[row.type]||row.type} #{row.targetId}</p>{row.note&&<blockquote>{row.note}</blockquote>}</div></li>)}</ol>;}
 
+function AccountTable({rows, currentUserId, onStatusChange}) {
+ return <div className="ad-table-wrap">
+  <table className="ad-table ad-accounts">
+   <thead><tr><th>Tài khoản</th><th>Liên hệ</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tham gia</th></tr></thead>
+   <tbody>{rows.map(item => {
+    const nextStatus = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const action = nextStatus === 'INACTIVE' ? actions.DEACTIVATED : actions.ACTIVATED;
+    return <tr key={item.userId}>
+     <td data-label="Tài khoản"><div className="ad-account-person">
+      <span className="ad-avatar">{(item.fullName || item.email).charAt(0).toUpperCase()}</span>
+      <div><strong>{item.fullName || 'Chưa có tên'}</strong><small>TK-{item.userId}</small></div>
+     </div></td>
+     <td data-label="Liên hệ"><span>{item.email}</span><small>{item.phoneNumber || 'Chưa có số điện thoại'}</small></td>
+     <td data-label="Vai trò"><span className={`ad-role-label ${item.role.toLowerCase()}`}>{roleLabels[item.role] || item.role}</span></td>
+     <td data-label="Trạng thái">
+      <Status value={item.status}/>
+      {item.userId === currentUserId ? <small>Tài khoản của bạn</small> : <div className="ad-account-action">
+       <MotionButton type="button" className={`ad-status-button ${nextStatus === 'INACTIVE' ? 'is-danger' : ''}`}
+        aria-label={`${action} tài khoản ${item.email}`}
+        onClick={() => onStatusChange({account: item, status: nextStatus})}>
+        {action}
+       </MotionButton>
+      </div>}
+     </td>
+     <td data-label="Tham gia"><time>{date(item.createdAt)}</time></td>
+    </tr>;
+   })}</tbody>
+  </table>
+ </div>;
+}
+
+function AccountStatusDialog({change, error, busy, onCancel, onConfirm}) {
+ const titleId = useId(), descriptionId = useId();
+ const deactivating = change.status === 'INACTIVE';
+ const action = deactivating ? actions.DEACTIVATED : actions.ACTIVATED;
+ function containFocus(event) {
+  if (event.key !== 'Tab') return;
+  const [first, last] = event.currentTarget.querySelectorAll('button');
+  if (document.activeElement !== (event.shiftKey ? first : last)) return;
+  event.preventDefault();
+  (event.shiftKey ? last : first).focus();
+ }
+ return <MotionDialog className="portal-modal ad-account-dialog" aria-labelledby={titleId}
+  aria-describedby={descriptionId} aria-busy={busy} onKeyDown={containFocus}
+  onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
+  <header><h2 id={titleId}>{action} tài khoản</h2></header>
+  <p id={descriptionId}>
+   <strong>{change.account.fullName || change.account.email}</strong>
+   {change.account.fullName && <span> · {change.account.email}</span>}
+   <br/>{deactivating
+    ? 'Tài khoản sẽ mất quyền truy cập. Các phiên đăng nhập hiện tại sẽ hết hiệu lực.'
+    : 'Người dùng có thể đăng nhập lại sau khi tài khoản được kích hoạt.'}
+  </p>
+  {error && <p className="ad-account-error" role="alert">{error}</p>}
+  <div className="portal-actions ad-account-dialog-actions">
+   <MotionButton type="button" className="p-button" aria-disabled={busy} onClick={() => { if (!busy) onCancel(); }}>Hủy</MotionButton>
+   <MotionButton type="button" className={`p-button ${deactivating ? 'ad-danger-confirm' : 'primary'}`}
+    aria-disabled={busy} onClick={onConfirm}>{busy ? 'Đang lưu…' : action}</MotionButton>
+  </div>
+ </MotionDialog>;
+}
+
 export default function AdminDashboardPage(){
  const {user}=useAuth();const [params,setParams]=useSearchParams();
+ const notify = useToast();
  const view=getAdminDashboardView(params);
  const q=params.get('q')||'',role=params.get('role')||'ALL',unassigned=params.get('unassigned')==='true',page=Math.max(0,parseInt(params.get('page'),10)||0);
  const [revision,setRevision]=useState(0),[query,setQuery]=useState(q);
+ const [overviewRevision, setOverviewRevision] = useState(0);
+ const [statusChange, setStatusChange] = useState(null);
+ const [statusError, setStatusError] = useState('');
+ const [savingStatus, setSavingStatus] = useState(false);
+ useCommunityLive('posts,reports',()=>{if(['overview','activity'].includes(view))setRevision(value=>value+1);});
  const [overview,setOverview]=useState({loading:true,data:null,error:''}),[list,setList]=useState({loading:true,data:null,error:''});
  useEffect(()=>{const timer=setTimeout(()=>setQuery(q),250);return()=>clearTimeout(timer);},[q]);
- useEffect(()=>{const controller=new AbortController();setOverview({loading:true,data:null,error:''});adminApi.dashboard(controller.signal).then(data=>{if(!controller.signal.aborted)setOverview({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setOverview({loading:false,data:null,error:error.message});});return()=>controller.abort();},[user.userId,revision]);
+ useEffect(()=>{const controller=new AbortController();setOverview({loading:true,data:null,error:''});adminApi.dashboard(controller.signal).then(data=>{if(!controller.signal.aborted)setOverview({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setOverview({loading:false,data:null,error:error.message});});return()=>controller.abort();},[user.userId,revision,overviewRevision]);
  useEffect(()=>{if(view==='overview')return;const controller=new AbortController();setList({loading:true,data:null,error:''});adminApi.list(view,{q:query,role,unassigned:String(unassigned),page:String(page),size:'8'},controller.signal).then(data=>{if(!controller.signal.aborted)setList({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setList({loading:false,data:null,error:error.message});});return()=>controller.abort();},[view,query,role,unassigned,page,user.userId,revision]);
  function change(key,value){const next=new URLSearchParams(params);if(value===''||value==='ALL'||value===false)next.delete(key);else next.set(key,String(value));if(key!=='page')next.delete('page');setParams(next,{replace:key==='q'});}
+ function openStatusChange(change) {
+  setStatusError('');
+  setStatusChange(change);
+ }
+ async function saveAccountStatus() {
+  if (!statusChange || savingStatus) return;
+  setSavingStatus(true);
+  setStatusError('');
+  try {
+   const updated = await adminApi.changeAccountStatus(statusChange.account.userId, statusChange.status);
+   setList(current => {
+    if (!current.data || current.data !== list.data) return current;
+    const content = current.data.content.map(row => row.userId === updated.userId ? updated : row);
+    return {...current, data: {...current.data, content}};
+   });
+   setStatusChange(null);
+   setOverviewRevision(value => value + 1);
+   notify(`Đã ${updated.status === 'ACTIVE' ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản ${updated.email}.`);
+  } catch (error) {
+   setStatusError(error.message);
+  } finally {
+   setSavingStatus(false);
+  }
+ }
  const refresh=()=>setRevision(v=>v+1),data=overview.data;
  const pageData=list.data,waiting=list.loading||q!==query;
  return <div className="ad-page">
   <section className="ad-hero"><div><span className="ad-eyebrow">HL_RCS · ADMIN CONSOLE</span><h1>Quản trị hệ thống</h1><p>Xin chào, <strong>{user.fullName||user.email}</strong>. Theo dõi dữ liệu và giám sát hoạt động của nền tảng.</p><span className="ad-hero-caption"><LockKeyhole size={13}/>Khu vực dành cho Quản trị viên</span></div><div className="ad-hero-side"><ShieldCheck size={37} strokeWidth={1.5}/><span>TỔNG QUAN VẬN HÀNH</span><small>{data?`Cập nhật: ${date(data.fetchedAt)}`:'Đang kết nối dữ liệu hệ thống'}</small><MotionButton className="ad-button ad-hero-refresh" disabled={overview.loading} onClick={refresh}><RefreshCw size={14} className={overview.loading?'spin':''}/>Làm mới dữ liệu</MotionButton></div></section>
   {view==='overview'?<>
+   <AdminServiceSummary />
    {overview.error&&<LoadState state={overview} retry={refresh}/>}
    <div className="ad-metrics">{[
     ['Tài khoản hệ thống',data?.totalAccounts,data?`${count(data.activeAccounts)} tài khoản đang hoạt động`:'Đang lấy số liệu',Users,'teal','/admin?view=accounts'],
@@ -56,10 +152,12 @@ export default function AdminDashboardPage(){
   </>:<section className="ad-panel ad-list-panel"><PanelTitle icon={adminDashboardViews[view][2]} title={view==='accounts'?'Tài khoản hệ thống':view==='assignment'?'Giám sát phân công xác minh':'Nhật ký kiểm duyệt'} subtitle={view==='accounts'?'Tra cứu tài khoản, vai trò và trạng thái hoạt động.':view==='assignment'?'Theo dõi hồ sơ và người phụ trách hiện tại; không thay Staff ra quyết định.':'Đối chiếu người xử lý, thời điểm, đối tượng và kết quả kiểm duyệt.'}/>
    <div className="ad-filterbar">{view!=='activity'&&<label className="ad-search"><Search size={17}/><input aria-label="Tìm dữ liệu quản trị" placeholder={view==='accounts'?'Tìm họ tên, email, số điện thoại...':'Tìm tên nhà trọ hoặc người nộp hồ sơ...'} value={q} onChange={e=>change('q',e.target.value)}/></label>}{view==='accounts'&&<select aria-label="Lọc vai trò" value={role} onChange={e=>change('role',e.target.value)}><option value="ALL">Tất cả vai trò</option>{Object.entries(roleLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>}{view==='assignment'&&<label className="ad-check"><input type="checkbox" checked={unassigned} onChange={e=>change('unassigned',e.target.checked)}/>Chờ duyệt, chưa phân công</label>}<span className="ad-result-count" aria-live="polite">{waiting?'Đang cập nhật...':pageData?`${count(pageData.totalElements)} kết quả`:'Chưa tải dữ liệu'}</span></div>
    <LoadState state={{...list,loading:waiting}} retry={refresh} empty={q||role!=='ALL'||unassigned?'Không có kết quả phù hợp':'Chưa có dữ liệu'}>
-    {view==='assignment'?<AssignmentTable rows={pageData?.content||[]}/>:view==='activity'?<ActivityList rows={pageData?.content||[]}/>:<div className="ad-table-wrap"><table className="ad-table ad-accounts"><thead><tr><th>Tài khoản</th><th>Liên hệ</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tham gia</th></tr></thead><tbody>{pageData?.content.map(item=><tr key={item.userId}><td data-label="Tài khoản"><div className="ad-account-person"><span className="ad-avatar">{(item.fullName||item.email).charAt(0).toUpperCase()}</span><div><strong>{item.fullName||'Chưa có tên'}</strong><small>TK-{item.userId}</small></div></div></td><td data-label="Liên hệ"><span>{item.email}</span><small>{item.phoneNumber||'Chưa có số điện thoại'}</small></td><td data-label="Vai trò"><span className={`ad-role-label ${item.role.toLowerCase()}`}>{roleLabels[item.role]||item.role}</span></td><td data-label="Trạng thái"><Status value={item.status}/></td><td data-label="Tham gia"><time>{date(item.createdAt)}</time></td></tr>)}</tbody></table></div>}
+    {view==='assignment'?<AssignmentTable rows={pageData?.content||[]}/>:view==='activity'?<ActivityList rows={pageData?.content||[]}/>:<AccountTable rows={pageData?.content || []} currentUserId={user.userId} onStatusChange={openStatusChange}/>}
    </LoadState>
    {!waiting&&pageData&&!list.error&&<footer className="ad-pagination"><span>{pageData.totalElements?`Trang ${pageData.number+1} / ${Math.max(1,pageData.totalPages)} · ${count(pageData.totalElements)} bản ghi`:'0 bản ghi'}</span><div><MotionButton aria-label="Trang trước" disabled={page===0} onClick={()=>change('page',page-1)}><ChevronLeft size={17}/></MotionButton><MotionButton aria-label="Trang sau" disabled={page+1>=pageData.totalPages} onClick={()=>change('page',page+1)}><ChevronRight size={17}/></MotionButton></div></footer>}
   </section>}
+  {statusChange && <AccountStatusDialog change={statusChange} error={statusError} busy={savingStatus}
+   onCancel={() => setStatusChange(null)} onConfirm={saveAccountStatus}/>}
   <footer className="ad-page-footer"><span>HL_RCS · Bảng điều khiển quản trị</span><span><ShieldCheck size={13}/>Giám sát theo quyền tài khoản</span></footer>
  </div>;
 }

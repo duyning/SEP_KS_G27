@@ -1,7 +1,7 @@
 /* =============================================================================
    HL_RCS | ROOM HOST PORTAL - STAFF SUPPORT CSS (host-support.css)
    Module: Yêu cầu Staff hỗ trợ (Staff Support Requests)
-   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0f766e), Emerald (#10b981), Amber (#d97706)
+   Design System: Navy (#0f172a), Slate (#1e293b, #64748b), Teal (#0d9488), Emerald (#10b981), Amber (#d97706)
    ============================================================================= */
 
 :root {
@@ -9,7 +9,7 @@
   --sp-slate-dark: #1e293b;
   --sp-slate-muted: #64748b;
   --sp-slate-subtle: #94a3b8;
-  --sp-teal: #0f766e;
+  --sp-teal: #0d9488;
   --sp-teal-hover: #0f766e;
   --sp-teal-light: #f0fdfa;
   --sp-teal-border: #99f6e4;

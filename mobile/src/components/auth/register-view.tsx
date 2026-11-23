@@ -17,16 +17,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/context/auth-context';
-import { validateRegister } from '@/services/auth';
+import { authApi, validateRegister } from '@/services/auth';
 import { AuthInput } from './auth-input';
 import { InlineError } from './inline-error';
 import { PasswordInput } from './password-input';
 import { PrimaryButton } from './primary-button';
 import { authColors, authSpacing } from './tokens';
 
-type RegisterFields = 'fullName' | 'email' | 'phoneNumber' | 'password' | 'confirmPassword';
+type RegisterFields = 'fullName' | 'email' | 'password' | 'confirmPassword' | 'otp';
 type RegisterErrors = Partial<Record<RegisterFields, string>>;
-const fieldOrder: RegisterFields[] = ['fullName', 'email', 'phoneNumber', 'password', 'confirmPassword'];
+const fieldOrder: RegisterFields[] = ['fullName', 'email', 'password', 'confirmPassword', 'otp'];
 
 export function RegisterView() {
   const insets = useSafeAreaInsets();
@@ -35,13 +35,14 @@ export function RegisterView() {
   const [values, setValues] = useState({
     fullName: '',
     email: '',
-    phoneNumber: '',
     password: '',
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const pendingRef = useRef(false);
   const fields = useRef<Partial<Record<RegisterFields, TextInputInstance | null>>>({});
@@ -50,20 +51,28 @@ export function RegisterView() {
     return <Redirect href="/home" />;
   }
 
-  const handleUpdate = (field: RegisterFields, text: string) => {
+  const handleUpdate = (field: Exclude<RegisterFields, 'otp'>, text: string) => {
+    if (field === 'email') {
+      setOtpSent(false);
+      setOtp('');
+    }
     setValues(prev => ({ ...prev, [field]: text }));
     setErrors(prev => ({
       ...prev,
       [field]: undefined,
       ...(field === 'password' ? { confirmPassword: undefined } : {}),
+      ...(field === 'email' ? { otp: undefined } : {}),
     }));
     setAlertMessage(null);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (resend = false) => {
     if (pendingRef.current || busy || loading) return;
 
-    const validationErrors = validateRegister(values);
+    const validationErrors: RegisterErrors = validateRegister(values);
+    if (otpSent && !resend && !/^[0-9]{6}$/.test(otp)) {
+      validationErrors.otp = 'Nhập mã xác minh gồm 6 chữ số.';
+    }
     setErrors(validationErrors);
     setAlertMessage(null);
 
@@ -81,7 +90,15 @@ export function RegisterView() {
     Keyboard.dismiss();
 
     try {
-      await signUp(values);
+      if (!otpSent || resend) {
+        await authApi.sendRegistrationOtp(values.email);
+        setOtpSent(true);
+        setOtp('');
+        AccessibilityInfo.announceForAccessibility('Mã xác minh đã được gửi qua email.');
+        return;
+      }
+      const verificationToken = await authApi.verifyRegistrationOtp(values.email, otp);
+      await signUp({ ...values, verificationToken });
       router.replace('/home');
     } catch (error) {
       const failure = error as { message?: string; fields?: RegisterErrors };
@@ -198,24 +215,6 @@ export function RegisterView() {
                 textContentType="emailAddress"
                 maxLength={255}
                 returnKeyType="next"
-                onSubmitEditing={() => fields.current.phoneNumber?.focus()}
-              />
-
-              <AuthInput
-                ref={node => { fields.current.phoneNumber = node; }}
-                testID="auth-phoneNumber"
-                label="Số điện thoại"
-                optionalLabel="(không bắt buộc)"
-                placeholder="Ví dụ: 0987 654 321"
-                value={values.phoneNumber}
-                onChangeText={text => handleUpdate('phoneNumber', text)}
-                error={errors.phoneNumber}
-                editable={!isActionDisabled}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                textContentType="telephoneNumber"
-                maxLength={16}
-                returnKeyType="next"
                 onSubmitEditing={() => fields.current.password?.focus()}
               />
 
@@ -251,13 +250,39 @@ export function RegisterView() {
                 autoComplete="new-password"
                 textContentType="newPassword"
                 returnKeyType="go"
-                onSubmitEditing={handleSubmit}
+                onSubmitEditing={() => otpSent ? fields.current.otp?.focus() : void handleSubmit()}
               />
+
+              {otpSent && (
+                <>
+                  <AuthInput
+                    ref={node => { fields.current.otp = node; }}
+                    testID="auth-registration-otp"
+                    label="Mã xác minh"
+                    hint="Kiểm tra hộp thư đến để lấy mã 6 chữ số."
+                    value={otp}
+                    onChangeText={text => {
+                      setOtp(text.replace(/[^0-9]/g, ''));
+                      setErrors(previous => ({ ...previous, otp: undefined }));
+                    }}
+                    error={errors.otp}
+                    editable={!isActionDisabled}
+                    keyboardType="number-pad"
+                    autoComplete="one-time-code"
+                    textContentType="oneTimeCode"
+                    maxLength={6}
+                    onSubmitEditing={() => void handleSubmit()}
+                  />
+                  <Pressable accessibilityRole="button" onPress={() => void handleSubmit(true)} disabled={isActionDisabled}>
+                    <Text style={styles.resendCode}>Gửi lại mã</Text>
+                  </Pressable>
+                </>
+              )}
 
               <PrimaryButton
                 testID="auth-submit"
-                title="Tạo tài khoản"
-                onPress={handleSubmit}
+                title={otpSent ? 'Xác minh và tạo tài khoản' : 'Gửi mã xác minh'}
+                onPress={() => void handleSubmit()}
                 loading={busy || loading}
                 disabled={isActionDisabled}
                 style={styles.submitBtn}
@@ -341,6 +366,13 @@ const styles = StyleSheet.create({
   },
   formGroup: {
     gap: authSpacing.lg,
+  },
+  resendCode: {
+    color: authColors.primary,
+    fontWeight: '600',
+    minHeight: 44,
+    textAlignVertical: 'center',
+    lineHeight: 44,
   },
   submitBtn: {
     marginTop: authSpacing.xs,

@@ -221,7 +221,9 @@ public class AccommodationService {
         if (availableOnly) filter = filter.and((root, query, cb) -> {
             var vacant = query.subquery(Integer.class);
             var room = vacant.from(org.hlrcs.entity.Room.class);
-            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root), cb.equal(room.get("property"), root.get("property")), cb.equal(room.get("status"), "VACANT"), cb.isTrue(room.get("publicVisible")));
+            vacant.select(cb.literal(1)).where(cb.equal(room.get("roomType"), root),
+                    cb.equal(room.get("property"), root.get("property")), cb.equal(room.get("status"), "VACANT"),
+                    cb.isTrue(room.get("publicVisible")));
             return cb.exists(vacant);
         });
         return filter;
@@ -378,15 +380,19 @@ public class AccommodationService {
         var ids = types.stream().map(RoomType::getRoomTypeId).toList();
         var vacancies = rooms.countPublicVacancies(ids).stream().collect(Collectors.toMap(
                 RoomRepository.VacancyCount::getRoomTypeId, RoomRepository.VacancyCount::getAvailableRooms));
+        var now = java.time.Instant.now();
         var covers = coverImages(types);
         return types.stream().map(type -> {
             var property = type.getProperty();
             String imageUrl = covers.get(type.getRoomTypeId());
             var coordinates = publishedCoordinates(property.getRegistration().getRegistrationDetails());
-            var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
+            var confirmedAt = type.getAvailabilityConfirmedAt();
+            var freshness = AvailabilityFreshness.status(confirmedAt, now);
             return new AccommodationSummary(property.getPropertyId(), type.getRoomTypeId(), property.getName(), type.getRoomType(),
-                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED", vacancies.getOrDefault(type.getRoomTypeId(), 0L),
-                    type.getCapacity(), roomAmenities(type), type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1],type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness),distance(origin,coordinates));
+                    property.getAddress(), imageUrl, type.getPrice(), type.getAreaSqm(), "APPROVED",
+                    vacancies.getOrDefault(type.getRoomTypeId(), 0L), type.getCapacity(), roomAmenities(type),
+                    type.getElectricityPrice(), type.getWaterPrice(), coordinates[0], coordinates[1],
+                    confirmedAt, freshness, "STALE".equals(freshness), distance(origin, coordinates));
         }).toList();
     }
 

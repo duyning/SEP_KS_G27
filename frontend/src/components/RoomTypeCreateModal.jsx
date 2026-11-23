@@ -1,4 +1,3 @@
-import UIField from './common/Field.jsx';
 import VndMoneyInput from './VndMoneyInput.jsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
@@ -62,7 +61,10 @@ export default function RoomTypeCreateModal({
   type = null,
   existingRoomNumbers = [],
   initialDraft = null,
+  onSaveDraft,
+  missingPhotos = 0,
 }) {
+  const draftMode = Boolean(onSaveDraft);
   const reduce = useShouldReduceMotion();
   const stepLeave = useTempoTransition(transition.panelOut);
   const stepEnter = useTempoTransition(transition.panelIn);
@@ -186,10 +188,10 @@ export default function RoomTypeCreateModal({
 
   const field = (name, label, control, required = false, hint = null) => (
     <div className="rt-field">
-      <UIField htmlFor={`rt-${name}`}>
+      <label htmlFor={`rt-${name}`}>
         {label}
         {required && <span> *</span>}
-      </UIField>
+      </label>
       {control}
       {hint && <small>{hint}</small>}
       {errors[name] && (
@@ -226,6 +228,15 @@ export default function RoomTypeCreateModal({
     if (Object.keys(invalid).length) {
       if (!type && step !== 0) goTo(0);
       requestAnimationFrame(() => form.current?.querySelector('[aria-invalid="true"]')?.focus());
+      return;
+    }
+
+    if (draftMode) {
+      const nameError = onSaveDraft(data);
+      if (nameError) {
+        setErrors({ roomType: nameError });
+        requestAnimationFrame(() => form.current?.querySelector('#rt-roomType')?.focus());
+      }
       return;
     }
 
@@ -289,14 +300,14 @@ export default function RoomTypeCreateModal({
   return (
     <Modal
       className="rt-create-modal rtc-dialog"
-      title={type ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới'}
+      title={draftMode && initialDraft ? 'Chỉnh sửa loại phòng trong bản nháp' : type ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới'}
       onClose={() => { if (!busy) onClose(); }}
     >
       <p className="rt-modal-subtitle">
-        {type ? 'Cập nhật cấu hình nhóm phòng' : 'Thiết lập cấu hình loại phòng và danh sách phòng'} cho “{property.name}”
+        {draftMode ? 'Khai báo loại phòng cho đợt thiết lập' : type ? 'Cập nhật cấu hình nhóm phòng' : 'Thiết lập cấu hình loại phòng và danh sách phòng'} cho “{property.name}”
       </p>
 
-      {!type && (
+      {!type && !draftMode && (
         <nav className="rt-wizard-steps" aria-label="Các bước thêm loại phòng">
           {['Thông tin loại phòng', 'Thiết lập danh sách phòng'].map((label, index) => (
             <MotionButton
@@ -410,9 +421,9 @@ export default function RoomTypeCreateModal({
                     <fieldset disabled={busy} className="rtc-photos">
                       <legend>Hình ảnh loại phòng</legend>
                       <div className="rt-field">
-                        <UIField className="rtc-photo-label" htmlFor="rt-photos">
+                        <label className="rtc-photo-label" htmlFor="rt-photos">
                           Chọn ảnh thực tế của loại phòng
-                        </UIField>
+                        </label>
                         <input
                           ref={filePicker}
                           className="rt-file-input"
@@ -434,6 +445,9 @@ export default function RoomTypeCreateModal({
                         <small id="rt-photo-hint">
                           <Upload size={12} /> Chọn nhiều ảnh từ máy · Tối đa 10 ảnh, 5 MB/ảnh · Ảnh đầu tiên là ảnh đại diện.
                         </small>
+                        {missingPhotos > 0 && <p role="status">
+                          Chọn lại {missingPhotos} ảnh từ lần trước, hoặc lưu bản nháp với số ảnh hiện tại.
+                        </p>}
                         {!data.photos.length && !data.retainedImages.length && (
                           <div className="rtc-photo-empty">
                             <Upload size={28} />
@@ -496,7 +510,7 @@ export default function RoomTypeCreateModal({
                             {keys.map(key => {
                               const label = ROOM_AMENITIES.find(([value]) => value === key)[1];
                               return (
-                                <UIField key={key} className={data.amenities.includes(key) ? 'selected' : ''}>
+                                <label key={key} className={data.amenities.includes(key) ? 'selected' : ''}>
                                   <input
                                     type="checkbox"
                                     checked={data.amenities.includes(key)}
@@ -510,7 +524,7 @@ export default function RoomTypeCreateModal({
                                     }
                                   />
                                   <span>{label}</span>
-                                </UIField>
+                                </label>
                               );
                             })}
                           </div>
@@ -583,7 +597,7 @@ export default function RoomTypeCreateModal({
           <MotionButton type="button" className="p-button" disabled={busy} onClick={onClose}>
             Hủy
           </MotionButton>
-          {!type && step === 0 && <MotionButton type="button" className="p-button" disabled={busy} onClick={event=>submit(event,true)}>Lưu loại phòng, thiết lập phòng sau</MotionButton>}
+          {!type && !draftMode && step === 0 && <MotionButton type="button" className="p-button" disabled={busy} onClick={event=>submit(event,true)}>Lưu loại phòng, thiết lập phòng sau</MotionButton>}
           <span ref={submitBtnScope} className="rtc-submit-wrap">
             <MotionButton
               type="submit"
@@ -596,6 +610,8 @@ export default function RoomTypeCreateModal({
                   <LoaderCircle className="spin" size={16} />
                   Đang lưu...
                 </>
+              ) : draftMode ? (
+                initialDraft ? 'Cập nhật bản nháp' : 'Thêm vào bản nháp'
               ) : type ? (
                 'Lưu thay đổi'
               ) : step === 0 ? (

@@ -75,13 +75,13 @@ export default function ServicesCatalog({ detail = false }) {
   useServiceLive(signal => detail ? api.detail(id, signal) : api.list(signal), data => { detail ? setRow(data) : setRows(data); setError(''); }, { identity: String(detail) + id, onError: err => { if (detail && err.status === 404) { setRow(null); setError(err.message); } } });
   const selectedCategory = resolveServiceCategory(category,categories);
   const areas = serviceAreaOptions(rows);
-  const filteredRows = discoverServices(filterPublicServices(rows,{area}).map(row=>({...row,serviceArea:serviceAreaText(row)})),{category:selectedCategory,q:query,sort:params.get('sort')||'recommended'});
+  const filteredRows = discoverServices(filterPublicServices(rows, { category: selectedCategory, area, query }), { sort: params.get('sort') || 'recommended' });
   const pageSize=6,totalPages=Math.max(1,Math.ceil(filteredRows.length/pageSize));
   const page=Math.min(totalPages,Math.max(1,Number.parseInt(params.get('page')||'1',10)||1));
   const displayedRows=filteredRows.slice((page-1)*pageSize,page*pageSize);
   const categoryName = categories.find(option => String(option.categoryId) === selectedCategory)?.name || categoryAliases[category] || 'Danh mục đã chọn';
   const updateFilter = (key, value) => setParams(previous => { const next = new URLSearchParams(previous); if (!value || value === 'all') next.delete(key); else next.set(key, value); if(key!=='page')next.delete('page');return next; }, { replace: key === 'q' });
-  const clearFilters = () => setParams(previous => { const next = new URLSearchParams(previous); ['q', 'area', 'category', 'page'].forEach(key => next.delete(key)); return next; });
+  const clearFilters = () => setParams(previous => { const next = new URLSearchParams(previous); ['q', 'area', 'category', 'sort', 'page'].forEach(key => next.delete(key)); return next; });
   const hasFilters = !!query || area !== 'all' || selectedCategory !== 'all';
   const content = row => <><span className="svc-badge" style={serviceCategoryStyle(row.categoryName)}><ShieldCheck size={12} aria-hidden="true" /> {row.categoryName}</span><h2 title={row.serviceName}>{row.serviceName}</h2><p className={detail ? 'service-text' : 'svc-description'}>{row.description}</p><div className="svc-meta" title={serviceAreaText(row)}><MapPin size={15} aria-hidden="true" /><span>{serviceAreaText(row)}</span></div>{detail ? <p>Nhà cung cấp: {row.providerName}</p> : <div className="svc-meta" title={row.providerName}><UserRound size={15} aria-hidden="true" /><span>{row.providerName}</span></div>}<div className="svc-price"><ServicePrice service={row} /></div></>;
   const refresh = () => setRevision(value => value + 1);

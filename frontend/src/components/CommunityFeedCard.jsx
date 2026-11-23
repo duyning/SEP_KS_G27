@@ -9,10 +9,10 @@ import CommunityPhoneDialog from './CommunityPhoneDialog.jsx';
 const badges={ROOM_TRANSFER:'badge-transfer',ROOMMATE:'badge-roommate',SECOND_HAND:'badge-secondhand'};
 export function CommunityCategoryBadge({post,className}){const category=communityCategories.find(([key])=>key===post.type);return <span data-category={post.type} className={className||`post-cat-badge ${badges[post.type]}`}><span aria-hidden="true">{category?.[1]}</span> <span>{post.typeLabel}</span></span>}
 
-export default function CommunityFeedCard({ post, showStatus = false, children }) {
+export default function CommunityFeedCard({ post, showStatus = false, children, focused = false }) {
   const [contactPhone, setContactPhone] = useState(null);
     const hasMedia=Boolean(post.images?.length||post.videos?.length);
-    return <article className="community-feed-card community-restored-post" id={`post-${post.id}`} data-id={post.id}>
+    return <article className={`community-feed-card community-restored-post${focused ? ' cn-focused-post' : ''}`} tabIndex={focused ? -1 : undefined} id={`post-${post.id}`} data-id={post.id}>
      <div className="community-feed-card-header">
       <div className="community-restored-author"><div className="community-restored-avatar" aria-hidden="true">{post.authorName.slice(0,2).toUpperCase()}</div><div><strong>{post.authorName}</strong><time className="community-feed-time" dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('vi-VN')}><span>{new Date(post.createdAt).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span><span aria-hidden="true">•</span><span>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</span></time></div></div>
       <div className="community-feed-badges"><CommunityCategoryBadge post={post} className="community-feed-category"/>{showStatus&&<StatusBadge status={post.status} label={post.statusLabel}/>}</div>

@@ -22,6 +22,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       const url = new URL(route.request().url());
       assert.ok(route.request().method()==='GET'||(route.request().method()==='POST'&&url.pathname.endsWith('/location/resolve')),'Only reads and location lookup are allowed');
       if (url.pathname === '/api/auth/me') return route.fulfill({json:{success:true,data:{userId:8,role:'ROOM_HOST',fullName:'Chủ trọ kiểm thử',phoneNumber:'0912345678'}}});
+      if (url.pathname === '/api/favorites/state') return route.fulfill({json:{success:true,data:{items:[],total:0}}});
+      if (url.pathname === '/api/property-location/status') return route.fulfill({json:{success:true,data:{enabled:false}}});
       if (url.pathname.endsWith('/eligibility')) return route.fulfill({json:{success:true,data:{canRegister:true,reason:'ELIGIBLE'}}});
       if (url.pathname.endsWith('/current')) return route.fulfill({json:{success:true,data:null}});
       if (url.pathname === '/api/host/property-registrations/77/edit') return route.fulfill({json:{success:true,data:{

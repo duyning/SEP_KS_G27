@@ -3,9 +3,7 @@ import {useFavoriteActions} from '../../context/FavoritesContext.jsx';
 import FavoriteNotice from '../../components/FavoriteNotice.jsx';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {Check, ChevronRight, Heart, LogOut, MapPin, Phone} from 'lucide-react';
-import {useAuth} from '../../context/AuthContext.jsx';
-import {landingFor, roleLabels} from '../../routing/screens.js';
+import {Check, ChevronRight, Heart, MapPin, Phone} from 'lucide-react';
 import {PublicListingImage, publicAmenityLabel} from '../../components/PublicPropertyCard.jsx';
 import {fetchPublicProperties, filterPublicProperties, normalizeLocation, homeRoomType, homeDetailUrl, sortHomeProperties} from '../../services/public-properties.js';
 import {money} from '../../services/room-types.js';
@@ -62,21 +60,13 @@ function PropertyCard({property, saved, onSave,saveBusy}) {
   </article>;
 }
 export default function HomeLandingPage() {
-  const {user, logout} = useAuth();
   const [data,setData] = useState([]), [loading,setLoading] = useState(true), [error,setError] = useState(''), [revision,setRevision] = useState(0);
-  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible), [mobileOpen,setMobileOpen] = useState(false), [announcementOpen,setAnnouncementOpen] = useState(false);
+  const [filters,setFilters] = useState(()=>readHomeView().filters), [visible,setVisible] = useState(()=>readHomeView().visible);
   useEffect(()=>{
     const controller=new AbortController(); setLoading(true); setError('');
     fetchPublicProperties(controller.signal).then(value=>{if(!controller.signal.aborted)setData(value);}).catch(error=>{if(!controller.signal.aborted)setError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
     return ()=>controller.abort();
   },[revision]);
-  useEffect(()=>{
-    if(!mobileOpen)return;
-    const closeOnEscape=event=>{if(event.key==='Escape'){setMobileOpen(false);document.getElementById('mobileMenuBtn')?.focus();}};
-    const closeOnResize=()=>{if(window.innerWidth>600)setMobileOpen(false);};
-    document.addEventListener('keydown',closeOnEscape);window.addEventListener('resize',closeOnResize);
-    return()=>{document.removeEventListener('keydown',closeOnEscape);window.removeEventListener('resize',closeOnResize);};
-  },[mobileOpen]);
   const previousFilters=useRef(filters);
   useEffect(()=>{if(previousFilters.current!==filters){previousFilters.current=filters;setVisible(6);}},[filters]);
   useEffect(()=>{try{sessionStorage.setItem(viewKey,JSON.stringify({filters,visible}));}catch{}},[filters,visible]);
@@ -96,10 +86,6 @@ export default function HomeLandingPage() {
       setFilters(previous=>({...previous,chip:chip.dataset.chip,tab:'all'}));
       showResults();
     }
-    if(event.target.closest('#mobileMenuBtn')){setMobileOpen(value=>!value);setAnnouncementOpen(false);}
-    if(event.target.closest('.hm-menu-dismiss'))setMobileOpen(false);
-    if(event.target.closest('#homeInfoToggle')){setAnnouncementOpen(value=>!value);setMobileOpen(false);}
-    if(event.target.closest('.nav-menu a'))setMobileOpen(false);
   };
   const onChange=event=>{
     const key={filterLocation:'location',filterPrice:'price',filterType:'type',homePriceSort:'sort'}[event.target.id];
@@ -111,8 +97,7 @@ export default function HomeLandingPage() {
     setFilters(previous=>({...previous,tab:'all'}));
     showResults();
   };
-  const account=user?<><Link to="/favorites" className="btn-wishlist-top" aria-label="Nhà trọ đã lưu"><Heart size={18}/><span className="wishlist-count">{favorites.total??0}</span></Link>{user.role!=='USER'&&<Link to={user?.role==='ROOM_HOST'?'/host/property':landingFor(user)} className="btn-primary-sm">{user?.role==='ROOM_HOST'?'Nhà trọ của tôi':'Bảng điều khiển'}</Link>}<div className="user-nav-pill"><Link to="/profile" className="user-nav-profile-link"><div className="user-nav-avatar">{(user.fullName||'U').charAt(0)}</div><div className="user-nav-meta"><span className="user-nav-name">{user.fullName}</span><span className="user-nav-role">{roleLabels[user.role]}</span></div></Link><button className="user-nav-logout" aria-label="Đăng xuất" onClick={()=>logout().catch(()=>{})}><LogOut size={15}/></button></div></>:null;
   const listings=loading?<div className="home-list-state" role="status">Đang tải danh sách nhà trọ...</div>:error?<div className="home-list-state" role="alert"><h3>Chưa thể tải danh sách nhà trọ</h3><p>{error}</p><button className="btn-primary-sm" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>:!filtered.length?<div className="home-list-state"><h3>{data.length?'Không tìm thấy phòng trọ phù hợp':'Chưa có nhà trọ được công khai'}</h3><p>{data.length?'Vui lòng thử điều chỉnh lại bộ lọc hoặc chọn mức giá khác.':'Nhà trọ sẽ xuất hiện sau khi được xét duyệt và hiển thị.'}</p>{data.length>0&&<button className="btn-primary-sm" onClick={()=>setFilters(initialFilters)}>Xem tất cả phòng</button>}</div>:filtered.slice(0,visible).map(property=><PropertyCard key={property.propertyId} property={property} saved={favorites.isSaved(homeRoomType(property)?.roomTypeId)} saveBusy={favorites.busy(homeRoomType(property)?.roomTypeId)} onSave={()=>favorites.toggle(homeRoomType(property)?.roomTypeId)}/>);
   const more=!loading&&!error&&visible<filtered.length?<button className="btn-outline-lg" onClick={()=>setVisible(value=>value+6)}>Xem thêm {filtered.length-visible} nhà trọ quanh Hòa Lạc<ChevronRight size={16}/></button>:null;
-  return <><FavoriteNotice favorites={favorites}/><HomePrototype {...{listings,more,account,filters,onClick,onSubmit,onChange,mobileOpen,announcementOpen}} savedCount={favorites.total??0}/></>;
+  return <><FavoriteNotice favorites={favorites}/><HomePrototype {...{listings,more,filters,onClick,onSubmit,onChange}}/></>;
 }

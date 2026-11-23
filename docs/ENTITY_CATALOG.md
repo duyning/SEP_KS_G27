@@ -5,6 +5,13 @@ Bổ sung 2026-11-19: `CollectedPost` → `collected_posts` và element collecti
 fields, index, FK và sơ đồ bổ sung trong [COLLECTED_POSTS.md](COLLECTED_POSTS.md).
 Số lượng entity ở snapshot bên dưới chưa tính module này.
 
+Cập nhật bổ sung 2026-11-18: `RentalContract` → `rental_contracts`, xem
+[Hợp đồng thuê phòng](RENTAL_CONTRACTS.md). `id` BIGINT PK; `roomId`/`ownerId`
+INT là ID snapshot (không có quan hệ JPA/FK để giữ lịch sử). `status` ACTIVE/CLOSED,
+snapshot `propertyName`/`propertyAddress`/`roomNumber`, `startDate`/`endDate` DATE,
+`detailsJson` MEDIUMTEXT chứa nội dung đã kiểm tra, `createdAt`/`closedAt` DATETIME.
+Index `(room_id,owner_id)`. Các số lượng entity bên dưới là mốc đối chiếu cũ.
+
 Đối chiếu JPA source ngày **2026-11-05**, commit `350dc13`.
 
 Có **29 @Entity**, **1 @Embeddable** (`RoomTypeAmenityId`) và **11 enums**.
@@ -530,3 +537,11 @@ New entity: Integer requestId (identity PK), required ManyToOne Service service 
 - ServiceComplaint: complaintId, service (ManyToOne), reporter (ManyToOne User), content, status (PENDING/NEEDS_EXPLANATION/EXPLAINED/DISMISSED/REMOVED), createdAt, revision, images.
 - ServiceComplaintEvent: eventId, complaint (ManyToOne), actor (ManyToOne User), action (REQUEST_EXPLANATION/EXPLAINED/DISMISS/REMOVE), content, createdAt, images.
 - Collection tables: service_rating_images, service_complaint_images, service_complaint_event_images; image_position giữ thứ tự, image_content LONGBLOB và content_type. Instant dùng cho thời gian; revision tăng thủ công trong transaction khóa báo cáo. Xem [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
+
+## CommunityReportAnalysis — AI hỗ trợ report (2026-11-22)
+
+Entity `CommunityReportAnalysis` ánh xạ `community_report_analyses`, khóa chính `report_id` là ID report dạng scalar; `postId` cũng là scalar, không thêm cascade/FK tới bài để tác vụ bỏ qua được khi bài đã xóa. Mỗi report có tối đa một tác vụ hiện hành.
+
+Các trường: `state` (QUEUED/RUNNING/READY/FAILED/DISABLED/SKIPPED), `generation`, `fingerprint`, `rulesVersion`, `model`, `findings` (JSON TEXT), `recommendation`, `errorCode`, `completedChecks`, `totalChecks`, `requestedAt`, `startedAt`, `finishedAt`. State STALE/CLOSED/UNAVAILABLE là trạng thái suy ra cho API, không phải enum database. Chỉ admin ACTIVE đọc/xếp lại tác vụ. Kết quả không tự sửa Post/Report hoặc ModerationLog.
+
+Chi tiết luồng/rule/cấu hình: [COMMUNITY_REPORT_AI_RULES.md](COMMUNITY_REPORT_AI_RULES.md).

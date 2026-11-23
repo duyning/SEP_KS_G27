@@ -65,9 +65,10 @@ async function check() {
       return respond([]);
     });
 
+    let selectedOrigin;
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto(base + '/search?price=15-25&page=2');
+      await page.goto(base + (width === 375 ? '/map' : '/search') + '?price=15-25&page=2');
       const sortMenu = page.getByRole('combobox', { name: /Sắp xếp theo/ });
       const aiButton = page.getByRole('button', { name: 'Hỏi Trọ Mây', exact: true });
       const open = page.getByRole('button', { name: 'Tìm quanh địa điểm', exact: true });
@@ -86,18 +87,36 @@ async function check() {
       await open.focus();
       await page.keyboard.press('Enter');
       const picker = page.getByRole('dialog', { name: 'Tìm quanh địa điểm' });
-      await picker.locator('.leaflet-container').click({ position: { x: 100, y: 100 } });
-      assert.notEqual(await picker.getByLabel('Vĩ độ').inputValue(), '');
-      await picker.getByLabel('Vĩ độ').fill(origin.originLat);
-      await picker.getByLabel('Kinh độ').fill(origin.originLng);
-      await picker.getByLabel('Bán kính (km)').fill('1');
-      await picker.getByRole('button', { name: 'Áp dụng địa điểm' }).click();
+      await picker.waitFor();
+      assert.equal(await picker.getByLabel(/Vĩ độ|Kinh độ/).count(), 0);
+      const radius = picker.getByRole('spinbutton', { name: 'Bán kính (km)' });
+      const apply = picker.getByRole('button', { name: 'Áp dụng địa điểm' });
+      await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
+      assert.ok(await picker.evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth + 1), `Location dialog overflow at ${width}px, 200% zoom`);
+      await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+      await apply.click();
+      await picker.getByRole('alert').getByText('Chọn một vị trí trên bản đồ.').waitFor();
+      await picker.locator('.leaflet-container').click({ position: { x: 100, y: 150 } });
+      await picker.getByTitle('Địa điểm tính khoảng cách').waitFor();
+      await radius.fill('1');
+      await apply.click();
       await page.getByText('Khoảng cách: 0,72 km', { exact: true }).first().waitFor();
       assert.equal(lastSearch.get('page'), '0');
       assert.equal(lastSearch.get('radiusKm'), '1');
       assert.equal(lastSearch.get('price'), '15-25');
       assert.equal(lastSearch.get('sort'), 'nearest');
-      await page.getByRole('button', { name: 'Đổi địa điểm', exact: true }).waitFor();
+      selectedOrigin = Object.fromEntries(Object.keys(origin).map(key => [key, lastSearch.get(key)]));
+      for (const [key, value] of Object.entries(selectedOrigin)) {
+        assert.ok(value && Math.abs(Number(value) - Number(origin[key])) < 0.05, `Invalid ${key} from the map`);
+      }
+      const changeOrigin = page.getByRole('button', { name: 'Đổi địa điểm', exact: true });
+      await changeOrigin.focus();
+      await page.keyboard.press('Enter');
+      await picker.getByTitle('Địa điểm tính khoảng cách').waitFor();
+      assert.equal(await radius.inputValue(), '1');
+      await page.keyboard.press('Escape');
+      await picker.waitFor({ state: 'hidden' });
+      assert.ok(await changeOrigin.evaluate(trigger => trigger === document.activeElement));
       assert.equal(await sortMenu.inputValue(), 'nearest');
       assert.ok(await sortMenu.locator('option[value="nearest"]').evaluate(option => option.hidden));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Overflow at ${width}`);
@@ -107,7 +126,7 @@ async function check() {
     await page.locator('.leaflet-marker-icon').first().click();
     await page.getByRole('link', { name: 'Xem chi tiết phòng', exact: true }).first().click();
     await page.getByText('Khoảng cách đến địa điểm đã chọn: 0,72 km', { exact: true }).waitFor();
-    for (const [key, value] of Object.entries(origin)) assert.equal(lastDetail.get(key), value);
+    for (const [key, value] of Object.entries(selectedOrigin)) assert.equal(lastDetail.get(key), value);
     await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
     assert.ok(await page.getByText('Khoảng cách đến địa điểm đã chọn: 0,72 km', { exact: true }).isVisible());
 
@@ -139,8 +158,21 @@ async function check() {
     const description = ai.getByLabel('Nhu cầu thuê phòng');
     assert.ok(await description.evaluate(field => field === document.activeElement));
     assert.ok(await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).isDisabled());
-    await ai.getByRole('button', { name: 'Dưới 2,5 triệu' }).click();
-    assert.match(await description.inputValue(), /2,5 triệu\/tháng/);
+    const samples = ai.getByRole('group', { name: 'Nhu cầu mẫu' });
+    const exampleDescription = 'Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh.';
+    const sample = samples.getByRole('button', { name: exampleDescription, exact: true });
+    assert.equal(await samples.getByRole('button').count(), 1);
+    for (const width of [375, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(await sample.evaluate(button => button.scrollWidth <= button.clientWidth + 1), `Sample overflows at ${width}px`);
+    }
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
+    assert.ok(await sample.evaluate(button => button.scrollWidth <= button.clientWidth + 1), 'Sample overflows at 200% zoom');
+    await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+    await sample.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await description.inputValue(), exampleDescription);
     assert.ok(await description.evaluate(field => field === document.activeElement));
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã có điều hòa');
     await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();

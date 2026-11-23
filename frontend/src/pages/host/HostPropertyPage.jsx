@@ -698,6 +698,7 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
   if (selectedId || selectedRegistrationId) {
     const back = new URLSearchParams(params);
     back.delete('id');
+    back.delete('propertyId');
     back.delete('registrationId');
     return (
       <HostManagementShell activePath="/host/property" actions={headerActions}>
@@ -750,6 +751,9 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
 
   const detailLink = record => {
     const next = new URLSearchParams(params);
+    next.delete('propertyId');
+    next.delete('registrationId');
+    next.delete('id');
     next.set(record.propertyId != null ? 'id' : 'registrationId', record.propertyId ?? record.registrationId);
     return `/host/property?${next}`;
   };
@@ -944,7 +948,6 @@ export function HostPropertyContent({ data, selectedId, selectedRegistrationId, 
                   </Link>
 
                   <div className="hm-prop-body">
-                    <ReverificationNotice required={record.reverificationRequired} reasons={record.reverificationReasons} status={record.changeRequest?.status} note={record.changeRequest?.reasonNote} registrationId={record.changeRequest?.registrationId}/>
                     <div className="hm-prop-head">
                       <h2 className="hm-prop-name">
                         <Link to={detailLink(record)} title={record.name} onClick={() => rememberProperty(record)}>
@@ -1125,7 +1128,7 @@ export default function HostPropertyPage() {
   const [params] = useSearchParams();
   const [state, setState] = useState({ loading: true, data: null, error: '' });
   const [revision, setRevision] = useState(0);
-  const selectedId = params.get('id');
+  const selectedId = params.get('id') || params.get('propertyId');
   const selectedRegistrationId = params.get('registrationId');
 
   useEffect(() => {

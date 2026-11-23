@@ -50,6 +50,13 @@ public class GeminiCommunityScanner {
         return !key.isBlank();
     }
 
+    public String modelName() { return model; }
+
+    /** Same authenticated transport/key/model as post moderation, separate task instructions. */
+    public JsonNode assessReport(String context, PostMedia media) throws IOException, InterruptedException {
+        return withMedia(context, media, CommunityReportAiPolicy.system(), CommunityReportAiPolicy.schema());
+    }
+
     public ScanFinding scan(String context, PostMedia media) throws IOException, InterruptedException {
         boolean video = media != null && media.getMediaType() == MediaType.VIDEO;
         Map<String, Object> prompt = Map.of("text", context);
@@ -96,7 +103,35 @@ public class GeminiCommunityScanner {
         var schema = Map.of("type", "object", "properties", Map.of(
                 "code", Map.of("type", "string", "enum", List.of("CLEAR", "SEXUAL", "FLAGGED", "OFF_TOPIC", "UNSURE")),
                 "timestampSeconds", Map.of("type", "integer")), "required", List.of("code"));
-        var payload = Map.of("systemInstruction", Map.of("parts", List.of(Map.of("text", SYSTEM))),
+        return generateStructured(SYSTEM, parts, schema);
+    }
+
+    private JsonNode withMedia(String context, PostMedia media, String system, Map<String, Object> schema) throws IOException, InterruptedException {
+        var parts = new java.util.ArrayList<Map<String, Object>>();
+        parts.add(Map.of("text", context));
+        String uploaded = null;
+        try {
+            if (media != null) {
+                if (media.getFileContent() == null || media.getContentType() == null) throw new IOException("Missing media");
+                if (media.getMediaType() == MediaType.VIDEO) {
+                    JsonNode file = upload(media.getFileContent());
+                    uploaded = file.path("name").asText();
+                    if (!uploaded.matches("files/[a-zA-Z0-9_-]+")) throw new IOException("Invalid uploaded file name");
+                    file = awaitVideo(file, uploaded);
+                    if (file.path("uri").asText().isBlank()) throw new IOException("Missing video URI");
+                    parts.add(Map.of("fileData", Map.of("mimeType", "video/mp4", "fileUri", file.path("uri").asText())));
+                } else parts.add(Map.of("inlineData", Map.of("mimeType", media.getContentType(), "data", Base64.getEncoder().encodeToString(media.getFileContent()))));
+            }
+            return generateStructured(system, parts, schema);
+        } finally {
+            if (uploaded != null && uploaded.matches("files/[a-zA-Z0-9_-]+")) {
+                try { api("DELETE", "/v1beta/" + uploaded, 10, Map.of(), null); } catch (IOException ignored) { }
+            }
+        }
+    }
+
+    private JsonNode generateStructured(String system, List<Map<String, Object>> parts, Map<String, Object> schema) throws IOException, InterruptedException {
+        var payload = Map.of("systemInstruction", Map.of("parts", List.of(Map.of("text", system))),
                 "contents", List.of(Map.of("parts", parts)),
                 "generationConfig", Map.of("responseMimeType", "application/json", "responseJsonSchema", schema));
         JsonNode response = json.readTree(api("POST", "/v1beta/models/" + model + ":generateContent", 45,
@@ -133,11 +168,19 @@ public class GeminiCommunityScanner {
 
     private JsonNode awaitVideo(JsonNode file, String name) throws IOException, InterruptedException {
         for (int attempt = 0; attempt < 20 && "PROCESSING".equals(file.path("state").asText()); attempt++) {
-            Thread.sleep(3000);
+            waitForVideoPoll();
             file = json.readTree(api("GET", "/v1beta/" + name, 10, Map.of(), null).body());
         }
         if (!"ACTIVE".equals(file.path("state").asText())) throw new IOException("Video processing incomplete");
         return file;
+    }
+
+    void waitForVideoPoll() throws InterruptedException {
+        Thread.sleep(3000);
+    }
+
+    HttpURLConnection openConnection(URI uri) throws IOException {
+        return (HttpURLConnection) uri.toURL().openConnection();
     }
 
     private Response api(String method, String path, int seconds, Map<String, String> headers, Object payload)
@@ -151,7 +194,7 @@ public class GeminiCommunityScanner {
 
     private Response send(String method, URI uri, int seconds, Map<String, String> headers, byte[] payload)
             throws IOException {
-        var connection = (HttpURLConnection) uri.toURL().openConnection();
+        var connection = openConnection(uri);
         try {
             connection.setConnectTimeout(10_000);
             connection.setReadTimeout(seconds * 1000);

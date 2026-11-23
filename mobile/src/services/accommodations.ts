@@ -48,8 +48,13 @@ export function getApiBase(): string {
   throw new Error('Chưa cấu hình EXPO_PUBLIC_API_URL cho máy chủ HL_RCS.');
 }
 
+export interface JsonRequestOptions {
+  timeoutMs?: number;
+  timeoutMessage?: string;
+}
+
 // Bound both the connection and response-body wait, including on physical phones.
-export async function requestJson(url: string, init: RequestInit) {
+export async function requestJson(url: string, init: RequestInit, options: JsonRequestOptions = {}) {
   const controller = new AbortController();
   const signal = init.signal;
   const abort = () => controller.abort();
@@ -59,7 +64,7 @@ export async function requestJson(url: string, init: RequestInit) {
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, 15000);
+  }, options.timeoutMs ?? 15000);
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     const result = await response.json().catch(() => null);
@@ -68,7 +73,7 @@ export async function requestJson(url: string, init: RequestInit) {
   } catch (error) {
     if (signal?.aborted) throw error;
     if (timedOut) {
-      throw new Error('Máy chủ phản hồi quá lâu. Kiểm tra kết nối Wi-Fi và thử lại.');
+      throw new Error(options.timeoutMessage ?? 'Máy chủ phản hồi quá lâu. Kiểm tra kết nối Wi-Fi và thử lại.');
     }
     throw new Error('Không thể kết nối đến máy chủ HL_RCS. Kiểm tra địa chỉ API, Wi-Fi và máy chủ backend.');
   } finally {

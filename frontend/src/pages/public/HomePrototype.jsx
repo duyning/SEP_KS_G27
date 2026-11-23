@@ -1,62 +1,10 @@
-import HostRegistrationBanner from '../../components/HostRegistrationBanner.jsx';
 import HomeFilterSelect from '../../components/HomeFilterSelect.jsx';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Layout and static content preserved from Code/giao_dien/html/home.html.
 import {Link} from 'react-router-dom';
-import {ChevronDown,X} from 'lucide-react';
-export default function HomePrototype({listings,more,account,filters,savedCount,mobileOpen,announcementOpen,onClick,onSubmit,onChange}) {
+import {ChevronDown} from 'lucide-react';
+export default function HomePrototype({listings,more,filters,onClick,onSubmit,onChange}) {
  return <div className="prototype-home home-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
-
-
-  <header className="navbar-wrapper">
-    <HostRegistrationBanner/>
-
-    <nav className="main-navbar">
-      <div className="container navbar-container">
-
-        <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">
-          <div className="brand-logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
-          </div>
-        </Link>
-
-
-        <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
-          <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>
-          <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Phòng yêu thích (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
-          <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
-          <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
-          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li><li><Link className="nav-item" to="/collected-posts">Bài tổng hợp</Link></li>
-          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
-          <li className="hm-menu-account">{account || <><Link className="btn-ghost" to="/login">Đăng nhập</Link><Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link></>}</li>
-        </ul>
-
-
-        <div className="nav-actions">{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Phòng yêu thích" style={{"textDecoration": "none"}} to="/favorites">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-            <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
-          </Link>
-          <Link className="btn-ghost" to="/login">Đăng nhập</Link>
-          <Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link>
-        </>}</div>
-
-
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
-          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
-        </MotionButton>
-      </div>
-    </nav>
-  </header>
-  {mobileOpen&&<button type="button" className="hm-menu-backdrop hm-menu-dismiss" aria-label="Đóng thực đơn và quay lại trang"/>}
 
 
   <section className="hero-section">

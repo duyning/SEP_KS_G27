@@ -116,6 +116,7 @@
   justify-content: center;
   gap: 7px;
   min-height: 38px;
+  max-width: 100%;
   padding: 6px 10px;
   border: 1px solid var(--ai-line);
   border-radius: 9px;
@@ -125,8 +126,12 @@
   font: inherit;
   font-size: .8125rem;
   font-weight: 700;
+  text-align: start;
+  white-space: normal;
 }
 
+.accommodation-ai-examples button > span { min-width: 0; overflow-wrap: anywhere; }
+.accommodation-ai-examples button > svg { flex: none; }
 .accommodation-ai-examples button:hover { border-color: #a7cdbd; background: #e1f1e8; }
 .accommodation-ai-examples button:disabled { cursor: default; opacity: .65; }
 .accommodation-ai-actions { display: flex; justify-content: flex-end; margin-top: 6px; }

@@ -45,6 +45,19 @@ export const hostApi = {
     if(!Array.isArray(result)||result.length!==data.rooms.length||!result.every(room=>validRoom(room)&&room.propertyId===data.propertyId&&room.publicVisible===false))throw new ApiError('Chưa xác nhận được danh sách phòng đã tạo. Vui lòng tải lại trước khi thử lại.',502);
     return result;
   },
+  async createRoomSetup(data, photos, signal) {
+    const body = new FormData();
+    body.append('setup', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    for (const file of photos) body.append('photos', file);
+    const result = await request('/rooms/setup', { basePath: '/api/host', method: 'POST', body, signal });
+    const ids = data.types.map(type => result?.createdTypes?.[type.localId]);
+    if (ids.some(id => !Number.isInteger(id) || id < 1) || new Set(ids).size !== ids.length ||
+        !Array.isArray(result?.rooms) || result.rooms.length !== data.rooms.length ||
+        !result.rooms.every(room => validRoom(room) && room.propertyId === data.propertyId && room.publicVisible === false)) {
+      throw new ApiError('Chưa xác nhận được kết quả thiết lập. Vui lòng tải lại trước khi gửi lại.', 502);
+    }
+    return result;
+  },
   async publishRooms(data,signal){
     const result=await request('/rooms/publication',{basePath:'/api/host',method:'PUT',body:data,signal});
     if(!Array.isArray(result)||!result.every(room=>validRoom(room)&&room.propertyId===data.propertyId&&typeof room.publicVisible==='boolean'&&room.publicVisible===data.roomIds.includes(room.roomId))||!data.roomIds.every(id=>result.some(room=>room.roomId===id)))throw new ApiError('Chưa xác nhận được kết quả công khai phòng. Vui lòng tải lại.',502);
