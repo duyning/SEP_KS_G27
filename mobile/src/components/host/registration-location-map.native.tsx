@@ -54,7 +54,7 @@ export function RegistrationLocationMap({ point, onSelect }: RegistrationMapProp
       {systemMap && source ? (
         <View style={s.mapFrame}>
           <WebView
-            accessibilityLabel="Bản đồ hệ thống HL_RCS"
+            accessibilityLabel="Bản đồ hệ thống NestHub"
             source={source}
             incognito
             sharedCookiesEnabled={false}

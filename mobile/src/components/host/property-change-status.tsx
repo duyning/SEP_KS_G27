@@ -79,7 +79,7 @@ export function PropertyChangeStatusView({
     },
     {
       key: 'review',
-      title: 'Nhân viên HL_RCS thẩm định',
+      title: 'Nhân viên NestHub thẩm định',
       sub:
         normalized === 'NEEDS_SUPPLEMENT'
           ? 'Cần bổ sung theo phản hồi bên dưới'

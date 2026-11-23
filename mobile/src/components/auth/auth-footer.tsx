@@ -38,7 +38,7 @@ export function AuthFooter({ mode, onSwitch, disabled = false }: AuthFooterProps
 
       <View style={styles.bottomBrand}>
         <View style={styles.divider} />
-        <Text style={styles.brandSubtext}>HL_RCS • Kết nối nơi ở, an tâm mỗi ngày</Text>
+        <Text style={styles.brandSubtext}>NestHub • Kết nối nơi ở, an tâm mỗi ngày</Text>
       </View>
     </View>
   );

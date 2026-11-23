@@ -22,6 +22,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
 import { sessionDestination } from '../routing/session-destination.js';
 import { authApi } from '../services/auth.js';
+import { BrandIcon, BRAND } from '../components/brand/index.js';
 import '../styles/auth-mobile.css';
 
 const DEMO_ACCOUNTS = [
@@ -81,8 +82,9 @@ export default function AuthPage({ registerMode = false }) {
 
   useEffect(() => {
     document.title = isFlipped
-      ? 'HL_RCS | Tạo tài khoản mới'
-      : 'HL_RCS | Đăng nhập hệ thống kết nối phòng trọ';
+      ? `${BRAND.name} | Tạo tài khoản mới`
+      : `${BRAND.name} | Đăng nhập hệ thống kết nối phòng trọ`;
+    window.scrollTo(0, 0);
   }, [isFlipped]);
 
   useEffect(() => {
@@ -286,18 +288,18 @@ export default function AuthPage({ registerMode = false }) {
         <div className="flip-face flip-login-face" inert={isFlipped} aria-hidden={isFlipped}>
           <div className="auth-wrapper">
             {/* CỘT TRÁI: SHOWCASE ĐĂNG NHẬP */}
-            <aside className="showcase-side login-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <aside className="showcase-side login-showcase-bg" aria-label={`Giới thiệu nền tảng ${BRAND.name}`}>
               <div className="page-overlay" />
               <div className="page-content">
                 {/* Header Showcase */}
                 <header className="showcase-header">
-                  <Link to="/" className="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <Link to="/" className="brand-badge" aria-label={`Trang chủ ${BRAND.name}`}>
                     <div className="brand-icon">
-                      <House size={22} />
+                      <BrandIcon size={24} variant="white" />
                     </div>
                     <div className="brand-text">
-                      <span className="brand-title">HL_RCS</span>
-                      <span className="brand-tagline">Rental Connection System</span>
+                      <span className="brand-title">{BRAND.name}</span>
+                      <span className="brand-tagline">{BRAND.shortTagline}</span>
                     </div>
                   </Link>
                   <span className="tag-pill">
@@ -357,7 +359,7 @@ export default function AuthPage({ registerMode = false }) {
 
                 {/* Footer Showcase */}
                 <footer className="showcase-footer">
-                  <p>© 2026 HL_RCS • Kết nối trực tiếp, minh bạch và an toàn.</p>
+                  <p>© 2026 {BRAND.name} • Kết nối trực tiếp, minh bạch và an toàn.</p>
                 </footer>
               </div>
             </aside>
@@ -367,7 +369,7 @@ export default function AuthPage({ registerMode = false }) {
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <Link to="/" className="auth-mobile-home" aria-label={`Trang chủ ${BRAND.name}`}><span className="brand-icon"><BrandIcon size={24} variant="white" /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">{BRAND.name}</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
                   <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
@@ -393,7 +395,7 @@ export default function AuthPage({ registerMode = false }) {
                       Email hoặc Số điện thoại
                     </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Mail size={18} />
                       </div>
                       <input
@@ -404,6 +406,7 @@ export default function AuthPage({ registerMode = false }) {
                         type="text"
                         className={`form-input ${loginErrors.identifier ? 'invalid' : ''}`}
                         autoComplete="username"
+                        autoCapitalize="none"
                         placeholder="Nhập email hoặc số điện thoại"
                         spellCheck="false"
                         value={loginIdentifier}
@@ -423,7 +426,7 @@ export default function AuthPage({ registerMode = false }) {
                       Mật khẩu
                     </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Lock size={18} />
                       </div>
                       <input
@@ -470,7 +473,7 @@ export default function AuthPage({ registerMode = false }) {
                     <MotionButton
                       type="button"
                       className="forgot-link"
-                      onClick={() => notify('Vui lòng liên hệ ban quản trị HL_RCS hoặc kiểm tra email để đặt lại mật khẩu.', 'info')}
+                      onClick={() => notify(`Vui lòng liên hệ ban quản trị ${BRAND.name} hoặc kiểm tra email để đặt lại mật khẩu.`, 'info')}
                     >
                       Quên mật khẩu?
                     </MotionButton>
@@ -554,7 +557,7 @@ export default function AuthPage({ registerMode = false }) {
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <Link to="/" className="auth-mobile-home" aria-label={`Trang chủ ${BRAND.name}`}><span className="brand-icon"><BrandIcon size={24} variant="white" /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">{BRAND.name}</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
                   <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
@@ -579,7 +582,7 @@ export default function AuthPage({ registerMode = false }) {
                       Họ và tên
                     </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <UserRound size={18} />
                       </div>
                       <input
@@ -611,7 +614,7 @@ export default function AuthPage({ registerMode = false }) {
                     </UIField>
                     <div className="register-otp-row">
                       <div className="input-container">
-                        <div className="input-icon"><Mail size={18} /></div>
+                        <div className="input-icon" aria-hidden="true"><Mail size={18} /></div>
                         <input
                           id="regIdentifier"
                           aria-invalid={Boolean(regErrors.identifier)}
@@ -621,6 +624,7 @@ export default function AuthPage({ registerMode = false }) {
                           type="text"
                           className={`form-input ${regErrors.identifier ? 'invalid' : ''}`}
                           autoComplete="username"
+                          autoCapitalize="none"
                           placeholder="Email hoặc số điện thoại"
                           spellCheck="false"
                           maxLength={254}
@@ -699,7 +703,7 @@ export default function AuthPage({ registerMode = false }) {
                       Mật khẩu
                     </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Lock size={18} />
                       </div>
                       <input
@@ -741,7 +745,7 @@ export default function AuthPage({ registerMode = false }) {
                       Xác nhận mật khẩu
                     </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <ShieldCheck size={18} />
                       </div>
                       <input
@@ -791,14 +795,14 @@ export default function AuthPage({ registerMode = false }) {
                       />
                       <UIField htmlFor="regAgree" className="terms-text">
                         Tôi đồng ý với{' '}
-                        <MotionButton type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify(`Điều khoản dịch vụ ${BRAND.name}`, 'info')}>
                           Điều khoản dịch vụ
                         </MotionButton>{' '}
                         và{' '}
-                        <MotionButton type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify(`Chính sách bảo mật ${BRAND.name}`, 'info')}>
                           Chính sách bảo mật
                         </MotionButton>{' '}
-                        của HL_RCS.
+                        của {BRAND.name}.
                       </UIField>
                   </div>
                   {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: '12px' }} role="alert">{regErrors.agree}</p>}
@@ -842,18 +846,18 @@ export default function AuthPage({ registerMode = false }) {
             </main>
 
             {/* CỘT PHẢI: SHOWCASE ĐĂNG KÝ */}
-            <aside className="showcase-side register-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <aside className="showcase-side register-showcase-bg" aria-label={`Giới thiệu nền tảng ${BRAND.name}`}>
               <div className="page-overlay" />
               <div className="page-content">
                 {/* Header Showcase */}
                 <header className="showcase-header">
-                  <Link to="/" className="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <Link to="/" className="brand-badge" aria-label={`Trang chủ ${BRAND.name}`}>
                     <div className="brand-icon">
-                      <House size={22} />
+                      <BrandIcon size={24} variant="white" />
                     </div>
                     <div className="brand-text">
-                      <span className="brand-title">HL_RCS</span>
-                      <span className="brand-tagline">Rental Connection System</span>
+                      <span className="brand-title">{BRAND.name}</span>
+                      <span className="brand-tagline">{BRAND.shortTagline}</span>
                     </div>
                   </Link>
                   <span className="tag-pill">
@@ -866,7 +870,7 @@ export default function AuthPage({ registerMode = false }) {
                 <div className="hero-block">
                   <div className="inline-badge">
                     <Star size={14} />
-                    <span>Gia nhập cộng đồng HL_RCS</span>
+                    <span>Gia nhập cộng đồng {BRAND.name}</span>
                   </div>
                   <h1 className="hero-title">Tìm trọ chuẩn xác , an tâm gắn bó lâu dài</h1>
                   <p className="hero-desc">
@@ -912,7 +916,7 @@ export default function AuthPage({ registerMode = false }) {
 
                 {/* Footer Showcase */}
                 <footer className="showcase-footer">
-                  <p>© 2026 HL_RCS • Rental Connection System. Đồng hành cùng sinh viên &amp; người thuê Hòa Lạc.</p>
+                  <p>© 2026 {BRAND.name} • {BRAND.tagline}. Đồng hành cùng sinh viên &amp; người thuê Hòa Lạc.</p>
                 </footer>
               </div>
             </aside>

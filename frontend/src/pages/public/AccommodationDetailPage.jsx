@@ -28,7 +28,7 @@ function DetailContent({item,origin}){
  const favorites=useFavoriteActions([item.roomTypeId,...(item.similar||[]).map(room=>room.roomTypeId)]);
  const [photo,setPhoto]=useState(null),[modal,setModal]=useState(null),[reportReason,setReportReason]=useState('Thông tin giá thuê'),[reportNote,setReportNote]=useState('');
  useEffect(()=>{if(['#host-contact','#room-type-details'].includes(location.hash))document.getElementById(location.hash.slice(1))?.scrollIntoView({block:'start'});},[location.hash]);
- useEffect(()=>{document.title=`${room.title} | HL_RCS Hòa Lạc`;},[room.title]);
+ useEffect(()=>{document.title=`${room.title} | NestHub Hòa Lạc`;},[room.title]);
  useEffect(()=>{if(photo==null)return;const keydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setPhoto(value=>(value+(e.key==='ArrowLeft'?-1:1)+gallery.length)%gallery.length)}};window.addEventListener('keydown',keydown);return()=>window.removeEventListener('keydown',keydown)},[photo,gallery.length]);
  async function copy(text,success){try{await navigator.clipboard.writeText(text);notify(success);return true}catch{notify('Không thể sao chép tự động. Bạn có thể chọn và sao chép nội dung.','error');return false}}
  const viewerId=canRequestViewing(user)?user.userId:null;

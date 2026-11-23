@@ -12,6 +12,7 @@ import { HostHeaderTarget } from '../components/HostHeaderSlot.jsx';
 import useCommunityLive from '../components/useCommunityLive.js';
 import { staffHostApi } from '../services/staff-host-applications.js';
 import PublicNavbar from '../components/layout/PublicNavbar.jsx';
+import { BrandIcon, BRAND, formatDocumentTitle } from '../components/brand/index.js';
 import NotificationBell from '../components/NotificationBell.jsx';
 import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
@@ -54,14 +55,12 @@ function HeaderRow({ workspace, children }) {
 export function Brand({ portal = 'public', onClick }) {
   return (
     <Link className="sidebar-brand-link" to={portal === 'public' ? '/' : `/${portal}`} onClick={onClick}>
-      <div className="brand-logo-icon">
-        {portal === 'staff' || portal === 'admin' ? <Shield size={22} /> : <House size={22} />}
-      </div>
+      <BrandIcon size={34} variant="teal" />
       <div className="brand-text-block">
-        <div className="brand-portal-title">HL_RCS</div>
+        <div className="brand-portal-title" style={{ color: '#0F5955', fontWeight: 800, letterSpacing: '-0.025em' }}>{BRAND.name}</div>
         <div className="brand-portal-role">
           {portal === 'public'
-            ? 'Rental Connection System'
+            ? BRAND.shortTagline
             : portal === 'host'
             ? 'ROOM HOST PORTAL'
             : `${portal.toUpperCase()} PORTAL`}
@@ -71,7 +70,7 @@ export function Brand({ portal = 'public', onClick }) {
   );
 }
 function PublicLayout({ screen, children }) {
-  useEffect(() => { document.title = `${screen.title} | HL_RCS`; }, [screen.title]);
+  useEffect(() => { document.title = formatDocumentTitle(screen.title); }, [screen.title]);
   const framedPage = screen.kind === 'communityReports' || screen.kind === 'contractSigning';
   return (
     <>
@@ -160,7 +159,7 @@ function OperationsLayout({ screen, children }) {
   useEffect(() => {
     setOpen(false);
     setUserMenuOpen(false);
-    document.title = `${screen.title} | HL_RCS`;
+    document.title = formatDocumentTitle(screen.title);
   }, [location.key, screen.title]);
 
   useEffect(() => {
@@ -390,7 +389,7 @@ function OperationsLayout({ screen, children }) {
       <main id="main-content" tabIndex={-1} className={`portal-content${workspace ? ' workspace-content' : ''}${communityReports ? ' report-portal-content' : ''}`}>
         {!communityReports && portal === 'admin' && (
           <nav className="portal-breadcrumbs" aria-label="Đường dẫn">
-            <Link to="/">HL_RCS</Link>
+            <Link to="/">{BRAND.name}</Link>
             <ChevronRight size={13} />
             <Link to="/admin">Admin Portal</Link>
             <ChevronRight size={13} />
@@ -413,7 +412,7 @@ function OperationsLayout({ screen, children }) {
       {portal === 'host' && (
         <footer className="host-footer">
           <div className="footer-inner">
-            <span>{hostFooterTitles[screen.path] ? `© 2026 HL_RCS · ${hostFooterTitles[screen.path]} (Room Host Portal).` : '© 2026 HL_RCS • Bảng điều khiển dành riêng cho Chủ trọ Hòa Lạc (Room Host Portal).'}</span>
+            <span>{hostFooterTitles[screen.path] ? `© 2026 ${BRAND.name} · ${hostFooterTitles[screen.path]} (Room Host Portal).` : `© 2026 ${BRAND.name} • Bảng điều khiển dành riêng cho Chủ trọ Hòa Lạc (Room Host Portal).`}</span>
             <span className="footer-links">
               <Link to="/">Trang chủ</Link> • 
               {hostFooterTitles[screen.path] ? <><Link to="/host">Bảng điều khiển</Link> · <Link to="/profile">Hồ sơ cá nhân</Link></> : <><Link to="/profile">Hồ sơ</Link> • <a href="tel:0912345678">Hotline: 0912 345 678</a></>}

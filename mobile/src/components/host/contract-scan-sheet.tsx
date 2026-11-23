@@ -351,7 +351,7 @@ function ContractScanSheetContent({
                     {consent && <Feather name="check" size={13} color="#FFFFFF" />}
                   </View>
                   <Text style={s.checkText}>
-                    Tôi đồng ý gửi tài liệu đã chọn lên máy chủ HL_RCS để trích xuất nguyên văn nội
+                    Tôi đồng ý gửi tài liệu đã chọn lên máy chủ NestHub để trích xuất nguyên văn nội
                     dung hợp đồng. Kết quả trích xuất chỉ mang tính hỗ trợ, tôi sẽ tự đối chiếu với
                     bản gốc trước khi sử dụng.
                   </Text>

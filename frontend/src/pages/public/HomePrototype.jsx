@@ -255,7 +255,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
     <div className="container">
       <div className="section-header center">
         <span className="section-eyebrow">Cam kết chất lượng</span>
-        <h2 className="section-title">Vì sao hơn 6,000+ sinh viên tin chọn HL_RCS?</h2>
+        <h2 className="section-title">Vì sao hơn 6,000+ sinh viên tin chọn NestHub?</h2>
         <p className="section-desc">Giải quyết triệt để vấn đề tin ảo, ép giá điện nước và phát sinh phụ phí khi thuê trọ tại Hòa Lạc.</p>
       </div>
 
@@ -329,7 +329,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
     <div className="container">
       <div className="section-header center">
         <span className="section-eyebrow">Trải nghiệm thực tế</span>
-        <h2 className="section-title">Sinh viên &amp; Người thuê nói gì về HL_RCS?</h2>
+        <h2 className="section-title">Sinh viên &amp; Người thuê nói gì về NestHub?</h2>
         <p className="section-desc">Đánh giá thực tế từ các bạn sinh viên đã tìm được phòng ưng ý thông qua nền tảng.</p>
       </div>
 
@@ -337,7 +337,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
 
         <div className="review-card">
           <div className="review-stars">★★★★★</div>
-          <p className="review-text">"Mình là sinh viên K18 ĐH FPT, lúc mới lên Hòa Lạc tìm trọ rất sợ bị môi giới với cọc ảo. Nhờ HL_RCS mà mình tìm được phòng ở Tân Xã cách trường có 700m, giá điện nước chuẩn 100% như trên web."</p>
+          <p className="review-text">"Mình là sinh viên K18 ĐH FPT, lúc mới lên Hòa Lạc tìm trọ rất sợ bị môi giới với cọc ảo. Nhờ NestHub mà mình tìm được phòng ở Tân Xã cách trường có 700m, giá điện nước chuẩn 100% như trên web."</p>
           <div className="reviewer">
             <div className="reviewer-avatar">NA</div>
             <div className="reviewer-info">
@@ -363,7 +363,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
 
         <div className="review-card">
           <div className="review-stars">★★★★★</div>
-          <p className="review-text">"Nhà trọ của cô có 14 phòng, đợt sinh viên mới vào trường đăng lên HL_RCS được các bạn hỗ trợ chụp ảnh rất đẹp. Chỉ trong 1 tuần là đã kín phòng mà không mất phí môi giới nào."</p>
+          <p className="review-text">"Nhà trọ của cô có 14 phòng, đợt sinh viên mới vào trường đăng lên NestHub được các bạn hỗ trợ chụp ảnh rất đẹp. Chỉ trong 1 tuần là đã kín phòng mà không mất phí môi giới nào."</p>
           <div className="reviewer">
             <div className="reviewer-avatar host-av">CH</div>
             <div className="reviewer-info">
@@ -383,11 +383,11 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
       <div className="footer-col col-brand">
         <Link className="nav-brand white" to="/">
           <div className="brand-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
+            <span className="brand-name">NestHub</span>
+            <span className="brand-sub">Kết nối &amp; quản lý nhà trọ</span>
           </div>
         </Link>
         <p className="footer-desc">
@@ -433,7 +433,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
           📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
         </p>
         <p className="footer-contact-item">
-          ✉️ Email: support@hlrcs.vn
+          ✉️ Email: support@nesthub.vn
         </p>
         <div className="verified-badge-footer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -444,7 +444,7 @@ export default function HomePrototype({listings,more,filters,onClick,onSubmit,on
 
     <div className="footer-bottom">
       <div className="container footer-bottom-inner">
-        <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
+        <p>© 2026 NestHub. Bản quyền thuộc về nền tảng NestHub.</p>
       </div>
     </div>
   </footer>

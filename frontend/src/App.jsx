@@ -31,11 +31,9 @@ function ScreenRoute({ screen }) {
   if (screen.kind === 'redirect') return <Navigate to={`${screen.to}${location.search}${location.hash}`} replace />;
   if (screen.kind === 'auth') {
     return (
-      <PortalLayout screen={screen}>
-        <Suspense fallback={<GlobalLoading message={DEFAULT_GLOBAL_LOADING_MESSAGE} />}>
-          <AuthPage registerMode={screen.path === '/register'} />
-        </Suspense>
-      </PortalLayout>
+      <Suspense fallback={<GlobalLoading message={DEFAULT_GLOBAL_LOADING_MESSAGE} />}>
+        <AuthPage registerMode={screen.path === '/register'} />
+      </Suspense>
     );
   }
 

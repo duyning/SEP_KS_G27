@@ -136,7 +136,7 @@ export function googleBrowserOrigin(): string | null {
 const googleAttemptToken = /^[A-Za-z0-9_-]{43}$/;
 function googleBrowserBase(): string {
   const base = googleBrowserOrigin();
-  if (!base) throw new AuthError('Đăng nhập Google trên Expo Go cần địa chỉ HTTPS của HL_RCS.', 'config');
+  if (!base) throw new AuthError('Đăng nhập Google trên Expo Go cần địa chỉ HTTPS của NestHub.', 'config');
   return base;
 }
 

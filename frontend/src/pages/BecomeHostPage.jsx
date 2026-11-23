@@ -367,7 +367,7 @@ export default function BecomeHostPage() {
               <>
                 <p>
                   Hồ sơ xin cấp quyền sẽ được chuyển sang trạng thái <strong>“Đang chờ xét duyệt”</strong> để đội ngũ
-                  Staff HL-RCS thẩm định.
+                  Staff NestHub thẩm định.
                 </p>
                 <aside>
                   <strong>Lưu ý:</strong> Đơn đăng ký này là thủ tục xin cấp quyền sử dụng chức năng Chủ trọ. Sau khi

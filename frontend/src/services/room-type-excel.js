@@ -21,7 +21,7 @@ const excel=async()=>{const module=await import('exceljs');return module.default
 
 // This is application template generation, not exported database data.
 export async function buildRoomTypeTemplate(){
- const ExcelJS=await excel();const book=new ExcelJS.Workbook();book.creator='HL_RCS';
+ const ExcelJS=await excel();const book=new ExcelJS.Workbook();book.creator='NestHub';
  const type=book.addWorksheet(TYPE_SHEET);type.columns=[{width:32},{width:32},{width:84}];
  type.addRow(['Trường thông tin','Giá trị','Hướng dẫn']);
  for(const [index,[key,label,hint]] of EXCEL_FIELDS.entries()){
@@ -51,7 +51,7 @@ export async function buildRoomTypeTemplate(){
 }
 export async function downloadRoomTypeTemplate(){
  const buffer=await buildRoomTypeTemplate();const url=URL.createObjectURL(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
- const anchor=document.createElement('a');anchor.href=url;anchor.download='HL-RCS_Mau-loai-phong-va-danh-sach-phong.xlsx';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const anchor=document.createElement('a');anchor.href=url;anchor.download='NestHub_Mau-loai-phong-va-danh-sach-phong.xlsx';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export function parseRoomTypeWorkbook(book,{existingRoomNumbers=[],existingTypeNames=[]}={}){
  const issues=[];const data=emptyRoomType();data.capacity='';const rooms=[],sourceRows=[];

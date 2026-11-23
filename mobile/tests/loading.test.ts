@@ -102,15 +102,15 @@ test('withLoading always clears task state even when async request fails', async
   manager.dispose();
 });
 
-test('mobile GlobalLoading uses HL_RCS ivory/teal brand tokens, reduced motion and zero role leaks', () => {
+test('mobile GlobalLoading uses NestHub brand tokens, reduced motion and zero role leaks', () => {
   const componentSrc = readFileSync(
     new URL('../src/components/loading/global-loading.tsx', import.meta.url),
     'utf8'
   );
   const layoutSrc = readFileSync(new URL('../src/app/_layout.tsx', import.meta.url), 'utf8');
 
-  assert.match(componentSrc, /#FAFAF6/i);
-  assert.match(componentSrc, /#087F72/i);
+  assert.match(componentSrc, /#F8FAFC/i);
+  assert.match(componentSrc, /#0D9488/i);
   assert.match(componentSrc, /useReducedMotionPreference/);
   assert.match(componentSrc, /accessibilityRole="progressbar"/);
   assert.match(componentSrc, /accessibilityRole="alert"/);

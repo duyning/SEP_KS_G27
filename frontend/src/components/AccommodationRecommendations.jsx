@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowDownLeft, ArrowUpRight, Check, CircleAlert, House, LoaderCircle, LogIn, MapPin, Search, SearchX, Sparkles } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Check, CircleAlert, Filter, House, LoaderCircle, LogIn, MapPin, Search, SearchX, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { accommodationApi } from '../services/accommodations.js';
 import { accommodationDetailUrl } from '../services/map-location.js';
@@ -18,14 +18,14 @@ const scoreFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 })
 const descriptionLimit = 1200;
 const exampleDescription = 'Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh.';
 
-export default function AccommodationRecommendations({ origin, onClose }) {
+export default function AccommodationRecommendations({ origin, initialDescription, onClose, onUseFilters }) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(initialDescription);
   const [answer, setAnswer] = useState('');
   const [clarification, setClarification] = useState('');
   const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const active = useRef(null);
   const descriptionInput = useRef(null);
@@ -50,7 +50,7 @@ export default function AccommodationRecommendations({ origin, onClose }) {
     setResult(null);
     setClarification('');
     setAnswer('');
-    setError('');
+    setError(null);
   }
 
   async function submit(event) {
@@ -58,13 +58,13 @@ export default function AccommodationRecommendations({ origin, onClose }) {
     if (active.current || !description.trim() || (question && !answer.trim())) return;
     const context = question ? [clarification, question, answer.trim()].filter(Boolean).join('\n') : clarification;
     if (context.length > 1200) {
-      setError('Hãy gộp các tiêu chí vào mô tả rồi tìm lại.');
+      setError({ message: 'Hãy gộp các tiêu chí vào mô tả rồi tìm lại.' });
       return;
     }
     const controller = new AbortController();
     active.current = controller;
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       const response = await accommodationApi.recommend(description.trim(), context, controller.signal);
       if (controller.signal.aborted) return;
@@ -72,7 +72,9 @@ export default function AccommodationRecommendations({ origin, onClose }) {
       setClarification(context);
       setAnswer('');
     } catch (err) {
-      if (!controller.signal.aborted) setError(err.message);
+      if (!controller.signal.aborted) {
+        setError({ message: err.message, showFilters: err.status === 0 || err.status === 429 || err.status >= 500 });
+      }
     } finally {
       if (!controller.signal.aborted) {
         active.current = null;
@@ -116,8 +118,12 @@ export default function AccommodationRecommendations({ origin, onClose }) {
             <textarea id="ai-room-answer" ref={answerInput} required rows={2} maxLength={400} disabled={busy} value={answer}
               placeholder="Nhập thêm nhu cầu của bạn" onChange={event => setAnswer(event.target.value)} />
           </div>}
-          {error && <p role="alert" className="accommodation-ai-error"><CircleAlert size={18} aria-hidden="true" />{error}</p>}
+          {error && <p role="alert" className="accommodation-ai-error"><CircleAlert size={18} aria-hidden="true" />{error.message}</p>}
           <div className="accommodation-ai-actions">
+            {error?.showFilters && <button type="button" className="accommodation-ai-action accommodation-ai-filter-action"
+              aria-haspopup="dialog" onClick={() => onUseFilters(description)}>
+              <Filter size={18} aria-hidden="true" /> Dùng bộ lọc tìm phòng
+            </button>}
             <button type="submit" className="accommodation-ai-action" disabled={busy || !description.trim() || Boolean(question && !answer.trim())}>
               {busy ? <LoaderCircle size={18} className="spin" aria-hidden="true" /> : <Search size={18} aria-hidden="true" />}
               {busy ? 'Đang tìm phòng…' : error ? 'Thử lại' : question ? 'Gửi bổ sung' : 'Tìm phòng'}

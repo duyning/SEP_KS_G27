@@ -132,7 +132,7 @@ export default function AdminDashboardPage(){
  const refresh=()=>setRevision(v=>v+1),data=overview.data;
  const pageData=list.data,waiting=list.loading||q!==query;
  return <div className="ad-page">
-  <section className="ad-hero"><div><span className="ad-eyebrow">HL_RCS · ADMIN CONSOLE</span><h1>Quản trị hệ thống</h1><p>Xin chào, <strong>{user.fullName||user.email}</strong>. Theo dõi dữ liệu và giám sát hoạt động của nền tảng.</p><span className="ad-hero-caption"><LockKeyhole size={13}/>Khu vực dành cho Quản trị viên</span></div><div className="ad-hero-side"><ShieldCheck size={37} strokeWidth={1.5}/><span>TỔNG QUAN VẬN HÀNH</span><small>{data?`Cập nhật: ${date(data.fetchedAt)}`:'Đang kết nối dữ liệu hệ thống'}</small><MotionButton className="ad-button ad-hero-refresh" disabled={overview.loading} onClick={refresh}><RefreshCw size={14} className={overview.loading?'spin':''}/>Làm mới dữ liệu</MotionButton></div></section>
+  <section className="ad-hero"><div><span className="ad-eyebrow">NestHub · ADMIN CONSOLE</span><h1>Quản trị hệ thống</h1><p>Xin chào, <strong>{user.fullName||user.email}</strong>. Theo dõi dữ liệu và giám sát hoạt động của nền tảng.</p><span className="ad-hero-caption"><LockKeyhole size={13}/>Khu vực dành cho Quản trị viên</span></div><div className="ad-hero-side"><ShieldCheck size={37} strokeWidth={1.5}/><span>TỔNG QUAN VẬN HÀNH</span><small>{data?`Cập nhật: ${date(data.fetchedAt)}`:'Đang kết nối dữ liệu hệ thống'}</small><MotionButton className="ad-button ad-hero-refresh" disabled={overview.loading} onClick={refresh}><RefreshCw size={14} className={overview.loading?'spin':''}/>Làm mới dữ liệu</MotionButton></div></section>
   {view==='overview'?<>
    <AdminServiceSummary />
    {overview.error&&<LoadState state={overview} retry={refresh}/>}
@@ -158,6 +158,6 @@ export default function AdminDashboardPage(){
   </section>}
   {statusChange && <AccountStatusDialog change={statusChange} error={statusError} busy={savingStatus}
    onCancel={() => setStatusChange(null)} onConfirm={saveAccountStatus}/>}
-  <footer className="ad-page-footer"><span>HL_RCS · Bảng điều khiển quản trị</span><span><ShieldCheck size={13}/>Giám sát theo quyền tài khoản</span></footer>
+  <footer className="ad-page-footer"><span>NestHub · Bảng điều khiển quản trị</span><span><ShieldCheck size={13}/>Giám sát theo quyền tài khoản</span></footer>
  </div>;
 }

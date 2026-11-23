@@ -1,6 +1,6 @@
 /* ============================================================================
-   NestHub / HL_RCS — Unified Global Loading System
-   Brand Palette: Ivory #FAFAF6 · Primary Teal #087F72 · Deep Ink #142D29
+   NestHub — Unified Global Loading System
+   Brand Palette: Background #F8FAFC · Primary Teal #0D9488 · Dark Teal #0F766E · Text #0F172A
    Tiers:
      1. GlobalSplashLoading / GlobalLoading (.gl-screen) — App startup & session
      2. GlobalLoadingOverlay (.gl-overlay) — Single blocking overlay (LoadingManager)
@@ -17,8 +17,8 @@
   align-items: center;
   justify-content: center;
   padding: 24px 20px;
-  background-color: #FAFAF6;
-  color: #142D29;
+  background-color: #F8FAFC;
+  color: #0F172A;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -30,12 +30,12 @@
 }
 
 .gl-screen.gl-overlay.gl-translucent-mode {
-  background-color: rgba(250, 250, 246, 0.92);
+  background-color: rgba(248, 250, 252, 0.92);
   backdrop-filter: blur(4px);
 }
 
 .gl-screen.gl-overlay.gl-fullscreen-mode {
-  background-color: #FAFAF6;
+  background-color: #F8FAFC;
 }
 
 .gl-card {

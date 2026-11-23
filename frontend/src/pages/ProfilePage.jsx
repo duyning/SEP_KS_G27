@@ -36,7 +36,7 @@ export default function ProfilePage() {
  },[accountMenuOpen]);
  const roleLabel=roleLabels[user?.role]||'Thành viên';
  const isOperator=['STAFF','ADMIN'].includes(user?.role), isHost=user?.role==='ROOM_HOST';
- const perks={title:isOperator?'Đặc quyền Chuyên viên vận hành Staff Portal':isHost?'Đặc quyền Chủ trọ đối tác HL_RCS':'Quyền lợi thành viên Sinh viên FPT & Người thuê',description:isOperator?'Tài khoản của bạn được cấp quyền thẩm định hồ sơ nhà trọ, kiểm duyệt tin đăng vi phạm, xác minh đánh giá và điều phối hỗ trợ đối tác.':isHost?'Tài khoản của bạn được cấp quyền đăng tải nhà trọ, kiểm soát số lượng phòng trống và nhận liên hệ trực tiếp từ sinh viên.':'Bạn được quyền lưu trữ và so sánh không giới hạn các phòng trọ, xem thông tin điện nước minh bạch và đặt lịch xem phòng miễn phí.'};
+ const perks={title:isOperator?'Đặc quyền Chuyên viên vận hành Staff Portal':isHost?'Đặc quyền Chủ trọ đối tác NestHub':'Quyền lợi thành viên Sinh viên FPT & Người thuê',description:isOperator?'Tài khoản của bạn được cấp quyền thẩm định hồ sơ nhà trọ, kiểm duyệt tin đăng vi phạm, xác minh đánh giá và điều phối hỗ trợ đối tác.':isHost?'Tài khoản của bạn được cấp quyền đăng tải nhà trọ, kiểm soát số lượng phòng trống và nhận liên hệ trực tiếp từ sinh viên.':'Bạn được quyền lưu trữ và so sánh không giới hạn các phòng trọ, xem thông tin điện nước minh bạch và đặt lịch xem phòng miễn phí.'};
  function showErrors(next){setErrors(next);const key=Object.keys(next)[0];if(key){requestAnimationFrame(()=>document.getElementById(ids[key])?.focus());return true;}return false;}
  function fail(error){setAlert(error.message||'Không thể lưu thay đổi. Vui lòng thử lại.');setErrors(error.fields||{});}
  function closePhoneOtp(){

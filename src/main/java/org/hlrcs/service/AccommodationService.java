@@ -173,7 +173,7 @@ public class AccommodationService {
         return new AccommodationRecommendationService.Match(score, matched, unmatched);
     }
 
-    private static String normalized(String value) {
+    static String normalized(String value) {
         return Normalizer.normalize(Objects.toString(value, ""), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT).replace('đ', 'd');
     }

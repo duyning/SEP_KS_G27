@@ -177,7 +177,7 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             String email = googleUser.email().trim().toLowerCase(Locale.ROOT);
             if (userRepository.existsByEmail(email)) {
-                throw new AppException("Email này đã thuộc một tài khoản HL-RCS. Hãy dùng phương thức đăng nhập ban đầu hoặc liên hệ hỗ trợ.", HttpStatus.CONFLICT);
+                throw new AppException("Email này đã thuộc một tài khoản NestHub. Hãy dùng phương thức đăng nhập ban đầu hoặc liên hệ hỗ trợ.", HttpStatus.CONFLICT);
             }
 
             String fullName = googleUser.fullName();

@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { BrandIcon, BRAND } from '../brand/index.js';
 
 export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, reports: 0, community: 1, feedback: 0, support: 1 } }) {
   const { user, logout } = useAuth();
@@ -44,12 +45,10 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
       <aside id="staffSidebar" className={`staff-sidebar ${isOpen ? 'mobile-open' : ''}`} aria-label="Thanh điều hướng nhân viên">
         {/* Brand & Portal Logo */}
         <div className="sidebar-brand-box">
-          <Link to="/staff" className="sidebar-brand-link" title="HL_RCS Rental Connection System">
-            <div className="brand-logo-icon">
-              <Shield size={22} />
-            </div>
+          <Link to="/staff" className="sidebar-brand-link" title={`${BRAND.name} - ${BRAND.tagline}`}>
+            <BrandIcon size={34} variant="teal" />
             <div className="brand-text-block">
-              <div className="brand-portal-title">HL_RCS</div>
+              <div className="brand-portal-title" style={{ color: '#0F5955', fontWeight: 800 }}>{BRAND.name}</div>
               <div className="brand-portal-role">STAFF PORTAL</div>
             </div>
           </Link>

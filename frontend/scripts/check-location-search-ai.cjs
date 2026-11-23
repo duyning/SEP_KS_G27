@@ -180,6 +180,16 @@ async function check() {
     aiMode = 'error';
     await ai.getByRole('button', { name: 'Gửi bổ sung' }).click();
     await ai.getByRole('alert').getByText(/AI phản hồi quá chậm/).waitFor();
+    const checkDialogPadding = async path => {
+      const insets = await ai.evaluate(dialog => {
+        const body = dialog.querySelector('.accommodation-ai-body');
+        const alert = dialog.querySelector('.accommodation-ai-error');
+        const button = dialog.querySelector('.accommodation-ai-action[type="submit"]');
+        return [body, alert, button].map(element => Number.parseFloat(getComputedStyle(element).paddingInlineStart));
+      });
+      assert.ok(insets.every(value => value >= 10), `Dialog body, alert or button lost padding on ${path}: ${insets}`);
+    };
+    await checkDialogPadding('/search');
     aiMode = 'results';
     await ai.getByRole('button', { name: 'Thử lại' }).click();
     await ai.getByRole('link', { name: 'Nhà trọ DEMO — Studio' }).waitFor();
@@ -201,6 +211,24 @@ async function check() {
     await page.keyboard.press('Escape');
     await ai.waitFor({ state: 'hidden' });
     assert.ok(await aiTrigger.evaluate(trigger => trigger === document.activeElement));
+
+    await page.goto(base + '/map');
+    aiMode = 'error';
+    await aiTrigger.click();
+    await description.fill('Tìm phòng Tân Xã có điều hòa');
+    await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();
+    await ai.getByRole('alert').waitFor();
+    await checkDialogPadding('/map');
+    await ai.getByRole('button', { name: 'Dùng bộ lọc tìm phòng' }).click();
+    const filters = page.getByRole('dialog', { name: 'Bộ lọc tìm kiếm phòng trọ' });
+    await filters.getByRole('checkbox', { name: 'Điều hòa', exact: true }).check();
+    await filters.getByRole('checkbox', { name: 'Bình nóng lạnh', exact: true }).check();
+    await filters.getByRole('button', { name: 'Áp dụng', exact: true }).click();
+    await filters.waitFor({ state: 'hidden' });
+    await page.getByRole('button', { name: 'Xóa bộ lọc Điều hòa' }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('amenities'), 'airConditioner,waterHeater');
+    await aiTrigger.click();
+    assert.equal(await description.inputValue(), 'Tìm phòng Tân Xã có điều hòa');
     assert.deepEqual(errors, []);
     console.log('PASS: origin, radius, filters, map, details, comparison, and AI clarification/timeout/results/empty with fixtures.');
   } finally {

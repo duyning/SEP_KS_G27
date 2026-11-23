@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { BrandIcon, BRAND } from '../brand/index.js';
 
 export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 }) {
   const { user, logout } = useAuth();
@@ -43,12 +44,10 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
       <aside id="hostSidebar" className={`host-sidebar ${isOpen ? 'mobile-open' : ''}`} aria-label="Thanh điều hướng chủ trọ">
         {/* Brand & Portal Logo */}
         <div className="sidebar-brand-box">
-          <Link to="/host" className="sidebar-brand-link" title="HL_RCS Rental Connection System">
-            <div className="brand-logo-icon">
-              <Home size={22} />
-            </div>
+          <Link to="/host" className="sidebar-brand-link" title={`${BRAND.name} - ${BRAND.tagline}`}>
+            <BrandIcon size={34} variant="teal" />
             <div className="brand-text-block">
-              <div className="brand-portal-title">HL_RCS</div>
+              <div className="brand-portal-title" style={{ color: '#0F5955', fontWeight: 800 }}>{BRAND.name}</div>
               <div className="brand-portal-role">ROOM HOST PORTAL</div>
             </div>
           </Link>

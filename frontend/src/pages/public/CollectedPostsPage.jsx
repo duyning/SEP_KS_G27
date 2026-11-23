@@ -16,7 +16,7 @@ export default function CollectedPostsPage() {
   return <DetailPrototypeShell className="collected-public"><main className="collected-page collected-discovery">
     <section className="collected-discovery-hero" aria-labelledby="collected-title">
       <div className="collected-discovery-container collected-discovery-intro">
-        <div><span className="collected-discovery-badge"><Globe size={15} aria-hidden="true" />HL_RCS · Thông tin Hòa Lạc</span><h1 id="collected-title">Bài đăng <span>tổng hợp</span></h1><p>Khám phá thông tin quanh Hòa Lạc được đội ngũ HL_RCS chọn lọc từ các nhóm Facebook.</p></div>
+        <div><span className="collected-discovery-badge"><Globe size={15} aria-hidden="true" />NestHub · Thông tin Hòa Lạc</span><h1 id="collected-title">Bài đăng <span>tổng hợp</span></h1><p>Khám phá thông tin quanh Hòa Lạc được đội ngũ NestHub chọn lọc từ các nhóm Facebook.</p></div>
         {['STAFF', 'ADMIN'].includes(user?.role) && <Link className="collected-button primary" to="/staff/collected-posts">Quản lý bài tổng hợp</Link>}
       </div>
     </section>

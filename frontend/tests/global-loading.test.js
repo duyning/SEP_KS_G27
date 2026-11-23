@@ -46,7 +46,7 @@ test('normalizeLoadingMessage returns neutral Vietnamese fallbacks', () => {
   assert.equal(DEFAULT_SESSION_LOADING_MESSAGE, 'Đang kiểm tra phiên đăng nhập...');
 });
 
-test('GlobalLoading and index.html bootstrap are role-agnostic, accessible, and use unified HL_RCS palette', () => {
+test('GlobalLoading and index.html bootstrap are role-agnostic, accessible, and use unified NestHub palette', () => {
   const indexHtml = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const globalLoadingSrc = fs.readFileSync(new URL('../src/components/loading/GlobalLoading.jsx', import.meta.url), 'utf8');
   const loadingCss = fs.readFileSync(new URL('../src/styles/loading.css', import.meta.url), 'utf8');
@@ -59,16 +59,16 @@ test('GlobalLoading and index.html bootstrap are role-agnostic, accessible, and 
   // Zero artificial timers inside GlobalLoading render component
   assert.doesNotMatch(globalLoadingSrc, /setTimeout|setInterval/);
 
-  // Unified HL_RCS brand palette (#087F72 teal + #FAFAF6 ivory background) and reduced motion
-  assert.match(indexHtml, /#087F72/i);
-  assert.match(indexHtml, /#FAFAF6/i);
+  // Unified NestHub brand palette (#0D9488 teal + #F8FAFC background) and reduced motion
+  assert.match(indexHtml, /#0d9488/i);
+  assert.match(indexHtml, /#f8fafc/i);
   assert.match(indexHtml, /prefers-reduced-motion:\s*reduce/i);
   assert.match(indexHtml, /role="status"/);
   assert.match(indexHtml, /aria-live="polite"/);
   assert.match(indexHtml, /aria-busy="true"/);
 
-  assert.match(loadingCss, /#087F72/i);
-  assert.match(loadingCss, /#FAFAF6/i);
+  assert.match(loadingCss, /#0d9488/i);
+  assert.match(loadingCss, /#f8fafc/i);
   assert.match(loadingCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/i);
 
   // Accessibility & error recovery in GlobalLoading

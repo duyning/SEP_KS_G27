@@ -207,7 +207,7 @@ export function resolvePropertyChangeEntry(
         badge: 'Đang chờ xét duyệt',
         title: 'Đề nghị thay đổi đang xử lý',
         subtitle:
-          'Thông tin nhà trọ công khai vẫn giữ nguyên cho đến khi nhân viên HL_RCS phê duyệt.',
+          'Thông tin nhà trọ công khai vẫn giữ nguyên cho đến khi nhân viên NestHub phê duyệt.',
         ctaLabel: 'Theo dõi yêu cầu',
         tone: 'pending',
       };
@@ -240,7 +240,7 @@ export function resolvePropertyChangeEntry(
       propertyId: null,
       badge: 'Đang xét duyệt',
       title: 'Hồ sơ nhà trọ đang chờ duyệt',
-      subtitle: 'Nhân viên HL_RCS đang thẩm định hồ sơ đăng ký nhà trọ này.',
+      subtitle: 'Nhân viên NestHub đang thẩm định hồ sơ đăng ký nhà trọ này.',
       ctaLabel: 'Theo dõi hồ sơ',
       tone: 'pending',
     };
@@ -883,7 +883,7 @@ export function propertyChangeStatusMeta(input: {
       tone: 'approved' as const,
       badge: 'Đã phê duyệt',
       title: 'Đề nghị thay đổi đã được phê duyệt',
-      description: 'Thông tin nhà trọ mới đã được áp dụng lên hệ thống HL_RCS.',
+      description: 'Thông tin nhà trọ mới đã được áp dụng lên hệ thống NestHub.',
       canEdit: false,
     };
   }
@@ -914,7 +914,7 @@ export function propertyChangeStatusMeta(input: {
       ? 'Đang chờ tái xác minh thông tin quan trọng'
       : 'Đã gửi yêu cầu xét duyệt',
     description: input.reverificationRequired
-      ? 'Vì có thay đổi thông tin quan trọng, nhà trọ tạm ẩn cho đến khi nhân viên HL_RCS hoàn tất tái xác minh.'
+      ? 'Vì có thay đổi thông tin quan trọng, nhà trọ tạm ẩn cho đến khi nhân viên NestHub hoàn tất tái xác minh.'
       : 'Thông tin nhà trọ hiện tại vẫn giữ nguyên công khai cho đến khi yêu cầu này được phê duyệt.',
     canEdit: false,
   };

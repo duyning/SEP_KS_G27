@@ -212,13 +212,31 @@ class AccommodationTests {
         assertEquals("EMPTY", json.readTree(recommend(token).body()).path("data").path("status").asText());
         when(gemini.generate(anyString(), any(), any())).thenThrow(new AppException("AI phản hồi quá chậm. Vui lòng thử lại.", HttpStatus.GATEWAY_TIMEOUT));
         assertEquals(504, recommend(token).statusCode());
+
+        eligible.setAmenitiesJson("[\"airConditioner\",\"waterHeater\",\"refrigerator\",\"desk\"]");
+        types.save(eligible);
+        unit.setStatus("VACANT");
+        rooms.save(unit);
+        var simpleResponse = recommend(token,
+                "Phòng dưới 2,5 triệu/tháng, có điều hòa và bình nóng lạnh, có thủ lạnh, có bàn ghế");
+        assertEquals(200, simpleResponse.statusCode(), simpleResponse.body());
+        var simpleData = json.readTree(simpleResponse.body()).path("data");
+        assertEquals("RESULTS", simpleData.path("status").asText());
+        assertEquals(2500000, simpleData.path("criteria").path("maxBudget").asInt());
+        var firstResult = simpleData.path("items").path(0);
+        assertEquals(eligible.getRoomTypeId(), firstResult.path("roomTypeId").asInt());
+        assertEquals(10.0, firstResult.path("match").path("score").asDouble());
     }
 
     private HttpResponse<String> recommend(String token) throws Exception {
+        return recommend(token, "Tìm phòng ở Tân Xã");
+    }
+
+    private HttpResponse<String> recommend(String token, String description) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + environment.getProperty("local.server.port")
                 + "/api/properties/recommendations")).header("Content-Type", "application/json");
         if (token != null) request.header("Authorization", "Bearer " + token);
-        return client.send(request.POST(HttpRequest.BodyPublishers.ofString("{\"description\":\"Tìm phòng ở Tân Xã\"}"))
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(Map.of("description", description))))
                 .build(), HttpResponse.BodyHandlers.ofString());
     }
 

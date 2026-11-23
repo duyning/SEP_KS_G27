@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/context/auth-context';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { authApi, validateRegister } from '@/services/auth';
 import { AuthInput } from './auth-input';
 import { InlineError } from './inline-error';
@@ -158,7 +159,7 @@ export function RegisterView() {
                 <Feather name="arrow-left" size={22} color={authColors.forestInk} />
               </Pressable>
 
-              <Text style={styles.headerWordmark}>HL_RCS</Text>
+              <BrandLogo size="sm" tone="light" />
               <View style={styles.navSpacer} />
             </View>
 

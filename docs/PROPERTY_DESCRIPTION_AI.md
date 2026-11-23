@@ -11,9 +11,11 @@ không gửi trường liên hệ, ảnh hay giấy tờ. Gemini nhận chỉ d�
 diện tích, số phòng, khoảng cách, tiện ích hoặc trạng thái xác minh.
 
 Gợi ý hiển thị riêng. Chủ trọ phải chọn **Dùng mô tả này** trước khi thay nội dung.
-Có thể sửa tiếp sau khi áp dụng. Lỗi, hủy hoặc response đến muộn không xóa mô tả
-đang nhập. Sửa dữ kiện trong lúc AI đang chạy sẽ hủy kết quả cũ.
-Giới hạn một yêu cầu mỗi 15 giây cho mỗi tài khoản trên một backend instance.
+Nếu Gemini lỗi, hết quota, phản hồi không hợp lệ hoặc chưa có kết quả sau 5 giây,
+trình duyệt tạo **Bản nháp từ thông tin đã nhập** dựa trên tên, loại hình, khu vực,
+địa điểm lân cận, tiện ích và nội quy đã chọn. Bản nháp cũng dùng được khi mất kết nối.
+Sửa dữ kiện trong lúc đang tạo gợi ý sẽ hủy kết quả cũ và giữ nội dung đang nhập.
+Giới hạn một lượt tạo gợi ý mỗi 15 giây cho mỗi tài khoản trên một backend instance.
 
 ## Cấu hình
 
@@ -31,9 +33,8 @@ bỏ qua. Run configuration dùng working directory là `$PROJECT_DIR$`.
 Sau khi lưu, Stop rồi Run lại backend và thử nút tạo mô tả trên web.
 Nếu dùng biến môi trường, có thể giữ nguyên biểu thức mặc định trong file local.
 
-Nếu thiếu khóa/quota hoặc nhà cung cấp lỗi, UI thông báo rõ và vẫn cho tự nhập;
-không dùng câu mẫu để giả làm kết quả AI. Kiểm thử dùng mock và response mẫu,
-không xác nhận khả năng/quota của tài khoản Gemini thật.
+Kiểm thử dùng dữ liệu mô phỏng và chưa xác nhận khả năng hoặc quota
+của tài khoản Gemini thật.
 
 API nhà cung cấp: https://ai.google.dev/api/generate-content
 
@@ -41,10 +42,12 @@ API nhà cung cấp: https://ai.google.dev/api/generate-content
 
 Backend ghi `Property description AI: configured=..., model=...` khi khởi động.
 Khi lỗi, log chỉ ghi model, HTTP status hoặc nhóm lỗi; không ghi khóa, prompt
-hay nội dung phản hồi. UI phân biệt lỗi quota/giới hạn (429), quyền truy cập (403),
+hay nội dung phản hồi. Backend phân biệt lỗi quota/giới hạn (429), quyền truy cập (403),
 model không khả dụng (404), timeout, gián đoạn nhà cung cấp và phản hồi chưa hoàn chỉnh.
+Với lỗi 500, 502, 503 hoặc 504, backend chờ khoảng một giây rồi thử lại một lần
+trong thời hạn 30 giây của lượt tạo gợi ý.
 Không tự động thay model hoặc thay khóa khi nhà cung cấp báo lỗi.
 
-Kiểm thử thật có chủ đích (một request bằng dữ liệu giả, cần khóa local):
+Kiểm thử thật có chủ đích (một lượt tạo gợi ý bằng dữ liệu giả, cần khóa local):
 `mvnw.cmd -Dtest=PropertyDescriptionLiveTests -Dhlrcs.ai.live-test=true test`.
 Test này bị bỏ qua mặc định, dùng H2 và không gửi dữ liệu nhà trọ thật.

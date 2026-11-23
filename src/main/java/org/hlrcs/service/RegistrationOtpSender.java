@@ -59,8 +59,8 @@ public class RegistrationOtpSender {
         var message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(email);
-        message.setSubject("Mã xác minh đăng ký HL-RCS");
-        message.setText("Mã xác minh đăng ký HL-RCS của bạn là " + code + ". Mã có hiệu lực trong 5 phút.");
+        message.setSubject("Mã xác minh đăng ký NestHub");
+        message.setText("Mã xác minh đăng ký NestHub của bạn là " + code + ". Mã có hiệu lực trong 5 phút.");
         try {
             sender.send(message);
         } catch (MailException ex) {

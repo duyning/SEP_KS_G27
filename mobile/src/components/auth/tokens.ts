@@ -1,5 +1,5 @@
 /**
- * Design Tokens for HL_RCS Mobile App
+ * Design Tokens for NestHub Mobile App
  * Art Direction: URBAN LIVING – Premium Mobile Rental Marketplace
  * Contemporary editorial design, clean native mobile experience, minimal luxury.
  */

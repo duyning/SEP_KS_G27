@@ -111,7 +111,7 @@ export default function HomeScreen() {
           const message =
             error instanceof Error
               ? error.message
-              : 'Không thể kết nối đến máy chủ HL_RCS.';
+              : 'Không thể kết nối đến máy chủ NestHub.';
           setErrorMessage(message);
         }
       } finally {

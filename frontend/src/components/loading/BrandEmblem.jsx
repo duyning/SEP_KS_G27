@@ -1,8 +1,8 @@
-import { House } from 'lucide-react';
+import BrandIcon from '../brand/BrandIcon.jsx';
 
 /**
- * Official NestHub / HL_RCS brand emblem used consistently with AuthLayout and PortalLayout.
- * If a static image logo asset is later added, pass `logoSrc` to swap seamlessly.
+ * Official NestHub brand emblem used inside GlobalLoading and PageLoading.
+ * Renders the exact NestHub house-nest vector icon inside the rounded teal badge.
  */
 export default function BrandEmblem({
   size = 'lg',
@@ -10,7 +10,7 @@ export default function BrandEmblem({
   logoAlt = 'NestHub',
   className = ''
 }) {
-  const iconSize = size === 'sm' ? 20 : 26;
+  const iconSize = size === 'sm' ? 22 : 30;
   const baseClass = size === 'sm' ? 'pl-emblem' : 'gl-emblem';
 
   return (
@@ -18,7 +18,7 @@ export default function BrandEmblem({
       {logoSrc ? (
         <img className="gl-emblem-img" src={logoSrc} alt={logoAlt} />
       ) : (
-        <House size={iconSize} strokeWidth={2.2} />
+        <BrandIcon size={iconSize} variant="white" />
       )}
     </span>
   );

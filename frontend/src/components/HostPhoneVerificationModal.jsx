@@ -1,4 +1,5 @@
 import {useRef,useState} from 'react';
+import {ShieldCheck} from 'lucide-react';
 import {Modal} from './PortalUI.jsx';
 import {MotionButton} from './motion/MotionUI.jsx';
 import ProfilePhoneOtp from './ProfilePhoneOtp.jsx';
@@ -20,7 +21,8 @@ export default function HostPhoneVerificationModal({user,onClose,onVerified,prev
    setChallenge(next);
   }catch(cause){setError(cause.message);}finally{lock.current=false;setBusy(false);}
  };
- return <Modal title="Xác minh số điện thoại" className="profile-phone-otp" onClose={close}>
+ const title=<span className="ppo-heading"><span className="ppo-icon"><ShieldCheck size={20} aria-hidden="true"/></span><span>Xác minh số điện thoại</span></span>;
+ return <Modal title={title} className="profile-phone-otp" onClose={close}>
   {challenge?<ProfilePhoneOtp embedded challenge={challenge} preview={preview} onBusyChange={setOtpBusy} onClose={close} onVerified={async()=>{if(!saved.current){await authApi.confirmPhone(challenge.phoneNumber);saved.current=true;}await onVerified();}}/>:
    <form onSubmit={send} noValidate><p className="ppo-intro">Nhập số điện thoại liên hệ của bạn. Mã xác minh sẽ được gửi qua SMS ngay tại đây.</p>{preview&&<p className="ppo-preview">Bản xem trước · Không gửi SMS thật.</p>}<div className="ppo-field"><label htmlFor="host-verification-phone">Số điện thoại</label><input id="host-verification-phone" className="hvp-phone-input" type="tel" autoComplete="tel" autoFocus value={phone} disabled={busy} onChange={event=>{setPhone(event.target.value);setError('');}} aria-invalid={Boolean(error)} aria-describedby={error?'host-phone-error':undefined}/>{error&&<p id="host-phone-error" className="ppo-error" role="alert">{error}</p>}</div><div className="ppo-actions"><MotionButton type="button" className="p-button" disabled={busy} onClick={close}>Hủy</MotionButton><MotionButton type="submit" className="p-button primary" disabled={busy}>{busy?'Đang gửi mã…':'Gửi mã OTP'}</MotionButton></div></form>}
  </Modal>;

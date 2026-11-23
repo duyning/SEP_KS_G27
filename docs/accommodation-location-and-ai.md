@@ -57,11 +57,11 @@ Ví dụ JSON cho một kết quả ở điểm gốc:
 
 ## Gợi ý phòng
 
-`POST /api/properties/recommendations` yêu cầu đăng nhập. Body gồm `description` và `clarification` tùy chọn, mỗi trường tối đa 1.200 ký tự. Gemini đọc mô tả và chuẩn hóa các tiêu chí người thuê đã nêu, gồm ngân sách/tháng, khu vực, loại phòng, sức chứa tối thiểu, diện tích tối thiểu và tiện nghi. API trả `CLARIFY` kèm `question`, `EMPTY` hoặc `RESULTS`. Nếu mô tả đã có tiêu chí có thể đối chiếu, người thuê có thể tìm ngay.
+`POST /api/properties/recommendations` yêu cầu đăng nhập. Body gồm `description` và `clarification` tùy chọn, mỗi trường tối đa 1.200 ký tự. Với mô tả gồm mức giá tối đa hoặc tiện nghi phổ biến và mọi tiêu chí đều nhận diện được, backend tìm phòng trực tiếp. Trao đổi có câu trả lời bổ sung hoặc mô tả ngoài phạm vi này được gửi tới Gemini để chuẩn hóa ngân sách/tháng, khu vực, loại phòng, sức chứa tối thiểu, diện tích tối thiểu và tiện nghi. API trả `CLARIFY` kèm `question`, `EMPTY` hoặc `RESULTS`.
 
-Server đối chiếu tiêu chí với dữ liệu các loại phòng công khai còn chỗ. Mỗi tiêu chí có trọng số bằng nhau. Điểm bằng số tiêu chí khớp chia cho tổng số tiêu chí, nhân 10 và làm tròn một chữ số thập phân. Ví dụ, phòng khớp 3/4 tiêu chí đạt 7,5/10. API trả tối đa 6 loại phòng khớp ít nhất một tiêu chí, ưu tiên điểm cao, xác nhận còn trống gần đây, giá thuê thấp hơn và ID nhỏ hơn khi các điều kiện trước bằng nhau. Mỗi kết quả có thêm `match.score`, `match.matchedCriteria` và `match.unmatchedCriteria`. Khi Gemini phản hồi quá chậm, API trả 504 để UI hiện thao tác thử lại.
+Server đối chiếu tiêu chí với dữ liệu các loại phòng công khai còn chỗ. Mỗi tiêu chí có trọng số bằng nhau. Điểm bằng số tiêu chí khớp chia cho tổng số tiêu chí, nhân 10 và làm tròn một chữ số thập phân. Ví dụ, phòng khớp 3/4 tiêu chí đạt 7,5/10. API trả tối đa 6 loại phòng khớp ít nhất một tiêu chí, ưu tiên điểm cao, xác nhận còn trống gần đây, giá thuê thấp hơn và ID nhỏ hơn khi các điều kiện trước bằng nhau. Mỗi kết quả có thêm `match.score`, `match.matchedCriteria` và `match.unmatchedCriteria`. Nếu lần gọi Gemini cuối cùng hết thời gian chờ, API trả 504 để giao diện hiện nút thử lại và mở bộ lọc.
 
-Đặt `GEMINI_API_KEY` ở môi trường backend. Có thể đổi model bằng `ACCOMMODATION_AI_MODEL`. Giao diện gọi Gemini qua Spring Boot.
+Backend đọc khóa theo thứ tự `ACCOMMODATION_AI_KEY`, `GEMINI_API_KEY`, rồi cấu hình `property.description.ai.key` dùng cho tạo mô tả nhà trọ. Model mặc định của Trọ Mây là `gemini-3.5-flash-lite` (`ACCOMMODATION_AI_MODEL`). Khi có model dự phòng, backend chờ model chính tối đa 7 giây. Nếu model chính hết thời gian chờ hoặc trả HTTP 502, 503, 504, backend tự thử một lần trong tối đa 5 giây với `gemini-3.1-flash-lite` (`ACCOMMODATION_AI_FALLBACK_MODEL`). Nếu tắt model dự phòng bằng giá trị rỗng, model chính có tối đa 12 giây.
 
 ## Smoke test demo
 

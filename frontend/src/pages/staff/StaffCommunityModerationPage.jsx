@@ -19,7 +19,7 @@ export default function StaffCommunityModerationPage(){
  const state=useCommunityLoad('moderation'),[params,setParams]=useSearchParams(),filters=readModerationFilters(params),posts=state.data||[];
  const [filtersOpen,setFiltersOpen]=useState(false);
  const stats=moderationSummary(posts),filtered=filterModerationPosts(posts,filters),totalPages=Math.max(1,Math.ceil(filtered.length/pageSize)),page=Math.min(filters.page,totalPages),rows=filtered.slice((page-1)*pageSize,page*pageSize),known=!state.loading&&!state.error;
- useEffect(()=>{document.title='Kiểm duyệt cộng đồng | HL_RCS Staff';},[]);
+ useEffect(()=>{document.title='Kiểm duyệt cộng đồng | NestHub Staff';},[]);
  useEffect(()=>{if(known&&filters.page>totalPages){const next=new URLSearchParams(params);next.set('page',String(totalPages));setParams(next,{replace:true});}},[known,filters.page,totalPages,params,setParams]);
  function change(values){const next=new URLSearchParams(params);for(const [key,value] of Object.entries(values)){if(!value||key==='category'&&value==='ALL'||key==='sort'&&value==='newest'||key==='page'&&value===1)next.delete(key);else next.set(key,String(value));}if(!('page' in values))next.delete('page');setParams(next,{replace:Object.keys(values).length===1&&'q' in values});}
  const actionLabel=post=>post.status==='PENDING'?'Kiểm duyệt':'Xem chi tiết';
@@ -44,6 +44,6 @@ export default function StaffCommunityModerationPage(){
   </>}
   {known&&!rows.length&&<div className="verif-empty-state" id="emptyStateCommunity" role="status"><Users size={40}/><h2 className="empty-title">Không có bài viết cộng đồng nào phù hợp</h2><p className="empty-desc">Hiện tại không có bài viết nào phù hợp với bộ lọc đã chọn.</p><MotionButton type="button" className="btn-staff-primary" onClick={()=>change({q:'',category:'ALL',status:'ALL'})}>Xem tất cả bài viết</MotionButton></div>}
   {known&&!!filtered.length&&<nav className="verif-pagination" id="paginationControls" aria-label="Phân trang kiểm duyệt"><span className="pagination-info">Trang {page} / {totalPages} · {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} / {filtered.length} bài viết</span><div><MotionButton type="button" className="btn-staff-secondary" disabled={page<=1} onClick={()=>change({page:page-1})}>Trang trước</MotionButton><MotionButton type="button" className="btn-staff-secondary" disabled={page>=totalPages} onClick={()=>change({page:page+1})}>Trang tiếp</MotionButton></div></nav>}
-  <footer className="staff-footer"><span>© 2026 HL_RCS — Hệ thống Kiểm định Nhà trọ &amp; Cộng đồng Hòa Lạc.</span><span>Chỉ bài đã phê duyệt được hiển thị công khai.</span></footer>
+  <footer className="staff-footer"><span>© 2026 NestHub — Hệ thống Kiểm định Nhà trọ &amp; Cộng đồng Hòa Lạc.</span><span>Chỉ bài đã phê duyệt được hiển thị công khai.</span></footer>
  </div>;
 }

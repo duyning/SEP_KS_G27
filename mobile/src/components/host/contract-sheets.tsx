@@ -184,7 +184,7 @@ function ContractInviteSheetContent({
                   {invitation.url}
                 </Text>
                 <Text style={s.linkReadyNote}>
-                  Người thuê cần đăng nhập HL_RCS bằng đúng số điện thoại đã xác minh trên hợp đồng để xem và ký. Việc mở liên kết không tự động ghi nhận chữ ký.
+                  Người thuê cần đăng nhập NestHub bằng đúng số điện thoại đã xác minh trên hợp đồng để xem và ký. Việc mở liên kết không tự động ghi nhận chữ ký.
                 </Text>
                 {shareNote && <Text style={s.shareNoteText}>{shareNote}</Text>}
               </View>

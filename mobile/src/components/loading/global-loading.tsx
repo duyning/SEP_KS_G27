@@ -15,7 +15,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { PrimaryButton } from '@/components/auth/primary-button';
+import { BrandIcon } from '@/components/brand/brand-logo';
 import { AnimatedPressable } from '@/components/home/animated-pressable';
+import { BRAND } from '@/config/brand';
 import { useReducedMotionPreference } from '@/constants/motion';
 import { useLoading } from '@/context/loading-context';
 import {
@@ -24,21 +26,21 @@ import {
 } from '@/services/loading-manager';
 
 /**
- * Unified HL_RCS / NestHub Global Loading Brand Tokens
+ * Unified NestHub Global Loading Brand Tokens
  */
 export const loadingColors = {
-  background: '#FAFAF6',
-  overlayBackdrop: 'rgba(250, 250, 246, 0.92)',
+  background: '#F8FAFC',
+  overlayBackdrop: 'rgba(248, 250, 252, 0.92)',
   surface: '#FFFFFF',
-  primary: '#087F72',
-  primaryDark: '#066057',
-  ringTrack: 'rgba(8, 127, 114, 0.14)',
-  textPrimary: '#142D29',
-  textSecondary: '#526A65',
-  border: '#E1EAE6',
-  skeletonBase: '#E7EFEA',
-  skeletonHighlight: '#F2F7F4',
-  error: '#C93636',
+  primary: '#0D9488',
+  primaryDark: '#0F766E',
+  ringTrack: 'rgba(13, 148, 136, 0.14)',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  border: '#E2E8F0',
+  skeletonBase: '#E2E8F0',
+  skeletonHighlight: '#F1F5F9',
+  error: '#DC2626',
   errorBg: '#FEF2F2',
   errorBorder: '#FECACA',
 } as const;
@@ -73,7 +75,7 @@ function BrandOrbitalLogo({
       false
     );
 
-    // Subtle breathing scale on the official HL_RCS emblem
+    // Subtle breathing scale on the official NestHub emblem
     pulse.value = withRepeat(
       withSequence(
         withTiming(1.04, { duration: 1100, easing: Easing.inOut(Easing.ease) }),
@@ -139,7 +141,7 @@ function BrandOrbitalLogo({
         ]}
       />
 
-      {/* Official HL_RCS Rounded Teal House Emblem */}
+      {/* Official NestHub Rounded Teal Emblem */}
       <Animated.View
         style={[
           s.emblem,
@@ -151,7 +153,7 @@ function BrandOrbitalLogo({
           emblemStyle,
         ]}
       >
-        <Feather name="home" size={iconSize} color="#FFFFFF" />
+        <BrandIcon size={isLarge ? 30 : 20} variant="white" />
       </Animated.View>
     </View>
   );
@@ -272,13 +274,13 @@ export function GlobalSplashLoading({
       edges={['top', 'bottom', 'left', 'right']}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`HL_RCS. ${label}`}
+      accessibilityLabel={`${BRAND.name}. ${label}`}
       accessibilityLiveRegion="polite"
     >
       <View style={s.centerCard}>
         <BrandOrbitalLogo size="lg" reducedMotion={reducedMotion} />
         <View style={s.copyWrap}>
-          {showBrandName && <Text style={s.brandName}>HL_RCS</Text>}
+          {showBrandName && <Text style={s.brandName}>{BRAND.name}</Text>}
           <Text style={s.messageText}>{label}</Text>
           {submessage ? <Text style={s.submessageText}>{submessage}</Text> : null}
           <SubtleLoadingDots reducedMotion={reducedMotion} />
@@ -317,13 +319,13 @@ export function GlobalLoadingOverlay() {
       accessible
       accessibilityViewIsModal
       accessibilityRole="progressbar"
-      accessibilityLabel={`HL_RCS. ${label}`}
+      accessibilityLabel={`${BRAND.name}. ${label}`}
       accessibilityLiveRegion="polite"
     >
       <View style={s.centerCard}>
         <BrandOrbitalLogo size="lg" reducedMotion={reducedMotion} />
         <View style={s.copyWrap}>
-          <Text style={s.brandName}>HL_RCS</Text>
+          <Text style={s.brandName}>{BRAND.name}</Text>
           <Text style={s.messageText}>{label}</Text>
           <SubtleLoadingDots reducedMotion={reducedMotion} />
         </View>

@@ -1,0 +1,117 @@
+.portal-modal:is(.hob-lightbox-modal, .hob-terms-modal) {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: calc(100% - 32px);
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-lg);
+}
+
+.portal-modal:is(.hob-lightbox-modal, .hob-terms-modal) > header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--slate-200);
+  background: #fff;
+}
+
+.portal-modal:is(.hob-lightbox-modal, .hob-terms-modal) > header h2 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.portal-modal:is(.hob-lightbox-modal, .hob-terms-modal) > header .p-icon {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.portal-modal.hob-lightbox-modal {
+  max-width: 760px;
+  overflow: auto;
+}
+
+.portal-modal.hob-lightbox-modal > header {
+  position: sticky;
+  top: 0;
+}
+
+.hob-lightbox-modal .hob-lightbox-body {
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2vw, 16px);
+}
+
+.hob-lightbox-modal .hob-lightbox-body img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: max(64px, calc(100dvh - 8rem));
+  border-radius: 12px;
+  border: 1px solid var(--slate-200);
+  object-fit: contain;
+}
+
+.hob-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate-900);
+}
+
+.hob-modal-title svg {
+  flex: none;
+  color: var(--primary);
+}
+
+.portal-modal.hob-terms-modal[open] {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  overflow: hidden;
+}
+
+.hob-terms-modal .hob-terms-body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--slate-600);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.hob-terms-modal .hob-terms-body:focus-visible {
+  outline: 2px solid var(--primary-hover);
+  outline-offset: -2px;
+}
+
+.hob-terms-modal .hob-terms-section h4 {
+  margin-block-end: 4px;
+  font-size: inherit;
+  color: var(--slate-900);
+}
+
+.hob-terms-modal .hob-terms-footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--slate-200);
+}
+
+.hob-terms-modal .hob-terms-footer .p-button {
+  min-height: 44px;
+  padding: 8px 14px;
+}

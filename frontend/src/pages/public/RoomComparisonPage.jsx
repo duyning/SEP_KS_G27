@@ -20,7 +20,7 @@ export default function RoomComparisonPage() {
   const {revision}=useFavorites();
   const [retry,setRetry]=useState(0),[state,setState]=useState({key:'',loading:true,columns:[]});
   const differences=params.get('differences')==='1';
-  useEffect(()=>{document.title='So sánh phòng yêu thích | HL_RCS';},[]);
+  useEffect(()=>{document.title='So sánh phòng yêu thích | NestHub';},[]);
   useEffect(()=>{
     if(error||ids.length<2)return;
     const controller=new AbortController();setState({key,loading:true,columns:[]});

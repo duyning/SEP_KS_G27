@@ -123,7 +123,7 @@ export default function ProfileScreen() {
   return <ProfilePage title="Tài khoản" rootTab>
     <InlineError message={error || (!user ? sessionError : null)} />
     {loading && !user ? <ProfileSkeleton /> : !user && sessionError ? <View style={{ gap: 16 }}><Text style={p.hint}>Chưa thể xác nhận phiên đăng nhập. Thử tải lại khi có kết nối.</Text><PrimaryButton title="Thử lại" onPress={() => { void retry(); }} /></View> : !user ? <View style={s.guest}>
-      <UserAvatar size={76} /><Text style={s.guestTitle}>Chào mừng đến với HL_RCS</Text><Text style={s.guestDescription}>Đăng nhập để lưu phòng yêu thích và quản lý lịch hẹn của bạn.</Text><PrimaryButton title="Đăng nhập" onPress={() => router.push('/login')} /><AnimatedPressable style={s.register} onPress={() => router.push('/register')}><Text style={s.edit}>Tạo tài khoản</Text></AnimatedPressable>
+      <UserAvatar size={76} /><Text style={s.guestTitle}>Chào mừng đến với NestHub</Text><Text style={s.guestDescription}>Đăng nhập để lưu phòng yêu thích và quản lý lịch hẹn của bạn.</Text><PrimaryButton title="Đăng nhập" onPress={() => router.push('/login')} /><AnimatedPressable style={s.register} onPress={() => router.push('/register')}><Text style={s.edit}>Tạo tài khoản</Text></AnimatedPressable>
       <View style={p.group}>
         <ProfileMenuRow
           icon="home"
@@ -165,8 +165,8 @@ export default function ProfileScreen() {
       <View style={p.group}><ProfileMenuRow icon="log-out" title="Đăng xuất" danger disabled={loading || busy} onPress={() => setConfirm(true)} /></View>
     </View>}
     {user?.role==='ROOM_HOST' && <ProfileMenuRow icon="search" title={isHostMode?'Chuyển sang tìm phòng':'Về quản lý nhà trọ'} onPress={()=>{switchWorkspace(isHostMode);}}/>}
-    {!!Constants.expoConfig?.version && <Text style={s.version}>HL_RCS · Phiên bản {Constants.expoConfig.version}</Text>}
-    {confirm && <ConfirmDialog title="Đăng xuất tài khoản?" description="Bạn có chắc chắn muốn đăng xuất khỏi HL_RCS?" confirmLabel="Đăng xuất" busy={busy} onCancel={() => setConfirm(false)} onConfirm={() => { void logout(); }} />}
+    {!!Constants.expoConfig?.version && <Text style={s.version}>NestHub · Phiên bản {Constants.expoConfig.version}</Text>}
+    {confirm && <ConfirmDialog title="Đăng xuất tài khoản?" description="Bạn có chắc chắn muốn đăng xuất khỏi NestHub?" confirmLabel="Đăng xuất" busy={busy} onCancel={() => setConfirm(false)} onConfirm={() => { void logout(); }} />}
   </ProfilePage>;
 }
 const s = StyleSheet.create({

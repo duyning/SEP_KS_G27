@@ -1,4 +1,25 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const base=process.env.AUTH_TEST_URL||'http://127.0.0.1:5173';
+
+async function checkAuthLayout(page, screen) {
+  assert.equal(await page.locator('.navbar-wrapper.site-header').count(), 0);
+  assert.ok(await page.getByRole('link', { name: 'Trang chủ HL_RCS', exact: true }).first().isVisible());
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), `${screen} horizontal overflow`);
+  const fields = screen === 'login' ? ['loginIdentifier', 'loginPassword'] : ['regIdentifier', 'regPassword', 'regConfirmPassword'];
+  for (const id of fields) {
+    const spacing = await page.locator(`#${id}`).evaluate(input => {
+      const box = input.getBoundingClientRect();
+      const styles = getComputedStyle(input);
+      const icon = input.parentElement.querySelector('.input-icon').getBoundingClientRect();
+      const action = input.parentElement.querySelector('.password-toggle-btn')?.getBoundingClientRect();
+      return {
+        left: box.left + parseFloat(styles.paddingLeft) - icon.right,
+        right: action ? action.left - (box.right - parseFloat(styles.paddingRight)) : Infinity,
+      };
+    });
+    assert.ok(spacing.left >= 6 && spacing.right >= 3, `Text overlaps an icon in ${id}`);
+  }
+}
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});const errors=[],writes=[];page.on('pageerror',e=>errors.push(e.message));const output=path.resolve(__dirname,'../../target/auth-mobile');fs.mkdirSync(output,{recursive:true});await page.route('https://images.unsplash.com/**',r=>r.fulfill({status:204,body:''}));
  const mockAPI = route => {
    const request = route.request();
@@ -16,12 +37,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
    }
    return route.fulfill({ status: 503, json: { success: false, message: 'Máy chủ kiểm thử tạm ngừng. Vui lòng thử lại.' } });
  };
- await page.route('http://127.0.0.1:5173/api/**', mockAPI);
- for(const [width,height] of [[320,568],[375,812],[390,844],[430,932],[600,900],[844,390]])for(const screen of ['login','register']){await page.setViewportSize({width,height});await page.goto('http://127.0.0.1:5173/'+screen);const active=page.locator(screen==='login'?'.flip-login-face':'.flip-register-face');await active.locator('form').waitFor();await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${screen} overflow ${width}`);assert.equal(await page.locator('.flip-face:not([inert])').count(),1);assert.equal(await active.locator('.showcase-side').isVisible(),false);assert.ok(await active.locator('.form-input').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));await active.locator('.primary-button').scrollIntoViewIfNeeded();await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(output,`${screen}-${width}.png`),fullPage:true,animations:'disabled'});}
- await page.setViewportSize({width:390,height:844});await page.goto('http://127.0.0.1:5173/login');await page.locator('#submitBtn').click();await page.locator('#loginIdentifier-error').waitFor();assert.equal(writes.length,0);await page.locator('#loginIdentifier').fill('user@example.test');await page.locator('#loginPassword').fill('Mobile123!');await page.locator('.flip-login-face .password-toggle-btn').click();assert.equal(await page.locator('#loginPassword').getAttribute('type'),'text');await page.locator('#remember').check();await page.locator('#submitBtn').click();await page.locator('.flip-login-face .form-alert').waitFor();assert.equal(await page.locator('#loginIdentifier').inputValue(),'user@example.test');assert.equal(await page.locator('#loginPassword').inputValue(),'Mobile123!');
+ await page.route(`${base}/api/**`, mockAPI);
+ for(const [width,height] of [[320,568],[375,812],[390,844],[430,932],[600,900],[844,390]])for(const screen of ['login','register']){await page.setViewportSize({width,height});await page.goto(`${base}/${screen}`);const active=page.locator(screen==='login'?'.flip-login-face':'.flip-register-face');await active.locator('form').waitFor();await page.evaluate(()=>document.fonts.ready);await checkAuthLayout(page,screen);assert.equal(await page.locator('.flip-face:not([inert])').count(),1);assert.equal(await active.locator('.showcase-side').isVisible(),false);assert.ok(await active.locator('.form-input').first().evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));await active.locator('.primary-button').scrollIntoViewIfNeeded();await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(output,`${screen}-${width}.png`),fullPage:true,animations:'disabled'});}
+ await page.setViewportSize({width:390,height:844});await page.goto(`${base}/login`);await page.locator('#submitBtn').click();await page.locator('#loginIdentifier-error').waitFor();assert.equal(writes.length,0);await page.locator('#loginIdentifier').fill('user@example.test');await page.locator('#loginPassword').fill('Mobile123!');await page.locator('.flip-login-face .password-toggle-btn').click();assert.equal(await page.locator('#loginPassword').getAttribute('type'),'text');await page.locator('#remember').check();await page.locator('#submitBtn').click();await page.locator('.flip-login-face .form-alert').waitFor();assert.equal(await page.locator('#loginIdentifier').inputValue(),'user@example.test');assert.equal(await page.locator('#loginPassword').inputValue(),'Mobile123!');
  assert.equal(await page.getByRole('button', { name: 'Hợp tác chủ trọ' }).count(), 0);
  await page.locator('#btnGoToRegisterUser').click();
  await page.waitForURL('**/register');
+ await page.waitForFunction(() => window.scrollY === 0);
  const signup = page.locator('#registerForm');
  const send = signup.getByRole('button', { name: 'Xác minh', exact: true });
  const identifier = signup.locator('#regIdentifier');
@@ -84,18 +106,31 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const desktop = await browser.newPage({ reducedMotion: 'reduce' });
  desktop.on('pageerror', error => errors.push(error.message));
  await desktop.route('https://images.unsplash.com/**', r => r.fulfill({ status: 204, body: '' }));
- await desktop.route('http://127.0.0.1:5173/api/**', mockAPI);
+ await desktop.route(`${base}/api/**`, mockAPI);
  for (const width of [768, 1024, 1440]) {
    await desktop.setViewportSize({ width, height: 900 });
-   await desktop.goto('http://127.0.0.1:5173/register');
+   await desktop.goto(`${base}/login`);
+   await desktop.locator('#loginForm').waitFor();
+   await checkAuthLayout(desktop, 'login');
+   assert.ok(await desktop.locator('#remember').isVisible());
+   await desktop.locator('.flip-login-face .password-toggle-btn').press('Enter');
+   assert.equal(await desktop.locator('#loginPassword').getAttribute('type'), 'text');
+   await desktop.screenshot({ path: path.join(output, `login-${width}.png`), fullPage: true, animations: 'disabled' });
+   await desktop.goto(`${base}/register`);
    await desktop.locator('#regIdentifier').fill('new@example.test');
+   await checkAuthLayout(desktop, 'register');
    await desktop.getByRole('button', { name: 'Xác minh', exact: true }).click();
    await desktop.locator('#registerOtpCode').waitFor();
    await desktop.locator('#submitRegisterBtn').scrollIntoViewIfNeeded();
    assert.ok(await desktop.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `OTP overflow ${width}`);
    await desktop.screenshot({ path: path.join(output, `register-otp-${width}.png`), fullPage: true, animations: 'disabled' });
+   if (width === 1440) {
+     await desktop.addStyleTag({ content: 'html { zoom: 2; }' });
+     assert.ok(await desktop.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+     await desktop.locator('#submitRegisterBtn').scrollIntoViewIfNeeded();
+   }
  }
  assert.deepEqual(errors, []);
- console.log(JSON.stringify({ passed: true, responsiveScreens: 15, otp: true, keyboard: true, validation: true, pageErrors: 0 }));
+ console.log(JSON.stringify({ passed: true, responsiveScreens: 18, otp: true, keyboard: true, validation: true, pageErrors: 0 }));
  } finally { await browser.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1;});

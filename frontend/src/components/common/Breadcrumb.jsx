@@ -13,8 +13,8 @@ const parents = {
   '/staff/community/detail': ['/staff/community', 'Kiểm duyệt cộng đồng'], '/staff/assistance/detail': ['/staff/assistance', 'Yêu cầu hỗ trợ'],
 };
 export function breadcrumbItems(screen, portal, title, search = '') {
-  if (screen.path === '/') return [{ label: 'HL_RCS' }];
-  const items = [{ label: 'HL_RCS', to: '/' }];
+  if (screen.path === '/') return [{ label: 'NestHub' }];
+  const items = [{ label: 'NestHub', to: '/' }];
   if (portal !== 'public' && screen.path !== '/' + portal) items.push({ label: { host: 'Chủ trọ', staff: 'Nhân viên', admin: 'Quản trị hệ thống' }[portal], to: '/' + portal });
   const parent = parents[screen.path]; if (parent) items.push({ to: parent[0], label: parent[1] });
   const applicationId = new URLSearchParams(search).get('id');

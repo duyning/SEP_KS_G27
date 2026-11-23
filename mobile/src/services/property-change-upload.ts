@@ -79,7 +79,7 @@ export async function fetchPropertyEditSnapshot(
       );
     }
     throw new PropertyChangeApiError(
-      cause instanceof Error ? cause.message : 'Không thể kết nối máy chủ HL_RCS.'
+      cause instanceof Error ? cause.message : 'Không thể kết nối máy chủ NestHub.'
     );
   } finally {
     clearTimeout(timeout);

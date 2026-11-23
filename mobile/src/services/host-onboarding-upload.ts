@@ -53,7 +53,7 @@ async function fetchJsonWithTimeout<T>(
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || result?.success !== true) {
-      throw new Error(result?.message || 'Không thể kết nối máy chủ HL_RCS. Vui lòng thử lại.');
+      throw new Error(result?.message || 'Không thể kết nối máy chủ NestHub. Vui lòng thử lại.');
     }
     return result.data as T;
   } catch (error) {

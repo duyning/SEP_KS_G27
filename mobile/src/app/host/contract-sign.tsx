@@ -523,7 +523,7 @@ function ContractSignContent({
                 <View style={s.typedPreviewCard}>
                   <Text style={s.typedCaption}>Xem trước chữ ký bằng họ tên</Text>
                   <Text style={s.typedSignature}>{landlordName}</Text>
-                  <Text style={s.typedMeta}>Danh tính xác thực theo tài khoản chủ trọ HL_RCS</Text>
+                  <Text style={s.typedMeta}>Danh tính xác thực theo tài khoản chủ trọ NestHub</Text>
                 </View>
               ) : (
                 <SignaturePad
@@ -541,7 +541,7 @@ function ContractSignContent({
               <View style={s.infoNotice}>
                 <Feather name="shield" size={14} color={c.primary} style={{ marginTop: 2 }} />
                 <Text style={s.infoNoticeText}>
-                  Chữ ký này là xác nhận điện tử trên hệ thống HL_RCS (kèm dấu thời gian và mã băm
+                  Chữ ký này là xác nhận điện tử trên hệ thống NestHub (kèm dấu thời gian và mã băm
                   SHA-256 của bản hợp đồng), không phải chữ ký số công cộng có chứng thư số. Sau khi
                   ký, nội dung hợp đồng không bị chỉnh sửa âm thầm.
                 </Text>

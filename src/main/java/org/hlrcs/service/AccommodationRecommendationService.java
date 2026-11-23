@@ -65,6 +65,10 @@ public class AccommodationRecommendationService {
     public record Result(String status, String question, Criteria criteria, List<Item> items) {}
 
     public Result recommend(String description, String clarification) {
+        if (clarification == null || clarification.isBlank()) {
+            var simpleCriteria = SimpleAccommodationQuery.parse(description);
+            if (simpleCriteria.isPresent()) return search(simpleCriteria.get());
+        }
         var extracted = gemini.generate(EXTRACT,
                 Map.of("description", description.strip(), "clarification", clarification == null ? "" : clarification.strip()),
                 CRITERIA_SCHEMA);
@@ -81,6 +85,10 @@ public class AccommodationRecommendationService {
                 && criteria.minCapacity() == null && criteria.minAreaSqm() == null && criteria.amenities().isEmpty()) {
             return clarify("Bạn muốn phòng có đặc điểm gì? Bạn có thể nêu khu vực, giá thuê hoặc tiện nghi cần có.");
         }
+        return search(criteria);
+    }
+
+    private Result search(Criteria criteria) {
         var items = accommodations.recommendationMatches(criteria);
         return new Result(items.isEmpty() ? "EMPTY" : "RESULTS", null, criteria, items);
     }

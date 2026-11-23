@@ -1,20 +1,811 @@
-.prototype-become-host .haf-form{--haf-action:#0f766e;--haf-ink:#0f172a;--haf-muted:#475569;--haf-border:#d5e2de;max-width:840px;margin:0 auto;padding:24px;border:1px solid var(--haf-border);border-radius:18px;box-shadow:none;background:#fff;color:var(--haf-ink)}
-.haf-heading{display:flex;gap:12px;align-items:flex-start}.haf-shield{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:12px;background:#e9f7f2;color:var(--haf-action)}
-.prototype-become-host .haf-heading h2{margin:0;font-size:1.4rem;line-height:1.4;font-weight:700}.haf-heading p{margin:5px 0 0;font-size:.875rem;color:var(--haf-muted);line-height:1.6}
-.haf-section{margin-top:22px}.haf-section h3{display:flex;align-items:center;gap:8px;font-size:.9375rem;font-weight:700;margin:0 0 10px}.haf-section h3 svg{color:var(--haf-action)}
-.haf-account{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;padding:16px;margin:0;background:#f5faf8;border:1px solid var(--haf-border);border-radius:12px}.haf-account>div{min-width:0}.haf-account dt{font-size:.75rem;color:var(--haf-muted);line-height:1.6}.haf-account dd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:3px 0 0;font-size:.875rem;line-height:1.5;font-weight:600;overflow-wrap:anywhere}
-.haf-phone-status{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;font-size:.6875rem;background:#f1f5f9;color:#475569;font-weight:500}.haf-phone-status.verified{background:#e0f4ea;color:#065f46}.haf-contact-note{font-size:.75rem;line-height:1.7;color:var(--haf-muted);margin:8px 0 0}.haf-contact-note a{color:var(--haf-action);font-weight:600}
-.haf-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border:1px dashed #94b8ac;border-radius:12px;background:#fafdfb}.haf-upload.has-error{border-color:#b91c1c}.haf-upload-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#e9f7f2;color:var(--haf-action);flex:none}.haf-upload-copy{flex:1 1 230px;min-width:0}.haf-upload-copy label{font-size:.875rem;font-weight:650;line-height:1.6}.haf-upload-copy label>span{color:#b91c1c}.haf-upload-copy p{margin:3px 0;font-size:.75rem;line-height:1.6;color:var(--haf-muted)}.haf-upload-copy small{font-size:.6875rem;color:#64748b}.haf-upload-actions{display:flex;gap:8px;flex-wrap:wrap}
-.haf-file{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip-path:inset(50%)}
-.haf-form .haf-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:10px 13px;border:1px solid #b5cec4;border-radius:9px;background:#fff;color:var(--haf-action);font:inherit;font-size:.8125rem;font-weight:600;line-height:1.5;cursor:pointer}.haf-form .haf-button.primary{background:var(--haf-action);border-color:var(--haf-action);color:#fff}.haf-form .haf-button:disabled{opacity:.55;cursor:not-allowed}.haf-form button:focus-visible,.haf-form textarea:focus-visible,.haf-form input:focus-visible{outline:2px solid var(--haf-action);outline-offset:3px}.haf-upload:focus-within{border-color:var(--haf-action);box-shadow:0 0 0 3px #0f766e15}
-.haf-privacy{display:flex;align-items:flex-start;gap:6px;margin:8px 0 0;font-size:.75rem;line-height:1.65;color:var(--haf-muted)}.haf-privacy svg{flex:none;margin-top:2px}.haf-image-preview{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-top:12px}.host-identity-image{display:block;width:100%;max-width:420px;max-height:300px;object-fit:contain;border:1px solid #d5e2de;border-radius:10px;background:#f8fafc}.sha-detail .host-identity-image{max-height:420px}
-.haf-note-label{display:block;font-size:.875rem;font-weight:650;margin:0 0 8px}.haf-note-label span{margin-left:6px;font-size:.75rem;font-weight:400;color:#64748b}.haf-form textarea{box-sizing:border-box;width:100%;min-height:72px;resize:vertical;padding:12px;border:1px solid var(--haf-border);border-radius:10px;font:inherit;font-size:.875rem;line-height:1.6;color:var(--haf-ink);background:#fff}.haf-section>small{display:block;margin-top:4px;text-align:right;font-size:.6875rem;color:#64748b}.haf-agreement{margin-top:16px}.haf-agreement label{display:flex;align-items:flex-start;gap:9px;min-height:44px;padding-block:8px;font-size:.8125rem;line-height:1.7;cursor:pointer}.haf-agreement input{flex:none;width:18px;height:18px;margin-top:3px;accent-color:var(--haf-action)}
-.haf-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:16px;border-top:1px solid var(--haf-border)}.haf-footer p{flex:1 1 260px;margin:0;font-size:.75rem;line-height:1.6;color:var(--haf-muted)}.haf-error{margin:8px 0 0;color:#991b1b;font-size:.8125rem;line-height:1.6}.haf-preview,.haf-feedback{padding:10px 12px;margin:16px 0 0;background:#f0fdfa;border:1px solid #b8e1d6;border-radius:9px;font-size:.75rem;line-height:1.7;color:#115e59}.haf-feedback p{margin:4px 0 0}
-@media(max-width:600px){.prototype-become-host .haf-form{padding:18px;border-radius:14px}.prototype-become-host .haf-heading h2{font-size:1.125rem}.haf-account{grid-template-columns:minmax(0,1fr);gap:12px;padding:14px}.haf-upload-icon{display:none}.haf-upload-actions{width:100%}.haf-upload-actions .haf-button{flex:1}.haf-footer .haf-button{width:100%}.haf-form textarea{font-size:16px}.haf-contact-note span{display:block}}
-.haf-identity-sides,.host-identity-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.haf-identity-side{min-width:0}.haf-identity-side .haf-upload{flex-direction:column;align-items:stretch;height:auto}
-.haf-identity-side .haf-upload-copy{flex:0 1 auto}
-.haf-identity-side .haf-upload-actions{display:flex;flex-wrap:wrap;gap:8px}
-.haf-identity-side .haf-image-preview{margin-top:12px}.haf-upload-limit{font-size:.8rem;color:var(--haf-muted);margin-bottom:12px}
-.haf-form .haf-footer{justify-content:flex-end}.host-identity-pair section{min-width:0}.host-identity-pair section>strong{display:block;margin-bottom:8px}
-@media(max-width:767px){.haf-identity-sides,.host-identity-pair{grid-template-columns:minmax(0,1fr)}}
+/* ============================================================================
+   NestHub — Step 1 Form: Account Info & CCCD Verification Upload Cards
+   All selectors scoped under .prototype-become-host so .prototype-home * reset
+   cannot strip padding or margins regardless of CSS load order.
+   ============================================================================ */
+
+.prototype-become-host .haf-form {
+  --haf-primary: #0d9488;
+  --haf-action: #0f766e;
+  --haf-ink: #0f172a;
+  --haf-muted: #475569;
+  --haf-subtle: #64748b;
+  --haf-border: #e2e8f0;
+  width: 100%;
+  padding: 28px 30px;
+  border: 1px solid var(--haf-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px -12px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03);
+  background: #ffffff;
+  color: var(--haf-ink);
+}
+
+.prototype-become-host .haf-heading {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.prototype-become-host .haf-shield {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: var(--haf-primary);
+}
+
+.prototype-become-host .haf-heading h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--haf-ink);
+}
+
+.prototype-become-host .haf-heading p {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--haf-muted);
+  line-height: 1.5;
+}
+
+/* Section Rhythm */
+.prototype-become-host .haf-section {
+  margin-top: 26px;
+}
+
+.prototype-become-host .haf-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.prototype-become-host .haf-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--haf-ink);
+}
+
+.prototype-become-host .haf-section h3 svg {
+  color: var(--haf-primary);
+}
+
+.prototype-become-host .haf-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--haf-action);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.prototype-become-host .haf-profile-link:hover {
+  background: #f0fdfa;
+  text-decoration: underline;
+}
+
+/* 5.1 Soft Teal Account Information Card */
+.prototype-become-host .haf-account-card {
+  background: #f4fbf9;
+  border: 1px solid #ccece5;
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.prototype-become-host .haf-account {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+  margin: 0;
+  padding: 0;
+}
+
+.prototype-become-host .haf-account > div {
+  min-width: 0;
+}
+
+.prototype-become-host .haf-account dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--haf-subtle);
+  margin: 0;
+}
+
+.prototype-become-host .haf-account dd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 5px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--haf-ink);
+  overflow-wrap: anywhere;
+}
+
+.prototype-become-host .haf-phone-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.prototype-become-host .haf-phone-status.verified {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.prototype-become-host .haf-account-notices {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #ccece5;
+  display: grid;
+  gap: 10px;
+}
+
+.prototype-become-host .haf-contact-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  font-size: 0.825rem;
+  line-height: 1.55;
+  color: var(--haf-muted);
+}
+
+.prototype-become-host .haf-contact-note.is-warning {
+  justify-content: flex-start;
+  color: #991b1b;
+}
+
+.prototype-become-host .haf-contact-note a {
+  color: var(--haf-action);
+  font-weight: 700;
+}
+
+/* 5.2 & 5.3 CCCD Upload Cards */
+.prototype-become-host .haf-pill-limit {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--haf-muted);
+  background: #f1f5f9;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
+
+.prototype-become-host .haf-upload-limit {
+  margin: 0 0 16px;
+  font-size: 0.86rem;
+  color: var(--haf-muted);
+  line-height: 1.55;
+}
+
+.prototype-become-host .haf-identity-sides,
+.host-identity-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.prototype-become-host .haf-identity-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #fafdff;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.prototype-become-host .haf-identity-side:hover {
+  border-color: var(--haf-primary);
+  background: #f6fefc;
+}
+
+.prototype-become-host .haf-identity-side.is-dragging {
+  border-color: var(--haf-primary);
+  background: #f0fdfa;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.prototype-become-host .haf-identity-side.is-ready {
+  border-style: solid;
+  border-color: #99f6e4;
+  background: #ffffff;
+}
+
+.prototype-become-host .haf-identity-side.has-error {
+  border-style: solid;
+  border-color: #fca5a5;
+  background: #fffafa;
+}
+
+.prototype-become-host .haf-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.prototype-become-host .haf-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: var(--haf-primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.prototype-become-host .haf-card-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.prototype-become-host .haf-card-title-wrap label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--haf-ink);
+}
+
+.prototype-become-host .haf-req {
+  color: #dc2626;
+}
+
+.prototype-become-host .haf-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.prototype-become-host .haf-status-pill.is-success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.prototype-become-host .haf-status-pill.is-loading {
+  background: #f0fdfa;
+  color: var(--haf-action);
+}
+
+.prototype-become-host .haf-status-pill.is-error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.prototype-become-host .haf-dropzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px 14px 16px;
+  gap: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+}
+
+.prototype-become-host .haf-dropzone-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #f0fdfa;
+  color: var(--haf-primary);
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.prototype-become-host .haf-dropzone-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--haf-ink);
+  line-height: 1.4;
+}
+
+.prototype-become-host .haf-dropzone-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--haf-subtle);
+  max-width: 240px;
+}
+
+.prototype-become-host .haf-upload-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.prototype-become-host .haf-sample-link {
+  margin-top: 4px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--haf-action);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Preview Stage inside Upload Card */
+.prototype-become-host .haf-preview-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prototype-become-host .haf-preview-frame {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--haf-border);
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+}
+
+.host-identity-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 240px;
+  object-fit: cover;
+}
+
+.sha-detail .host-identity-image {
+  max-height: 420px;
+  object-fit: contain;
+}
+
+.prototype-become-host .haf-file-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--haf-subtle);
+}
+
+.prototype-become-host .haf-file-name {
+  font-weight: 600;
+  color: var(--haf-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prototype-become-host .haf-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prototype-become-host .haf-file {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Buttons inside Step 1 Form */
+.prototype-become-host .haf-form .haf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--haf-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.prototype-become-host .haf-form .haf-button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: var(--haf-primary);
+  color: var(--haf-action);
+}
+
+.prototype-become-host .haf-form .haf-button.haf-button-soft {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: var(--haf-action);
+}
+
+.prototype-become-host .haf-form .haf-button.haf-button-soft:hover:not(:disabled) {
+  background: #ccfbf1;
+}
+
+.prototype-become-host .haf-form .haf-button.haf-button-verify {
+  background: #ffffff;
+  border-color: var(--haf-primary);
+  color: var(--haf-action);
+  min-height: 38px;
+  padding: 7px 14px;
+}
+
+.prototype-become-host .haf-form .haf-button.haf-btn-sm {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.77rem;
+  flex: 1 1 auto;
+}
+
+.prototype-become-host .haf-form .haf-button.is-danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.prototype-become-host .haf-form .haf-button.is-danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.prototype-become-host .haf-form .haf-button.primary {
+  min-height: 48px;
+  padding: 12px 24px;
+  background: var(--haf-primary);
+  border-color: var(--haf-primary);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px -6px rgba(13, 148, 136, 0.45);
+}
+
+.prototype-become-host .haf-form .haf-button.primary:hover:not(:disabled) {
+  background: var(--haf-action);
+  border-color: var(--haf-action);
+  box-shadow: 0 8px 20px -6px rgba(15, 118, 110, 0.5);
+}
+
+.prototype-become-host .haf-form .haf-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.prototype-become-host .haf-form button:focus-visible,
+.prototype-become-host .haf-form textarea:focus-visible,
+.prototype-become-host .haf-form input:focus-visible {
+  outline: 2px solid var(--haf-primary);
+  outline-offset: 2px;
+}
+
+.prototype-become-host .haf-photo-guidelines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 14px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--haf-border);
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: var(--haf-muted);
+}
+
+.prototype-become-host .haf-photo-guidelines span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prototype-become-host .haf-photo-guidelines svg {
+  color: #059669;
+  flex: none;
+}
+
+/* 5.4 Optional Notes */
+.prototype-become-host .haf-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.prototype-become-host .haf-note-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--haf-ink);
+}
+
+.prototype-become-host .haf-optional-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--haf-subtle);
+  background: #f1f5f9;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.prototype-become-host .haf-char-counter {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--haf-subtle);
+}
+
+.prototype-become-host .haf-char-counter.is-near {
+  color: #d97706;
+}
+
+.prototype-become-host .haf-char-counter.is-over {
+  color: #dc2626;
+}
+
+.prototype-become-host .haf-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 13px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--haf-ink);
+  background: #ffffff;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.prototype-become-host .haf-form textarea::placeholder {
+  color: #94a3b8;
+}
+
+.prototype-become-host .haf-form textarea:focus {
+  border-color: var(--haf-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.14);
+}
+
+/* 5.5 Terms Agreement */
+.prototype-become-host .haf-agreement {
+  margin-top: 22px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--haf-border);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.prototype-become-host .haf-agreement:hover {
+  border-color: #cbd5e1;
+}
+
+.prototype-become-host .haf-agreement.has-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.prototype-become-host .haf-agreement label {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--haf-ink);
+  cursor: pointer;
+}
+
+.prototype-become-host .haf-agreement input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--haf-primary);
+  cursor: pointer;
+}
+
+.prototype-become-host .haf-terms-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--haf-action);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.prototype-become-host .haf-terms-link:hover {
+  color: #115e59;
+}
+
+/* Validation & Feedback Banners */
+.prototype-become-host .haf-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.prototype-become-host .haf-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.prototype-become-host .haf-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 18px 0 0;
+  padding: 13px 16px;
+  border-radius: 11px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.prototype-become-host .haf-alert-banner svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.prototype-become-host .haf-preview,
+.prototype-become-host .haf-feedback {
+  padding: 12px 16px;
+  margin: 18px 0 0;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #115e59;
+}
+
+.prototype-become-host .haf-feedback {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.prototype-become-host .haf-feedback p {
+  margin: 4px 0 0;
+}
+
+/* 5.6 Form Footer */
+.prototype-become-host .haf-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--haf-border);
+}
+
+.prototype-become-host .haf-footer-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--haf-subtle);
+  flex: 1 1 240px;
+}
+
+.prototype-become-host .haf-submit-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.host-identity-pair section {
+  min-width: 0;
+}
+
+.host-identity-pair section > strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 767px) {
+  .prototype-become-host .haf-identity-sides,
+  .host-identity-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .prototype-become-host .haf-form {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .prototype-become-host .haf-account-card {
+    padding: 16px;
+  }
+
+  .prototype-become-host .haf-account {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .prototype-become-host .haf-form textarea {
+    font-size: 16px;
+  }
+
+  .prototype-become-host .haf-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prototype-become-host .haf-footer .haf-button.primary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prototype-become-host .haf-identity-side,
+  .prototype-become-host .haf-form .haf-button,
+  .prototype-become-host .haf-form textarea,
+  .prototype-become-host .haf-agreement {
+    transition: none;
+  }
+}

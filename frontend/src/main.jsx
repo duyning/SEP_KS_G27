@@ -11,6 +11,7 @@ import './styles/auth.css';
 import './styles/portal.css';
 import './styles/host-dashboard.css';
 import './styles/motion.css';
+import './styles/brand.css';
 import './styles/loading.css';
 import './styles/design-system.css';
 import './styles/workspace-header.css';

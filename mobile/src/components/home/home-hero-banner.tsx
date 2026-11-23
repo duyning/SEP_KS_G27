@@ -70,7 +70,7 @@ export function HomeHeroBanner({
         <View style={styles.leftColumn}>
           <View style={styles.tagBadge}>
             <Feather name="zap" size={11} color="#FFFFFF" />
-            <Text style={styles.tagText}>HL_RCS Độc quyền</Text>
+            <Text style={styles.tagText}>NestHub Độc quyền</Text>
           </View>
 
           <Text style={styles.headline}>Gần trường. Gần cuộc sống.</Text>

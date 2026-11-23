@@ -38,6 +38,7 @@ export default function SearchPage({mapView=false}){
  const [params,setParams]=useSearchParams(),filters=readSearchFilters(params),notify=useToast();
  const [advanced,setAdvanced]=useState(false),[drawer,setDrawer]=useState(false),[draft,setDraft]=useState(filters);
  const [locationDialog,setLocationDialog]=useState(false),[aiDialog,setAiDialog]=useState(false);
+ const [aiDescription,setAiDescription]=useState('');
  const origin=readSearchOrigin(params);
  const query=accommodationQuery({...filters,page:filters.page-1,size:PAGE_SIZE,amenities:filters.amenities.join(','),availableOnly:filters.availableOnly});
  const {data,loading,error,retry}=useAccommodations(query),paramKey=params.toString();
@@ -46,7 +47,7 @@ export default function SearchPage({mapView=false}){
  const selection=parseComparisonIds(params.get('compare')||''),selected=selection.ids;
  function select(value){setParams(previous=>{const next=new URLSearchParams(previous),current=parseComparisonIds(previous.get('compare')||'').ids,ids=typeof value==='function'?value(current):value;if(ids.length)next.set('compare',ids.join(','));else next.delete('compare');return next;},{replace:true});}
  function toggleComparison(id){select(ids=>ids.includes(id)?ids.filter(value=>value!==id):ids.length<MAX_COMPARE_ROOMS?[...ids,id]:ids);}
- useEffect(()=>{document.title='Tìm kiếm phòng trọ Hòa Lạc | HL_RCS';},[]);
+ useEffect(()=>{document.title='Tìm kiếm phòng trọ Hòa Lạc | NestHub';},[]);
  useEffect(()=>{setDraft(readSearchFilters(new URLSearchParams(paramKey)));},[paramKey]);
  useEffect(()=>{if(data&&filters.page>Math.max(1,data.totalPages))setParams(updateSearchFilters(params,{page:Math.max(1,data.totalPages)}),{replace:true});},[data,filters.page,params,setParams]);
  function change(updates){setParams(updateSearchFilters(params,updates),{replace:Object.keys(updates).length===1&&'q' in updates});}
@@ -55,6 +56,12 @@ export default function SearchPage({mapView=false}){
  function reset(){setParams({});setDraft(readSearchFilters(new URLSearchParams()));}
  function toggleAmenity(key){change({amenities:filters.amenities.includes(key)?filters.amenities.filter(id=>id!==key):[...filters.amenities,key]});}
  function apply(mobile=false){change({amenities:draft.amenities,availableOnly:draft.availableOnly,...(mobile?{location:draft.location,price:draft.price,type:draft.type}:{})});setDrawer(false);setAdvanced(false);}
+ function openFiltersFromAssistant(description){
+  setAiDescription(description);
+  setAiDialog(false);
+  setDraft(filters);
+  setDrawer(true);
+ }
  async function save(id){const favoriteId=favorites.items.get(id);if(await favorites.toggle(id)&&favoriteId)select(ids=>ids.filter(value=>value!==favoriteId));}
  function comparisonControl(item){
   const id=favorites.items.get(item.roomTypeId),checked=selected.includes(id);
@@ -94,7 +101,8 @@ export default function SearchPage({mapView=false}){
   </div></section>
   <AnimatePresence>{drawer&&<Modal title="Bộ lọc tìm kiếm phòng trọ" onClose={()=>setDrawer(false)} className="search-filter-modal"><div className="drawer-body"><SelectField id="drawerLocation" label="Khu vực" options={searchLocations} value={draft.location} onChange={value=>setDraft(v=>({...v,location:value}))}/><SelectField id="drawerPrice" label="Mức giá thuê" options={searchPrices} value={draft.price} onChange={value=>setDraft(v=>({...v,price:value}))}/><SelectField id="drawerType" label="Loại phòng" options={searchTypes} value={draft.type} onChange={value=>setDraft(v=>({...v,type:value}))}/><AdvancedFields draft={draft} setDraft={setDraft} prefix="mobile"/></div><div className="drawer-footer"><MotionButton className="btn-drawer-reset" onClick={()=>setDraft(readSearchFilters(new URLSearchParams()))}>Xóa lọc</MotionButton><MotionButton className="btn-drawer-apply" onClick={()=>apply(true)}>Áp dụng</MotionButton></div></Modal>}</AnimatePresence>
   {locationDialog&&<SearchOriginDialog origin={origin} radiusKm={filters.radiusKm} onApply={chooseOrigin} onClose={()=>setLocationDialog(false)}/>}
-  {aiDialog&&<AccommodationRecommendations origin={origin} onClose={()=>setAiDialog(false)}/>}
+  {aiDialog&&<AccommodationRecommendations origin={origin} initialDescription={aiDescription}
+   onClose={()=>{setAiDialog(false);setAiDescription('');}} onUseFilters={openFiltersFromAssistant}/>}
   <div className="search-floating-actions">
    <button className="search-assistant-launcher" type="button" aria-haspopup="dialog" onClick={()=>setAiDialog(true)}>
     <span className="search-assistant-label"><MessageCircle size={16} aria-hidden="true"/>Hỏi Trọ Mây</span>

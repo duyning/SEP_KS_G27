@@ -87,7 +87,7 @@ export function PropertyChangeReview({
           </View>
           <Text style={s.warnBody}>
             Yêu cầu có thay đổi thông tin quan trọng nên nhà trọ sẽ tạm ẩn cho đến khi nhân viên
-            HL_RCS phê duyệt:
+            NestHub phê duyệt:
           </Text>
           {diff.reverificationReasons.map(reason => (
             <Text key={reason} style={s.warnBullet}>

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "NestHub",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0D9488",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -28,17 +28,17 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Cho phép HL_RCS chọn ảnh từ thư viện của bạn.",
-          "cameraPermission": "Cho phép HL_RCS chụp ảnh nhà trọ để gửi xét duyệt.",
+          "photosPermission": "Cho phép NestHub chọn ảnh từ thư viện của bạn.",
+          "cameraPermission": "Cho phép NestHub chụp ảnh nhà trọ để gửi xét duyệt.",
           "microphonePermission": false
         }
       ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FAFAF6",
+          "backgroundColor": "#F8FAFC",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 84
         }
       ]
     ],

@@ -27,7 +27,7 @@ function ContinuousMessage({message}){
 export default function HostRegistrationBanner(){
  const {user}=useAuth();
  const eligible=!user||user.role==='USER';
- const message='Bạn có nhà trọ tại Hòa Lạc? Trở thành đối tác HL_RCS và quản lý nhà trọ ngay trên hệ thống.';
+ const message='Bạn có nhà trọ tại Hòa Lạc? Trở thành đối tác NestHub và quản lý nhà trọ ngay trên hệ thống.';
  return <aside className="host-entry-banner" aria-label={eligible?'Đăng ký trở thành chủ trọ':'Thông tin Hòa Lạc'}>
   <div className="host-entry-inner">
    <span className="host-entry-badge">Hòa Lạc Campus</span>

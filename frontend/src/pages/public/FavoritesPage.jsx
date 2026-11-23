@@ -30,7 +30,7 @@ export default function FavoritesPage() {
  const value=Number(params.get('page')||1),page=Number.isSafeInteger(value)&&value>0?value:1;
  const [state,setState]=useState({loading:true,error:'',data:null}),[reload,setReload]=useState(0);
  const favorites=useFavoriteActions(state.data?.items.map(item=>item.roomTypeId)||[]);
- useEffect(()=>{document.title='Phòng yêu thích | HL_RCS';},[]);
+ useEffect(()=>{document.title='Phòng yêu thích | NestHub';},[]);
  useEffect(()=>{
   const c=new AbortController();setState({loading:true,error:'',data:null});
   favoritesApi.list(page-1,6,c.signal).then(data=>{

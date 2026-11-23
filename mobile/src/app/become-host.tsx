@@ -682,7 +682,7 @@ export default function BecomeHostScreen() {
               <Feather name="check-circle" size={30} color={c.primary} />
               <Text style={s.noticeTitle}>Bạn đã là đối tác chủ nhà trọ</Text>
               <Text style={s.noticeDesc}>
-                Tài khoản của bạn đã có quyền Chủ nhà trọ trên HL_RCS. Bạn có thể vào không gian
+                Tài khoản của bạn đã có quyền Chủ nhà trọ trên NestHub. Bạn có thể vào không gian
                 quản lý để thêm nhà trọ, thiết lập phòng hoặc quản lý hợp đồng.
               </Text>
               <PrimaryButton title="Vào quản lý nhà trọ" onPress={handleOpenHostPortal} />

@@ -70,7 +70,7 @@ export default function HomeLandingPage() {
   const previousFilters=useRef(filters);
   useEffect(()=>{if(previousFilters.current!==filters){previousFilters.current=filters;setVisible(6);}},[filters]);
   useEffect(()=>{try{sessionStorage.setItem(viewKey,JSON.stringify({filters,visible}));}catch{}},[filters,visible]);
-  useEffect(()=>{const previous=document.title; document.title='HL_RCS | Hệ thống kết nối phòng trọ thông minh tại Hòa Lạc';return()=>{document.title=previous;};},[]);
+  useEffect(()=>{const previous=document.title; document.title='NestHub | Hệ thống kết nối phòng trọ thông minh tại Hòa Lạc';return()=>{document.title=previous;};},[]);
   const favorites=useFavoriteActions(data.map(property=>homeRoomType(property)?.roomTypeId));
   const filtered=useMemo(()=>sortHomeProperties(filterHomeProperties(data,filters),filters.sort),[data,filters]);
   const showResults=()=>{

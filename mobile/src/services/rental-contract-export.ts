@@ -41,7 +41,7 @@ function buildPlainContractSummaryForAndroidShare(record: RentalContractRecord):
     `Bên cho thuê: ${model.ownerSignature ? 'Đã ký trên hệ thống' : 'Chưa ký'}`,
     `Bên thuê: ${model.tenantSignature ? 'Đã ký trên hệ thống' : 'Chưa ký'}`,
     '',
-    'Mở ứng dụng HL_RCS hoặc cổng web để in / lưu bản PDF đầy đủ theo đúng định dạng A4.',
+    'Mở ứng dụng NestHub hoặc cổng web để in / lưu bản PDF đầy đủ theo đúng định dạng A4.',
   ].filter(Boolean);
   return lines.join('\n');
 }

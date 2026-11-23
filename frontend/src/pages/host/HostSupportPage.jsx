@@ -113,7 +113,7 @@ export default function HostSupportPage() {
     setFormSubject('');
     setFormCategory('');
     setFormContent('');
-    notify('Đã gửi yêu cầu hỗ trợ tới ban quản trị HL_RCS!', 'success');
+    notify('Đã gửi yêu cầu hỗ trợ tới ban quản trị NestHub!', 'success');
   };
 
   const handleSendReply = () => {
@@ -140,13 +140,13 @@ export default function HostSupportPage() {
   return (
     <div className="portal-page-container sp-main-area">
       <DemoNoticeBanner
-        message="Module Yêu cầu Staff hỗ trợ kết nối trực tiếp với đội ngũ vận hành HL_RCS. Phản hồi và tạo phiếu hoạt động ngay trên giao diện thử nghiệm."
+        message="Module Yêu cầu Staff hỗ trợ kết nối trực tiếp với đội ngũ vận hành NestHub. Phản hồi và tạo phiếu hoạt động ngay trên giao diện thử nghiệm."
       />
 
       {/* Header */}
       <div className="sp-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Gửi và theo dõi các yêu cầu hỗ trợ kỹ thuật, kiểm định và vận hành từ HL_RCS.</p>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Gửi và theo dõi các yêu cầu hỗ trợ kỹ thuật, kiểm định và vận hành từ NestHub.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <MotionButton
@@ -173,7 +173,7 @@ export default function HostSupportPage() {
       <section className="support-info-banner" style={{ background: '#f0fdfa', border: '1px solid #ccfbf1', borderRadius: '10px', padding: '14px 18px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
         <span style={{ fontSize: '20px' }}>ℹ️</span>
         <div style={{ fontSize: '13px', color: '#134e4a', lineHeight: '1.5' }}>
-          Đội ngũ vận hành HL_RCS tiếp nhận xử lý các vấn đề về hiển thị nhà trọ, kiểm định phòng thực tế, cập nhật biểu phí và hỗ trợ kỹ thuật trong giờ hành chính (8h00 - 18h00 từ Thứ 2 đến Thứ 7).
+          Đội ngũ vận hành NestHub tiếp nhận xử lý các vấn đề về hiển thị nhà trọ, kiểm định phòng thực tế, cập nhật biểu phí và hỗ trợ kỹ thuật trong giờ hành chính (8h00 - 18h00 từ Thứ 2 đến Thứ 7).
         </div>
       </section>
 

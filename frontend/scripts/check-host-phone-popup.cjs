@@ -15,6 +15,7 @@ const base=process.env.HOST_PHONE_TEST_URL||'http://127.0.0.1:5198';
    calls.push(p);assert.ok(['/api/auth/profile/phone/send-otp','/api/auth/profile/phone/verify-otp','/api/auth/profile/phone/confirm'].includes(p),'No real application/profile writes');
   }
   if(p==='/api/auth/me')return ok(profile());
+  if(p==='/api/host-onboarding/current')return ok({registration:null,account:null});
   if(p==='/api/host-applications/current')return ok(null);
   if(p==='/api/auth/profile/phone/send-otp')return failSend?bad('Không gửi được mã thử nghiệm.'):ok({phoneNumber:'0934567812',expiresAt:new Date(Date.now()+300000).toISOString(),resendAt:new Date(Date.now()+60000).toISOString()});
   if(p==='/api/auth/profile/phone/verify-otp')return JSON.parse(r.request().postData()).code==='123456'?ok({verified:true}):bad('Mã OTP không đúng');
@@ -29,12 +30,28 @@ const base=process.env.HOST_PHONE_TEST_URL||'http://127.0.0.1:5198';
   await page.locator('#agreementCheck').check();
   await page.getByRole('button',{name:'Xác minh số điện thoại',exact:true}).click();
   assert.equal(await page.getByRole('dialog').count(),1);
+  async function centered(){
+   const box=await page.getByRole('dialog').boundingBox();
+   assert.ok(Math.abs(box.x+box.width/2-width/2)<2,'Dialog is horizontally centered');
+   assert.ok(Math.abs(box.y+box.height/2-500)<2,'Dialog is vertically centered');
+   assert.ok(box.x>=12&&box.y>=12,'Dialog stays inside viewport');
+  }
+  await centered();
+  await page.screenshot({path:path.join(output,`phone-${width}.png`)});
+  await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'detached'});
+  assert.equal(await page.getByRole('button',{name:'Xác minh số điện thoại',exact:true}).evaluate(el=>el===document.activeElement),true,'Focus returns to trigger');
+  await page.getByRole('button',{name:'Xác minh số điện thoại',exact:true}).click();
   await page.evaluate(()=>window.__originalOtpDialog=document.querySelector('dialog'));
   await page.locator('#host-verification-phone').fill('123');await page.getByRole('button',{name:'Gửi mã OTP',exact:true}).click();
   await page.getByText('Vui lòng nhập số điện thoại Việt Nam hợp lệ.',{exact:true}).waitFor();
   await page.locator('#host-verification-phone').fill('0934567812');
   if(width===375){failSend=true;await page.getByRole('button',{name:'Gửi mã OTP',exact:true}).click();await page.getByText('Không gửi được mã thử nghiệm.',{exact:true}).waitFor();failSend=false;}
   await page.getByRole('button',{name:'Gửi mã OTP',exact:true}).click();await page.locator('#profilePhoneOtp').waitFor();
+  await centered();
+  await page.locator('#profilePhoneOtp').focus();
+  await page.keyboard.press('Shift+Tab');await page.keyboard.press('Tab');
+  assert.equal(await page.getByRole('dialog').evaluate(el=>el.contains(document.activeElement)),true,'Keyboard focus stays inside dialog');
+  assert.equal(await page.locator('#profilePhoneOtp').evaluate(el=>getComputedStyle(el).outlineStyle),'none','Only digit cell shows focus');
   assert.equal(await page.evaluate(()=>window.__originalOtpDialog===document.querySelector('dialog')),true);
   assert.equal(await page.getByRole('dialog').count(),1);
   await page.locator('#profilePhoneOtp').fill('000000');await page.getByRole('button',{name:'Xác minh và lưu',exact:true}).click();

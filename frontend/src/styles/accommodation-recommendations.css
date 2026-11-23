@@ -56,7 +56,7 @@
 }
 
 .accommodation-ai-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.accommodation-ai-subtitle { display: block; margin-top: 3px; color: var(--ai-muted); font-size: .75rem; font-weight: 650; letter-spacing: normal; }
+.accommodation-ai-dialog .accommodation-ai-subtitle { display: block; margin-top: 3px; color: var(--ai-muted); font-size: .75rem; font-weight: 650; letter-spacing: normal; }
 
 .accommodation-ai-dialog > header .p-icon {
   flex: 0 0 44px;
@@ -69,7 +69,7 @@
 }
 
 .accommodation-ai-dialog > header .p-icon:hover { background: #dbeee4; }
-.accommodation-ai-body { padding: 24px 26px 26px; }
+.accommodation-ai-dialog > .accommodation-ai-body { padding: 24px 26px 26px; }
 .accommodation-ai-form { display: grid; gap: 12px; }
 
 .accommodation-ai-input-heading {
@@ -134,8 +134,8 @@
 .accommodation-ai-examples button > svg { flex: none; }
 .accommodation-ai-examples button:hover { border-color: #a7cdbd; background: #e1f1e8; }
 .accommodation-ai-examples button:disabled { cursor: default; opacity: .65; }
-.accommodation-ai-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
-.accommodation-ai-action {
+.accommodation-ai-dialog .accommodation-ai-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.accommodation-ai-dialog .accommodation-ai-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -155,10 +155,12 @@
 
 .accommodation-ai-action:hover { background: #0c5144; color: #fff; }
 .accommodation-ai-action:disabled { border-color: var(--ai-line); background: #e6efeb; color: #52645f; cursor: default; }
+.accommodation-ai-dialog .accommodation-ai-filter-action { border-color: var(--ai-line); background: #fff; color: var(--ai-accent); }
+.accommodation-ai-dialog .accommodation-ai-filter-action:hover { background: var(--ai-mint); }
 .accommodation-ai-signin { display: grid; justify-items: start; gap: 15px; }
 .accommodation-ai-signin p { margin: 0; color: var(--ai-muted); }
 
-.accommodation-ai-clarification {
+.accommodation-ai-dialog .accommodation-ai-clarification {
   display: grid;
   gap: 9px;
   padding: 14px;
@@ -170,17 +172,17 @@
 .accommodation-ai-clarification label { display: flex; align-items: baseline; gap: 8px; }
 .accommodation-ai-clarification label svg { flex: none; color: var(--ai-accent); align-self: center; }
 .accommodation-ai-clarification textarea { min-height: 72px; background: #fff; }
-.accommodation-ai-error, .accommodation-ai-state { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: 12px; }
+.accommodation-ai-dialog :is(.accommodation-ai-error, .accommodation-ai-state) { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: 12px; }
 .accommodation-ai-error { margin: 0; border: 1px solid #fecaca; background: #fff4f3; color: #9f2926; }
 .accommodation-ai-error svg, .accommodation-ai-state > svg { flex: none; }
-.accommodation-ai-state { margin-top: 16px; border: 1px solid var(--ai-line); background: var(--ai-mint); color: var(--ai-accent); }
+.accommodation-ai-dialog .accommodation-ai-state { margin-top: 16px; border: 1px solid var(--ai-line); background: var(--ai-mint); color: var(--ai-accent); }
 .accommodation-ai-state h3, .accommodation-ai-state p { margin: 0; }
 .accommodation-ai-empty p { margin-top: 4px; color: var(--ai-muted); }
 
-.accommodation-ai-matches { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--ai-line); }
+.accommodation-ai-dialog .accommodation-ai-matches { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--ai-line); }
 .accommodation-ai-matches > h3 { margin: 0 0 12px; font-size: 1.125rem; font-weight: 800; }
 .accommodation-ai-results { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.accommodation-ai-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--ai-line); border-radius: 15px; }
+.accommodation-ai-dialog .accommodation-ai-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--ai-line); border-radius: 15px; }
 .accommodation-ai-card-main { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; align-items: start; gap: 12px; }
 
 .accommodation-ai-photo {
@@ -204,7 +206,7 @@
 .accommodation-ai-room p strong { color: var(--ai-ink); }
 .accommodation-ai-room p svg { flex: none; }
 
-.accommodation-ai-score {
+.accommodation-ai-dialog .accommodation-ai-score {
   display: grid;
   min-width: 103px;
   gap: 5px;
@@ -220,7 +222,7 @@
 .accommodation-ai-score strong { font-size: 1rem; }
 .accommodation-ai-score-track { height: 4px; overflow: hidden; border-radius: 3px; background: #cce5d9; }
 .accommodation-ai-score-track > span { display: block; height: 100%; border-radius: inherit; background: var(--ai-accent); }
-.accommodation-ai-criteria { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--ai-line); }
+.accommodation-ai-dialog .accommodation-ai-criteria { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--ai-line); }
 .accommodation-ai-criteria h5 { margin: 0 0 5px; color: var(--ai-muted); font-size: .75rem; font-weight: 750; }
 .accommodation-ai-criteria ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
 .accommodation-ai-criteria li { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 4px 7px; border-radius: 6px; background: var(--ai-mint); color: #145545; font-size: .75rem; overflow-wrap: anywhere; }
@@ -230,7 +232,7 @@
 
 @media (max-width: 540px) {
   .portal-modal.accommodation-ai-dialog { width: calc(100% - 20px); max-height: calc(100dvh - 20px); border-radius: 18px; scroll-padding-top: 80px; }
-  .accommodation-ai-dialog > header, .accommodation-ai-body { padding: 15px; }
+  .accommodation-ai-dialog > header, .accommodation-ai-dialog > .accommodation-ai-body { padding: 15px; }
   .accommodation-ai-dialog > header h2 { gap: 10px; }
   .accommodation-ai-mark { width: 40px; height: 40px; flex-basis: 40px; border-radius: 11px; }
   .accommodation-ai-examples > span { flex-basis: 100%; }

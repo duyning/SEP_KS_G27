@@ -1,4 +1,5 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { BRAND } from '../../config/brand.js';
 import BrandEmblem from './BrandEmblem.jsx';
 import {
   DEFAULT_GLOBAL_LOADING_MESSAGE,
@@ -6,7 +7,7 @@ import {
 } from './loading-policy.js';
 
 /**
- * Unified App-level GlobalLoading / GlobalSplashLoading component for HL_RCS / NestHub.
+ * Unified App-level GlobalLoading / GlobalSplashLoading component for NestHub.
  *
  * Role-agnostic by design: never displays role-specific badges or labels.
  * Use ONLY when the full application is not yet ready (bootstrap, auth session restore,
@@ -18,7 +19,7 @@ import {
 export default function GlobalLoading({
   message = DEFAULT_GLOBAL_LOADING_MESSAGE,
   submessage = '',
-  brandName = 'HL_RCS',
+  brandName = BRAND.name,
   overlay = false,
   logoSrc = '',
   error = '',

@@ -552,7 +552,7 @@ export function OnboardingStage2Form({
             <Feather name="send" size={17} color={c.primary} />
             <Text style={s.summaryBannerText}>
               Kiểm tra lại thông tin trước khi gửi một hồ sơ kết hợp duy nhất tới nhân viên thẩm
-              định HL_RCS.
+              định NestHub.
             </Text>
           </View>
 
@@ -675,7 +675,7 @@ export function OnboardingStage2Form({
               />
               <Text style={s.checkboxLabel}>
                 Tôi xác nhận toàn bộ thông tin tài khoản, CCCD và nhà trọ đầu tiên là chính xác và
-                sẵn sàng gửi nhân viên HL_RCS thẩm định.
+                sẵn sàng gửi nhân viên NestHub thẩm định.
               </Text>
             </AnimatedPressable>
             <InlineError message={errors.termsAccepted} />

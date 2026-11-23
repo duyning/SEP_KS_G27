@@ -1,0 +1,2492 @@
+/* ============================================================================
+   NestHub — 6-Step Property Registration Wizard Design System
+   Scoped under .property-registration to stay 100% immune to global resets
+   both inside /become-host (HostOnboardingPage) and /host/property/new.
+   ============================================================================ */
+
+.property-registration.prw-root {
+  --prw-primary: #0d9488;
+  --prw-primary-dark: #0f766e;
+  --prw-primary-soft: #f0fdfa;
+  --prw-primary-border: #99f6e4;
+  --prw-bg: #f8fafc;
+  --prw-surface: #ffffff;
+  --prw-border: #e2e8f0;
+  --prw-ink: #0f172a;
+  --prw-muted: #475569;
+  --prw-subtle: #64748b;
+  --prw-success: #059669;
+  --prw-warning: #d97706;
+  --prw-error: #dc2626;
+  --prw-radius-md: 12px;
+  --prw-radius-lg: 16px;
+  --prw-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --prw-shadow-md: 0 10px 28px -12px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03);
+  max-width: 1240px;
+  margin: 0 auto;
+  color: var(--prw-ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   1. 6-Step Progress Bar
+   -------------------------------------------------------------------------- */
+.property-registration .prw-progress-wrap {
+  margin-bottom: 22px;
+}
+
+.property-registration .prw-progress-mobile {
+  display: none;
+  padding: 14px 16px;
+  background: var(--prw-surface);
+  border: 1px solid var(--prw-border);
+  border-radius: 14px;
+  box-shadow: var(--prw-shadow-sm);
+}
+
+.property-registration .prw-progress-mobile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.property-registration .prw-progress-mobile-step {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--prw-primary-dark);
+  background: var(--prw-primary-soft);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.property-registration .prw-progress-mobile-top strong {
+  font-size: 0.88rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.property-registration .prw-progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--prw-primary);
+  border-radius: 999px;
+  transition: width 220ms ease;
+}
+
+.property-registration .prw-stepper {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--prw-surface);
+  border: 1px solid var(--prw-border);
+  border-radius: var(--prw-radius-lg);
+  box-shadow: var(--prw-shadow-sm);
+}
+
+.property-registration .prw-step-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 6px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--prw-subtle);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  min-width: 0;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.property-registration .prw-step-btn:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.property-registration .prw-step-btn:not(:disabled):hover {
+  background: #f8fafc;
+}
+
+.property-registration .prw-step-btn:focus-visible {
+  outline: 2px solid var(--prw-primary);
+  outline-offset: 2px;
+}
+
+.property-registration .prw-step-btn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 26px;
+  left: calc(50% + 22px);
+  width: calc(100% - 38px);
+  height: 2px;
+  background: #e2e8f0;
+  pointer-events: none;
+}
+
+.property-registration .prw-step-circle {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  color: var(--prw-muted);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.property-registration .prw-step-label {
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.property-registration .prw-step-btn.is-current {
+  background: var(--prw-primary-soft);
+  border-color: #ccfbf1;
+  color: var(--prw-primary-dark);
+  font-weight: 700;
+}
+
+.property-registration .prw-step-btn.is-current .prw-step-circle {
+  background: var(--prw-primary);
+  border-color: var(--prw-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.28);
+}
+
+.property-registration .prw-step-btn.is-done {
+  color: #065f46;
+}
+
+.property-registration .prw-step-btn.is-done .prw-step-circle {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.property-registration .prw-step-btn.is-done:not(:last-child)::after {
+  background: #10b981;
+}
+
+.property-registration .prw-step-btn.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.property-registration .prw-step-btn.is-error .prw-step-circle {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   2. Main 2-Column Layout (72% Form / 28% Help Sidebar)
+   -------------------------------------------------------------------------- */
+.property-registration .prw-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 316px;
+  gap: 24px;
+  align-items: start;
+}
+
+.property-registration .prw-form,
+.property-registration .prw-fieldset-lock {
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.property-registration .prw-main-card {
+  background: var(--prw-surface);
+  border: 1px solid var(--prw-border);
+  border-radius: var(--prw-radius-lg);
+  padding: 28px 30px 24px;
+  box-shadow: var(--prw-shadow-md);
+}
+
+.property-registration .prw-main-header {
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.property-registration .prw-step-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.property-registration .prw-main-header h3 {
+  margin: 8px 0 4px;
+  font-size: 1.32rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-main-header p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-inline-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 11px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #99f6e4;
+  color: var(--prw-primary-dark);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.property-registration .prw-inline-notice svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Step Group Cards & Inputs
+   -------------------------------------------------------------------------- */
+.property-registration .prw-step-body {
+  display: grid;
+  gap: 22px;
+  animation: prw-fade 180ms ease-out;
+}
+
+@keyframes prw-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.property-registration .prw-group-card {
+  padding: 20px 22px;
+  border-radius: 14px;
+  border: 1px solid var(--prw-border);
+  background: #ffffff;
+}
+
+.property-registration .prw-group-head-split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.property-registration .prw-group-head-split .prw-group-head {
+  margin-bottom: 0;
+}
+
+.property-registration .prw-group-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 18px;
+}
+
+.property-registration .prw-group-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.property-registration .prw-group-head h4 {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-group-head p {
+  margin: 3px 0 0;
+  font-size: 0.8125rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-group-grid,
+.property-registration .prw-stack-sm {
+  display: grid;
+  gap: 18px;
+}
+
+.property-registration .prw-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.property-registration .prw-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.property-registration .prw-field {
+  min-width: 0;
+}
+
+.property-registration .prw-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.property-registration .prw-field-label,
+.property-registration .property-type-field > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+  margin-bottom: 0;
+}
+
+.property-registration .property-type-field {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 0;
+}
+
+.property-registration .prw-required,
+.property-registration .registration-required {
+  color: #dc2626;
+}
+
+.property-registration .prw-optional-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--prw-subtle);
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.property-registration .prw-char-count {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--prw-subtle);
+  flex-shrink: 0;
+}
+
+.property-registration .prw-char-count.is-near {
+  color: #d97706;
+}
+
+.property-registration .prw-char-count.is-over {
+  color: #dc2626;
+}
+
+.property-registration input:not([type='checkbox']):not([type='file']):not([type='time']),
+.property-registration textarea,
+.property-registration select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--prw-ink);
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.property-registration textarea {
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px 14px;
+}
+
+.property-registration input.prw-readonly-input {
+  background: #f8fafc;
+  color: var(--prw-muted);
+  border-color: var(--prw-border);
+}
+
+.property-registration input:not([type='checkbox']):not([type='file']):focus,
+.property-registration textarea:focus,
+.property-registration select:focus {
+  outline: none;
+  border-color: var(--prw-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.14);
+}
+
+.property-registration [aria-invalid='true'] {
+  border-color: #dc2626 !important;
+}
+
+.property-registration .prw-field-hint,
+.property-registration .property-type-field > small {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-field-error,
+.property-registration .registration-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 7px 0 0;
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.property-registration .prw-field-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .prw-description-block .property-writing {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--prw-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.property-registration .prw-description-block .property-writing .p-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: fit-content;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid #99f6e4;
+  background: #ffffff;
+  color: var(--prw-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.property-registration .prw-description-block .property-writing .p-button.primary {
+  background: var(--prw-primary);
+  border-color: var(--prw-primary);
+  color: #ffffff;
+}
+
+.property-registration .prw-description-block .property-writing .p-button:hover:not(:disabled) {
+  background: var(--prw-primary-soft);
+}
+
+.property-registration .prw-description-block .property-writing .p-button.primary:hover:not(:disabled) {
+  background: var(--prw-primary-dark);
+}
+
+/* --------------------------------------------------------------------------
+   4. Step 2 — Lookup & Map Controls
+   -------------------------------------------------------------------------- */
+.property-registration .prw-lookup-box {
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #f4fbf9;
+  border: 1px solid #ccece5;
+}
+
+.property-registration .prw-lookup-box .registration-address-lookup {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  gap: 10px;
+}
+
+.property-registration .prw-lookup-box .registration-address-lookup > label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-lookup-box .registration-lookup-input {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.property-registration .prw-lookup-box .property-address-combobox {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.property-registration .prw-lookup-box .registration-location-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.property-registration .prw-lookup-box .registration-location-actions small {
+  font-size: 0.75rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-lookup-box .p-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--prw-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.property-registration .prw-lookup-box .p-button.primary {
+  background: var(--prw-primary);
+  border-color: var(--prw-primary);
+  color: #ffffff;
+}
+
+.property-registration .prw-lookup-box .p-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.property-registration .prw-map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--prw-border);
+}
+
+.property-registration .prw-map-toolbar strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-map-toolbar strong svg {
+  color: var(--prw-primary);
+}
+
+.property-registration .prw-map-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.property-registration .prw-map-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #99f6e4;
+  background: #ffffff;
+  color: var(--prw-primary-dark);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.property-registration .prw-map-tool-btn:hover:not(:disabled) {
+  background: var(--prw-primary-soft);
+  border-color: var(--prw-primary);
+}
+
+.property-registration .prw-map-tool-btn.subtle {
+  border-color: #cbd5e1;
+  color: var(--prw-muted);
+  padding: 6px 9px;
+}
+
+.property-registration .registration-map-shell {
+  border: 1px solid var(--prw-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.property-registration .registration-map-shell footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-top: 1px solid var(--prw-border);
+  font-size: 0.8rem;
+  color: var(--prw-muted);
+}
+
+.property-registration .registration-map-shell footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.property-registration .registration-map-shell footer .pinned {
+  color: #059669;
+  font-weight: 700;
+}
+
+.property-registration .registration-map-hint {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.77rem;
+  color: var(--prw-subtle);
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.property-registration .registration-map-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 9px 14px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-top: 1px solid #fecaca;
+}
+
+/* Collapsible sections */
+.property-registration .prw-collapsible {
+  margin-top: 16px;
+  border: 1px solid var(--prw-border);
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.property-registration .prw-collapsible summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--prw-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.property-registration .prw-collapsible summary svg {
+  color: var(--prw-primary);
+}
+
+.property-registration .prw-collapsible-body {
+  padding: 4px 14px 14px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Step 3 — Selectable Amenity & Rule Cards
+   -------------------------------------------------------------------------- */
+.property-registration .prw-count-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.property-registration .prw-count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--prw-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.property-registration .prw-count-pill.is-ready {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.property-registration .prw-clear-link {
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  color: var(--prw-subtle);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.property-registration .prw-clear-link:hover {
+  color: #dc2626;
+}
+
+.property-registration .prw-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.property-registration .prw-choice-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1px solid var(--prw-border);
+  background: #ffffff;
+  color: var(--prw-ink);
+  font-size: 0.825rem;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.property-registration .prw-choice-card:hover {
+  border-color: #99f6e4;
+  background: #fafefe;
+}
+
+.property-registration .prw-choice-card.is-selected {
+  border-color: var(--prw-primary);
+  background: var(--prw-primary-soft);
+  color: var(--prw-primary-dark);
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.14);
+}
+
+.property-registration .prw-sr-checkbox,
+.property-registration .prw-sr-file {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.property-registration .prw-choice-card:has(.prw-sr-checkbox:focus-visible) {
+  outline: 2px solid var(--prw-primary);
+  outline-offset: 2px;
+}
+
+.property-registration .prw-choice-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--prw-muted);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.property-registration .prw-choice-card.is-selected .prw-choice-icon {
+  background: #ffffff;
+  color: var(--prw-primary);
+}
+
+.property-registration .prw-choice-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.property-registration .prw-choice-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: #ffffff;
+}
+
+.property-registration .prw-choice-card.is-selected .prw-choice-check {
+  background: var(--prw-primary);
+  border-color: var(--prw-primary);
+}
+
+.property-registration .prw-quiet-card {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: default;
+}
+
+.property-registration .prw-quiet-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 140px;
+  cursor: pointer;
+}
+
+.property-registration .prw-quiet-time-input {
+  width: auto !important;
+  min-height: 34px !important;
+  padding: 4px 8px !important;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+}
+
+/* --------------------------------------------------------------------------
+   6. Step 4 — Photo Dropzone & Gallery Grid
+   -------------------------------------------------------------------------- */
+.property-registration .prw-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 32px 20px;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 14px;
+  background: #f8fafc;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.property-registration .prw-dropzone.is-dragging {
+  border-color: var(--prw-primary);
+  background: var(--prw-primary-soft);
+}
+
+.property-registration .prw-dropzone.has-error {
+  border-color: #f87171;
+  background: #fffafa;
+}
+
+.property-registration .prw-dropzone-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--prw-shadow-sm);
+}
+
+.property-registration .prw-dropzone strong {
+  font-size: 0.92rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-dropzone p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.property-registration .prw-photo-card {
+  margin: 0;
+  border: 1px solid var(--prw-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.property-registration .prw-photo-card.is-cover {
+  border-color: var(--prw-primary);
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.2);
+}
+
+.property-registration .prw-photo-thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.property-registration .prw-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.property-registration .prw-photo-index {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.property-registration .prw-cover-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--prw-primary);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.property-registration .prw-photo-zoom {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--prw-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.property-registration .prw-photo-meta {
+  padding: 10px 12px;
+  display: grid;
+  gap: 9px;
+}
+
+.property-registration .prw-photo-info strong {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--prw-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.property-registration .prw-photo-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.71rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+.property-registration .prw-photo-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.property-registration .prw-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid #99f6e4;
+  background: var(--prw-primary-soft);
+  color: var(--prw-primary-dark);
+  font: inherit;
+  font-size: 0.71rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.property-registration .prw-photo-order {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.property-registration .prw-photo-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--prw-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.property-registration .prw-photo-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.property-registration .prw-photo-icon-btn.danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.property-registration .prw-photo-icon-btn.danger:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+/* --------------------------------------------------------------------------
+   7. Step 5 — Verification Document Cards
+   -------------------------------------------------------------------------- */
+.property-registration .prw-privacy-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  border-left: 4px solid var(--prw-primary);
+}
+
+.property-registration .prw-privacy-icon {
+  color: var(--prw-primary-dark);
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .prw-privacy-banner strong {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--prw-primary-dark);
+}
+
+.property-registration .prw-privacy-banner p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-doc-list {
+  display: grid;
+  gap: 16px;
+}
+
+.property-registration .prw-doc-card {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--prw-border);
+  background: #ffffff;
+}
+
+.property-registration .prw-doc-card.is-attached {
+  border-color: #99f6e4;
+}
+
+.property-registration .prw-doc-card.is-reused-card {
+  background: #f4fbf9;
+}
+
+.property-registration .prw-doc-card.has-error {
+  border-color: #fca5a5;
+  background: #fffafa;
+}
+
+.property-registration .prw-doc-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.property-registration .prw-doc-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.property-registration .prw-doc-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.property-registration .prw-doc-icon.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.property-registration .prw-doc-title {
+  display: block;
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-doc-desc {
+  margin: 4px 0 0;
+  font-size: 0.79rem;
+  line-height: 1.55;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-doc-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.property-registration .prw-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.property-registration .prw-doc-badge.is-required {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.property-registration .prw-doc-badge.is-optional {
+  background: #f1f5f9;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-doc-badge.is-success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.property-registration .prw-doc-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-radius: 11px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+}
+
+.property-registration .prw-doc-card.is-attached .prw-doc-slot {
+  border-style: solid;
+  border-color: #ccfbf1;
+  background: #fafefe;
+}
+
+.property-registration .prw-doc-file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 200px;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-doc-file-info > div {
+  min-width: 0;
+}
+
+.property-registration .prw-doc-file-info strong {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--prw-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.property-registration .prw-doc-file-info small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.73rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-doc-file-info small.is-reused {
+  color: #059669;
+  font-weight: 600;
+}
+
+.property-registration .prw-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.property-registration .prw-saved-id-details {
+  margin-top: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   8. Step 6 — Review & Submit Summary Cards
+   -------------------------------------------------------------------------- */
+.property-registration .prw-readiness-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid #a7f3d0;
+  background: #ecfdf5;
+}
+
+.property-registration .prw-readiness-banner.has-issues {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.property-registration .prw-readiness-icon {
+  color: #059669;
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .prw-readiness-banner.has-issues .prw-readiness-icon {
+  color: #d97706;
+}
+
+.property-registration .prw-readiness-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.property-registration .prw-readiness-copy strong {
+  display: block;
+  font-size: 0.94rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-readiness-copy p {
+  margin: 3px 0 0;
+  font-size: 0.82rem;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-readiness-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.property-registration .prw-readiness-stats span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-issue-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.property-registration .prw-issue-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #fde68a;
+  font-size: 0.79rem;
+  color: #92400e;
+}
+
+.property-registration .prw-issue-list button {
+  border: 0;
+  background: transparent;
+  color: var(--prw-primary-dark);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.property-registration .prw-review-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.property-registration .prw-review-card {
+  border: 1px solid var(--prw-border);
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.property-registration .prw-review-card.has-issue {
+  border-color: #fca5a5;
+}
+
+.property-registration .prw-review-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.property-registration .prw-review-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.property-registration .prw-review-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--prw-primary-soft);
+  color: var(--prw-primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.property-registration .prw-review-card-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.property-registration .prw-review-card-title strong {
+  font-size: 0.88rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-review-card-title small {
+  font-size: 0.75rem;
+  color: var(--prw-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.property-registration .prw-review-chevron {
+  margin-left: auto;
+  color: var(--prw-subtle);
+  transition: transform 160ms ease;
+}
+
+.property-registration .prw-review-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.property-registration .prw-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--prw-primary-dark);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.property-registration .prw-edit-btn:hover {
+  background: var(--prw-primary-soft);
+  border-color: var(--prw-primary);
+}
+
+.property-registration .prw-review-card-body {
+  padding: 16px 18px;
+}
+
+.property-registration .prw-summary-dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.property-registration .prw-summary-dl > div.is-full {
+  grid-column: 1 / -1;
+}
+
+.property-registration .prw-summary-dl dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-summary-dl dd {
+  margin: 3px 0 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--prw-ink);
+  overflow-wrap: anywhere;
+}
+
+.property-registration .prw-summary-desc {
+  font-weight: 500 !important;
+  color: var(--prw-muted) !important;
+  white-space: pre-wrap;
+}
+
+.property-registration .prw-summary-tags-block + .prw-summary-tags-block {
+  margin-top: 12px;
+}
+
+.property-registration .prw-summary-sub {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--prw-subtle);
+  margin-bottom: 7px;
+}
+
+.property-registration .prw-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.property-registration .prw-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary-dark);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.property-registration .prw-tag.is-rule {
+  background: #f8fafc;
+  border-color: var(--prw-border);
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-tag-empty {
+  font-size: 0.8rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-summary-extra-rule {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #f8fafc;
+  font-size: 0.81rem;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-review-thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.property-registration .prw-review-thumb {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid var(--prw-border);
+}
+
+.property-registration .prw-review-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.property-registration .prw-review-cover-tag {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--prw-primary);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.property-registration .prw-review-docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.property-registration .prw-review-docs li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.property-registration .prw-review-docs li.is-ok > span {
+  color: #059669;
+  margin-top: 2px;
+}
+
+.property-registration .prw-review-docs li.is-missing {
+  background: #fef2f2;
+}
+
+.property-registration .prw-review-docs li.is-missing > span {
+  color: #dc2626;
+  margin-top: 2px;
+}
+
+.property-registration .prw-review-docs strong {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-review-docs small {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--prw-subtle);
+}
+
+/* Step 6 Consent & Info */
+.property-registration .prw-consent-card {
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--prw-border);
+}
+
+.property-registration .prw-consent-card.has-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.property-registration .prw-consent-card label {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--prw-ink);
+  cursor: pointer;
+}
+
+.property-registration .prw-consent-card input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 3px;
+  accent-color: var(--prw-primary);
+  cursor: pointer;
+}
+
+.property-registration .prw-terms-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--prw-primary-dark);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.property-registration .prw-post-submit-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 11px;
+  background: var(--prw-primary-soft);
+  border: 1px solid #ccfbf1;
+  color: var(--prw-primary-dark);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.property-registration .prw-post-submit-info svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .prw-post-submit-info p {
+  margin: 0;
+}
+
+.property-registration .prw-submit-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 13px 16px;
+  border-radius: 11px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   9. Unified Navigation Footer & Draft Bar
+   -------------------------------------------------------------------------- */
+.property-registration .prw-nav-shell {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--prw-border);
+  display: grid;
+  gap: 14px;
+}
+
+.property-registration .prw-draft-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--prw-border);
+  font-size: 0.78rem;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-draft-bar.is-saved {
+  background: #f0fdfa;
+  border-color: #ccfbf1;
+  color: var(--prw-primary-dark);
+}
+
+.property-registration .prw-draft-bar.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.property-registration .prw-draft-icon {
+  margin-top: 2px;
+  flex: none;
+}
+
+.property-registration .prw-draft-copy strong {
+  display: block;
+  font-size: 0.79rem;
+}
+
+.property-registration .prw-draft-copy small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.property-registration .prw-actions-left,
+.property-registration .prw-actions-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Shared Buttons */
+.property-registration .prw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.property-registration .prw-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.property-registration .prw-btn-primary {
+  background: var(--prw-primary);
+  border-color: var(--prw-primary);
+  color: #ffffff;
+  box-shadow: 0 6px 16px -6px rgba(13, 148, 136, 0.42);
+}
+
+.property-registration .prw-btn-primary:hover:not(:disabled) {
+  background: var(--prw-primary-dark);
+  border-color: var(--prw-primary-dark);
+}
+
+.property-registration .prw-btn-secondary {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.property-registration .prw-btn-ghost {
+  background: #f8fafc;
+  border-color: var(--prw-border);
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-btn-ghost:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-btn-soft {
+  background: var(--prw-primary-soft);
+  border-color: #99f6e4;
+  color: var(--prw-primary-dark);
+}
+
+.property-registration .prw-btn-soft:hover:not(:disabled) {
+  background: #ccfbf1;
+}
+
+.property-registration .prw-btn-danger {
+  background: #ffffff;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.property-registration .prw-btn-danger:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.property-registration .prw-btn-sm {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+.property-registration .prw-btn:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.property-registration .prw-btn:focus-visible {
+  outline: 2px solid var(--prw-primary);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   10. Right Context Help Sidebar (25-30%)
+   -------------------------------------------------------------------------- */
+.property-registration .prw-help-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 90px;
+}
+
+.property-registration .prw-help-card {
+  padding: 20px;
+  border-radius: var(--prw-radius-lg);
+  border: 1px solid var(--prw-border);
+  background: var(--prw-surface);
+  box-shadow: var(--prw-shadow-sm);
+}
+
+.property-registration .prw-help-primary {
+  background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 52%);
+  border-color: #ccfbf1;
+}
+
+.property-registration .prw-help-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.property-registration .prw-help-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--prw-primary);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.property-registration .prw-help-icon.subtle {
+  background: #f1f5f9;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-help-head h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-help-head p {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.property-registration .prw-help-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.81rem;
+  line-height: 1.5;
+  color: var(--prw-muted);
+}
+
+.property-registration .prw-help-list svg {
+  color: var(--prw-primary);
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .prw-review-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.property-registration .prw-review-timeline li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.property-registration .prw-review-timeline li > span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--prw-primary-soft);
+  border: 1px solid #99f6e4;
+  color: var(--prw-primary-dark);
+  font-size: 0.74rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-top: 1px;
+}
+
+.property-registration .prw-review-timeline strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--prw-ink);
+}
+
+.property-registration .prw-review-timeline small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-help-security,
+.property-registration .prw-help-eta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--prw-subtle);
+}
+
+.property-registration .prw-help-security svg,
+.property-registration .prw-help-eta svg {
+  color: var(--prw-primary);
+  flex: none;
+  margin-top: 2px;
+}
+
+/* Pending standalone card */
+.prw-pending-card {
+  max-width: 720px;
+  margin: 28px auto;
+  padding: 36px 28px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 28px -12px rgba(15, 23, 42, 0.08);
+}
+
+.prw-pending-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #d97706;
+  display: grid;
+  place-items: center;
+}
+
+.prw-pending-badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.prw-pending-card h2 {
+  margin: 14px 0 8px;
+  font-size: 1.4rem;
+  color: #0f172a;
+}
+
+.prw-pending-card > p {
+  margin: 0 auto;
+  max-width: 540px;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.prw-pending-note {
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  max-width: 540px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 0.85rem;
+}
+
+.prw-pending-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+  padding: 16px 0;
+  border-block: 1px solid #e2e8f0;
+}
+
+.prw-pending-meta dt {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.prw-pending-meta dd {
+  margin: 4px 0 0;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.prw-pending-footnote {
+  font-size: 0.82rem !important;
+  color: #64748b !important;
+}
+
+.prw-pending-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* Preview Modals & Native <dialog> Protection against .prototype-home * reset */
+.prototype-home dialog.portal-modal,
+.property-registration dialog.portal-modal {
+  margin: auto;
+  padding: 22px 24px 24px;
+  width: calc(100% - 32px);
+  max-width: 560px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.28);
+}
+
+.prototype-home dialog.portal-modal::backdrop,
+.property-registration dialog.portal-modal::backdrop {
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(3px);
+}
+
+.prototype-home dialog.portal-modal.prw-doc-preview-modal,
+.prototype-home dialog.portal-modal.prw-lightbox-modal,
+.prototype-home dialog.portal-modal.hob-lightbox-modal,
+.property-registration dialog.portal-modal.prw-doc-preview-modal,
+.property-registration dialog.portal-modal.prw-lightbox-modal {
+  max-width: min(820px, calc(100vw - 32px));
+}
+
+.prototype-home dialog.portal-modal > header,
+.property-registration dialog.portal-modal > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prototype-home dialog.portal-modal > header h2,
+.property-registration dialog.portal-modal > header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.prototype-home dialog.portal-modal > header .p-icon,
+.property-registration dialog.portal-modal > header .p-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.prototype-home dialog.portal-modal > header .p-icon:hover,
+.property-registration dialog.portal-modal > header .p-icon:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.prototype-home .prw-lightbox-body,
+.prototype-home .prw-doc-preview-body,
+.prw-lightbox-body,
+.prw-doc-preview-body {
+  padding: 4px 0 0;
+  display: grid;
+  place-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.prototype-home .prw-lightbox-body img,
+.prototype-home .prw-doc-img-preview,
+.prw-lightbox-body img,
+.prw-doc-img-preview {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
+}
+
+.prototype-home .prw-pdf-frame,
+.prw-pdf-frame {
+  width: min(740px, 82vw);
+  height: 70vh;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+/* Embedded PropertyPhotoGuide inside Step 4 Collapsible (immune to .prototype-home * reset) */
+.property-registration .property-photo-guide {
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid #ccece5;
+  border-radius: 12px;
+  background: #f7fcfb;
+  color: #0f172a;
+}
+
+.property-registration .property-photo-guide > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.property-registration .property-photo-guide > header > svg {
+  color: var(--prw-primary);
+  flex: none;
+  margin-top: 2px;
+}
+
+.property-registration .property-photo-guide h4 {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+  line-height: 1.4;
+}
+
+.property-registration .property-photo-guide p {
+  margin: 0;
+  font-size: 0.81rem;
+  line-height: 1.6;
+  color: var(--prw-muted);
+}
+
+.property-registration .property-photo-guide .property-photo-guide-angles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-angles li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  min-width: 0;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-angles li > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--prw-primary);
+}
+
+.property-registration .property-photo-guide .property-photo-guide-angles strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--prw-ink);
+  margin: 0 0 3px;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-extra {
+  margin: 14px 0 0;
+  padding: 0 2px;
+  font-size: 0.8rem;
+  color: var(--prw-subtle);
+}
+
+.property-registration .property-photo-guide .property-photo-guide-tips {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 14px 0 0;
+  margin: 14px 0;
+  border-top: 1px solid #d9efe9;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.81rem;
+  line-height: 1.55;
+  color: var(--prw-muted);
+}
+
+.property-registration .property-photo-guide .property-photo-guide-tips svg {
+  flex: none;
+  margin-top: 3px;
+  color: #059669;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-cover {
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  color: var(--prw-primary-dark);
+  font-size: 0.81rem;
+  line-height: 1.55;
+}
+
+.property-registration .property-photo-guide .property-photo-guide-cover strong {
+  color: var(--prw-primary-dark);
+}
+
+@media (max-width: 680px) {
+  .property-registration .property-photo-guide {
+    padding: 14px;
+  }
+
+  .property-registration .property-photo-guide .property-photo-guide-angles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. Responsive — Tablet & Mobile
+   -------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .property-registration .prw-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .property-registration .prw-help-panel {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .property-registration .prw-contact-grid,
+  .property-registration .prw-choice-grid,
+  .property-registration .prw-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .property-registration .prw-review-thumbs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .property-registration .prw-stepper {
+    display: none;
+  }
+
+  .property-registration .prw-progress-mobile {
+    display: block;
+  }
+
+  .property-registration .prw-main-card {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .property-registration .prw-group-card {
+    padding: 16px;
+  }
+
+  .property-registration .prw-two-col,
+  .property-registration .prw-contact-grid,
+  .property-registration .prw-choice-grid,
+  .property-registration .prw-photo-grid,
+  .property-registration .prw-summary-dl,
+  .property-registration .prw-help-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .property-registration .prw-review-thumbs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .property-registration .prw-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .property-registration .prw-actions-left,
+  .property-registration .prw-actions-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .property-registration .prw-btn {
+    width: 100%;
+  }
+
+  .property-registration input:not([type='checkbox']):not([type='file']),
+  .property-registration textarea,
+  .property-registration select {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .property-registration .prw-step-body,
+  .property-registration .prw-progress-bar > span,
+  .property-registration .prw-step-btn,
+  .property-registration .prw-choice-card,
+  .property-registration .prw-btn {
+    animation: none;
+    transition: none;
+  }
+}

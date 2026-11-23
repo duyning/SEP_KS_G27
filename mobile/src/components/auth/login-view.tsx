@@ -19,6 +19,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/context/auth-context';
+import { BrandIcon } from '@/components/brand/brand-logo';
+import { BRAND } from '@/config/brand';
 import { validateLogin } from '@/services/auth';
 import { resolveSafeRedirect } from '@/services/host-onboarding';
 import { AuthInput } from './auth-input';
@@ -147,9 +149,9 @@ export function LoginView() {
               {/* Floating Minimal Brand Mark */}
               <View style={[styles.floatingBrand, { top: Math.max(insets.top, 16) + 8 }]}>
                 <View style={styles.brandIconCircle}>
-                  <Feather name="home" size={14} color="#FFFFFF" />
+                  <BrandIcon size={16} variant="white" />
                 </View>
-                <Text style={styles.brandWordmark}>HL_RCS</Text>
+                <Text style={styles.brandWordmark}>{BRAND.name}</Text>
                 <View style={styles.brandDivider} />
                 <Text style={styles.brandLocationText}>Hòa Lạc</Text>
               </View>

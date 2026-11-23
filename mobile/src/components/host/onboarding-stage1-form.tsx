@@ -302,7 +302,7 @@ export function OnboardingStage1Form({
           scaleTo={0.99}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: draft.agreementAccepted }}
-          accessibilityLabel="Đồng ý điều khoản đối tác HL_RCS"
+          accessibilityLabel="Đồng ý điều khoản đối tác NestHub"
           style={s.checkboxRow}
           onPress={() => onUpdateDraft({ agreementAccepted: !draft.agreementAccepted })}
         >
@@ -313,7 +313,7 @@ export function OnboardingStage1Form({
           />
           <Text style={s.checkboxLabel}>
             Tôi cam kết thông tin cung cấp là trung thực và đồng ý tuân thủ quy định dành cho đối
-            tác chủ nhà trọ trên HL_RCS.
+            tác chủ nhà trọ trên NestHub.
           </Text>
         </AnimatedPressable>
         <InlineError message={errors.agreementAccepted} />

@@ -908,7 +908,7 @@ function RoomContractDetailContent({
                 <View style={s.auditNoteBox}>
                   <Feather name="info" size={14} color={c.textSecondary} style={{ marginTop: 1 }} />
                   <Text style={s.auditNoteText}>
-                    Trạng thái quản lý ({mgmtMeta.label}) và trạng thái ký kết ({sigProgress.summaryLabel}) được theo dõi độc lập theo dữ liệu thực tế từ hệ thống HL_RCS.
+                    Trạng thái quản lý ({mgmtMeta.label}) và trạng thái ký kết ({sigProgress.summaryLabel}) được theo dõi độc lập theo dữ liệu thực tế từ hệ thống NestHub.
                   </Text>
                 </View>
               </Animated.View>

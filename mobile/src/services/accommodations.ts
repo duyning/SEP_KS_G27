@@ -45,7 +45,7 @@ export function getApiBase(): string {
   if (envUrl) {
     return envUrl.replace(/\/+$/, '');
   }
-  throw new Error('Chưa cấu hình EXPO_PUBLIC_API_URL cho máy chủ HL_RCS.');
+  throw new Error('Chưa cấu hình EXPO_PUBLIC_API_URL cho máy chủ NestHub.');
 }
 
 export interface JsonRequestOptions {
@@ -75,7 +75,7 @@ export async function requestJson(url: string, init: RequestInit, options: JsonR
     if (timedOut) {
       throw new Error(options.timeoutMessage ?? 'Máy chủ phản hồi quá lâu. Kiểm tra kết nối Wi-Fi và thử lại.');
     }
-    throw new Error('Không thể kết nối đến máy chủ HL_RCS. Kiểm tra địa chỉ API, Wi-Fi và máy chủ backend.');
+    throw new Error('Không thể kết nối đến máy chủ NestHub. Kiểm tra địa chỉ API, Wi-Fi và máy chủ backend.');
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', abort);

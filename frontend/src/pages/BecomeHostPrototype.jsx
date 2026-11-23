@@ -286,16 +286,16 @@ export default function BecomeHostPrototype({
 
         <nav className="main-navbar">
           <div className="container navbar-container">
-            <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">
+            <Link className="nav-brand" aria-label="Trang chủ NestHub" to="/">
               <div className="brand-logo-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
+                <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+                  <path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div className="brand-title-wrap">
-                <span className="brand-name">HL_RCS</span>
-                <span className="brand-sub">Rental Connection System</span>
+                <span className="brand-name">NestHub</span>
+                <span className="brand-sub">Kết nối &amp; quản lý nhà trọ</span>
               </div>
             </Link>
 
@@ -375,7 +375,7 @@ export default function BecomeHostPrototype({
         <div>
           <span className="bh-page-eyebrow">DÀNH CHO CHỦ NHÀ</span>
           <h1 id="become-host-title">Đăng ký làm chủ trọ</h1>
-          <p>Hoàn thiện hồ sơ để sử dụng không gian quản lý nhà trọ trên HL_RCS.</p>
+          <p>Hoàn thiện hồ sơ để sử dụng không gian quản lý nhà trọ trên NestHub.</p>
         </div>
       </section>
 
@@ -416,7 +416,7 @@ export default function BecomeHostPrototype({
                 </div>
                 <h2 className="bh-state-title">Yêu cầu đăng nhập tài khoản</h2>
                 <p className="bh-state-desc">
-                  Bạn cần đăng nhập tài khoản người dùng trên hệ thống HL-RCS trước khi gửi hồ sơ đăng ký làm chủ trọ để
+                  Bạn cần đăng nhập tài khoản người dùng trên hệ thống NestHub trước khi gửi hồ sơ đăng ký làm chủ trọ để
                   chúng tôi có thể liên kết quyền hạn với tài khoản của bạn.
                 </p>
                 <div className="bh-state-actions">
@@ -525,7 +525,7 @@ export default function BecomeHostPrototype({
                   </div>
                   <div className="bh-feedback-meta">
                     <span>
-                      Người xét duyệt: <strong id="ncReviewer">{application?.reviewedBy || 'Ban Quản Trị HL_RCS'}</strong>
+                      Người xét duyệt: <strong id="ncReviewer">{application?.reviewedBy || 'Ban Quản Trị NestHub'}</strong>
                     </span>
                   </div>
                 </div>
@@ -578,7 +578,7 @@ export default function BecomeHostPrototype({
                   </div>
                   <div className="bh-feedback-meta">
                     <span>
-                      Người thẩm định: <strong id="rejReviewer">{application?.reviewedBy || 'Ban Quản Trị HL_RCS'}</strong>
+                      Người thẩm định: <strong id="rejReviewer">{application?.reviewedBy || 'Ban Quản Trị NestHub'}</strong>
                     </span>
                   </div>
                 </div>
@@ -710,17 +710,17 @@ export default function BecomeHostPrototype({
           <div className="footer-col col-brand">
             <Link className="nav-brand" style={{ marginBottom: '16px' }} to="/">
               <div className="brand-logo-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
+                <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+                  <path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div className="brand-title-wrap">
                 <span className="brand-name" style={{ color: '#ffffff' }}>
-                  HL_RCS
+                  NestHub
                 </span>
                 <span className="brand-sub" style={{ color: 'var(--slate-400)' }}>
-                  Rental Connection System
+                  Kết nối &amp; quản lý nhà trọ
                 </span>
               </div>
             </Link>
@@ -778,7 +778,7 @@ export default function BecomeHostPrototype({
             <p className="footer-contact-item">
               📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
             </p>
-            <p className="footer-contact-item">✉️ Email: support@hlrcs.vn</p>
+            <p className="footer-contact-item">✉️ Email: support@nesthub.vn</p>
             <div className="verified-badge-footer">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -790,7 +790,7 @@ export default function BecomeHostPrototype({
 
         <div className="footer-bottom">
           <div className="container footer-bottom-inner">
-            <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
+            <p>© 2026 NestHub. Bản quyền thuộc về nền tảng NestHub.</p>
           </div>
         </div>
       </footer>

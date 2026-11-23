@@ -7,10 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class PropertyDescriptionService {
@@ -24,6 +27,8 @@ public class PropertyDescriptionService {
     private record CachedSuggestion(Facts facts, Suggestion suggestion, long createdAt) {}
     private static final long CACHE_TTL_MS = 120_000;
     private static final int CACHE_LIMIT = 256;
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+    private static final Set<Integer> RETRYABLE_PROVIDER_STATUSES = Set.of(500, 502, 503, 504);
     private static final String INSTRUCTION="""
             Viết mô tả nhà trọ bằng tiếng Việt, văn phong tự nhiên, rõ ràng, khoảng 45–100 từ,
             tối thiểu 30 và tối đa 2000 ký tự. Chỉ dùng dữ kiện trong JSON được cung cấp.
@@ -77,9 +82,9 @@ public class PropertyDescriptionService {
                     "contents",List.of(Map.of("role","user","parts",List.of(Map.of("text",json.writeValueAsString(facts))))),
                     "generationConfig",Map.of("temperature",0.3,"maxOutputTokens",896));
             var request=HttpRequest.newBuilder(URI.create("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent"))
-                    .timeout(Duration.ofSeconds(30)).header("x-goog-api-key",key).header("Content-Type","application/json")
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(body))).build();
-            var response=http.send(request,HttpResponse.BodyHandlers.ofByteArray());
+                    .header("x-goog-api-key",key).header("Content-Type","application/json")
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(body)));
+            var response=sendWithRetry(request);
             if(response.statusCode()!=200){LOG.warn("Property description AI rejected: model={}, http={}",model,response.statusCode());throw providerFailure(response.statusCode());}
             var suggestion = parse(response.body(), json);
             remember(me.getUserId(), facts, suggestion);
@@ -90,6 +95,23 @@ public class PropertyDescriptionService {
         catch(ParseFailure e){LOG.warn("Property description AI unusable response: model={}, reason={}",model,e.reason);throw new AppException(switch(e.reason){case "MAX_TOKENS"->"AI trả mô tả chưa hoàn chỉnh. Vui lòng thử tạo lại với thông tin ngắn gọn hơn.";case "BLOCKED"->"AI chưa thể tạo mô tả từ nội dung này. Hãy kiểm tra lại thông tin và thử lại.";default->"AI trả mô tả chưa hợp lệ. Vui lòng bổ sung thông tin nhà trọ rồi thử lại; nội dung đang viết được giữ nguyên.";},HttpStatus.BAD_GATEWAY);}
         catch(Exception e){LOG.warn("Property description AI failed: model={}, category={}",model,e.getClass().getSimpleName());throw unavailable();}
     }
+
+    private HttpResponse<byte[]> sendWithRetry(HttpRequest.Builder request) throws IOException, InterruptedException {
+        var handler = HttpResponse.BodyHandlers.ofByteArray();
+        long deadline = System.nanoTime() + REQUEST_TIMEOUT.toNanos();
+        var response = http.send(request.timeout(REQUEST_TIMEOUT).build(), handler);
+        if (!RETRYABLE_PROVIDER_STATUSES.contains(response.statusCode())) return response;
+
+        long delayMillis = ThreadLocalRandom.current().nextLong(750, 1251);
+        if (deadline - System.nanoTime() <= TimeUnit.MILLISECONDS.toNanos(delayMillis)) return response;
+        Thread.sleep(delayMillis);
+        long remainingNanos = deadline - System.nanoTime();
+        if (remainingNanos <= 0) return response;
+
+        LOG.info("Property description AI retry: model={}, http={}", model, response.statusCode());
+        return http.send(request.timeout(Duration.ofNanos(remainingNanos)).build(), handler);
+    }
+
     static Suggestion parse(byte[] bytes,ObjectMapper json){
         if(bytes.length>65536)throw new ParseFailure("OVERSIZED");
         var root=json.readTree(bytes);var candidate=root.path("candidates").path(0);

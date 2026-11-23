@@ -24,7 +24,7 @@ export function HomeWelcomeSection() {
           entering={FadeInDown.duration(240).delay(40)}
           style={styles.greeting}
         >
-          HL_RCS • Hòa Lạc Rental Community
+          NestHub • Hòa Lạc Rental Community
         </Animated.Text>
       )}
 
@@ -41,7 +41,7 @@ export function HomeWelcomeSection() {
           <AnimatedPressable
             onPress={() => router.push('/login')}
             style={styles.guestBanner}
-            accessibilityLabel="Đăng nhập tài khoản HL_RCS"
+            accessibilityLabel="Đăng nhập tài khoản NestHub"
           >
             <View style={styles.guestBannerLeft}>
               <View style={styles.guestIconCircle}>

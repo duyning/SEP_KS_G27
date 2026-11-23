@@ -8,9 +8,9 @@ export function CommunitySupportLinks() {
 export default function CommunityFooter() {
   return <footer className="community-compact-footer">
     <div className="container">
-      <strong>HL_RCS · Cộng đồng Hòa Lạc</strong>
+      <strong>NestHub · Cộng đồng Hòa Lạc</strong>
       <nav aria-label="Liên hệ cộng đồng"><CommunitySupportLinks /></nav>
-      <small>© {new Date().getFullYear()} HL_RCS</small>
+      <small>© {new Date().getFullYear()} NestHub</small>
     </div>
   </footer>;
 }

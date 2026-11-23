@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Heart, House, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
+import { Heart, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
+import { BrandIcon, BRAND } from '../brand/index.js';
 import CommunityNotificationBell from '../CommunityNotificationBell.jsx';
 import { CommunitySupportLinks } from '../CommunityFooter.jsx';
 import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
@@ -66,7 +67,9 @@ export default function PublicNavbar() {
   }
 
   const name = user?.fullName?.trim() || user?.email || 'Tài khoản';
-  const dashboard = landingFor(user);
+  const isHost = user?.role === 'ROOM_HOST';
+  const portalPath = isHost ? '/host/property' : landingFor(user);
+  const portalLabel = isHost ? 'Nhà trọ của tôi' : 'Bảng điều khiển';
   const communityBell = ['USER', 'ROOM_HOST'].includes(user?.role);
   const closeMenu = () => setMenuOpen(false);
   return (
@@ -74,11 +77,11 @@ export default function PublicNavbar() {
       <HostRegistrationBanner />
       <div className="main-navbar site-nav">
         <div className="navbar-container site-nav-inner">
-          <Link className="nav-brand site-brand" aria-label="Trang chủ HL_RCS" to="/" onClick={closeMenu}>
-            <span className="site-brand-icon"><House size={22} aria-hidden="true" /></span>
+          <Link className="nav-brand site-brand" aria-label={`Trang chủ ${BRAND.name}`} to="/" onClick={closeMenu}>
+            <BrandIcon size={34} variant="teal" />
             <span className="site-brand-text">
-              <strong>HL_RCS</strong>
-              <small>Rental Connection System</small>
+              <strong style={{ color: '#0F5955', fontWeight: 800, letterSpacing: '-0.025em' }}>{BRAND.name}</strong>
+              <small>{BRAND.shortTagline}</small>
             </span>
           </Link>
 
@@ -97,8 +100,8 @@ export default function PublicNavbar() {
                   </NavLink>
                 </li>
               ))}
-              {dashboard !== '/' && (
-                <li className="site-menu-extra"><Link className="nav-item" to={dashboard} onClick={closeMenu}>Bảng điều khiển</Link></li>
+              {portalPath !== '/' && (
+                <li className="site-menu-extra"><Link className="nav-item" to={portalPath} onClick={closeMenu}>{portalLabel}</Link></li>
               )}
               {user ? (
                 <li className="site-menu-extra"><Link className="nav-item" to="/notifications" onClick={closeMenu}>Thông báo</Link></li>
@@ -123,8 +126,8 @@ export default function PublicNavbar() {
             </NavLink>
             {user ? (
               <>
-                {dashboard !== '/' && <Link className="site-dashboard" to={dashboard} aria-label="Bảng điều khiển" title="Bảng điều khiển">
-                  <LayoutDashboard size={18} aria-hidden="true" /><span>Bảng điều khiển</span>
+                {portalPath !== '/' && <Link className="site-dashboard" to={portalPath} aria-label={portalLabel} title={portalLabel}>
+                  <LayoutDashboard size={18} aria-hidden="true" /><span>{portalLabel}</span>
                 </Link>}
                 <div className="user-nav-pill site-account">
                   <Link className="user-nav-profile-link site-profile-link" to="/profile" onClick={closeMenu} aria-label={`Hồ sơ của ${name}`}>

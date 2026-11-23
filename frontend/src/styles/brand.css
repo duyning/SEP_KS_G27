@@ -1,0 +1,69 @@
+/* ============================================================================
+   NestHub Centralized Brand System Styles
+   ============================================================================ */
+
+.nh-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.nh-brand-svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.nh-brand-badge {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  box-shadow: 0 6px 14px -4px rgba(13, 148, 136, 0.28);
+  flex-shrink: 0;
+}
+
+.nh-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nh-brand-name {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #0f5955;
+}
+
+.nh-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #0f766e;
+  letter-spacing: 0.01em;
+}
+
+.nh-brand-logo.is-sm .nh-brand-name {
+  font-size: 18px;
+}
+
+.nh-brand-logo.is-md .nh-brand-name {
+  font-size: 21px;
+}
+
+.nh-brand-logo.is-lg .nh-brand-name {
+  font-size: 26px;
+}
+
+.nh-brand-logo.tone-dark .nh-brand-name {
+  color: #ffffff;
+}
+
+.nh-brand-logo.tone-dark .nh-brand-sub {
+  color: rgba(255, 255, 255, 0.78);
+}

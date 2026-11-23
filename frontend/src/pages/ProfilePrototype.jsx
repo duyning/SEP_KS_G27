@@ -23,7 +23,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
           <div className="profile-user-info">
             <div className="profile-name-row">
-              <h1 className="profile-display-name" id="profileDisplayName">{user.fullName || 'Người dùng HL_RCS'}</h1>
+              <h1 className="profile-display-name" id="profileDisplayName">{user.fullName || 'Người dùng NestHub'}</h1>
               <span className="profile-role-badge" id="profileRoleBadge">{roleLabel}</span>
             </div>
             <div className="profile-user-meta">
@@ -379,7 +379,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="security-tips-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div className="security-tips-text">
-                  <strong>Khuyến nghị an toàn:</strong> Không chia sẻ mật khẩu hoặc mã xác thực với bất kỳ ai, kể cả người tự xưng là ban quản trị HL_RCS hoặc chủ trọ.
+                  <strong>Khuyến nghị an toàn:</strong> Không chia sẻ mật khẩu hoặc mã xác thực với bất kỳ ai, kể cả người tự xưng là ban quản trị NestHub hoặc chủ trọ.
                 </div>
               </div>
 
@@ -392,7 +392,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="profile-card-header">
                 <div className="profile-card-title-group">
                   <h2>Báo cáo nhà trọ của tôi</h2>
-                  <p id="profileReportsSummaryText">Theo dõi tiến độ kiểm duyệt và xử lý các vấn đề bạn đã phản hồi cho HL_RCS.</p>
+                  <p id="profileReportsSummaryText">Theo dõi tiến độ kiểm duyệt và xử lý các vấn đề bạn đã phản hồi cho NestHub.</p>
                 </div>
                 <Link className="btn-secondary" style={{"textDecoration": "none", "fontSize": "13px"}} to="/search">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -408,7 +408,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           </div>
           <h4 style={{"fontSize": "16px", "fontWeight": "700", "color": "var(--slate-900)", "marginBottom": "6px"}}>Bạn chưa gửi báo cáo nào</h4>
           <p style={{"fontSize": "13.5px", "color": "var(--slate-600)", "maxWidth": "480px", "margin": "0 auto 18px", "lineHeight": "1.5"}}>
-            Khi phát hiện thông tin nhà trọ bị sai giá, địa chỉ không đúng hoặc tin ảo, bạn có thể bấm <strong>"Báo cáo thông tin"</strong> trên trang chi tiết phòng để HL_RCS tiến hành kiểm tra.
+            Khi phát hiện thông tin nhà trọ bị sai giá, địa chỉ không đúng hoặc tin ảo, bạn có thể bấm <strong>"Báo cáo thông tin"</strong> trên trang chi tiết phòng để NestHub tiến hành kiểm tra.
           </p>
           <Link className="btn-primary-action" style={{"textDecoration": "none"}} to="/search">Khám phá phòng trọ Hòa Lạc</Link>
         </div>
@@ -418,7 +418,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="reports-safety-tip-box" style={{"marginTop": "24px", "padding": "14px 18px", "background": "#f0fdfa", "border": "1px solid #ccfbf1", "borderRadius": "12px", "display": "flex", "alignItems": "flex-start", "gap": "12px", "fontSize": "13px", "color": "var(--primary-dark)", "lineHeight": "1.5"}}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{"flexShrink": "0", "color": "var(--primary)"}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div>
-                  <strong>Chính sách bảo mật người báo cáo:</strong> HL_RCS cam kết không cung cấp danh tính người báo cáo cho chủ trọ. Mọi thông tin phản ánh được đội ngũ kiểm duyệt độc lập đối chiếu thực tế để đảm bảo môi trường thuê trọ an toàn, minh bạch tại Hòa Lạc.
+                  <strong>Chính sách bảo mật người báo cáo:</strong> NestHub cam kết không cung cấp danh tính người báo cáo cho chủ trọ. Mọi thông tin phản ánh được đội ngũ kiểm duyệt độc lập đối chiếu thực tế để đảm bảo môi trường thuê trọ an toàn, minh bạch tại Hòa Lạc.
                 </div>
               </div>
 
@@ -441,11 +441,11 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
       <div className="footer-col col-brand">
         <Link className="nav-brand white" to="/">
           <div className="brand-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
+            <span className="brand-name">NestHub</span>
+            <span className="brand-sub">Kết nối &amp; quản lý nhà trọ</span>
           </div>
         </Link>
         <p className="footer-desc">
@@ -491,7 +491,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
         </p>
         <p className="footer-contact-item">
-          ✉️ Email: support@hlrcs.vn
+          ✉️ Email: support@nesthub.vn
         </p>
         <div className="verified-badge-footer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -502,7 +502,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
     <div className="footer-bottom">
       <div className="container footer-bottom-inner">
-        <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
+        <p>© 2026 NestHub. Bản quyền thuộc về nền tảng NestHub.</p>
       </div>
     </div>
   </footer>

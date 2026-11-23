@@ -7,7 +7,7 @@ export function googleSignInAvailability(): { available: boolean; mode?: 'browse
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
     return googleBrowserOrigin()
       ? { available: true, mode: 'browser' }
-      : { available: false, reason: 'Đăng nhập Google trên Expo Go cần địa chỉ HTTPS đã đăng ký của HL_RCS.' };
+      : { available: false, reason: 'Đăng nhập Google trên Expo Go cần địa chỉ HTTPS đã đăng ký của NestHub.' };
   }
   if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim()) {
     return { available: false, reason: 'Đăng nhập Google chưa được cấu hình.' };
@@ -63,8 +63,8 @@ export async function requestGoogleIdToken(): Promise<string | null> {
     }
     throw new AuthError('Không thể đăng nhập Google. Vui lòng kiểm tra kết nối và cấu hình ứng dụng.', 'network');
   } finally {
-    // Persist only the HL-RCS session. Do not silently reuse a cached Google
-    // account after the user signs out of HL-RCS.
+    // Persist only the NestHub session. Do not silently reuse a cached Google
+    // account after the user signs out of NestHub.
     await sdk.GoogleSignin.signOut().catch(() => undefined);
   }
 }

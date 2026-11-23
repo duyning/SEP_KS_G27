@@ -1,6 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BrandIcon } from '@/components/brand/brand-logo';
+import { BRAND } from '@/config/brand';
 import { authColors, authRadius, authSpacing } from './tokens';
 
 interface AuthHeaderProps {
@@ -42,9 +44,9 @@ export function AuthHeader({ mode, onBack, disabled = false }: AuthHeaderProps) 
 
         <View style={styles.centerBrand}>
           <View style={styles.miniLogo}>
-            <Feather name="home" size={14} color="#FFFFFF" />
+            <BrandIcon size={16} variant="white" />
           </View>
-          <Text style={styles.miniBrandName}>HL_RCS</Text>
+          <Text style={styles.miniBrandName}>{BRAND.name}</Text>
         </View>
 
         <View style={styles.campusBadge}>
@@ -59,10 +61,10 @@ export function AuthHeader({ mode, onBack, disabled = false }: AuthHeaderProps) 
     <View style={styles.loginContainer}>
       <View style={styles.brandRow}>
         <View style={styles.logoBadge}>
-          <Feather name="home" size={20} color="#FFFFFF" />
+          <BrandIcon size={22} variant="white" />
         </View>
         <View style={styles.brandMeta}>
-          <Text style={styles.brandName}>HL_RCS</Text>
+          <Text style={styles.brandName}>{BRAND.name}</Text>
           <Text style={styles.brandTagline}>Một nơi ở. Một khởi đầu.</Text>
         </View>
       </View>

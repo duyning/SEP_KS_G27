@@ -979,7 +979,7 @@ export default function PropertyChangeScreen() {
                 bộ hồ sơ.
               </Text>
               <Text style={s.guideItem}>
-                2. Thông tin nhà trọ đang công khai sẽ giữ nguyên cho đến khi nhân viên HL_RCS phê
+                2. Thông tin nhà trọ đang công khai sẽ giữ nguyên cho đến khi nhân viên NestHub phê
                 duyệt.
               </Text>
               <Text style={s.guideItem}>

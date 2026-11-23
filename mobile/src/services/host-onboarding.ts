@@ -241,7 +241,7 @@ export function validateOnboardingStage1(input: {
     errors.phoneVerified = 'Vui lòng xác minh số điện thoại bằng mã OTP trước khi tiếp tục.';
   }
   if (!input.draft.agreementAccepted) {
-    errors.agreementAccepted = 'Vui lòng đồng ý điều khoản đối tác HL_RCS.';
+    errors.agreementAccepted = 'Vui lòng đồng ý điều khoản đối tác NestHub.';
   }
 
   const hasFront = Boolean(input.front) || Boolean(input.account?.hasIdentityImage);
@@ -292,7 +292,7 @@ export function resolveOnboardingBannerState(input: {
       visible: true,
       state: 'host',
       badge: 'Đối tác chủ nhà trọ',
-      title: 'Bạn đang là đối tác HL_RCS',
+      title: 'Bạn đang là đối tác NestHub',
       description:
         'Chuyển sang không gian chủ trọ để quản lý nhà trọ, phòng thuê và lịch xem phòng.',
       ctaLabel: 'Vào quản lý nhà trọ',
@@ -308,7 +308,7 @@ export function resolveOnboardingBannerState(input: {
       badge: 'Dành cho chủ nhà trọ',
       title: 'Bạn có nhà trọ cho thuê?',
       description:
-        'Trở thành đối tác HL_RCS để quản lý nhà trọ, phòng thuê và lịch xem phòng thuận tiện hơn.',
+        'Trở thành đối tác NestHub để quản lý nhà trọ, phòng thuê và lịch xem phòng thuận tiện hơn.',
       ctaLabel: 'Đăng ký làm chủ trọ',
       action: 'login_redirect',
       href: '/login?redirect=%2Fbecome-host',
@@ -324,7 +324,7 @@ export function resolveOnboardingBannerState(input: {
       badge: 'Hồ sơ đang thẩm định',
       title: 'Hồ sơ đối tác đang chờ duyệt',
       description:
-        'Nhân viên HL_RCS đang thẩm định tài khoản CCCD và thông tin nhà trọ đầu tiên của bạn.',
+        'Nhân viên NestHub đang thẩm định tài khoản CCCD và thông tin nhà trọ đầu tiên của bạn.',
       ctaLabel: 'Theo dõi hồ sơ',
       action: 'onboarding_status',
       href: '/become-host',
@@ -379,7 +379,7 @@ export function resolveOnboardingBannerState(input: {
     badge: 'Dành cho chủ nhà trọ',
     title: 'Bạn có nhà trọ cho thuê?',
     description:
-      'Trở thành đối tác HL_RCS để quản lý nhà trọ, phòng thuê và lịch xem phòng thuận tiện hơn.',
+      'Trở thành đối tác NestHub để quản lý nhà trọ, phòng thuê và lịch xem phòng thuận tiện hơn.',
     ctaLabel: 'Đăng ký làm chủ trọ',
     action: 'onboarding_start',
     href: '/become-host',
@@ -565,7 +565,7 @@ export function onboardingStatusMeta(
         {
           key: 'review',
           title: 'Staff thẩm định',
-          subtitle: 'Nhân viên HL_RCS đã phê duyệt hồ sơ kết hợp',
+          subtitle: 'Nhân viên NestHub đã phê duyệt hồ sơ kết hợp',
           state: 'done',
         },
         {
@@ -665,7 +665,7 @@ export function onboardingStatusMeta(
     badge: 'Đang thẩm định',
     title: 'Hồ sơ đã gửi thành công',
     description:
-      'Hồ sơ tài khoản & nhà trọ đầu tiên đang chờ nhân viên HL_RCS thẩm định. Vai trò chủ trọ và tin đăng chỉ kích hoạt sau khi được duyệt.',
+      'Hồ sơ tài khoản & nhà trọ đầu tiên đang chờ nhân viên NestHub thẩm định. Vai trò chủ trọ và tin đăng chỉ kích hoạt sau khi được duyệt.',
     dossierCode,
     roleStatusLabel: 'Chờ phê duyệt (vẫn là Người thuê)',
     propertyStatusLabel: 'Đang chờ thẩm định (chưa công khai)',
@@ -687,7 +687,7 @@ export function onboardingStatusMeta(
       {
         key: 'review',
         title: 'Staff thẩm định',
-        subtitle: 'Nhân viên HL_RCS đang kiểm tra và đối chiếu hồ sơ',
+        subtitle: 'Nhân viên NestHub đang kiểm tra và đối chiếu hồ sơ',
         state: 'active',
       },
       {
