@@ -192,6 +192,12 @@
   }
 }
 
+@media (max-width: 350px) {
+  .site-header .site-brand { gap: 6px; }
+  .site-header .site-brand-icon { width: 36px; height: 36px; }
+  .site-header .site-brand-text strong { font-size: 1rem; }
+}
+
 @media (min-width: 601px) {
   .site-header :is(.site-nav-inner, .host-entry-inner) { padding-inline: clamp(16px, 2vw, 40px); }
   .site-header .site-brand-text small { display: block; font-size: 0.73rem; font-weight: 600; }
