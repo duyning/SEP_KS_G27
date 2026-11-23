@@ -13,8 +13,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { serviceReviewApi as api, validateServiceReview } from '../../services/service-review.js';
 import '../../styles/service-applications.css';
+import '../../styles/staff-service-application-detail.css';
 import ServiceGallery from '../../components/ServiceGallery.jsx';
-import { Download, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, Download, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle, RefreshCw } from 'lucide-react';
 
 const status = { PENDING: 'Chờ xét duyệt', APPROVED: 'Đã xét duyệt', REJECTED: 'Đã từ chối', NEEDS_SUPPLEMENT: 'Cần bổ sung', CANCELLED: 'Đã hủy' };
 const statusFilters = ['ALL', 'APPROVED', 'PENDING', 'NEEDS_SUPPLEMENT', 'REJECTED', 'CANCELLED'];
@@ -23,7 +24,7 @@ const reviewChoices = [
   { value: 'SUPPLEMENT', label: 'Yêu cầu bổ sung', description: 'Trả hồ sơ để người đăng ký hoàn thiện.' },
   { value: 'REJECT', label: 'Từ chối hồ sơ', description: 'Không chấp nhận hồ sơ, kèm lý do.' },
 ];
-const statusBadge = value => <StatusBadge status={value} tone={value === 'NEEDS_SUPPLEMENT' ? 'supplement' : undefined} label={status[value] || value} />;
+const statusBadge = value => <StatusBadge status={value} label={status[value] || value} />;
 const labels = { FIXED: 'Giá cố định', FROM: 'Giá từ', NEGOTIABLE: 'Thỏa thuận', CREATE: 'Thêm dịch vụ', UPDATE: 'Cập nhật dịch vụ', DELETE: 'Xóa dịch vụ', CANCELLED: 'Đã hủy hồ sơ', CHANGE_REQUESTED: 'Yêu cầu thay đổi', RESUBMITTED: 'Đã nộp lại hồ sơ', APPROVED: 'Đã duyệt', REJECTED: 'Đã từ chối', REQUESTED_SUPPLEMENT: 'Yêu cầu bổ sung', APPROVE: 'Duyệt', REJECT: 'Từ chối', ACTIVE: 'Đang công khai', DELETED: 'Đã ngừng công khai', INACTIVE: 'Ngừng hoạt động' };
 const textValue = value => labels[value] || value || '—';
 const money = value => value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} VNĐ`;
@@ -115,7 +116,8 @@ export default function StaffServiceApplicationsPage() {
     }
     mutate(() => decision === 'SUPPLEMENT' ? api.supplement(selected, reason.trim(), row.revision) : api.review(selected, decision, decision, decision === 'APPROVE' ? '' : reason.trim(), row.revision));
   }
-  return <main className={selected ? "service-applications" : "service-applications staff-service-list-page"}>
+  return <main className={selected ? "service-applications staff-service-detail-page" : "service-applications staff-service-list-page"} aria-busy={loading || busy}>
+    {selected && <nav className="service-detail-navigation" aria-label="Điều hướng hồ sơ"><Link to={listUrl}><ArrowLeft size={16} aria-hidden="true" />Danh sách hồ sơ</Link><UIButton variant="secondary" disabled={loading || busy} onClick={() => setRevision(v => v + 1)}><RefreshCw size={16} aria-hidden="true" />Làm mới</UIButton></nav>}
     <div className="service-applications-heading"><h1 ref={pageTop} tabIndex={-1}>{selected ? `Hồ sơ dịch vụ #${selected}` : 'Xét duyệt hồ sơ cung cấp dịch vụ'}</h1></div>
     <p>Nhân viên và quản trị viên đều có thể xem tài liệu và xét duyệt các hồ sơ chờ xử lý.</p>
     {!selected ? <StaffListPanel title="Hồ sơ dịch vụ" description="Theo dõi và xét duyệt hồ sơ của nhà cung cấp" loading={loading || busy} onReload={() => setRevision(v => v + 1)}>
@@ -136,12 +138,19 @@ export default function StaffServiceApplicationsPage() {
         {row.resubmissionNote && <div className="service-change-note"><strong>Lý do thay đổi</strong><p className="service-text">{row.resubmissionNote}</p></div>}
         <div className={`service-application-overview${row.hasImage ? '' : ' without-image'}`}>
         {row.hasImage && <ServiceGallery key={row.registrationId + "-" + row.revision} application={row} alt={row.serviceName} />}
-        <dl><dt>Người đăng ký</dt><dd>{row.applicantName} (tài khoản #{row.applicantId})</dd><dt>Liên hệ</dt><dd>{row.contactPhone} · {row.contactEmail || 'Không có email'}</dd><dt>Mô tả</dt><dd className="service-text">{row.description}</dd><dt>Khu vực</dt><dd>{serviceAreaText(row)}</dd><dt>Giá</dt><dd><ServicePrice service={row} /></dd><dt>Ngày gửi</dt><dd>{time(row.createdAt)}</dd></dl>
+        <dl className="service-application-facts">{[
+          ['Người đăng ký', <>{row.applicantName || 'Chưa cập nhật'} (tài khoản #{row.applicantId})</>],
+          ['Liên hệ', [row.contactPhone, row.contactEmail].filter(Boolean).join(' · ') || 'Chưa cập nhật'],
+          ['Khu vực', serviceAreaText(row) || 'Chưa cập nhật'],
+          ['Giá', <ServicePrice service={row} />],
+          ['Ngày gửi', time(row.createdAt)],
+          ['Mô tả', row.description || 'Chưa cập nhật'],
+        ].map(([label, value]) => <div key={label} className={label === 'Mô tả' ? 'service-fact-description' : undefined}><dt>{label}</dt><dd className={label === 'Mô tả' ? 'service-text' : undefined}>{value}</dd></div>)}</dl>
         </div>
         {row.targetServiceId && row.publicEligible && <Link className="service-app-action service-public-compare" to={'/services/detail?id=' + row.targetServiceId} target="_blank"><Eye size={16} aria-hidden="true" />Xem bản đang công khai để đối chiếu</Link>}
         <h3 className="service-documents-heading">Tài liệu xác minh</h3>{!row.documents.length && <p>Hồ sơ không có tài liệu.</p>}<div className="service-review-documents">{row.documents.map(doc => <ReviewDocument key={row.registrationId + '-' + row.revision + '-' + doc.documentId} applicationId={row.registrationId} doc={doc} onError={setError} />)}</div>
       </section>
-      {row.operation === 'DELETE' ? <section className="service-delete-banner" role="note"><h2>Đề nghị xóa / ngừng công khai dịch vụ</h2><p>Dịch vụ sẽ ngừng hiển thị công khai sau khi yêu cầu được duyệt. Không có nội dung thay thế để đối chiếu.</p></section> : detail.currentListing && row.operation !== 'CREATE' && <section><h2>Đối chiếu nội dung đề nghị</h2><p>Bản dịch vụ hiện tại: phiên bản {detail.currentListing.revision}. Các ô thay đổi được tô vàng nhạt.</p><div className="service-table-wrap"><table className="service-comparison"><colgroup><col style={{ width: '20%' }} /><col style={{ width: '40%' }} /><col style={{ width: '40%' }} /></colgroup><thead><tr><th>Thông tin</th><th>Hiện tại</th><th>Đề nghị</th></tr></thead><tbody>{[['serviceName','Tên dịch vụ'],['pricingType','Loại giá'],['price','Giá'],['priceUnit','Đơn vị tính'],['description','Mô tả'],['serviceArea','Khu vực chuẩn'],['customServiceAreas','Khu vực khác']].map(([key,label]) => { const before = comparisonValue(detail.currentListing, key), after = comparisonValue(row, key); return <tr key={key}><th scope="row">{label}</th><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={detail.currentListing} /> : before}</td><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={row} /> : after}</td></tr>; })}</tbody></table></div></section>}
+      {row.operation === 'DELETE' ? <section className="service-delete-banner" role="note"><h2>Đề nghị xóa / ngừng công khai dịch vụ</h2><p>Dịch vụ sẽ ngừng hiển thị công khai sau khi yêu cầu được duyệt. Không có nội dung thay thế để đối chiếu.</p></section> : detail.currentListing && row.operation !== 'CREATE' && <section><h2>Đối chiếu nội dung đề nghị</h2><p>Bản dịch vụ hiện tại: phiên bản {detail.currentListing.revision}. Các ô thay đổi được tô vàng nhạt.</p><div className="service-table-wrap" role="region" aria-label="Đối chiếu nội dung dịch vụ, cuộn ngang để xem đủ thông tin" tabIndex={0}><table className="service-comparison"><colgroup><col style={{ width: '20%' }} /><col style={{ width: '40%' }} /><col style={{ width: '40%' }} /></colgroup><thead><tr><th>Thông tin</th><th>Hiện tại</th><th>Đề nghị</th></tr></thead><tbody>{[['serviceName','Tên dịch vụ'],['pricingType','Loại giá'],['price','Giá'],['priceUnit','Đơn vị tính'],['description','Mô tả'],['serviceArea','Khu vực chuẩn'],['customServiceAreas','Khu vực khác']].map(([key,label]) => { const before = comparisonValue(detail.currentListing, key), after = comparisonValue(row, key); return <tr key={key}><th scope="row">{label}</th><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={detail.currentListing} /> : before}</td><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={row} /> : after}</td></tr>; })}</tbody></table></div></section>}
       {row.status === 'PENDING' && row.applicantId === user.userId && <p>Hồ sơ của bạn cần được một nhân viên hoặc quản trị viên khác xét duyệt.</p>}
       {row.status === 'PENDING' && row.applicantId !== user.userId && <section className="service-review-panel"><h2>Quyết định xét duyệt</h2><p className="service-review-intro">Chọn cách xử lý hồ sơ. Nhận xét của bạn sẽ được hiển thị cho người đăng ký.</p><form noValidate onSubmit={review}><fieldset disabled={busy}>
         <fieldset className="service-review-choices" aria-describedby={fieldErrors.decision ? 'service-decision-error' : undefined}><legend>Hướng xử lý <span className="service-required">*</span></legend>
