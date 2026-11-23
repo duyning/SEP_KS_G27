@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import useCommunityLive from './useCommunityLive.js';
 import { communityApi } from '../services/community.js';
 import { beginCommunityLoad, failCommunityLoad, initialCommunityLoadState, shouldRefreshCommunityOnFocus } from '../services/community-load.js';
 
@@ -16,6 +17,7 @@ export function useCommunityLoad(view, id) {
   const lastAttempt = useRef({ scope: '', at: 0 });
   stateRef.current = state;
   scopeRef.current = scope;
+  useCommunityLive('posts', () => setRevision(value => value + 1), view === 'detail' ? id : null);
 
   useEffect(() => {
     const refresh = () => {
@@ -51,7 +53,9 @@ export function useCommunityLoad(view, id) {
       })
       .catch(error => {
         if (controller.signal.aborted || requestVersion.current !== version) return;
-        const next = failCommunityLoad(stateRef.current, scope, error.message);
+        const next = [401, 403, 404].includes(error.status)
+          ? { ...initialCommunityLoadState(scope), loading: false, error: error.message }
+          : failCommunityLoad(stateRef.current, scope, error.message);
         stateRef.current = next;
         setState(next);
       })

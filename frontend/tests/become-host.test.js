@@ -23,7 +23,10 @@ async function loadComponent(filePath) {
   ).code;
   const mod = { exports: {} };
   const fileRequire = createRequire(fullPath);
-  new Function('require', 'module', 'exports', compiled)(fileRequire, mod, mod.exports);
+  const requireForPrototype = specifier => specifier === '../components/CommunityNotificationBell.jsx'
+    ? (() => null)
+    : fileRequire(specifier);
+  new Function('require', 'module', 'exports', compiled)(requireForPrototype, mod, mod.exports);
   return mod.exports.default;
 }
 

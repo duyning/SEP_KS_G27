@@ -12,6 +12,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
+    @Query("select count(c) from Comment c where c.post.postId=:postId and c.parentCommentId is null "
+            + "and (c.createdAt < :createdAt or (c.createdAt=:createdAt and c.commentId < :id))")
+    long countRootsBefore(@Param("postId") Integer postId, @Param("createdAt") java.time.LocalDateTime createdAt, @Param("id") Integer id);
     interface PostCount {
         Integer getPostId();
         long getTotal();

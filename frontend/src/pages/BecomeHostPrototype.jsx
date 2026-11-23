@@ -1,3 +1,4 @@
+import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -398,7 +399,7 @@ export default function BecomeHostPrototype({
               <li className="bm-menu-account">{account}</li>
             </ul>
 
-            <div className="nav-actions">{account}</div>
+            <div className="nav-actions"><CommunityNotificationBell />{account}</div>
 
             <MotionButton
               className="mobile-toggle"

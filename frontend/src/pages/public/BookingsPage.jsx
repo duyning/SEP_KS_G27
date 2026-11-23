@@ -162,7 +162,7 @@ export default function BookingsPage() {
             <div><h1>Lịch xem phòng của bạn</h1><p>Theo dõi lịch hẹn đã gửi, thời gian xem trực tiếp và phản hồi từ chủ trọ.</p>
               <div className="bookings-summary" aria-label="Tổng quan lịch xem phòng"><span className="upcoming">{data?.summary?.upcoming ?? '—'} Lịch sắp tới</span><span className="pending">{count('PENDING')} Chờ xác nhận</span><span>{data?.summary?.ended ?? '—'} Đã kết thúc</span></div>
             </div>
-            <div className="bookings-toolbar-actions"><Link className="bookings-button" to="/search"><CalendarDays size={17} aria-hidden="true" />Đặt lịch mới</Link><Link className="bookings-button primary" to="/search"><Plus size={18} aria-hidden="true" />Tìm thêm phòng</Link></div>
+            <div className="bookings-toolbar-actions"><Link className="bookings-button" to="/notifications?category=VIEWING">Thông báo lịch hẹn</Link><Link className="bookings-button primary" to="/search"><Plus size={18} aria-hidden="true" />Tìm thêm phòng</Link></div>
           </div>
           <div className="bookings-toolbar">
             <div className="bookings-status-tabs" role="group" aria-label="Trạng thái lịch hẹn">{[['', 'Tất cả'], ['APPROVED', 'Đã xác nhận'], ['PENDING', 'Chờ xác nhận'], ['CANCELLED', 'Đã hủy'], ['REJECTED', 'Đã từ chối']].map(([value, label]) => <button key={value} type="button" aria-pressed={status === value} onClick={() => update('status', value)}>{label}<span>{value ? count(value) : total}</span></button>)}</div>

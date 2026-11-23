@@ -3,6 +3,7 @@ import {Link,useSearchParams} from 'react-router-dom';
 import {Bell,CalendarDays,Check,ChevronRight,FileText,MessageCircle,RefreshCw,Search,ShieldCheck} from 'lucide-react';
 import {Modal} from '../../components/PortalUI.jsx';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
+import CommunityNotificationInbox from '../../components/CommunityNotificationInbox.jsx';
 import ServiceRegistrationModal from '../../components/ServiceRegistrationModal.jsx';
 import {Editor as PropertyEditor} from '../host/HostPropertyEditForm.jsx';
 import {hostApi} from '../../services/host.js';
@@ -24,10 +25,26 @@ const today=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Ho_Chi_Minh'}).f
 function NoticeViewing({item,onContactChange}){const load=useCallback(signal=>noticesApi.viewing(item.id,signal),[item.id]);const {data,error,reload}=useViewingData(load,item.id);return data?<ViewingDetails item={data} host={item.target?.startsWith('/host')} onContactChange={onContactChange} compact/>:<ViewingLoadState error={error} retry={reload}/>;}
 function PropertySupplement({id,onClose}){const load=useCallback(signal=>hostApi.propertyEdit(id,signal),[id]);const {data,error,reload}=useViewingData(load,id);return <Modal className="notice-dialog" title={`Bổ sung hồ sơ #${id}`} onClose={onClose}><div className="notice-dialog-body">{data?<PropertyEditor snapshot={data} onDone={onClose}/>:<ViewingLoadState error={error} retry={reload}/>}</div></Modal>;}
 
-export default function NotificationsPage({host=false}){
+export default function NotificationsPage({ host = false }) {
+ const { user } = useAuth();
+ const [params] = useSearchParams();
+ const path = host ? '/host/notifications' : '/notifications';
+ const member = ['USER', 'ROOM_HOST'].includes(user?.role);
+ const community = member && params.get('tab') === 'community';
+ const tabs = member && <nav className="cn-center-tabs" aria-label="Hộp thư thông báo">
+  <Link to={path} aria-current={!community ? 'page' : undefined}>Thông báo chung</Link>
+  <Link to={`${path}?tab=community`} aria-current={community ? 'page' : undefined}>Thông báo cộng đồng</Link>
+ </nav>;
+ const content = community
+  ? <main className={`notice-center${host ? ' notice-host' : ''}`}>{tabs}<CommunityNotificationInbox /></main>
+  : <NoticeCenter host={host} tabs={tabs} />;
+ return host ? content : <DetailPrototypeShell className="prototype-notifications">{content}</DetailPrototypeShell>;
+}
+
+function NoticeCenter({host,tabs}){
  const {user}=useAuth();
  const [params,setParams]=useSearchParams();
- const category=Object.hasOwn(categories,params.get('category'))?params.get('category'):params.get('unread')==='true'?'UNREAD':'ALL';
+ const category=Object.hasOwn(categories,params.get('category'))?params.get('category'):params.get('unread')==='true'?'UNREAD':params.get('tab')==='viewings'?'VIEWING':'ALL';
  const kind=params.get('kind')||'',query=params.get('q')||'';
  const [q,setQ]=useState(query);
  const setCategory=value=>setParams(previous=>{const next=new URLSearchParams(previous);next.set('category',value);next.delete('unread');next.delete('kind');return next;});
@@ -52,8 +69,9 @@ export default function NotificationsPage({host=false}){
  useEffect(()=>{if(!state.nextCursor||state.loading||state.error||!window.IntersectionObserver)return;const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))next.current();},{rootMargin:'250px'});if(sentinel.current)observer.observe(sentinel.current);return()=>observer.disconnect();},[state.nextCursor,state.loading,state.error]);
  async function mutate(action){if(mutating.current)return;mutating.current=true;setBusy(true);setActionError('');try{await action();}catch(e){setActionError(e.message);}finally{setBusy(false);mutating.current=false;}}
  function open(item){setContactPhone(null);setSelected(item);setReply('');setSuccess('');setActionError('');if(!item.read)mutate(async()=>{const updated=await noticesApi.read(item.id);setSelected(current=>current?.id===item.id?updated:current);reload();});}
- const content=<main className={`notice-center${host?' notice-host':''}`}>
+ return <main className={`notice-center${host?' notice-host':''}`}>
   <nav className="notice-breadcrumb" aria-label="Đường dẫn"><Link to={host?'/host':'/'}>Trang chủ</Link><span>/</span><span>Thông báo</span></nav>
+  {tabs}
   <header className="notice-heading"><div><h1>Thông báo</h1><span className="notice-unread" aria-live="polite">{state.unreadCount??'…'} chưa đọc</span></div><div><button className="notice-button primary" disabled={busy||!state.unreadCount} onClick={()=>mutate(async()=>{await noticesApi.readAll();reload();})}><Check size={16}/>Đọc tất cả</button><button className="notice-button" disabled={state.loading} onClick={reload}><RefreshCw size={16}/>Làm mới</button></div></header>
   <section className="notice-filters" aria-label="Lọc thông báo"><div>{Object.entries(categories).map(([key,label])=><button key={key} type="button" aria-pressed={category===key} onClick={()=>setCategory(key)}>{label}<span>{state.counts?.[key]??(state.loading?'…':0)}</span></button>)}</div><label><Search size={16}/><input aria-label="Tìm thông báo" placeholder="Tìm tên, mã #…" value={q} maxLength={100} onChange={e=>setQ(e.target.value)}/></label></section>
   {['APPLICATION','COMMUNITY'].includes(category)&&<div className="notice-subfilters" role="group" aria-label="Loại thông báo">{[['',category==='APPLICATION'?'Tất cả đơn':'Tất cả'],...(category==='APPLICATION'?['APPROVED','NEEDS_SUPPLEMENT','CANCELLED','REJECTED']:['COMMENT','REPLY']).map(key=>[key,kinds[key]])].map(([key,label])=><button key={key} aria-pressed={kind===key} onClick={()=>setKind(key)}>{label}</button>)}</div>}
@@ -69,5 +87,4 @@ export default function NotificationsPage({host=false}){
    <footer><button className="notice-button" onClick={()=>setSelected(null)}>Đóng</button>{selected.category==='VIEWING'&&contactPhone?<CopyPhoneButton phone={contactPhone}/>:selected.category==='COMMUNITY'?<button className="notice-button primary" disabled={busy||!reply.trim()} onClick={()=>mutate(async()=>{if(selected.commentId)await communityApi.reply(selected.postId,selected.commentId,reply.trim());else await communityApi.addComment(selected.postId,reply.trim());setReply('');setSuccess('Đã gửi phản hồi.');})}>{busy?'Đang gửi…':'Gửi phản hồi'}</button>:selected.category==='APPLICATION'&&selected.kind==='NEEDS_SUPPLEMENT'&&(selected.target?.startsWith('/services')||selected.target?.startsWith('/host/property/edit'))?<button className="notice-button primary" onClick={()=>{setSupplement(selected);setSelected(null);}}>Bổ sung hồ sơ</button>:selected.target&&<Link className="notice-button primary" to={selected.target}>Xem {selected.category==='VIEWING'?'lịch hẹn':'chi tiết'}</Link>}{selected.category==='ADMIN'&&<button className="notice-button primary" onClick={()=>setSelected(null)}>Đã hiểu</button>}</footer></Modal>}
   {supplement&&(supplement.target.startsWith('/services')?<ServiceRegistrationModal applicationId={supplement.referenceId} onClose={()=>{setSupplement(null);reload();}}/>:<PropertySupplement id={supplement.referenceId} onClose={()=>{setSupplement(null);reload();}}/>)}
  </main>;
- return host?content:<DetailPrototypeShell className="prototype-notifications">{content}</DetailPrototypeShell>;
 }

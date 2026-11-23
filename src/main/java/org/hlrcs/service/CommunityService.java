@@ -24,6 +24,14 @@ import java.util.Comparator;
 @Service
 @RequiredArgsConstructor
 public class CommunityService {
+    private java.util.function.Consumer<CommunityNotificationEvent> notificationEvents = event -> {};
+    private java.util.function.Consumer<CommunityRealtimeEvent> liveEvents = event -> {};
+    @org.springframework.beans.factory.annotation.Autowired
+    void notificationPublisher(org.springframework.context.ApplicationEventPublisher publisher) {
+        notificationEvents = publisher::publishEvent;
+        liveEvents = publisher::publishEvent;
+    }
+
     private final PostRepository posts;
     private final ModerationLogRepository logs;
     private final AuthService auth;
@@ -64,6 +72,7 @@ public class CommunityService {
         images.replace(post, request.retainedImageIds(), photos);
         videos.replace(post, request.retainedVideoIds(), clips);
         autoModeration.enqueue(post);
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         return response(post, true);
     }
 
@@ -99,6 +108,7 @@ public class CommunityService {
         post.setReviewNote(null);
         post.setSubmissionRevision(post.revision() + 1);
         autoModeration.enqueue(post);
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         return response(posts.saveAndFlush(post), true);
     }
 
@@ -109,6 +119,8 @@ public class CommunityService {
             throw new ResourceNotFoundException("Không tìm thấy bài viết của bạn.");
         }
         // Use the same lock as moderation; authors may delete in every status.
+        liveEvents.accept(CommunityRealtimeEvent.post(post, post.getStatus() == PostStatus.APPROVED));
+        liveEvents.accept(CommunityRealtimeEvent.reports(id));
         // Remove dependent rows even in databases created by Hibernate without ON DELETE CASCADE.
         posts.deleteCommentsForPost(id);
         posts.deleteMediaForPost(id);
@@ -170,6 +182,8 @@ public class CommunityService {
         posts.saveAndFlush(post);
         logs.saveAndFlush(ModerationLog.builder().staff(reviewer).targetType("COMMUNITY_POST")
                 .targetId(id).action(status.name()).note(post.getReviewNote()).build());
+        notificationEvents.accept(CommunityNotificationEvent.reviewed(post));
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         return detail(id);
     }
 
@@ -224,7 +238,7 @@ public class CommunityService {
         post.setZaloUrl(request.zaloUrl());
     }
 
-    private CommunityPostResponse response(Post post, boolean privateView) {
+    CommunityPostResponse response(Post post, boolean privateView) {
         return response(post, privateView, comments.countByPost_PostId(post.getPostId()));
     }
 

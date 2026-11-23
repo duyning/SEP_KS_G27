@@ -28,6 +28,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class CommunityAutoModeration {
+    private java.util.function.Consumer<CommunityNotificationEvent> notificationEvents = event -> {};
+    private java.util.function.Consumer<CommunityRealtimeEvent> liveEvents = event -> {};
+    @org.springframework.beans.factory.annotation.Autowired
+    void notificationPublisher(org.springframework.context.ApplicationEventPublisher publisher) {
+        notificationEvents = publisher::publishEvent;
+        liveEvents = publisher::publishEvent;
+    }
+
     public enum Mode { OFF, ASSIST, AUTO }
     public record Settings(Mode mode, boolean configured) {}
 
@@ -41,6 +49,10 @@ public class CommunityAutoModeration {
     private final Object decisionLock = new Object();
     private volatile Mode mode;
     private long modeGeneration;
+    // One bounded pass per AUTO activation (including application startup).
+    private boolean backlogRequested;
+    private int backlogCursor;
+    private int backlogThrough;
 
     public CommunityAutoModeration(CommunityScanRepository jobs, PostRepository posts, PostMediaRepository media,
                                    GeminiCommunityScanner scanner, ObjectMapper json, PlatformTransactionManager txManager,
@@ -52,6 +64,7 @@ public class CommunityAutoModeration {
         this.json = json;
         this.tx = new TransactionTemplate(txManager);
         this.mode = mode;
+        this.backlogRequested = mode == Mode.AUTO;
     }
 
     public Settings settings() {
@@ -62,8 +75,12 @@ public class CommunityAutoModeration {
         if (next == null) throw new BadRequestException("Vui lòng chọn chế độ kiểm duyệt AI.");
         if (next != Mode.OFF && !scanner.configured()) throw new BadRequestException("Máy chủ chưa cấu hình khóa Gemini.");
         synchronized (decisionLock) {
-            if (mode != next) modeGeneration++;
+            if (mode != next) {
+                modeGeneration++;
+                if (next == Mode.AUTO) backlogRequested = true;
+            }
             mode = next;
+            tx.executeWithoutResult(status -> liveEvents.accept(new CommunityRealtimeEvent("posts", null, null, false, true, true)));
             return settings();
         }
     }
@@ -93,6 +110,7 @@ public class CommunityAutoModeration {
             if (mode == Mode.OFF) return;
             LocalDateTime now = LocalDateTime.now();
             tx.executeWithoutResult(status -> jobs.expire(State.RUNNING, State.FAILED, now, now.minusMinutes(15)));
+            if (mode == Mode.AUTO) prepareBacklog();
             work = tx.execute(status -> claim());
         }
         if (work == null) return;
@@ -123,6 +141,50 @@ public class CommunityAutoModeration {
         }
     }
 
+    private void prepareBacklog() {
+        if (backlogRequested) {
+            Integer latest = tx.execute(status -> posts.latestPostId());
+            backlogThrough = latest == null ? 0 : latest;
+            backlogCursor = 0;
+            backlogRequested = false;
+        }
+        if (backlogCursor >= backlogThrough) return;
+        // Advance only after commit so a failed batch cannot silently lose posts.
+        Integer next = tx.execute(status -> queueBacklogBatch());
+        if (next != null) backlogCursor = next;
+    }
+
+    private int queueBacklogBatch() {
+        var ids = posts.pendingBacklogIds(PostStatus.PENDING, backlogCursor, backlogThrough,
+                org.springframework.data.domain.PageRequest.of(0, 25));
+        if (ids.isEmpty()) return backlogThrough;
+        int cursor = backlogCursor;
+        for (Integer id : ids) {
+            Post post = posts.findForReview(id).orElse(null);
+            if (post != null && post.getStatus() == PostStatus.PENDING) {
+                var existing = jobs.findByPostIdAndRevision(id, post.revision())
+                        .flatMap(job -> jobs.lockById(job.getId())).orElse(null);
+                // Do not reset a job while another worker is still finishing it.
+                // Revisit it next poll; expired jobs are handled before this batch.
+                if (existing != null && existing.getState() == State.RUNNING) return cursor;
+                if (existing == null) {
+                    enqueue(post);
+                } else if (!existing.isAutoEligible() || existing.getState() != State.QUEUED) {
+                    existing.setAutoEligible(true);
+                    existing.setState(State.QUEUED);
+                    existing.setFindings(null);
+                    existing.setStartedAt(null);
+                    existing.setFinishedAt(null);
+                    existing.setDecision(null);
+                    existing.setDecisionNote(null);
+                }
+                liveEvents.accept(CommunityRealtimeEvent.post(post, false));
+            }
+            cursor = id;
+        }
+        return cursor;
+    }
+
     private Work claim() {
         LocalDateTime now = LocalDateTime.now();
         var queued = jobs.findFirstByStateOrderByIdAsc(State.QUEUED).orElse(null);
@@ -138,6 +200,7 @@ public class CommunityAutoModeration {
         }
         job.setState(State.RUNNING);
         job.setStartedAt(now);
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         String context = json.writeValueAsString(new PostContext(post.getPostType().name(), post.getTitle(), post.getDescription()));
         return new Work(job.getId(), post.getPostId(), job.getRevision(), modeGeneration,
                 mode == Mode.AUTO && job.isAutoEligible(), context, media.findByPost_PostIdOrderByMediaIdAsc(post.getPostId()));
@@ -150,6 +213,7 @@ public class CommunityAutoModeration {
         job.setState(result);
         job.setFindings(json.writeValueAsString(findings));
         job.setFinishedAt(LocalDateTime.now());
+        if (post != null) liveEvents.accept(CommunityRealtimeEvent.post(post, false));
         if (!work.auto() || mode != Mode.AUTO || work.generation() != modeGeneration
                 || !pendingRevision(post, work.revision())) return;
 
@@ -170,6 +234,8 @@ public class CommunityAutoModeration {
         post.setReviewNote(note);
         job.setDecision(decision);
         job.setDecisionNote(note);
+        notificationEvents.accept(CommunityNotificationEvent.reviewed(post));
+        liveEvents.accept(CommunityRealtimeEvent.post(post, false));
     }
 
     private static boolean pendingRevision(Post post, int revision) {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useAuth } from '../context/AuthContext.jsx';
 import { communityApi } from '../services/community.js';
 import { appendFeedPosts, readFeedFilters } from '../services/community-feed.js';
+import useCommunityLive from './useCommunityLive.js';
 
 // Keep a small in-memory history so Back can restore the loaded feed and scroll position.
 const snapshots = new Map();
@@ -22,8 +23,51 @@ export default function useCommunityFeed(mine, params) {
   const scrollPosition = useRef(window.scrollY);
   const leaving = useRef(false);
   const restoring = useRef(false);
+  const liveAnchor = useRef(null);
+  const pendingLive = useRef(false);
   stateRef.current = state;
   currentScope.current = scope;
+  useLayoutEffect(() => {
+    if (!liveAnchor.current) return;
+    const { id, top } = liveAnchor.current;
+    liveAnchor.current = null;
+    const element = document.getElementById(id);
+    if (element) window.scrollBy({ top: element.getBoundingClientRect().top - top, behavior: 'instant' });
+  }, [state.data]);
+  const refreshFromLive = async () => {
+    snapshots.clear();
+    const previous = stateRef.current;
+    if (previous.scope !== scope || !previous.data) { pendingLive.current = true; return; }
+    active.current?.abort();
+    const controller = new AbortController(); active.current = controller;
+    setState(current => ({ ...current, loadingMore: false, refreshing: true, refreshError: '' }));
+    try {
+      let result = await communityApi.feed({ ...filters, mine }, controller.signal);
+      let items = result.items;
+      // Rebuild the currently loaded window, preserving cursor correctness after insertions/deletions.
+      while (result.hasMore && items.length < previous.data.length) {
+        result = await communityApi.feed({ ...filters, mine, cursor: result.nextCursor }, controller.signal);
+        items = appendFeedPosts(items, result.items);
+      }
+      if (controller.signal.aborted || currentScope.current !== scope) return;
+      const anchor = [...document.querySelectorAll('.community-feed-card[id]')]
+        .find(element => element.getBoundingClientRect().bottom > 120);
+      if (anchor) liveAnchor.current = { id: anchor.id, top: anchor.getBoundingClientRect().top };
+      const next = { ...initial(scope), loading: false, data: items, counts: result.counts,
+        hasMore: result.hasMore, nextCursor: result.nextCursor };
+      stateRef.current = next; setState(next);
+    } catch (error) {
+      if (!controller.signal.aborted && currentScope.current === scope)
+        setState(current => ({ ...current, refreshing: false, refreshError: error.message }));
+    } finally { if (active.current === controller) active.current = null; }
+  };
+  useCommunityLive('posts', refreshFromLive);
+  useEffect(() => {
+    if (pendingLive.current && !state.loading && state.data) {
+      pendingLive.current = false;
+      refreshFromLive();
+    }
+  }, [state.loading, state.data]);
 
   useEffect(() => {
     const remember = () => { if (!leaving.current) scrollPosition.current = window.scrollY; };
@@ -84,7 +128,7 @@ export default function useCommunityFeed(mine, params) {
     });
     else if (previousScope.current !== scope) frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     previousScope.current = scope;
-    const timer = cached ? null : setTimeout(() => load(), filters.q ? 250 : 0);
+    const timer = setTimeout(() => cached ? refreshFromLive() : load(), filters.q ? 250 : 0);
     return () => {
       if (timer != null) clearTimeout(timer);
       if (frame != null) cancelAnimationFrame(frame);

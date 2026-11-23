@@ -49,6 +49,16 @@ public class JwtTokenProvider {
         return readClaims(token).getSubject();
     }
 
+    public boolean isCurrentSession(String token, User user) {
+        var claims = readClaims(token);
+        return user.getEmail().equals(claims.getSubject()) && isCurrentSession(claims, user);
+    }
+
+    boolean isCurrentSession(Claims claims, User user) {
+        Long sessionVersion = claims.get("sessionVersion", Long.class);
+        return user.getSessionVersion() == (sessionVersion == null ? 0L : sessionVersion);
+    }
+
     Claims readClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

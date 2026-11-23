@@ -13,6 +13,7 @@ public interface CommunityScanRepository extends JpaRepository<CommunityScan, In
     interface QueueEntry { Integer getId(); Integer getPostId(); }
     Optional<QueueEntry> findFirstByStateOrderByIdAsc(State state);
     List<CommunityScan> findByPostIdOrderByRevisionDesc(Integer postId);
+    Optional<CommunityScan> findByPostIdAndRevision(Integer postId, int revision);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from CommunityScan s where s.id = :id")

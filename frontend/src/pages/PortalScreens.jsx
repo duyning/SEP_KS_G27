@@ -11,6 +11,7 @@ import FavoritesPage from './public/FavoritesPage.jsx';
 import RoomComparisonPage from './public/RoomComparisonPage.jsx';
 import BookingsPage from './public/BookingsPage.jsx';
 import CommunityPage from './public/CommunityPage.jsx';
+import CommunityReportsPage from './CommunityReportsPage.jsx';
 import ServicesPage from './public/ServicesPage.jsx';
 import ServiceDetailPage from './public/ServiceDetailPage.jsx';
 import NotificationsPage from './public/NotificationsPage.jsx';
@@ -67,6 +68,8 @@ export default function PortalScreens({ screen }) {
       return <BookingsPage />;
     case '/community':
       return <CommunityPage />;
+    case '/community/reports':
+      return <CommunityReportsPage />;
     case '/services':
       return <ServicesPage />;
     case '/services/detail':
@@ -111,6 +114,8 @@ export default function PortalScreens({ screen }) {
     // Admin Routes
     case '/admin':
       return <AdminDashboardPage />;
+    case '/admin/community/reports':
+      return <CommunityReportsPage admin />;
 
     default:
       return (

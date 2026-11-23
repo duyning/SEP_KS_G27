@@ -1,10 +1,14 @@
 import { ApiError, request } from './auth.js';
+import { detailPhone } from './accommodation-detail.js';
 
 export const postTypes = { ROOM_TRANSFER: 'Nhượng phòng', ROOMMATE: 'Tìm người ở ghép', SECOND_HAND: 'Đồ cũ sinh viên' };
-export const postStatuses = { PENDING: 'Chờ kiểm duyệt', NEED_CHANGES: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối' };
+export const postStatuses = { PENDING: 'Chờ kiểm duyệt', NEED_CHANGES: 'Cần chỉnh sửa', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', HIDDEN: 'Đã bị ẩn' };
 const clean = value => String(value ?? '').trim();
 export function isOwnCommunityPost(post, user) {
   return Number.isInteger(user?.userId) && user.userId > 0 && post.authorId === user.userId;
+}
+export function canReportCommunityPost(post, user) {
+  return post.status === 'APPROVED' && !isOwnCommunityPost(post, user);
 }
 export function validPostContactLink(value, platform) {
   const url = clean(value);
@@ -13,6 +17,13 @@ export function validPostContactLink(value, platform) {
   return platform === 'facebook'
     ? /^https:\/\/(?:(?:www\.|m\.)?facebook\.com|(?:www\.)?fb\.com)\/[^\s\\]+$/.test(url)
     : platform === 'zalo' && /^https:\/\/(?:www\.)?zalo\.me\/[^\s\\]+$/.test(url);
+}
+
+function postZaloUrl(value) {
+  const contact = clean(value);
+  if (validPostContactLink(contact, 'zalo')) return contact;
+  const phone = detailPhone(contact);
+  return phone ? `https://zalo.me/${phone.replace(/^\+84/, '0')}` : null;
 }
 
 export function parsePostPrice(value) {
@@ -67,6 +78,7 @@ export function hasPostDraftChanges(values, initial, editing = false) {
       const originalPrice = parsePostPrice(original);
       if (!Number.isNaN(currentPrice) && !Number.isNaN(originalPrice)) return currentPrice !== originalPrice;
     }
+    if (field === 'zaloUrl') return (postZaloUrl(current) ?? current) !== (postZaloUrl(original) ?? original);
     return current !== original;
   });
 }
@@ -86,7 +98,7 @@ export function validatePost(values) {
   }
   const price = parsePostPrice(values.price);
   if (!validPostContactLink(values.facebookUrl, 'facebook')) errors.facebookUrl = 'Nhập link HTTPS Facebook hợp lệ (facebook.com hoặc fb.com), tối đa 500 ký tự.';
-  if (!validPostContactLink(values.zaloUrl, 'zalo')) errors.zaloUrl = 'Nhập link HTTPS Zalo hợp lệ (zalo.me), tối đa 500 ký tự.';
+  if (postZaloUrl(values.zaloUrl) === null) errors.zaloUrl = 'Nhập số điện thoại Zalo hợp lệ, ví dụ 0912345678 hoặc +84912345678.';
   if (price !== null && (!Number.isFinite(price) || price < 0 || price > 1_000_000_000)) {
     errors.price = 'Giá phải là số nguyên từ 0 đến 1 tỷ đồng; để trống nếu thỏa thuận.';
   } else if (price === 0 && values.type !== 'SECOND_HAND') {
@@ -96,19 +108,20 @@ export function validatePost(values) {
 }
 
 export function postPayload(values) {
+  const zaloUrl = postZaloUrl(values.zaloUrl);
   return {
     type: values.type, title: clean(values.title), content: clean(values.content),
     ...(values.contentFormat != null ? { contentFormat: values.contentFormat } : {}),
     price: parsePostPrice(values.price), location: clean(values.location),
     authorName: clean(values.authorName), authorPhone: clean(values.authorPhone).replace(/[\s.-]/g, ''),
     ...(clean(values.facebookUrl) ? { facebookUrl: clean(values.facebookUrl) } : {}),
-    ...(clean(values.zaloUrl) ? { zaloUrl: clean(values.zaloUrl) } : {}),
+    ...(zaloUrl ? { zaloUrl } : {}),
     ...(values.retainedImageIds ? { retainedImageIds: values.retainedImageIds } : {}),
     ...(values.retainedVideoIds ? { retainedVideoIds: values.retainedVideoIds } : {}),
   };
 }
 
-function post(data) {
+export function normalizeCommunityPost(data) {
   if (!data || !Number.isInteger(data.id) || data.id < 1 || !Object.hasOwn(postTypes, data.type)
       || !Object.hasOwn(postStatuses, data.status) || !['title', 'content', 'authorName'].every(key => typeof data[key] === 'string')
       || !(data.price === null || typeof data.price === 'number' && Number.isFinite(data.price) && data.price >= 0)) {
@@ -130,7 +143,7 @@ function post(data) {
 
 function list(data) {
   if (!Array.isArray(data)) throw new ApiError('Danh sách bài viết không hợp lệ.', 502);
-  return data.map(post);
+  return data.map(normalizeCommunityPost);
 }
 function id(value) {
   if (!/^\d+$/.test(String(value)) || Number(value) < 1 || Number(value) > 2147483647) throw new ApiError('Mã bài viết không hợp lệ.', 400);
@@ -138,7 +151,7 @@ function id(value) {
 }
 function detail(data) {
   if (!data || !Array.isArray(data.history) || typeof data.accountName !== 'string') throw new ApiError('Chi tiết kiểm duyệt không hợp lệ.', 502);
-  return { ...data, post: post(data.post) };
+  return { ...data, post: normalizeCommunityPost(data.post) };
 }
 function commentPage(result) {
   if (!result || !Array.isArray(result.content) || !Number.isSafeInteger(result.totalElements) || result.totalElements < 0
@@ -166,7 +179,7 @@ export const communityApi = {
     return { ...data, items };
   },
   async feedPost(postId, mine, signal) {
-    const saved = post(await request(`${mine ? '/mine' : ''}/feed/${id(postId)}`, { basePath, signal }));
+    const saved = normalizeCommunityPost(await request(`${mine ? '/mine' : ''}/feed/${id(postId)}`, { basePath, signal }));
     if (!mine && saved.status !== 'APPROVED') throw new ApiError('Bài viết chưa được công khai.', 502);
     return saved;
   },
@@ -206,7 +219,7 @@ export const communityApi = {
       for (const photo of photos) body.append('photos', photo, photo.name);
       for (const video of videos) body.append('videos', video, video.name);
     }
-    const saved = post(await request(postId == null ? '' : `/${id(postId)}`, { basePath, method: postId == null ? 'POST' : 'PUT', body, signal }));
+    const saved = normalizeCommunityPost(await request(postId == null ? '' : `/${id(postId)}`, { basePath, method: postId == null ? 'POST' : 'PUT', body, signal }));
     if (saved.status !== 'PENDING') throw new ApiError('Chưa xác nhận được trạng thái chờ duyệt. Vui lòng kiểm tra Bài viết của tôi.', 502);
     return saved;
   },
