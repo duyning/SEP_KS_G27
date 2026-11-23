@@ -18,3 +18,29 @@
 @media(max-width:600px){.admin-portal .btn-topbar-logout{display:none}.admin-portal .portal-topbar-left{min-width:0;flex:1}.admin-portal .portal-topbar-left>div{min-width:0;flex:1}.admin-portal .portal-topbar-left h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.admin-portal .portal-topbar-right{flex-shrink:0}.admin-portal .portal-topbar{min-height:67px}}
 @media(max-width:1100px){.admin-portal .btn-topbar-logout,.admin-portal .host-user-text,.admin-portal .btn-view-public-site .hide-mobile{display:none}.admin-portal .portal-topbar-left{min-width:0;flex:1}.admin-portal .portal-topbar-left>div{min-width:0;flex:1}.admin-portal .portal-topbar-left h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-portal .portal-topbar-right{flex-shrink:0}}
 @media(prefers-reduced-motion:reduce){.ad-page *{animation:none!important;transition:none!important}}
+
+.ad-account-action { margin-top: 4px; }
+.ad-page .ad-status-button {
+  min-height: 44px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ad-teal);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+}
+.ad-page .ad-status-button.is-danger,
+.ad-account-dialog .ad-account-error { color: #991b1b; }
+.ad-status-button:hover { text-decoration: underline; }
+.ad-page .ad-status-button:focus-visible,
+.ad-account-dialog .p-button:focus-visible { outline: 2px solid var(--ad-teal); outline-offset: 2px; }
+.ad-accounts .ad-status { white-space: normal; }
+.ad-account-dialog p { overflow-wrap: anywhere; }
+.ad-account-dialog .ad-account-dialog-actions { flex-wrap: wrap; }
+.ad-account-dialog .p-button { min-height: 44px; }
+.ad-account-dialog .p-button.primary { background: var(--ad-teal); color: #fff; }
+.ad-account-dialog .ad-danger-confirm { background: #991b1b; border-color: #991b1b; color: #fff; }
+.ad-account-dialog .p-button[aria-disabled="true"] { cursor: wait; opacity: .65; }

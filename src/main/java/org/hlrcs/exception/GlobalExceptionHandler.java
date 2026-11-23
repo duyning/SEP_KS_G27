@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -59,8 +60,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Email hoặc mật khẩu không chính xác"));
     }
 
-    @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDisabledException(DisabledException ex) {
+    @ExceptionHandler({DisabledException.class, LockedException.class})
+    public ResponseEntity<ApiResponse<Void>> handleInactiveAccount() {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt"));
