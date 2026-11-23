@@ -826,3 +826,58 @@
     animation: none !important;
   }
 }
+.register-otp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.register-otp-button,
+.register-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.register-otp-button {
+  border: 1px solid #0f766e;
+  background: #fff;
+  color: #0f766e;
+  cursor: pointer;
+}
+
+.register-otp-button:hover:not(:disabled),
+.register-verified {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.register-otp-button:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.register-otp-button:disabled {
+  border-color: #cbd5e1;
+  color: #475569;
+  background: #f8fafc;
+  cursor: default;
+}
+
+.register-otp-row .register-otp-input {
+  padding-inline-start: 14px;
+}
+
+.register-field-help {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}

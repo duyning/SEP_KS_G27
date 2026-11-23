@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { Modal } from '../PortalUI.jsx';
 import { detailPhone } from '../../services/accommodation-detail.js';
-import { formatViewingDate, viewingApi, viewingIsFuture, viewingLink, viewingStatuses, VIEWING_MAX_DAYS, viewingDateRange } from '../../services/viewings.js';
+import { formatViewingDate, viewingApi, canScheduleViewing, viewingLink, viewingStatuses, VIEWING_MAX_DAYS, viewingDateRange } from '../../services/viewings.js';
 import '../../styles/viewing-flow.css';
 
 export default function ViewingRequestForm({ item, user, pending, onClose, onSaved, onViewSaved }) {
@@ -23,8 +23,8 @@ export default function ViewingRequestForm({ item, user, pending, onClose, onSav
     const scheduledDate = fields.get('date') + 'T' + fields.get('time');
     const name = fields.get('name').trim();
     const contactPhone = detailPhone(fields.get('phone'));
-    if (!name || !contactPhone || !viewingIsFuture(scheduledDate) || fields.get('date') > viewingDateRange().max) {
-      setError('Nhập tên, số điện thoại di động Việt Nam và chọn giờ trong 30 ngày tới.');
+    if (!name || !contactPhone || !canScheduleViewing(scheduledDate) || fields.get('date') > viewingDateRange().max) {
+      setError('Nhập tên, số điện thoại di động Việt Nam và chọn giờ hẹn cách hiện tại ít nhất 30 phút, trong 30 ngày tới.');
       return;
     }
 
@@ -56,7 +56,7 @@ export default function ViewingRequestForm({ item, user, pending, onClose, onSav
           ? <button type="button" className="p-button primary" onClick={onViewSaved}>Xem yêu cầu #{result.bookingId}</button>
           : <Link className="p-button primary" to={viewingLink(result.bookingId)}>Xem yêu cầu #{result.bookingId}</Link>}
       </> : <form onSubmit={submit}>
-        <p id={formId}>Chọn giờ Việt Nam (UTC+7), tối đa {VIEWING_MAX_DAYS} ngày tới. Lịch cần chủ trọ xác nhận và không giữ chỗ.</p>
+        <p id={formId}>Chọn giờ Việt Nam (UTC+7), cách hiện tại ít nhất 30 phút và tối đa {VIEWING_MAX_DAYS} ngày tới. Lịch cần chủ trọ xác nhận và không giữ chỗ.</p>
         <fieldset disabled={busy} aria-describedby={formId}>
           <div className="viewing-fields">
             <label>Ngày xem<input type="date" required min={range.min} max={range.max} name="date" defaultValue={pending?.scheduledDate?.slice(0, 10)} /></label>

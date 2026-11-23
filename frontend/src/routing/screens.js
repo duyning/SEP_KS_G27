@@ -9,6 +9,8 @@ export function landingFor(user) { return ({ ROOM_HOST: '/host', STAFF: '/staff'
 
 const screen = (source, path, portal, title, kind, extra = {}) => ({ source, path, portal, title, kind, integration: 'blocked', ...extra });
 export const screens = [
+  screen(null, '/collected-posts', 'public', 'Bài đăng tổng hợp', 'collectedPosts', { integration: 'connected' }),
+  screen(null, '/staff/collected-posts', 'staff', 'Quản lý bài tổng hợp', 'collectedPosts', { integration: 'connected' }),
   screen('index.html', '/', 'public', 'Tìm phòng trọ tại Hòa Lạc', 'home'),
   screen('home.html', '/home', 'public', 'Trang chủ', 'redirect', { to: '/' }),
   screen('login.html', '/login', 'public', 'Đăng nhập', 'auth', { integration: 'connected' }),

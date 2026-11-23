@@ -3,6 +3,7 @@ package org.hlrcs.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.ViewingRequests.Decision;
+import org.hlrcs.dto.request.ViewingRequests.BatchApproval;
 import org.hlrcs.dto.response.ViewingResponses.Viewing;
 import org.hlrcs.service.ViewingService;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/host/viewings")
@@ -22,6 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class HostViewingController {
     private final HostViewingService service;
     private final ViewingService viewingService;
+
+    @PostMapping("/batch-approval")
+    @PreAuthorize("hasRole('ROOM_HOST')")
+    public ApiResponse<List<Viewing>> approveBatch(@Valid @RequestBody BatchApproval request) {
+        return ApiResponse.success(viewingService.approveBatch(request));
+    }
 
     @GetMapping("/{id}/availability")
     @PreAuthorize("hasAnyRole('ROOM_HOST', 'ADMIN')")

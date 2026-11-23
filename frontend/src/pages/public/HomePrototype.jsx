@@ -48,7 +48,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
           <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
           <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
           <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
-          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
+          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li><li><Link className="nav-item" to="/collected-posts">Bài tổng hợp</Link></li>
           <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
           <li className="hm-menu-account">{account || <><Link className="btn-ghost" to="/login">Đăng nhập</Link><Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link></>}</li>
         </ul>

@@ -36,7 +36,7 @@ function Photo({ file, id, onRemove, disabled }) {
   return <div className="hpe-photo">{url ? <img src={url} alt={file?.name || 'Ảnh nhà trọ đã gửi'} /> : <span>Không tải được ảnh</span>}<MotionButton type="button" disabled={disabled} aria-label={`Bỏ ảnh ${file?.name || id}`} onClick={onRemove}><Trash2 size={15} /></MotionButton></div>;
 }
 
-function Editor({ snapshot, onDone }) {
+export function Editor({ snapshot, onDone }) {
   const { user } = useAuth(); const notify = useToast();
   const key = `hlrcs:property-edit:${user?.userId}:${snapshot.registrationId}`;
   const [form, setForm] = useState(() => { try { return restoreEditDraft(snapshot, JSON.parse(sessionStorage.getItem(key) || 'null')); } catch { return propertyEditForm(snapshot.details); } });

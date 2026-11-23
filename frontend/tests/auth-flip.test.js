@@ -22,7 +22,7 @@ test('AuthPage implements 3D book-flip architecture with Login and Register face
   assert.match(content, /Tìm trọ an tâm, quản lý dễ dàng/);
   assert.match(content, /Tìm trọ chuẩn xác/);
   assert.match(content, /Đăng ký người thuê/);
-  assert.match(content, /Hợp tác chủ trọ/);
+  assert.doesNotMatch(content, /btnGoToRegisterHost/);
 });
 
 test('auth.css contains 3D page flip transforms and preserve-3d properties', () => {
