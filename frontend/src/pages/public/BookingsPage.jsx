@@ -19,16 +19,6 @@ import '../../styles/search-prototype.css';
 import '../../styles/search-prototype-integration.css';
 import '../../styles/bookings-page.css';
 
-const savedKey = 'hlrcs:public-saved-properties';
-function readSavedCount() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(savedKey) || '[]');
-    return Array.isArray(saved) ? saved.filter(Number.isInteger).length : 0;
-  } catch {
-    return 0;
-  }
-}
-
 function BookingEmpty({ filtered, onReset }) {
   return <div className="search-empty-container bookings-empty" role="status">
     <div className="search-empty-icon bookings-illustration" aria-hidden="true">
@@ -101,12 +91,6 @@ function BookingDetail({ id, close, onSaved, initialCancel = false }) {
 
 export default function BookingsPage() {
   const [params, setParams] = useSearchParams();
-  const [savedCount, setSavedCount] = useState(readSavedCount);
-  useEffect(() => {
-    const syncSaved = () => setSavedCount(readSavedCount());
-    window.addEventListener('storage', syncSaved);
-    return () => window.removeEventListener('storage', syncSaved);
-  }, []);
   const status = Object.hasOwn(viewingStatuses, params.get('status')) ? params.get('status') : '';
   const rawPage = Number(params.get('page'));
   const page = Number.isSafeInteger(rawPage) && rawPage >= 0 ? rawPage : 0;
@@ -149,7 +133,7 @@ export default function BookingsPage() {
     setSearch(''); setParams(next);
   }
 
-  return <DetailPrototypeShell savedCount={savedCount} className="prototype-search prototype-bookings">
+  return <DetailPrototypeShell className="prototype-search prototype-bookings">
     <main id="main-content" className="bookings-main">
       <div className="search-breadcrumb-bar">
         <nav className="container search-breadcrumb-inner" aria-label="Đường dẫn">

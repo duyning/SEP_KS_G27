@@ -13,7 +13,7 @@ import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
 import CommunityPrototype from '../../components/CommunityPrototype.jsx';
-import CommunityFooter, { CommunityMenuSupport } from '../../components/CommunityFooter.jsx';
+import CommunityFooter from '../../components/CommunityFooter.jsx';
 import CommunityPostEditor, { GrowingPostTextarea } from '../../components/CommunityPostEditor.jsx';
 import { communityZones } from '../../services/community-prototype.js';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
@@ -352,7 +352,7 @@ export default function CommunityPage() {
   }, [errors, isCreateModalOpen]);
 
   return (
-    <DetailPrototypeShell className="prototype-community" footer={<CommunityFooter />} menuExtras={<CommunityMenuSupport />}>
+    <DetailPrototypeShell className="prototype-community" footer={<CommunityFooter />}>
       <CommunityPrototype state={state} mine={mine} user={user} params={params} setParams={setParams}
         onCreate={() => openForm()} onEdit={openForm} deleting={deleting}
         onDelete={post => { setPostToDelete(post); setDeleteError(''); }} />
