@@ -22,6 +22,8 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private String phoneNumber;
+    private boolean googleAccount;
+    private java.time.Instant phoneVerifiedAt;
     private String organization;
     private String preferredArea;
     private String avatar;

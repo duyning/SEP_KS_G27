@@ -4,7 +4,7 @@ import { communityApi } from '../services/community.js';
 import { appendFeedPosts, readFeedFilters } from '../services/community-feed.js';
 import useCommunityLive from './useCommunityLive.js';
 
-// Keep a small in-memory history so Back can restore the loaded feed and scroll position.
+// Keep loaded posts and scroll positions for filter changes within the feed.
 const snapshots = new Map();
 const initial = scope => ({ scope, data: null, counts: null, loading: true, loadingMore: false,
   error: '', moreError: '', refreshing: false, refreshError: '', hasMore: false, nextCursor: null });
@@ -120,13 +120,14 @@ export default function useCommunityFeed(mine, params) {
     stateRef.current = next;
     setState(next);
     let frame;
-    restoring.current = Boolean(cached);
-    if (cached) frame = requestAnimationFrame(() => {
+    const scopeChanged = previousScope.current !== scope;
+    restoring.current = Boolean(cached && scopeChanged);
+    if (cached && scopeChanged) frame = requestAnimationFrame(() => {
       window.scrollTo({ top: cached.scrollY || 0, behavior: 'instant' });
       scrollPosition.current = window.scrollY;
       restoring.current = false;
     });
-    else if (previousScope.current !== scope) frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    else if (scopeChanged) frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     previousScope.current = scope;
     const timer = setTimeout(() => cached ? refreshFromLive() : load(), filters.q ? 250 : 0);
     return () => {

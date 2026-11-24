@@ -54,4 +54,3 @@ class CommunityAutoModerationUnitTest extends CommunityUnitSupport {
         return cases;
     }
 }
-

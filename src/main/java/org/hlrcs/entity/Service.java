@@ -48,14 +48,24 @@ public class Service {
     @Column(name = "service_area", length = 500)
     private String serviceArea;
 
+    @Column(name = "custom_service_areas", length = 600)
+    private String customServiceAreas;
+
     @Column(name = "price", precision = 12, scale = 2)
     private BigDecimal price;
+
+    @Column(name = "price_unit", length = 20)
+    private String priceUnit;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "status")
     private String status;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean moderationHidden = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

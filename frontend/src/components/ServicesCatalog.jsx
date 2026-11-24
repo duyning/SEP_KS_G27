@@ -1,81 +1,164 @@
-import {useEffect,useState} from 'react';
-import {Link,useSearchParams} from 'react-router-dom';
-import {ArrowUpRight,Check,ShieldCheck,Search,MapPin,SlidersHorizontal,ReceiptText,ChevronLeft,RotateCcw,LoaderCircle,X,ChevronRight} from 'lucide-react';
 import DetailPrototypeShell from './detail/DetailPrototypeShell.jsx';
-import ServiceRegistrationModal from './ServiceRegistrationModal.jsx';
-import ServiceManagement from './ServiceManagement.jsx';
-import ServiceGallery from './ServiceGallery.jsx';
-import {useAuth} from '../context/AuthContext.jsx';
-import {serviceRegistrationApi} from '../services/service-registration.js';
-import {MotionButton,AnimatePresence} from './motion/MotionUI.jsx';
-import {ServiceCategoryIcon,ServiceDiscoveryCard,ServiceContact} from './ServiceDiscoveryParts.jsx';
-import {publicServicesApi as api,servicePrice} from '../services/public-services.js';
-import {paginationRange} from '../services/pagination.js';
-import {resolveServiceCategory,discoverServices,serviceInventory,serviceAreas,serviceCategoryKind} from '../services/service-discovery.js';
 import '../styles/home-prototype.css';
 import '../styles/home-prototype-integration.css';
-import '../styles/services-discovery.css';
+import useServiceLive from '../hooks/useServiceLive.js';
+import ServiceRatings from './ServiceRatings.jsx';
+import ServiceComplaints, { ServiceReportForm } from './ServiceComplaints.jsx';
+import ServicePrice from './ServicePrice.jsx';
+import { serviceCategoryStyle } from '../services/service-category.js';
+import { areaList, serviceAreaText } from '../services/service-areas.js';
+import UIField from './common/Field.jsx';
+import UIButton from './common/Button.jsx';
+import { useBreadcrumbTitle } from './common/Breadcrumb.jsx';
+import ServiceRequests from './ServiceRequests.jsx';
+import ServiceRequestModal from './ServiceRequestModal.jsx';
+import { useToast } from './PortalUI.jsx';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import ServiceRegistrationModal from './ServiceRegistrationModal.jsx';
+import ServiceManagement from './ServiceManagement.jsx';
+import ServicePhoto from './ServicePhoto.jsx';
+import ServiceGallery from './ServiceGallery.jsx';
+import ServiceFormSelect from './ServiceFormSelect.jsx';
+import Modal from './common/Modal.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { MapPin, Phone, ArrowRight, ShieldCheck, Search, SlidersHorizontal, UserRound, Flag, X } from 'lucide-react';
+import { publicServicesApi as api } from '../services/public-services.js';
+import { serviceRegistrationApi } from '../services/service-registration.js';
+import { filterPublicServices, serviceAreaOptions } from '../services/service-catalog.js';
+import '../styles/service-applications.css';
+import '../styles/service-detail-layout.css';
+import {discoverServices,resolveServiceCategory} from '../services/service-discovery.js';
+import Pagination from './common/Pagination.jsx';
 
-const PAGE_SIZE=6;
+const categoryAliases = { moving: 'Chuyển phòng trọ', laundry: 'Giặt là sinh viên', cleaning: 'Dọn dẹp & Vệ sinh', repair: 'Sửa chữa điện nước, khóa cổng' };
 
-export default function ServicesCatalog({detail=false}){
- const {user,loading:authLoading}=useAuth(),userId=user?.userId??null;
- const [ownership,setOwnership]=useState(null),[ownershipRevision,setOwnershipRevision]=useState(0),[manage,setManage]=useState(null);
- const [params,setParams]=useSearchParams(),id=params.get('id'),categoryValue=params.get('category')||'all';
- const key=detail?`detail/${id}`:'catalog';
- const [state,setState]=useState({key:'',loading:true,error:'',rows:[],categories:[],row:null}),[revision,setRevision]=useState(0),[register,setRegister]=useState(null);
- useEffect(()=>{setRegister(null);setManage(null);},[userId,detail]);
- useEffect(()=>{
-  if(userId===null||detail){setOwnership(null);return;}
-  const controller=new AbortController();setOwnership(null);
-  serviceRegistrationApi.mine(controller.signal)
-   .then(records=>{if(!controller.signal.aborted)setOwnership({userId,revision:ownershipRevision,hasRecords:records.length>0});})
-   .catch(error=>{if(!controller.signal.aborted)setOwnership({userId,revision:ownershipRevision,error:error.message});});
-  return()=>controller.abort();
- },[userId,detail,ownershipRevision]);
- useEffect(()=>{const controller=new AbortController();setState({key,loading:true,error:'',rows:[],categories:[],row:null});
-  (detail?api.detail(id,controller.signal):Promise.all([api.categories(controller.signal),api.list(controller.signal)]))
-   .then(data=>{if(!controller.signal.aborted)setState({key,loading:false,error:'',rows:detail?[]:data[1],categories:detail?[]:data[0],row:detail?data:null});})
-   .catch(error=>{if(!controller.signal.aborted)setState({key,loading:false,error:error.message,rows:[],categories:[],row:null});});return()=>controller.abort();
- },[detail,id,key,revision]);
- const current=state.key===key?state:{...state,loading:true,error:'',rows:[],categories:[],row:null};
- const {loading,error,rows,categories,row}=current,category=resolveServiceCategory(categoryValue,categories),q=(params.get('q')||'').slice(0,200),area=serviceAreas.some(([key])=>key===params.get('area'))?params.get('area'):'all',sort=['price-asc','price-desc','name'].includes(params.get('sort'))?params.get('sort'):'recommended';
- const matched=discoverServices(rows,{category,q,area,sort}),inventory=serviceInventory(rows,categories),known=!loading&&!error;
- const rawPage=Number(params.get('page')||1),totalPages=Math.max(1,Math.ceil(matched.length/PAGE_SIZE));
- const page=Math.min(Number.isSafeInteger(rawPage)&&rawPage>0?rawPage:1,totalPages),start=(page-1)*PAGE_SIZE;
- const pageRows=matched.slice(start,start+PAGE_SIZE);
- useEffect(()=>{if(!detail&&known&&params.has('page')&&rawPage!==page){const next=new URLSearchParams(params);if(page===1)next.delete('page');else next.set('page',String(page));setParams(next,{replace:true});}},[detail,known,rawPage,page,params,setParams]);
- const activeCategory=categories.find(item=>String(item.categoryId)===category),activeFilters=q||category!=='all'||area!=='all';
- const emptyCategory=known&&activeCategory&&!(inventory.byCategory[activeCategory.categoryId]>0);
- useEffect(()=>{document.title=`${detail?row?.serviceName||'Chi tiết dịch vụ':'Dịch vụ quanh trọ'} | HL_RCS`;},[detail,row?.serviceName]);
- function change(updates){const next=new URLSearchParams(params);for(const [field,value] of Object.entries(updates)){if(!value||value==='all'||value==='recommended'||field==='page'&&value===1)next.delete(field);else next.set(field,String(value));}next.delete('count');if(!('page' in updates))next.delete('page');setParams(next,{replace:Object.keys(updates).length===1&&'q' in updates});}
- function goToPage(value){change({page:value});document.getElementById('services-results')?.scrollIntoView({block:'start'});}
- const retry=()=>setRevision(value=>value+1);
- const ownState=ownership?.userId===userId&&ownership.revision===ownershipRevision?ownership:null;
- const checkingOwnership=authLoading||(userId!==null&&!detail&&!ownState);
- const actionLabel=checkingOwnership?'Đang kiểm tra hồ sơ...':ownState?.error?'Thử lại hồ sơ':ownState?.hasRecords?'Dịch vụ của tôi':'Đăng ký dịch vụ / Xem hồ sơ';
- function openRegistration(){
-  if(checkingOwnership)return;
-  if(ownState?.error)setOwnershipRevision(value=>value+1);
-  else if(ownState?.hasRecords)setManage({userId});
-  else setRegister({userId});
- }
- function closeServices(){setRegister(null);setManage(null);setOwnershipRevision(value=>value+1);retry();}
- return <DetailPrototypeShell className="prototype-services"><main className={`sv-page${detail?'':' sv-catalog'}`}>
-  <div className="sv-breadcrumb"><div className="container"><nav aria-label="Đường dẫn dịch vụ"><Link to="/">Trang chủ</Link><ChevronRight size={13}/>{detail?<><Link to="/services">Dịch vụ quanh trọ</Link><ChevronRight size={13}/><span>Chi tiết dịch vụ</span></>:<span>Dịch vụ quanh trọ</span>}</nav><span className="sv-breadcrumb-note">Kết nối trực tiếp tại Hòa Lạc</span></div></div>
-  {!detail&&<>
-   <section className="sv-hero"><div className="container sv-hero-grid"><div className="sv-hero-copy"><h1>Dịch vụ quanh trọ</h1><p>Tìm dịch vụ tại Hòa Lạc, xem thông tin và liên hệ trực tiếp với nhà cung cấp.</p></div><aside className="sv-provider-intro" aria-labelledby="sv-provider-intro-title"><span className="sv-eyebrow">DÀNH CHO NHÀ CUNG CẤP</span><h2 id="sv-provider-intro-title">Mang dịch vụ của bạn đến cộng đồng.</h2><p>Gửi hồ sơ để được xét duyệt và xuất hiện trong danh sách dịch vụ quanh Hòa Lạc.</p><div className="sv-provider-intro-actions"><MotionButton className="sv-button sv-button-primary" disabled={checkingOwnership} aria-busy={checkingOwnership} onClick={openRegistration}>{actionLabel}<ArrowUpRight size={16}/></MotionButton><MotionButton className="sv-button sv-button-secondary" disabled={checkingOwnership} aria-busy={checkingOwnership} onClick={openRegistration}>{checkingOwnership?'Đang kiểm tra hồ sơ...':ownState?.error?'Thử lại hồ sơ':'Hồ sơ dịch vụ của tôi'}</MotionButton></div></aside></div></section>
-   {ownState?.error&&<div className="container sv-state sv-error" role="alert"><p>Không tải được hồ sơ dịch vụ: {ownState.error}</p><MotionButton className="sv-button sv-button-secondary" onClick={openRegistration}>Thử lại hồ sơ</MotionButton></div>}
-   <section className="sv-results-section" id="services-results"><div className="container"><div className="sv-section-heading"><h2>Danh sách dịch vụ</h2><span className="sv-result-count" aria-live="polite">{loading?'Đang tải...':error?'Chưa tải được dữ liệu':`${matched.length} dịch vụ phù hợp`}</span></div>
-    <div className="sv-filter-panel"><div className="sv-category-tabs" role="group" aria-label="Danh mục dịch vụ"><MotionButton type="button" className={category==='all'?'is-active':''} aria-pressed={category==='all'} onClick={()=>change({category:'all'})}>Tất cả<span>{known?rows.length:'—'}</span></MotionButton>{categories.map(item=><MotionButton type="button" key={item.categoryId} className={`${category===String(item.categoryId)?'is-active ':''}${known&&!inventory.byCategory[item.categoryId]?'is-empty':''}`} title={known&&!inventory.byCategory[item.categoryId]?'Chưa có dịch vụ công khai. Bạn có thể đăng ký cung cấp dịch vụ.':undefined} aria-pressed={category===String(item.categoryId)} onClick={()=>change({category:item.categoryId})}><ServiceCategoryIcon name={item.name} size={16}/>{item.name}<span>{known?(inventory.byCategory[item.categoryId]||'Chưa có'):'—'}</span></MotionButton>)}</div>
-    <div className="sv-toolbar"><div className="sv-search"><Search size={18}/><label className="sv-sr-only" htmlFor="svcSearchInput">Tìm kiếm dịch vụ hoặc nhà cung cấp</label><input id="svcSearchInput" type="search" maxLength={200} value={q} onChange={e=>change({q:e.target.value})} placeholder="Tìm theo tên dịch vụ, nhà cung cấp..."/>{q&&<button type="button" aria-label="Xóa tìm kiếm" onClick={()=>change({q:''})}><X size={16}/></button>}</div><label className="sv-select"><span><MapPin size={16} aria-hidden="true"/>Khu vực</span><select aria-label="Lọc theo khu vực" value={area} onChange={e=>change({area:e.target.value})}>{serviceAreas.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label className="sv-select"><span><SlidersHorizontal size={16} aria-hidden="true"/>Sắp xếp</span><select aria-label="Sắp xếp danh sách" value={sort} onChange={e=>change({sort:e.target.value})}><option value="recommended">Mới thêm</option><option value="name">Tên dịch vụ A–Z</option><option value="price-asc">Giá thấp đến cao</option><option value="price-desc">Giá cao đến thấp</option></select></label></div>
-    </div>{activeFilters&&<div className="sv-active-filters"><span>Đang lọc:</span>{category!=='all'&&<span>{activeCategory?.name||'Danh mục đã chọn'}</span>}{q&&<span>“{q}”</span>}{area!=='all'&&<span>{serviceAreas.find(([key])=>key===area)?.[1]}</span>}<button type="button" onClick={()=>setParams({})}><RotateCcw size={13}/>Đặt lại bộ lọc</button></div>}
-    {loading?<div className="sv-state" role="status"><LoaderCircle className="spin" size={25}/><h3>Đang tìm dịch vụ cho bạn...</h3><p>Đang tải thông tin từ hệ thống.</p></div>:error?<div className="sv-state sv-error" role="alert"><h3>Chưa thể tải danh sách dịch vụ</h3><p>{error}</p><MotionButton className="sv-button sv-button-primary" onClick={retry}><RotateCcw size={16}/>Thử lại</MotionButton></div>:matched.length?<><div className={`sv-service-grid${pageRows.length<3?' sv-service-grid--few':''}${pageRows.length===1?' sv-service-grid--single':''}`} aria-label="Danh sách dịch vụ">{pageRows.map(item=><ServiceDiscoveryCard key={item.serviceId} row={item}/>)}</div><div className="sv-pagination-bar"><span aria-live="polite">Hiển thị {start+1}–{Math.min(start+PAGE_SIZE,matched.length)} / {matched.length} dịch vụ</span>{totalPages>1&&<nav className="sv-pagination" aria-label="Phân trang dịch vụ"><MotionButton type="button" disabled={page<=1} onClick={()=>goToPage(page-1)} aria-label="Trang trước"><ChevronLeft size={16}/>Trước</MotionButton>{paginationRange(page,totalPages).map(value=>typeof value==='number'?<MotionButton type="button" key={value} aria-label={`Trang ${value}`} aria-current={page===value?'page':undefined} onClick={()=>goToPage(value)}>{value}</MotionButton>:<span key={value} aria-hidden="true">…</span>)}<MotionButton type="button" disabled={page>=totalPages} onClick={()=>goToPage(page+1)} aria-label="Trang tiếp theo">Sau<ChevronRight size={16}/></MotionButton></nav>}</div></>:<div className="sv-state"><span className="sv-state-icon"><Search size={27}/></span><h3>{activeFilters?'Chưa tìm thấy dịch vụ phù hợp':'Dịch vụ mới đang được cập nhật'}</h3><p>{activeFilters?'Thử đổi từ khóa hoặc mở rộng khu vực phục vụ.':'Các dịch vụ đã được duyệt sẽ xuất hiện tại đây. Bạn vẫn có thể đăng ký trở thành nhà cung cấp.'}</p><MotionButton className="sv-button sv-button-secondary" disabled={!activeFilters&&checkingOwnership} aria-busy={!activeFilters&&checkingOwnership} onClick={activeFilters?()=>setParams({}):openRegistration}>{activeFilters?'Xóa bộ lọc':actionLabel}</MotionButton></div>}
-    {emptyCategory&&<div className="sv-category-invitation"><p>Danh mục <strong>{activeCategory.name}</strong> chưa có dịch vụ công khai. Bạn cung cấp dịch vụ này?</p><MotionButton type="button" className="sv-button sv-button-secondary" disabled={checkingOwnership} aria-busy={checkingOwnership} onClick={openRegistration}>{actionLabel}<ArrowUpRight size={16}/></MotionButton></div>}
-    <p className="sv-price-note"><ReceiptText size={15}/>Giá và khu vực phục vụ do nhà cung cấp khai báo. Hãy xác nhận chi phí cuối cùng trước khi sử dụng.</p>
-   </div></section>
-  </>}
-  {detail&&<div className="container sv-detail-page"><Link className="sv-detail-back" to="/services">← Danh sách dịch vụ</Link>{loading?<div className="sv-state" role="status">Đang tải thông tin dịch vụ...</div>:error?<div className="sv-state sv-error" role="alert"><h1>Không thể xem dịch vụ</h1><p>{error}</p><MotionButton className="sv-button sv-button-primary" onClick={retry}>Thử lại</MotionButton></div>:row&&<div className="sv-detail-grid"><article><div className={`sv-detail-heading sv-tone-${serviceCategoryKind(row.categoryName)}`}><span className="sv-card-icon"><ServiceCategoryIcon name={row.categoryName} size={34}/></span><span>{row.categoryName}</span><h1>{row.serviceName}</h1><span className="sv-reviewed"><ShieldCheck size={14}/>Thông tin đã xét duyệt</span></div><section className="sv-detail-description"><ServiceGallery key={row.serviceId} urls={row.imageUrls?.length?row.imageUrls:row.imageUrl?[row.imageUrl]:[]} alt={row.serviceName}/><h2>Thông tin dịch vụ</h2><p>{row.description||'Chưa cập nhật mô tả.'}</p><h2>Khu vực phục vụ</h2><p><MapPin size={16}/>{row.serviceArea||'Liên hệ xác nhận khu vực phục vụ'}</p></section></article><aside className="sv-detail-contact"><span className="sv-eyebrow">KẾT NỐI NHÀ CUNG CẤP</span><h2>{row.providerName||`Nhà cung cấp #${row.providerId}`}</h2><div className="sv-card-price"><span>GIÁ DỊCH VỤ</span><strong>{servicePrice(row)}</strong></div><ServiceContact row={row}/><p>Trao đổi trực tiếp để thống nhất phạm vi công việc, lịch thực hiện và tổng chi phí. Hệ thống chưa hỗ trợ đặt dịch vụ trực tuyến.</p><ul><li><Check size={15}/>Xác nhận báo giá trước khi bắt đầu.</li><li><Check size={15}/>Giữ lại nội dung trao đổi với nhà cung cấp.</li></ul></aside></div>}</div>}
-  <AnimatePresence>{register&&register.userId===userId&&<ServiceRegistrationModal key={`registration/${userId}`} onClose={closeServices}/>}{manage&&manage.userId===userId&&userId!==null&&<ServiceManagement key={`management/${userId}`} onClose={closeServices}/>}</AnimatePresence>
- </main></DetailPrototypeShell>;
+export default function ServicesCatalog({ detail = false }) {
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams(); const id = params.get('id'); const category = params.get('category') || 'all';
+  const query = params.get('q') || ''; const area = params.get('area') || 'all';
+  const [rows, setRows] = useState([]); const [row, setRow] = useState(null);
+  useBreadcrumbTitle(detail ? row?.serviceName : 'Dịch vụ');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true); const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0); const [register, setRegister] = useState(false);
+  const [manage, setManage] = useState(false); const [contact, setContact] = useState(null);
+  const [ownership, setOwnership] = useState(null);
+  const [requestsOpen, setRequestsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
+  const [requestFormOpen, setRequestFormOpen] = useState(false);
+  const notify = useToast();
+  useEffect(() => {
+    if (!user || detail) { setOwnership(null); return; }
+    const controller = new AbortController();
+    setOwnership(null);
+    serviceRegistrationApi.mine(controller.signal)
+      .then(records => { if (!controller.signal.aborted) setOwnership({ userId: user.userId, hasRecords: records.length > 0 }); })
+      .catch(error => { if (!controller.signal.aborted) setOwnership({ userId: user.userId, error: error.message }); });
+    return () => controller.abort();
+  }, [user?.userId, detail, revision]);
+  useEffect(() => {
+    const controller = new AbortController(); setLoading(true); setError(''); setRow(null); setRows([]);
+    async function load() {
+      if (detail) return api.detail(id, controller.signal);
+      const [options, services] = await Promise.all([api.categories(controller.signal), api.list(controller.signal)]);
+      if (controller.signal.aborted) return;
+      setCategories(options);
+      return services;
+    }
+    load().then(data => { if (!controller.signal.aborted) detail ? setRow(data) : setRows(data); })
+      .catch(err => { if (!controller.signal.aborted) setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [detail, id, revision]);
+  useServiceLive(signal => detail ? api.detail(id, signal) : api.list(signal), data => { detail ? setRow(data) : setRows(data); setError(''); }, { identity: String(detail) + id, onError: err => { if (detail && err.status === 404) { setRow(null); setError(err.message); } } });
+  const selectedCategory = resolveServiceCategory(category,categories);
+  const areas = serviceAreaOptions(rows);
+  const filteredRows = discoverServices(filterPublicServices(rows, { category: selectedCategory, area, query }), { sort: params.get('sort') || 'recommended' });
+  const pageSize=6,totalPages=Math.max(1,Math.ceil(filteredRows.length/pageSize));
+  const page=Math.min(totalPages,Math.max(1,Number.parseInt(params.get('page')||'1',10)||1));
+  const displayedRows=filteredRows.slice((page-1)*pageSize,page*pageSize);
+  const categoryName = categories.find(option => String(option.categoryId) === selectedCategory)?.name || categoryAliases[category] || 'Danh mục đã chọn';
+  const updateFilter = (key, value) => setParams(previous => { const next = new URLSearchParams(previous); if (!value || value === 'all') next.delete(key); else next.set(key, value); if(key!=='page')next.delete('page');return next; }, { replace: key === 'q' });
+  const clearFilters = () => setParams(previous => { const next = new URLSearchParams(previous); ['q', 'area', 'category', 'sort', 'page'].forEach(key => next.delete(key)); return next; });
+  const hasFilters = !!query || area !== 'all' || selectedCategory !== 'all';
+  const content = row => <><span className="svc-badge" style={serviceCategoryStyle(row.categoryName)}><ShieldCheck size={12} aria-hidden="true" /> {row.categoryName}</span><h2 title={row.serviceName}>{row.serviceName}</h2><p className={detail ? 'service-text' : 'svc-description'}>{row.description}</p><div className="svc-meta" title={serviceAreaText(row)}><MapPin size={15} aria-hidden="true" /><span>{serviceAreaText(row)}</span></div>{detail ? <p>Nhà cung cấp: {row.providerName}</p> : <div className="svc-meta" title={row.providerName}><UserRound size={15} aria-hidden="true" /><span>{row.providerName}</span></div>}<div className="svc-price"><ServicePrice service={row} /></div></>;
+  const refresh = () => setRevision(value => value + 1);
+  const ownState = ownership?.userId === user?.userId ? ownership : null;
+  const checkingOwnership = !!user && !ownState;
+  const actionLabel = checkingOwnership ? 'Đang kiểm tra...' : ownState?.error ? 'Thử lại' : ownState?.hasRecords ? 'Dịch vụ của tôi' : 'Đăng ký dịch vụ';
+  const openServices = () => {
+    if (ownState?.error) refresh();
+    else if (ownState?.hasRecords) setManage(true);
+    else setRegister(true);
+  };
+  return <DetailPrototypeShell className="prototype-services"><main className={`svc-catalog${detail ? ' svc-detail-page' : ' svc-catalog-list'}`}>
+    {!detail && <div className="svc-heading">
+      <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Tìm và liên hệ các đối tác đã được xác minh, đang hoạt động tại khu vực của bạn.</p></div>
+      <div className="svc-actions svc-heading-actions">
+        {user && <UIButton className="svc-btn" onClick={() => setReportsOpen(true)}>Báo cáo của tôi</UIButton>}
+        {user && <UIButton variant="secondary" className="svc-btn" onClick={() => setRequestsOpen(true)}>Yêu cầu dịch vụ</UIButton>}
+        <UIButton variant="primary" className="svc-btn svc-btn-primary" disabled={checkingOwnership} onClick={openServices}>{actionLabel}</UIButton>
+      </div>
+    </div>}
+    {reportsOpen && <Modal title="Báo cáo của tôi" maxWidth="900px" onClose={() => setReportsOpen(false)}><ServiceComplaints key={user?.userId} /></Modal>}
+    {requestsOpen && <ServiceRequests key={user?.userId} onClose={() => setRequestsOpen(false)} />}
+    {!detail && ownState?.error && <p role="alert" className="service-error">Không tải được hồ sơ dịch vụ: {ownState.error}</p>}
+    {!detail && <><div className="svc-discovery-toolbar" role="search" aria-label="Tìm kiếm và lọc dịch vụ">
+      <UIField className="svc-search-field" htmlFor="svc-service-search"><span>Tìm kiếm dịch vụ</span><div className="svc-search-control"><Search size={19} aria-hidden="true" /><input id="svc-service-search" type="search" maxLength={120} value={query} onChange={e => updateFilter('q', e.target.value)} placeholder="Tên dịch vụ, nhà cung cấp hoặc khu vực…" autoComplete="off" /></div></UIField>
+      <ServiceFormSelect label="Khu vực" name="service-area" value={area} onChange={e => updateFilter('area', e.target.value)} options={[{ value: 'all', label: 'Tất cả khu vực' }, ...areas.map(value => ({ value, label: value }))]} />
+      {hasFilters && <UIButton variant="secondary" className="svc-btn svc-clear-filters" type="button" onClick={clearFilters}><SlidersHorizontal size={16} aria-hidden="true" />Xóa lọc</UIButton>}
+    </div>
+    <div className="svc-quick-categories" role="group" aria-label="Lọc nhanh theo loại dịch vụ">
+      {[{ categoryId: 'all', name: 'Tất cả' }, ...categories].map(option => <UIButton
+        key={option.categoryId} type="button" variant="ghost" className="svc-category-chip" style={serviceCategoryStyle(option.name)}
+        aria-pressed={selectedCategory === String(option.categoryId)}
+        onClick={() => updateFilter('category', selectedCategory === String(option.categoryId) ? 'all' : String(option.categoryId))}>{option.name}</UIButton>)}
+    </div>
+    <div className="svc-results-toolbar"><p role="status" aria-live="polite">{loading ? 'Đang tìm dịch vụ…' : error ? 'Chưa tải được kết quả' : <><strong>{filteredRows.length}</strong> dịch vụ{selectedCategory !== 'all' && ` ${categoryName}`}{area !== 'all' && ` tại ${area}`}</>}</p></div>
+      {hasFilters && <div className="svc-active-filters" aria-label="Bộ lọc đang áp dụng">{[['q', query && `Tìm: ${query}`], ['category', selectedCategory !== 'all' && categoryName], ['area', area !== 'all' && area]].filter(([, label]) => label).map(([key, label]) => <UIButton key={key} type="button" onClick={() => updateFilter(key, '')} aria-label={`Bỏ lọc ${label}`}><span>{label}</span><X size={13} aria-hidden="true" /></UIButton>)}</div>}
+    </>}
+    {error && <div role="alert" className="service-error">{error}<UIButton onClick={() => setRevision(v => v + 1)}>Thử lại</UIButton></div>}
+    {loading ? <p role="status">Đang tải dịch vụ...</p> : detail ? row && <section className="svc-detail svc-detail-layout">
+      <div className="svc-detail-media"><ServiceGallery key={row.serviceId} presentation="detail" urls={row.imageUrls?.length ? row.imageUrls : row.imageUrl ? [row.imageUrl] : []} alt={row.serviceName} /></div>
+      <aside className="svc-detail-info" aria-label="Thông tin nhà cung cấp và liên hệ">
+        <span className="svc-badge" style={serviceCategoryStyle(row.categoryName)}>{row.categoryName}</span>
+        <h1>{row.serviceName}</h1>
+        <div className="svc-detail-provider">
+          <span className="svc-provider-avatar" aria-hidden="true">{(row.providerName || '?').trim().split(/\s+/).slice(-2).map(part => part[0]).join('').toUpperCase()}</span>
+          <div><small>Nhà cung cấp</small><strong>{row.providerName}</strong></div>
+        </div>
+        <ul className="svc-detail-area-chips" aria-label="Khu vực phục vụ">{areaList(serviceAreaText(row)).map(area => <li key={area}><MapPin size={14} aria-hidden="true" /><span>{area}</span></li>)}</ul>
+        <hr />
+        <div className="svc-detail-price"><ServicePrice service={row} /></div>
+        <div className="svc-detail-contact-actions">
+          <UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={16} aria-hidden="true" />Liên hệ nhà cung cấp</UIButton>
+          <UIButton className="svc-btn" disabled={user?.userId === row.providerId} onClick={() => setRequestFormOpen(true)}>Gửi yêu cầu</UIButton>
+          {user?.userId === row.providerId && <p className="svc-detail-owner-note">Đây là dịch vụ của bạn</p>}
+        </div>
+        {user?.userId !== row.providerId && <UIButton className="svc-report-action" variant="destructive" onClick={() => setReportOpen(true)}><Flag size={19} aria-hidden="true" />Báo cáo dịch vụ</UIButton>}
+        {user?.userId !== row.providerId && <p className="svc-detail-payment-note">Bạn chưa phải thanh toán ở bước này.</p>}
+      </aside>
+      <section className="svc-detail-copy"><h2>Mô tả dịch vụ</h2><p>{row.description}</p></section>
+    </section> : !error && <>
+      {!filteredRows.length && <div className="svc-empty"><Search size={28} aria-hidden="true" /><h2>{hasFilters ? 'Không tìm thấy dịch vụ phù hợp' : 'Chưa có dịch vụ công khai'}</h2><p>{hasFilters ? 'Thử từ khóa khác hoặc bớt điều kiện lọc để xem thêm dịch vụ.' : 'Các dịch vụ sẽ xuất hiện tại đây sau khi được xét duyệt.'}</p>{hasFilters && <UIButton className="svc-btn" type="button" onClick={clearFilters}>Xem tất cả dịch vụ</UIButton>}</div>}
+      <label className="svc-sort">Sắp xếp <select value={params.get('sort')||'recommended'} onChange={event=>updateFilter('sort',event.target.value)}><option value="recommended">Đề xuất</option><option value="price-asc">Giá tăng dần</option><option value="price-desc">Giá giảm dần</option><option value="name">Tên dịch vụ</option></select></label><div className="svc-grid">{displayedRows.map(row => <article className="svc-card" key={row.serviceId}><ServicePhoto url={row.imageUrl} alt={row.serviceName} /><div className="svc-card-body">{content(row)}<div className="svc-actions svc-card-footer"><Link className="svc-btn" to={`/services/detail?id=${row.serviceId}`}>Xem chi tiết<ArrowRight size={15} /></Link><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={15} />Liên hệ</UIButton></div></div></article>)}</div><Pagination currentPage={page} totalPages={totalPages} totalItems={filteredRows.length} pageSize={pageSize} onPageChange={value=>updateFilter('page',value)}/>
+    </>}
+    {detail && row && !loading && !error && <>
+      <ServiceRatings key={row.serviceId + "-" + user?.userId} service={row} />
+      {reportOpen && <ServiceReportForm key={row.serviceId + "-" + user?.userId} service={row} onClose={() => setReportOpen(false)} />}
+      <div className="svc-detail-mobile-contact"><UIButton className="svc-btn svc-btn-primary" onClick={() => setContact(row)}><Phone size={18} aria-hidden="true" />Liên hệ nhà cung cấp</UIButton></div>
+    </>}
+    {detail && row && requestFormOpen && <ServiceRequestModal key={row.serviceId + '-' + user?.userId} service={row}
+      onClose={() => setRequestFormOpen(false)} onSuccess={() => {
+        setRequestFormOpen(false);
+        notify('Đã gửi yêu cầu thành công. Nhà cung cấp sẽ phản hồi cho bạn.', 'success', {
+          label: 'Xem yêu cầu của tôi', onClick: () => setRequestsOpen(true),
+        });
+      }} />}
+    {register && <ServiceRegistrationModal onClose={() => { setRegister(false); setRevision(value => value + 1); }} />}
+    {manage && <ServiceManagement onClose={() => { setManage(false); refresh(); }} />}
+    {contact && <Modal title={`Liên hệ ${contact.serviceName}`} onClose={() => setContact(null)}><div className="svc-form"><p>{contact.providerName} · {serviceAreaText(contact)}</p><a className="svc-btn svc-btn-primary" href={`tel:${contact.contactPhone}`}><Phone size={16} />Gọi {contact.contactPhone}</a>{contact.contactEmail && <a className="svc-btn" href={`mailto:${contact.contactEmail}`}>Gửi email · {contact.contactEmail}</a>}</div></Modal>}
+  </main></DetailPrototypeShell>;
 }

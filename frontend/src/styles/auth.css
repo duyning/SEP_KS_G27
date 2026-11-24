@@ -3,7 +3,7 @@
    ========================================================================== */
 
 :root {
-  --auth-primary: #0d9488;
+  --auth-primary: #0f766e;
   --auth-primary-hover: #0f766e;
   --auth-primary-light: #f0fdfa;
   --auth-teal-glow: #5eead4;
@@ -14,16 +14,16 @@
    ========================================= */
 .flip-viewport {
   position: relative;
-  width: 100vw;
-  min-height: 100vh;
-  overflow-x: hidden;
+  width: 100%;
+  min-height: 100svh;
+  overflow-x: clip;
   perspective: 2200px;
   background-color: var(--slate-900, #0f172a);
 }
 
 .auth-flip-box {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100svh;
   position: relative;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
@@ -38,14 +38,15 @@
 /* 2 MẶT CỦA KHUNG LẬT TRANG */
 .flip-face {
   width: 100%;
-  min-height: 100vh;
-  position: absolute;
-  top: 0;
-  left: 0;
+  min-height: 100svh;
+  position: relative;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   background-color: #f8fafc;
-  overflow-y: auto;
+}
+
+.flip-face[inert] {
+  display: none;
 }
 
 /* Mặt 1: Đăng nhập */
@@ -161,7 +162,8 @@
   flex-direction: column;
 }
 
-.brand-title {
+.showcase-header .brand-title {
+  color: #ffffff;
   font-size: 20px;
   font-weight: 800;
   line-height: 1.2;
@@ -467,13 +469,14 @@
   margin-bottom: 5px;
 }
 
-.input-container {
+.flip-viewport .input-container {
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
-.input-icon {
+.flip-viewport .input-icon {
   position: absolute;
   left: 14px;
   color: #94a3b8;
@@ -483,13 +486,14 @@
   pointer-events: none;
 }
 
-.form-input {
+.flip-viewport .form-input {
   width: 100%;
-  height: 42px;
-  padding: 8px 14px 8px 40px;
+  min-width: 0;
+  height: 44px;
+  padding: 8px 14px 8px 42px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: #0f172a;
   background: #ffffff;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
@@ -497,35 +501,42 @@
   box-sizing: border-box;
 }
 
-.form-input.has-action {
-  padding-right: 42px;
+.flip-viewport .form-input.has-action {
+  padding-right: 48px;
 }
 
-.form-input:focus {
+.flip-viewport .form-input::-ms-reveal {
+  display: none;
+}
+
+.flip-viewport .form-input:focus {
   outline: none;
-  border-color: #0d9488;
+  border-color: #0f766e;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
-.form-input.invalid {
+.flip-viewport .form-input.invalid {
   border-color: #e11d48;
 }
 
-.password-toggle-btn {
+.flip-viewport .password-toggle-btn {
   position: absolute;
-  right: 10px;
+  right: 4px;
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  padding: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: color 0.15s ease;
 }
 
-.password-toggle-btn:hover {
+.flip-viewport .password-toggle-btn:hover {
   color: #475569;
 }
 
@@ -557,16 +568,18 @@
   font-size: 12.5px;
 }
 
-.custom-checkbox input[type="checkbox"] {
+.flip-viewport .custom-checkbox input[type="checkbox"] {
+  display: block;
+  flex-shrink: 0;
   width: 15px;
   height: 15px;
-  accent-color: #0d9488;
+  accent-color: #0f766e;
   cursor: pointer;
   border-radius: 4px;
 }
 
 .forgot-link {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 600;
   text-decoration: none;
   font-size: 12.5px;
@@ -590,7 +603,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #0d9488;
+  background: #0f766e;
   color: #ffffff;
   border: none;
   border-radius: 10px;
@@ -626,7 +639,7 @@
 }
 
 .flip-trigger-btn {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
@@ -665,7 +678,7 @@
 
 .terms-text button,
 .terms-text a {
-  color: #0d9488;
+  color: #0f766e;
   font-weight: 600;
   background: none;
   border: none;
@@ -694,12 +707,12 @@
   width: 18px;
   height: 20px;
   margin: 3px 0 0;
-  accent-color: #0d9488;
+  accent-color: #0f766e;
   cursor: pointer;
 }
 
 .register-consent input:focus-visible {
-  outline: 2px solid #0d9488;
+  outline: 2px solid #0f766e;
   outline-offset: 3px;
 }
 
@@ -752,7 +765,7 @@
 }
 
 .demo-grid button:hover {
-  border-color: #0d9488;
+  border-color: #0f766e;
   background: #f0fdfa;
 }
 
@@ -773,51 +786,6 @@
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-@media (max-width: 960px) {
-  .auth-wrapper,
-  .register-layout {
-    grid-template-columns: 1fr !important;
-  }
-
-  .register-layout .form-side {
-    order: 1;
-  }
-
-  .register-layout .showcase-side {
-    order: 2;
-  }
-
-  .glass-cards-container {
-    display: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .showcase-side {
-    display: none !important;
-  }
-
-  .mobile-brand {
-    display: flex;
-  }
-
-  .auth-card {
-    padding: 24px 18px;
-    border: none;
-    box-shadow: none;
-    background: transparent;
-  }
-
-  .form-side {
-    padding: 16px;
-    background: #ffffff;
-  }
-
-  .form-input {
-    font-size: 16px; /* Avoid iOS zoom */
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .auth-flip-box {
     transition: none !important;
@@ -825,4 +793,59 @@
   .pulse-dot {
     animation: none !important;
   }
+}
+.register-otp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.register-otp-button,
+.register-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.register-otp-button {
+  border: 1px solid #0f766e;
+  background: #fff;
+  color: #0f766e;
+  cursor: pointer;
+}
+
+.register-otp-button:hover:not(:disabled),
+.register-verified {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.register-otp-button:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.register-otp-button:disabled {
+  border-color: #cbd5e1;
+  color: #475569;
+  background: #f8fafc;
+  cursor: default;
+}
+
+.flip-viewport .register-otp-row .register-otp-input {
+  padding-inline-start: 14px;
+}
+
+.register-field-help {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }

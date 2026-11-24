@@ -49,9 +49,8 @@ public class CommunityRealtimeService {
     private boolean valid(Client client) {
         if (System.currentTimeMillis() >= client.expiresAt()) return false;
         if (client.userId() == null) return true;
-        if (!tokens.validateToken(client.token())) return false;
         return users.findById(client.userId()).filter(u -> u.getStatus() == UserStatus.ACTIVE
-                && u.getRole() == client.role()).isPresent();
+                && u.getRole() == client.role() && tokens.isCurrentSession(client.token(), u)).isPresent();
     }
     private void send(Client client, Map<String, Object> data) {
         try {

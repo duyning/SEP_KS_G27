@@ -1,0 +1,54 @@
+/* Operational portals own their gutters; public pages keep their existing containers. */
+.portal-app .portal-content.workspace-content {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin-left: var(--p-sidebar-width);
+  padding: var(--space-6) var(--layout-gutter) var(--space-12);
+}
+
+.workspace-content > * {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Dossiers use the portal gutter instead of adding a second page gutter. */
+.portal-app .workspace-content > .staff-service-detail-page {
+  padding-inline: 0;
+}
+
+.workspace-content .sp-header-row {
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.workspace-content .sp-header-row > :first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.workspace-content .sp-header-row > :last-child {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.workspace-content .sp-header-row .p-button {
+  min-height: 44px;
+}
+
+@media (max-width: 900px) {
+  .portal-app .portal-content.workspace-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .portal-app .portal-content.workspace-content {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-8);
+    padding-left: max(var(--layout-gutter), env(safe-area-inset-left));
+    padding-right: max(var(--layout-gutter), env(safe-area-inset-right));
+  }
+}

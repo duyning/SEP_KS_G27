@@ -45,6 +45,20 @@ o thu muc cha neu ban dang mo `Code/HL-RCS` trong IntelliJ.
 - Mo http://127.0.0.1:5173/login; sua React se cap nhat ngay.
 - Bam Stop de dung ca hai. Neu frontend loi, backend cung dung va console hien nguyen nhan.
 
+### Chạy web và app cùng lúc
+
+| Thành phần | Cổng | Cách chạy |
+| --- | --- | --- |
+| Giao diện web (Vite) | 5173 | Run **HL-RCS Full Stack** trong IntelliJ |
+| API cho web | 8080 | Khởi động cùng cấu hình Full Stack |
+| API cho app | 8081 | Profile `mysql,mobile`; script mobile tự khởi động |
+| Expo cho app | 8082 | `cd mobile` rồi `npm run dev` |
+
+Web gọi API 8080, điện thoại gọi `http://<IP-LAN-máy-tính>:8081`.
+Hai API dùng chung MySQL nên dữ liệu được chia sẻ. Không đổi web sang 8081
+khi cổng 8080 bận; kiểm tra phiên web đang chạy trước. Nếu IntelliJ còn giữ
+cấu hình cũ, đặt **Program arguments** thành `--server.port=8080`.
+
 Can MySQL dang chay va Node.js 22.12+ (hoac 20.19+). Launcher tim Node trong
 NODE_HOME, PATH, bo runtime Codex co san tren may, hoac Program Files/nodejs.
 Neu thieu frontend dependencies, launcher tu chay pnpm/npm install; lan dau can Internet.
@@ -90,7 +104,7 @@ Mo terminal thu hai va chay:
 ```
 
 Mo http://localhost:5173/login. Dung Ctrl+C trong tung terminal de dung server.
-Neu cong 8080 dang duoc su dung, them `-Port 8081`.
+Cong 8080 danh rieng cho web API; cong 8081 danh rieng cho mobile API.
 Script tu tim JDK tu JAVA_HOME hoac thu muc cai Java thong dung va su dung Maven Wrapper.
 Lan build dau can Internet de tai cac thu vien Maven.
 
@@ -177,6 +191,35 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\stop-local-mysql.p
 
 Binary va mat khau local khong duoc commit. Tren may khac, can cai MySQL Server va tao
 file cau hinh local theo huong dan ben tren.
+
+## Xác minh đăng ký tài khoản
+
+Đăng ký bằng một email hoặc một số di động Việt Nam. Backend gửi OTP qua email
+hoặc Zalo theo thông tin đã nhập. Mã gồm 6 chữ số, có hiệu lực 5 phút, được thử
+tối đa 5 lần và có thể gửi lại sau 60 giây. Sau khi xác minh, người dùng có
+10 phút để hoàn tất việc tạo tài khoản `USER`. Hồ sơ xin quyền chủ trọ ở
+`/become-host`.
+
+Cấu hình ở backend qua biến môi trường hoặc trong
+`config/mysql-local.properties` khi chạy cục bộ. Tệp local này được Git bỏ qua.
+
+| Kênh | Thuộc tính backend | Biến môi trường tương ứng |
+| --- | --- | --- |
+| Email | `spring.mail.host`, `spring.mail.port`, `spring.mail.username`, `spring.mail.password` | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` |
+| Người gửi email | `app.registration.mail-from` | `REGISTRATION_MAIL_FROM` |
+| Zalo | `app.registration.zalo-access-token`, `app.registration.zalo-template-id` | `REGISTRATION_ZALO_ACCESS_TOKEN`, `REGISTRATION_ZALO_TEMPLATE_ID` |
+| Tên tham số OTP trong mẫu Zalo | `app.registration.zalo-otp-field` (mặc định `otp`) | `REGISTRATION_ZALO_OTP_FIELD` |
+
+SMTP mặc định dùng xác thực và STARTTLS. Đặt cổng theo máy chủ gửi email. Zalo
+cần mẫu xác thực ZBS đã được duyệt, token có quyền gửi tin qua số điện thoại và
+số người nhận đã liên kết Zalo. Backend đọc token từ cấu hình lúc khởi động.
+Cập nhật token khi hết hạn và khởi động lại backend. [Hướng dẫn gửi tin qua API của Zalo](https://zalo.solutions/business-message/guidelines/en/gui-api).
+
+API dùng `POST /api/auth/register/otp/send` với `identifier`, rồi
+`POST /api/auth/register/otp/verify` với `identifier` và `code`.
+Gửi `verificationToken` nhận được vào `POST /api/auth/register` cùng đúng một
+trường `email` hoặc `phoneNumber`, `fullName` và `password`. Hibernate tạo bảng
+`registration_otps` khi backend khởi động với cấu hình `ddl-auto=update`.
 
 ## Đăng ký cung cấp dịch vụ
 

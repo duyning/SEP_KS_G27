@@ -59,7 +59,8 @@ function MemberBell() {
     </button>
     {open && <div className="cn-popover" id={id}>
       <CommunityNotificationInbox compact onOpen={() => setOpen(false)} />
-      <Link className="cn-all" to="/notifications?tab=community" onClick={() => setOpen(false)}>Xem tất cả thông báo</Link>
+      <Link className="cn-all" to="/notifications?tab=community" onClick={() => setOpen(false)}>Mở hộp thư cộng đồng</Link>
+      <Link className="cn-all" to="/notifications" onClick={() => setOpen(false)}>Mở trung tâm thông báo</Link>
     </div>}
   </div>;
 }

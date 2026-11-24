@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Home, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { BrandLogo, BRAND } from '../brand/index.js';
 
 export default function PublicFooter() {
   return (
@@ -7,15 +8,14 @@ export default function PublicFooter() {
       <div className="container footer-grid">
         {/* Col 1: Brand Info */}
         <div className="footer-col col-brand">
-          <Link to="/" className="nav-brand white">
-            <div className="brand-logo-icon">
-              <Home size={20} />
-            </div>
-            <div className="brand-title-wrap">
-              <span className="brand-name">HL_RCS</span>
-              <span className="brand-sub">Rental Connection System</span>
-            </div>
-          </Link>
+          <BrandLogo
+            to="/"
+            size="md"
+            tone="dark"
+            iconVariant="badge"
+            subtitle={BRAND.shortTagline}
+            className="nav-brand white"
+          />
           <p className="footer-desc">
             Nền tảng công nghệ kết nối trực tiếp người thuê và chủ nhà trọ tại khu vực ĐH FPT và Khu Công nghệ cao Hòa Lạc. Minh bạch thông tin, cam kết không môi giới.
           </p>
@@ -49,13 +49,13 @@ export default function PublicFooter() {
         <div className="footer-col">
           <h4 className="footer-col-title">Trụ sở hỗ trợ sinh viên</h4>
           <p className="footer-contact-item">
-            📍 Văn phòng hỗ trợ: Đường D1, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội
+            Văn phòng hỗ trợ: Đường D1, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội
           </p>
           <p className="footer-contact-item">
-            📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
+            Hotline: <strong>{BRAND.hotline}</strong> (8:00 - 21:00)
           </p>
           <p className="footer-contact-item">
-            ✉️ Email: support@hlrcs.vn
+            Email: {BRAND.supportEmail}
           </p>
           <div className="verified-badge-footer">
             <ShieldCheck size={16} />
@@ -66,7 +66,7 @@ export default function PublicFooter() {
 
       <div className="footer-bottom">
         <div className="container footer-bottom-inner">
-          <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
+          <p>© {BRAND.copyrightYear} {BRAND.name}. Bản quyền thuộc về nền tảng {BRAND.name}.</p>
           <div className="bottom-links">
             <Link to="/community">Quy chế hoạt động</Link>
             <span className="dot">•</span>

@@ -9,7 +9,7 @@ test('supplement keeps private evidence via IDs and submits the same application
   const form = { applicantName: 'Nguyễn An', categoryId: 1, serviceName: 'Dọn dẹp trọ', description: 'Dọn dẹp phòng trọ tại khu vực Hòa Lạc.', serviceArea: 'Tân Xã', contactPhone: '0987654321', pricingType: 'NEGOTIABLE', price: null };
   const payload = { details: form, retainedDocumentIds: [10], note: 'Đã bổ sung mô tả dịch vụ.', revision: 1 };
   assert.equal(validateServiceRegistration(form, [], 1), '');
-  assert.ok(validateServiceRegistration(form, [], 0));
+  assert.equal(validateServiceRegistration(form, [], 0), '');
   assert.ok(validateServiceRegistration(form, [{ type: 'application/pdf', size: 100, name: 'a.pdf' }], 5));
   try {
     globalThis.fetch = async (url, options) => {

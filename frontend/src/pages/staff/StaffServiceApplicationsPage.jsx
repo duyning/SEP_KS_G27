@@ -1,152 +1,179 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {Link, useSearchParams} from 'react-router-dom';
-import {ArrowLeft, ArrowRight, BriefcaseBusiness, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, FileCheck2, FileText, FolderOpen, Info, LoaderCircle, MapPin, RotateCcw, Search, ShieldCheck, SlidersHorizontal, UserRound, XCircle, AlertCircle, LockKeyhole} from 'lucide-react';
-import {useAuth} from '../../context/AuthContext.jsx';
-import {MotionButton, AnimatePresence} from '../../components/motion/MotionUI.jsx';
+import useServiceLive from '../../hooks/useServiceLive.js';
+import { StaffListPanel, StaffListFilters, StaffListStatus, StaffListOpen, StaffListTag } from '../../components/StaffServiceListUI.jsx';
+import ServicePrice from '../../components/ServicePrice.jsx';
 import Modal from '../../components/common/Modal.jsx';
-import {serviceReviewApi as api, validateServiceReview} from '../../services/service-review.js';
-import {applicationStatuses, filterServiceApplications, serviceApplicationCounts, serviceApplicationPrice} from '../../services/service-applications-view.js';
-import {ServiceCategoryIcon} from '../../components/ServiceDiscoveryParts.jsx';
-import {serviceCategoryKind} from '../../services/service-discovery.js';
+import { serviceCategoryStyle } from '../../services/service-category.js';
+import { serviceAreaText } from '../../services/service-areas.js';
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
+import StatusBadge from '../../components/common/StatusBadge.jsx';
+import { serviceFileName } from '../../services/service-form.js';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { serviceReviewApi as api, validateServiceReview } from '../../services/service-review.js';
 import '../../styles/service-applications.css';
-import '../../styles/staff-service-list.css';
-import '../../styles/staff-service-detail.css';
+import '../../styles/staff-service-application-detail.css';
 import ServiceGallery from '../../components/ServiceGallery.jsx';
-import {serviceFileName} from '../../services/service-form.js';
+import { ArrowLeft, Download, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle, RefreshCw } from 'lucide-react';
 
-const time = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : 'Chưa có thông tin';
-const decisionLabel = value => ({APPROVE:'Phê duyệt', REJECT:'Từ chối', SUPPLEMENT:'Yêu cầu bổ sung'})[value] || 'Chưa quyết định';
-const operationLabel = value => ({CREATE:'Thêm dịch vụ', UPDATE:'Cập nhật dịch vụ', DELETE:'Yêu cầu xóa dịch vụ'})[value] || 'Thêm dịch vụ';
-const pageSize = 15;
-function Status({value}) { return <span className={`sa-status ${value?.toLowerCase()}`}><span/>{applicationStatuses[value] || value}</span>; }
-function Notice({children, error = false}) {return <div className={`sa-notice${error ? ' is-error' : ''}`} role={error ? 'alert' : undefined}>{error ? <AlertCircle size={18}/> : <Info size={18}/>}<div>{children}</div></div>;}
-function PanelHeading({icon: Icon, title, subtitle}) {return <header className="sa-panel-heading"><span><Icon size={19}/></span><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></header>;}
+const status = { PENDING: 'Chờ xét duyệt', APPROVED: 'Đã xét duyệt', REJECTED: 'Đã từ chối', NEEDS_SUPPLEMENT: 'Cần bổ sung', CANCELLED: 'Đã hủy' };
+const statusFilters = ['ALL', 'APPROVED', 'PENDING', 'NEEDS_SUPPLEMENT', 'REJECTED', 'CANCELLED'];
+const reviewChoices = [
+  { value: 'APPROVE', label: 'Duyệt hồ sơ', description: 'Chấp nhận thông tin và tài liệu.' },
+  { value: 'SUPPLEMENT', label: 'Yêu cầu bổ sung', description: 'Trả hồ sơ để người đăng ký hoàn thiện.' },
+  { value: 'REJECT', label: 'Từ chối hồ sơ', description: 'Không chấp nhận hồ sơ, kèm lý do.' },
+];
+const statusBadge = value => <StatusBadge status={value} tone={value === 'NEEDS_SUPPLEMENT' ? 'supplement' : undefined} label={status[value] || value} />;
+const labels = { FIXED: 'Giá cố định', FROM: 'Giá từ', NEGOTIABLE: 'Thỏa thuận', CREATE: 'Thêm dịch vụ', UPDATE: 'Cập nhật dịch vụ', DELETE: 'Xóa dịch vụ', CANCELLED: 'Đã hủy hồ sơ', CHANGE_REQUESTED: 'Yêu cầu thay đổi', RESUBMITTED: 'Đã nộp lại hồ sơ', APPROVED: 'Đã duyệt', REJECTED: 'Đã từ chối', REQUESTED_SUPPLEMENT: 'Yêu cầu bổ sung', APPROVE: 'Duyệt', REJECT: 'Từ chối', ACTIVE: 'Đang công khai', DELETED: 'Đã ngừng công khai', INACTIVE: 'Ngừng hoạt động' };
+const textValue = value => labels[value] || value || '—';
+const money = value => value == null ? '—' : `${Number(value).toLocaleString('vi-VN')} VNĐ`;
+const time = value => {
+  if (!value) return '—';
+  const date = new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value + '+07:00');
+  if (Number.isNaN(date.getTime())) return '—';
+  const parts = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date);
+  const get = type => parts.find(part => part.type === type)?.value;
+  return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`;
+};
+const comparisonValue = (record, key) => key === 'price' ? (record.pricingType === 'NEGOTIABLE' ? 'Thỏa thuận' : money(record[key]) + (record.priceUnit ? ' / ' + record.priceUnit : '')) : textValue(record[key]);
+const historyNote = note => String(note || '').replace(/\b(CREATE|UPDATE|DELETE|FIXED|FROM|NEGOTIABLE|APPROVE|REJECT)\b/g, value => labels[value]).replace(/Capability:/g, 'Quyền cung cấp dịch vụ:').replace(/Listing:/g, 'Nội dung dịch vụ:').replace(/Revision /g, 'Phiên bản ');
+function ReviewDocument({ applicationId, doc, onError }) {
+  const [file, setFile] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [preview, setPreview] = useState(false), [previewUrl, setPreviewUrl] = useState('');
+  const mime = file?.type || doc.contentType || '';
+  const isImage = ['image/png','image/jpeg','image/webp','image/gif'].includes(mime);
+  useEffect(() => { if (!preview || !file) return; const url = URL.createObjectURL(file); setPreviewUrl(url); return () => URL.revokeObjectURL(url); }, [preview, file]);
+  useEffect(() => {
+    let active = true;
+    api.file(applicationId, doc.documentId).then(blob => { if (active) setFile(blob); }).catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [applicationId, doc.documentId]);
+  async function download() {
+    try {
+      const blob = file || await api.file(applicationId, doc.documentId);
+      setFile(blob); setFailed(false);
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = doc.name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { onError(error.message); }
+  }
+  return <div className="service-document-item"><div className="service-document-name">{isImage ? <ImageIcon size={24} aria-hidden="true" /> : <FileText size={24} aria-hidden="true" />}<div><strong title={doc.name}>{serviceFileName(doc.name)}</strong><small>{file ? `${(file.size / (file.size >= 1048576 ? 1048576 : 1024)).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${file.size >= 1048576 ? 'MB' : 'KB'}` : failed ? 'Chưa đọc được dung lượng' : 'Đang đọc dung lượng…'}</small></div></div><div className="service-document-actions">{(isImage || mime === 'application/pdf') && <UIButton className="service-app-action" disabled={!file} onClick={() => setPreview(true)} aria-label={'Xem trước ' + doc.name}><Eye size={16} aria-hidden="true" />Xem trước</UIButton>}<UIButton className="service-app-action" aria-label={`Tải xuống ${doc.name}`} onClick={download}><Download size={16} aria-hidden="true" />Tải xuống</UIButton></div>{preview && <Modal title={doc.name} maxWidth="1000px" className="service-file-preview" onClose={() => setPreview(false)}>{previewUrl && (isImage ? <img src={previewUrl} alt={doc.name} /> : <object data={previewUrl} type="application/pdf" aria-label={doc.name}><p>Trình duyệt không hỗ trợ xem PDF. <UIButton onClick={download}>Tải xuống để xem</UIButton></p></object>)}</Modal>}</div>;
+}
 
 export default function StaffServiceApplicationsPage() {
-  const {user} = useAuth();
-  const [params, setParams] = useSearchParams(), selected = params.get('id');
-  const activeSelection = useRef(selected), mutation = useRef(false);
-  activeSelection.current = selected;
-  const [rows, setRows] = useState([]), [detail, setDetail] = useState(null);
-  const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const [revision, setRevision] = useState(0), [downloadId, setDownloadId] = useState(null);
-  const [capability, setCapability] = useState(''), [listing, setListing] = useState(''), [reason, setReason] = useState('');
-  const [confirmation, setConfirmation] = useState(null), [saved, setSaved] = useState(false);
-  const [stale, setStale] = useState(false);
-  const filters = {q:params.get('q') || '', status:params.get('status') || 'PENDING', category:params.get('category') || '', sort:params.get('sort') || 'OLDEST'};
-  const visible = useMemo(() => filterServiceApplications(rows, filters), [rows, filters.q, filters.status, filters.category, filters.sort]);
-  const counts = useMemo(() => serviceApplicationCounts(rows), [rows]);
-  const categories = useMemo(() => [...new Set(rows.map(row => row.categoryName).filter(Boolean))].sort((a,b) => a.localeCompare(b,'vi')), [rows]);
-  const totalPages = Math.max(1, Math.ceil(visible.length / pageSize));
-  const page = Math.min(totalPages, Math.max(1, Number.parseInt(params.get('page'),10) || 1));
-  const listParams = new URLSearchParams(params); listParams.delete('id');
-  const listUrl = `/staff/service-applications${listParams.size ? `?${listParams}` : ''}`;
-  const detailUrl = id => {const query = new URLSearchParams(listParams); query.set('id',id); return `/staff/service-applications?${query}`;};
-  function filter(key,value) {const next = new URLSearchParams(params); value ? next.set(key,value) : next.delete(key); if(key !== 'page') next.delete('page'); setParams(next, {replace:key === 'q'});}
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams(); const selected = params.get('id');
+  const activeStatus = statusFilters.includes(params.get('status')) ? params.get('status') : 'ALL';
+  const activeSelection = useRef(selected); activeSelection.current = selected;
+  const [rows, setRows] = useState([]); const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const pageTop = useRef(null), scrollAfterReview = useRef(false);
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true); setError(''); setDetail(null); setConfirmation(null); setSaved(false);
-    setCapability(''); setListing(''); setReason(''); setStale(false);
+    if (!scrollAfterReview.current) return;
+    scrollAfterReview.current = false;
+    let parent = pageTop.current?.parentElement;
+    while (parent) { if (parent.scrollHeight > parent.clientHeight) parent.scrollTop = 0; parent = parent.parentElement; }
+    window.scrollTo({ top: 0, behavior: 'instant' }); pageTop.current?.focus({ preventScroll: true });
+  }, [detail]);
+  const [revision, setRevision] = useState(0);
+  const [decision, setDecision] = useState(''); const [reason, setReason] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({}); const decisionInput = useRef(null); const reasonInput = useRef(null);
+  useEffect(() => {
+    const controller = new AbortController(); setLoading(true); setError(''); setDetail(null);
+    setDecision(''); setReason(''); setFieldErrors({});
     (selected ? api.detail(selected, controller.signal) : api.list(controller.signal))
-      .then(data => {if (!controller.signal.aborted) selected ? setDetail(data) : setRows(data);})
-      .catch(err => {if (!controller.signal.aborted) setError(err.message);})
-      .finally(() => {if (!controller.signal.aborted) setLoading(false);});
+      .then(data => {
+        if (controller.signal.aborted) return;
+        if (selected) setDetail(data); else setRows(data);
+      }).catch(err => { if (!controller.signal.aborted) setError(err.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [selected, user.userId, revision]);
+  useServiceLive(signal => selected ? api.detail(selected, signal) : api.list(signal), fresh => { selected ? setDetail(fresh) : setRows(fresh); setError(''); setLoading(false); }, { enabled: !busy, identity: selected || 'list' });
+  const visibleRows = activeStatus === 'ALL' ? rows : rows.filter(item => item.status === activeStatus);
+  const listUrl = '/staff/service-applications' + (activeStatus === 'ALL' ? '' : `?status=${activeStatus}`);
   const row = detail?.application;
-  const isChange = row?.operation === 'UPDATE' || row?.operation === 'DELETE';
-  const supplement = capability === 'SUPPLEMENT';
-  const needsReason = supplement || capability === 'REJECT' || listing === 'REJECT';
-  const reasonLabel = supplement ? 'Nội dung cần bổ sung' : needsReason ? 'Lý do từ chối' : 'Nhận xét xét duyệt';
-  const effect = (cap, list) => cap === 'SUPPLEMENT' ? 'Hồ sơ chuyển sang Cần bổ sung. Người đăng ký có thể chỉnh sửa và nộp lại trên cùng hồ sơ.' : list === 'REJECT' ? 'Nội dung đề nghị bị từ chối. Các dịch vụ đang công khai và quyền hiện có được giữ nguyên.' : row?.operation === 'DELETE' ? 'Duyệt sẽ ngừng công khai dịch vụ này. Các dịch vụ khác được giữ nguyên.' : row?.operation === 'UPDATE' ? 'Thông tin và ảnh đề nghị sẽ thay thế bản dịch vụ đang công khai sau khi duyệt.' : 'Quyền cung cấp và nội dung dịch vụ được áp dụng theo hai quyết định đã chọn.';
-  async function saveDecision() {
-    if (mutation.current || !confirmation || stale || loading || selected !== confirmation.id || row?.status !== 'PENDING' || row.applicantId === user.userId || row.revision !== confirmation.revision) return;
-    mutation.current = true; setBusy(true); setError('');
+  const reasonLabel = decision === 'SUPPLEMENT' ? 'Nội dung cần bổ sung' : decision === 'REJECT' ? 'Lý do từ chối' : 'Nhận xét xét duyệt';
+  const submitLabel = decision === 'SUPPLEMENT' ? 'Gửi yêu cầu bổ sung' : decision === 'REJECT' ? 'Xác nhận từ chối' : decision === 'APPROVE' ? 'Xác nhận duyệt hồ sơ' : 'Xác nhận quyết định';
+  async function mutate(action) {
+    if (busy) return;
+    setBusy(true); setError('');
     const requested = selected;
-    try {
-      const result = confirmation.capability === 'SUPPLEMENT'
-        ? await api.supplement(requested, confirmation.reason, confirmation.revision)
-        : await api.review(requested, confirmation.capability, confirmation.listing, confirmation.reason, confirmation.revision);
-      if (activeSelection.current === requested) {setDetail(result); setConfirmation(null); setSaved(true);}
-      window.dispatchEvent(new Event('hlrcs:staff-updated'));
-    } catch(err) {
-      if(activeSelection.current === requested) {
-        setError(err.message);
-        if (err.status === 409) {
-          setConfirmation(null); setCapability(''); setListing(''); setReason(''); setStale(true);
-          try {
-            const fresh = await api.detail(requested);
-            if(activeSelection.current === requested) {setDetail(fresh); setStale(false);}
-          } catch { /* Keep decisions disabled until an explicit reload succeeds. */ }
-        }
-      }
-    }
-    finally {mutation.current = false; setBusy(false);}
+    try { const result = await action(); if (activeSelection.current === requested) { scrollAfterReview.current = true; setDetail(result); } window.dispatchEvent(new Event('hlrcs:staff-updated')); }
+    catch (err) { if (activeSelection.current === requested) {
+      setError(err.message);
+      if (err.status === 409) { try { const fresh = await api.detail(requested); if (activeSelection.current === requested) { setDetail(fresh); setDecision(''); setReason(''); setFieldErrors({}); } } catch { /* Reload remains available. */ } }
+    } }
+    finally { setBusy(false); }
   }
   function review(event) {
-    event.preventDefault();
-    if (mutation.current || busy || stale || loading || !row || row.status !== 'PENDING' || row.applicantId === user.userId) return;
-    const errors = validateServiceReview(supplement ? 'SUPPLEMENT' : needsReason ? 'REJECT' : capability, reason);
-    const failure = !capability ? 'Vui lòng chọn quyết định xét duyệt.' : !supplement && !['APPROVE','REJECT'].includes(listing) ? 'Vui lòng chọn quyết định cho nội dung dịch vụ.' : capability === 'REJECT' && listing === 'APPROVE' ? 'Không thể công khai dịch vụ khi từ chối quyền cung cấp.' : errors.reason || errors.decision || (reason.length > 2000 ? 'Nhận xét không được quá 2000 ký tự.' : '');
-    setError(failure);
-    if(failure) {document.getElementById(!capability ? 'sa-capability' : !supplement && !listing ? 'sa-listing' : 'sa-reason')?.focus(); return;}
-    setConfirmation({id:selected, revision:row.revision, capability, listing, reason:reason.trim()});
+    event.preventDefault(); if (busy) return;
+    const errors = validateServiceReview(decision, reason); setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      const target = errors.decision ? decisionInput.current : reasonInput.current;
+      target?.focus({ preventScroll: true }); target?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return;
+    }
+    mutate(() => decision === 'SUPPLEMENT' ? api.supplement(selected, reason.trim(), row.revision) : api.review(selected, decision, decision, decision === 'APPROVE' ? '' : reason.trim(), row.revision));
   }
-  async function download(doc) {
-    if(downloadId) return;
-    setDownloadId(doc.documentId); setError('');
-    const requested = selected;
-    try {
-      const blob = await api.file(requested, doc.documentId), url = URL.createObjectURL(blob);
-      const link = document.createElement('a'); link.href = url; link.download = doc.name; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch(err) {if(activeSelection.current === requested) setError(err.message);}
-    finally {setDownloadId(null);}
-  }
-  const ready = !loading && !error;
-  return <div className={`service-applications sa-page${selected?' sa-detail-page':' sa-list-page'}`}>
-    <header className="sa-page-heading"><div>{selected?<><span className="sa-eyebrow">VẬN HÀNH · ĐỐI TÁC DỊCH VỤ</span><h1>Thẩm định hồ sơ dịch vụ</h1><p>Đối chiếu thông tin, kiểm tra tài liệu và ghi nhận quyết định xét duyệt.</p></>:<><h1 className="sa-sr-only">Xét duyệt hồ sơ dịch vụ</h1><p>Xem xét hồ sơ nhà cung cấp và nội dung dịch vụ trước khi hiển thị công khai.</p></>}</div><MotionButton className="sa-button sa-secondary" disabled={busy || loading} onClick={() => setRevision(v => v+1)}><RotateCcw size={16} className={loading ? 'spin' : ''}/>Làm mới</MotionButton></header>
-    {selected && <div className="sa-detail-top"><Link className="sa-back" to={listUrl}><ArrowLeft size={16}/>Danh sách hồ sơ</Link>{row && <div><span className="sa-id">DV-{row.registrationId}</span><Status value={row.status}/></div>}</div>}
-    {error && !confirmation && <Notice error>{error}{(!row || stale) && <MotionButton className="sa-inline-button" onClick={() => setRevision(v => v+1)}>Thử lại<RotateCcw size={14}/></MotionButton>}</Notice>}
-    {!selected && <>
-      <div className="sa-metrics">{[
-        ['ALL','Tổng hồ sơ','Toàn bộ hồ sơ đã gửi',FolderOpen,'slate'],
-        ['PENDING','Chờ xét duyệt','Cần kiểm tra & quyết định',Clock3,'amber'],
-        ['NEEDS_SUPPLEMENT','Cần bổ sung','Chờ người đăng ký bổ sung',FileText,'purple'],
-        ['APPROVED','Đã cấp quyền','Đã duyệt quyền cung cấp',ShieldCheck,'teal'],
-        ['REJECTED','Đã từ chối','Đã ghi nhận lý do',XCircle,'rose'],
-      ].map(([key,label,hint,Icon,tone]) => <MotionButton key={key} className={`sa-metric ${tone}${filters.status === key ? ' is-selected' : ''}`} aria-pressed={filters.status === key} onClick={() => filter('status',key)} disabled={!ready}><div><span>{label}</span><Icon size={19}/></div><strong>{ready ? counts[key] : '—'}</strong><small>{hint}<ArrowRight size={13}/></small></MotionButton>)}</div>
-      <div className="sa-category-summary"><span>Chờ duyệt theo loại:</span>{categories.map(name=><button type="button" key={name} data-category={serviceCategoryKind(name)} disabled={!ready} onClick={()=>{const next=new URLSearchParams(params);next.set('category',name);next.set('status','PENDING');next.delete('page');setParams(next);}}><span><ServiceCategoryIcon name={name} size={16}/>{name}</span><strong>{rows.filter(item=>item.categoryName===name&&item.status==='PENDING').length}</strong></button>)}</div>
-      <section className="sa-queue" aria-label="Danh sách hồ sơ dịch vụ">
-        <div className="sa-filters"><label className="sa-search"><Search size={17}/><input type="search" maxLength={200} aria-label="Tìm hồ sơ dịch vụ" placeholder="Tìm mã hồ sơ, dịch vụ, người đăng ký..." value={filters.q} onChange={e => filter('q',e.target.value)}/></label><label className="sa-select"><span className="sa-sr-only">Danh mục</span><select aria-label="Danh mục dịch vụ" value={filters.category} onChange={e => filter('category',e.target.value)}><option value="">Tất cả danh mục</option>{categories.map(name => <option key={name}>{name}</option>)}</select></label><label className="sa-select"><span className="sa-sr-only">Trạng thái</span><select aria-label="Trạng thái hồ sơ" value={filters.status} onChange={e=>filter('status',e.target.value)}><option value="ALL">Tất cả trạng thái</option>{Object.entries(applicationStatuses).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label className="sa-select"><span className="sa-sr-only">Sắp xếp</span><select aria-label="Sắp xếp hồ sơ" value={filters.sort} onChange={e => filter('sort',e.target.value)}><option value="OLDEST">Cũ nhất trước</option><option value="NEWEST">Mới nhất trước</option></select></label><MotionButton type="button" className="sa-button sa-secondary" onClick={()=>setParams({})}><RotateCcw size={14}/>Đặt lại</MotionButton><span className="sa-list-count" aria-live="polite">Hiển thị <strong>{ready?visible.length:'—'}</strong> hồ sơ</span></div>
-        {loading ? <div className="sa-empty" role="status"><LoaderCircle className="spin" size={29}/><h3>Đang tải danh sách hồ sơ</h3><p>Thông tin đang được cập nhật từ hệ thống.</p></div> : !error && <>
-          {!visible.length ? <div className="sa-empty"><FolderOpen size={35}/><h3>{rows.length ? 'Không tìm thấy hồ sơ phù hợp' : 'Chưa có hồ sơ dịch vụ'}</h3><p>{rows.length ? 'Thử thay đổi từ khóa, danh mục hoặc trạng thái xét duyệt.' : 'Hồ sơ đăng ký mới sẽ xuất hiện tại đây để bạn kiểm tra và xử lý.'}</p>{rows.length > 0 && <MotionButton className="sa-button sa-secondary" onClick={() => setParams({})}><SlidersHorizontal size={15}/>Xóa bộ lọc</MotionButton>}</div> : <div className="sa-table-wrap"><table className="sa-table"><thead><tr><th scope="col">Dịch vụ / Hồ sơ</th><th scope="col">Người đăng ký</th><th scope="col">Ngày gửi</th><th scope="col">Trạng thái</th><th scope="col">Người xét duyệt</th><th scope="col"><span className="sa-sr-only">Thao tác</span></th></tr></thead><tbody>{visible.slice((page-1)*pageSize,page*pageSize).map(item => <tr key={item.registrationId}>
-            <td><div className="sa-service-cell"><span className="sa-service-icon"><BriefcaseBusiness size={20}/></span><div><Link className="sa-service-title" to={detailUrl(item.registrationId)}>{item.serviceName}</Link><div className="sa-row-meta"><span className="sa-id">DV-{item.registrationId}</span><span className="sa-operation">{operationLabel(item.operation)}</span><span>{item.categoryName || 'Chưa có danh mục'}</span></div><small><FileText size={12}/>{item.documents.length} tài liệu{item.serviceArea && <><span>·</span>{item.serviceArea}</>}</small></div></div></td>
-            <td><strong>{item.applicantName || 'Chưa có tên'}</strong><small>{item.contactPhone || item.contactEmail || 'Chưa có liên hệ'}</small></td><td><time dateTime={item.createdAt}>{time(item.createdAt)}</time></td><td><Status value={item.status}/></td><td>{item.reviewerName || <span className="sa-muted">Chưa xét duyệt</span>}</td><td><Link className="sa-view-link" aria-label={`Xem hồ sơ DV-${item.registrationId}`} to={detailUrl(item.registrationId)}>Xem hồ sơ<ArrowRight size={14}/></Link></td>
-          </tr>)}</tbody></table></div>}
-          <footer className="sa-pagination"><span>{visible.length ? `Hiển thị ${(page-1)*pageSize+1}–${Math.min(page*pageSize,visible.length)} / ${visible.length} hồ sơ` : '0 hồ sơ'}</span><div><MotionButton aria-label="Trang trước" disabled={page === 1} onClick={() => filter('page',String(page-1))}><ChevronLeft size={16}/></MotionButton><span>{page} / {totalPages}</span><MotionButton aria-label="Trang sau" disabled={page === totalPages} onClick={() => filter('page',String(page+1))}><ChevronRight size={16}/></MotionButton></div></footer>
+  return <main className={selected ? "service-applications staff-service-detail-page" : "service-applications staff-service-list-page"} aria-busy={loading || busy}>
+    {selected && <nav className="service-detail-navigation" aria-label="Điều hướng hồ sơ"><Link to={listUrl}><ArrowLeft size={16} aria-hidden="true" />Danh sách hồ sơ</Link><UIButton variant="secondary" disabled={loading || busy} onClick={() => setRevision(v => v + 1)}><RefreshCw size={16} aria-hidden="true" />Làm mới</UIButton></nav>}
+    <div className="service-applications-heading"><h1 ref={pageTop} tabIndex={-1}>{selected ? `Hồ sơ dịch vụ #${selected}` : 'Xét duyệt hồ sơ cung cấp dịch vụ'}</h1></div>
+    <p>Nhân viên và quản trị viên đều có thể xem tài liệu và xét duyệt các hồ sơ chờ xử lý.</p>
+    {!selected ? <StaffListPanel title="Hồ sơ dịch vụ" description="Theo dõi và xét duyệt hồ sơ của nhà cung cấp" loading={loading || busy} onReload={() => setRevision(v => v + 1)}>
+      <StaffListFilters label="Lọc hồ sơ theo trạng thái" value={activeStatus} options={statusFilters.map(value => ({ value, label: value === 'ALL' ? 'Tất cả' : status[value], tone: ({ ALL: 'all', APPROVED: 'completed', PENDING: 'review', NEEDS_SUPPLEMENT: 'supplement', REJECTED: 'removed', CANCELLED: 'neutral' })[value], count: loading || error ? '—' : value === 'ALL' ? rows.length : rows.filter(item => item.status === value).length }))} onChange={value => setParams(previous => {
+        const next = new URLSearchParams(previous);
+        if (value === 'ALL') next.delete('status'); else next.set('status', value);
+        return next;
+      })} />
+      {error && <p role="alert" className="staff-report-error">{error}</p>}
+      {loading ? <p role="status" className="staff-report-empty">Đang tải hồ sơ...</p> : <>
+        {!visibleRows.length && !error && <p role="status" className="staff-report-empty">{rows.length ? 'Không có hồ sơ ở trạng thái này.' : 'Chưa có hồ sơ dịch vụ.'}</p>}
+        <div className="staff-list-table-wrap" role="region" aria-label="Bảng hồ sơ dịch vụ, cuộn ngang để xem đủ thông tin" tabIndex={0}><table className="staff-list-table"><thead><tr><th>Hồ sơ / Dịch vụ</th><th>Người đăng ký</th><th>Người duyệt</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>{visibleRows.map(row => <tr key={row.registrationId}><td><strong>#{row.registrationId} · {row.serviceName}</strong><StaffListTag>{row.categoryName}</StaffListTag></td><td>{row.applicantName}</td><td>{row.reviewerName || 'Chưa xét duyệt'}</td><td><StaffListStatus label={status[row.status] || row.status} tone={({ APPROVED: 'completed', PENDING: 'pending', NEEDS_SUPPLEMENT: 'explanation', REJECTED: 'removed', CANCELLED: 'neutral' })[row.status]} /></td><td>{time(row.createdAt)}</td><td><StaffListOpen to={`/staff/service-applications?id=${row.registrationId}${activeStatus === "ALL" ? "" : `&status=${activeStatus}`}`}>Xem hồ sơ</StaffListOpen></td></tr>)}</tbody></table></div>
+      </>}
+    </StaffListPanel> : <>
+    {error && <p role="alert" className="service-error">{error}</p>}
+    {loading ? <p role="status">Đang tải hồ sơ...</p> : row && <>
+      <section className="service-application-detail"><header className="service-application-title"><h2>{row.serviceName}</h2><div className="service-application-category"><span>Danh mục đăng ký</span><strong style={serviceCategoryStyle(row.categoryName)}>{row.categoryName || 'Chưa có danh mục'}</strong></div><p className="service-application-meta"><StatusBadge tone="info" label={textValue(row.operation || 'CREATE')} />{statusBadge(row.status)}</p></header>
+        {row.resubmissionNote && <div className="service-change-note"><strong>Lý do thay đổi</strong><p className="service-text">{row.resubmissionNote}</p></div>}
+        <div className={`service-application-overview${row.hasImage ? '' : ' without-image'}`}>
+        {row.hasImage && <ServiceGallery key={row.registrationId + "-" + row.revision} application={row} alt={row.serviceName} />}
+        <dl className="service-application-facts">{[
+          ['Người đăng ký', <>{row.applicantName || 'Chưa cập nhật'} (tài khoản #{row.applicantId})</>],
+          ['Liên hệ', [row.contactPhone, row.contactEmail].filter(Boolean).join(' · ') || 'Chưa cập nhật'],
+          ['Khu vực', serviceAreaText(row) || 'Chưa cập nhật'],
+          ['Giá', <ServicePrice service={row} />],
+          ['Ngày gửi', time(row.createdAt)],
+          ['Mô tả', row.description || 'Chưa cập nhật'],
+        ].map(([label, value]) => <div key={label} className={label === 'Mô tả' ? 'service-fact-description' : undefined}><dt>{label}</dt><dd className={label === 'Mô tả' ? 'service-text' : undefined}>{value}</dd></div>)}</dl>
+        </div>
+        {row.targetServiceId && row.publicEligible && <Link className="service-app-action service-public-compare" to={'/services/detail?id=' + row.targetServiceId} target="_blank"><Eye size={16} aria-hidden="true" />Xem bản đang công khai để đối chiếu</Link>}
+        <h3 className="service-documents-heading">Tài liệu xác minh</h3>{!row.documents.length && <p>Hồ sơ không có tài liệu.</p>}<div className="service-review-documents">{row.documents.map(doc => <ReviewDocument key={row.registrationId + '-' + row.revision + '-' + doc.documentId} applicationId={row.registrationId} doc={doc} onError={setError} />)}</div>
+      </section>
+      {row.operation === 'DELETE' ? <section className="service-delete-banner" role="note"><h2>Đề nghị xóa / ngừng công khai dịch vụ</h2><p>Dịch vụ sẽ ngừng hiển thị công khai sau khi yêu cầu được duyệt. Không có nội dung thay thế để đối chiếu.</p></section> : detail.currentListing && row.operation !== 'CREATE' && <section><h2>Đối chiếu nội dung đề nghị</h2><p>Bản dịch vụ hiện tại: phiên bản {detail.currentListing.revision}. Các ô thay đổi được tô vàng nhạt.</p><div className="service-table-wrap" role="region" aria-label="Đối chiếu nội dung dịch vụ, cuộn ngang để xem đủ thông tin" tabIndex={0}><table className="service-comparison"><colgroup><col style={{ width: '20%' }} /><col style={{ width: '40%' }} /><col style={{ width: '40%' }} /></colgroup><thead><tr><th>Thông tin</th><th>Hiện tại</th><th>Đề nghị</th></tr></thead><tbody>{[['serviceName','Tên dịch vụ'],['pricingType','Loại giá'],['price','Giá'],['priceUnit','Đơn vị tính'],['description','Mô tả'],['serviceArea','Khu vực chuẩn'],['customServiceAreas','Khu vực khác']].map(([key,label]) => { const before = comparisonValue(detail.currentListing, key), after = comparisonValue(row, key); return <tr key={key}><th scope="row">{label}</th><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={detail.currentListing} /> : before}</td><td className={`service-text${before !== after ? ' is-changed' : ''}`}>{key === 'price' ? <ServicePrice service={row} /> : after}</td></tr>; })}</tbody></table></div></section>}
+      {row.status === 'PENDING' && row.applicantId === user.userId && <p>Hồ sơ của bạn cần được một nhân viên hoặc quản trị viên khác xét duyệt.</p>}
+      {row.status === 'PENDING' && row.applicantId !== user.userId && <section className="service-review-panel"><h2>Quyết định xét duyệt</h2><p className="service-review-intro">Chọn cách xử lý hồ sơ. Nhận xét của bạn sẽ được hiển thị cho người đăng ký.</p><form noValidate onSubmit={review}><fieldset disabled={busy}>
+        <fieldset className="service-review-choices" aria-describedby={fieldErrors.decision ? 'service-decision-error' : undefined}><legend>Hướng xử lý <span className="service-required">*</span></legend>
+          {reviewChoices.map(({ value, label, description }, index) => <UIField key={value} className={`service-review-choice${decision === value ? ' is-selected' : ''}`}>
+            <input ref={index === 0 ? decisionInput : undefined} type="radio" name="reviewDecision" value={value} checked={decision === value} aria-invalid={!!fieldErrors.decision} aria-describedby={fieldErrors.decision ? 'service-decision-error' : undefined} onChange={() => { setDecision(value); setFieldErrors({}); }} /><span><strong>{label}</strong><small>{description}</small></span>
+          </UIField>)}
+        </fieldset>
+        {fieldErrors.decision && <p id="service-decision-error" className="service-review-error" role="alert">{fieldErrors.decision}</p>}
+        {decision && <>
+          {decision !== 'APPROVE' && <UIField className="service-review-reason"><span>{reasonLabel} <span className="service-required">*</span></span><textarea ref={reasonInput} required minLength={10} maxLength={2000} rows={4} value={reason} aria-invalid={!!fieldErrors.reason} aria-describedby="service-reason-hint" placeholder={decision === 'SUPPLEMENT' ? 'Ví dụ: Bổ sung giấy phép kinh doanh rõ nét và cập nhật khu vực phục vụ cụ thể.' : decision === 'REJECT' ? 'Nêu rõ thông tin hoặc tài liệu không đáp ứng và lý do hồ sơ bị từ chối.' : 'Ghi nhận nội dung và tài liệu đã kiểm tra, căn cứ chấp nhận hồ sơ.'} onChange={e => { setReason(e.target.value); setFieldErrors(previous => ({ ...previous, reason: validateServiceReview(decision, e.target.value).reason })); }} /><small id="service-reason-hint" className={fieldErrors.reason ? 'service-review-error' : 'service-review-hint'} role={fieldErrors.reason ? 'alert' : undefined}>{fieldErrors.reason || `${decision === 'SUPPLEMENT' ? 'Nêu rõ phần thông tin cần sửa, tài liệu cần bổ sung. ' : ''}Từ 10 đến 2000 ký tự · Đã nhập: ${reason.trim().length}/2000`}</small></UIField>}
+          <p className="service-review-effect">{decision === 'SUPPLEMENT' ? 'Hồ sơ chuyển sang “Cần bổ sung”. Người đăng ký có thể chỉnh sửa và nộp lại trên cùng hồ sơ.' : decision === 'REJECT' ? 'Hồ sơ bị từ chối và người đăng ký sẽ nhận được lý do bên trên. Các dịch vụ đang công khai được giữ nguyên.' : row.operation === 'DELETE' ? 'Duyệt sẽ ngừng công khai dịch vụ này. Các dịch vụ khác được giữ nguyên.' : row.operation === 'UPDATE' ? 'Thông tin mới sẽ thay thế bản dịch vụ đang công khai sau khi duyệt.' : 'Duyệt sẽ cấp quyền cung cấp dịch vụ và công khai dịch vụ đủ điều kiện.'}</p>
         </>}
-      </section><div className="sa-bottom-note"><LockKeyhole size={15}/>Tài liệu hồ sơ chỉ phục vụ thẩm định nội bộ. Quyền cung cấp và nội dung công khai được xét duyệt riêng.</div>
+        <div className="service-review-actions"><UIButton className={`service-review-submit${decision === 'REJECT' ? ' is-reject' : ''}`} type="submit" disabled={busy || Object.keys(validateServiceReview(decision, reason)).length > 0} aria-busy={busy}>{busy && <LoaderCircle className="service-review-spinner" size={16} aria-hidden="true" />}{busy ? 'Đang lưu...' : submitLabel}</UIButton></div>
+      </fieldset></form></section>}
+      {row.requestedChanges && <section><h2>Yêu cầu bổ sung</h2><p className="service-text">{row.requestedChanges}</p><p>Phiên bản {row.revision} · Yêu cầu lúc {time(row.supplementRequestedAt)}</p>{row.resubmittedAt && <><p>Lần nộp lại gần nhất: {time(row.resubmittedAt)}</p><p className="service-text">{row.resubmissionNote}</p></>}</section>}
+      {(row.reviewedAt || row.status === 'NEEDS_SUPPLEMENT') && <section className="service-review-result" role="status">
+<h2>Kết quả xét duyệt</h2><div className="service-result-heading">{statusBadge(row.status === 'APPROVED' && row.listingDecision === 'REJECT' ? 'REJECTED' : row.status)}<span>{row.reviewerName || detail.history[0]?.actor || 'Nhân viên xét duyệt'} · {time(row.status === 'NEEDS_SUPPLEMENT' ? row.supplementRequestedAt : row.reviewedAt)}</span></div>
+<div className="service-result-note"><strong>Nhận xét</strong><p className="service-text">{(row.status === 'NEEDS_SUPPLEMENT' ? row.requestedChanges : row.reasonNote) || 'Không có nhận xét.'}</p>{row.status === 'APPROVED' && row.listingDecision === 'REJECT' && <p>Đã duyệt quyền cung cấp dịch vụ; nội dung dịch vụ chưa được chấp nhận.</p>}</div>
+<dl className="service-result-facts"><dt>Nhà cung cấp <small>#{row.providerId}</small></dt><dd><StatusBadge status={row.capabilityActive ? 'ACTIVE' : 'INACTIVE'} label={row.capabilityActive ? 'Quyền đang hoạt động' : 'Chưa có / Đã ngừng quyền'} /></dd><dt>Dịch vụ {row.serviceId && <small>#{row.serviceId}</small>}</dt><dd><StatusBadge status={row.serviceState || 'DRAFT'} label={row.serviceId ? textValue(row.serviceState) : 'Chưa tạo dịch vụ công khai'} /></dd></dl>
+{row.publicEligible && <Link className="service-app-action service-public-link" to={'/services/detail?id=' + row.serviceId} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" />Xem dịch vụ công khai</Link>}
+</section>}
+      <section><h2>Lịch sử xử lý</h2>{!detail.history.length && <p>Chưa có lịch sử xử lý.</p>}<ol className="service-review-timeline">{detail.history.map(item => <li key={item.id}><div><strong>{item.actor || 'Hệ thống'}</strong><span>{textValue(item.action)}</span></div><time>{time(item.time)}</time>{item.reason && <p className="service-text">{historyNote(item.reason)}</p>}</li>)}</ol></section>
     </>}
-    {selected && (loading ? <div className="sa-empty sa-panel" role="status"><LoaderCircle className="spin" size={30}/><h3>Đang tải hồ sơ</h3></div> : row && <>
-      {saved && <div className="sa-saved" role="status"><CheckCircle2 size={19}/>Đã lưu quyết định xét duyệt. Kết quả hồ sơ đã được cập nhật.</div>}
-      <div className="sa-detail-layout"><div className="sa-detail-main">
-        <section className="sa-panel"><PanelHeading icon={BriefcaseBusiness} title="Thông tin dịch vụ" subtitle="Nội dung do người đăng ký cung cấp"/><span className="sa-category" data-category={serviceCategoryKind(row.categoryName)}><ServiceCategoryIcon name={row.categoryName} size={16}/>{row.categoryName || 'Chưa có danh mục'}</span><h2 className="sa-detail-title">{row.serviceName}</h2><div className="sa-proposal-meta"><span className="sa-operation">{operationLabel(row.operation)}</span>{row.targetServiceId && <span>Dịch vụ #{row.targetServiceId} · Phiên bản dịch vụ {row.serviceRevision ?? 0}</span>}<span>Phiên bản hồ sơ {row.revision ?? 0}</span></div>{row.targetServiceId && row.publicEligible && <Link className="sa-button sa-secondary sa-compare" to={`/services/detail?id=${row.targetServiceId}`} target="_blank" rel="noopener noreferrer">Xem bản đang công khai để đối chiếu<ArrowRight size={16}/></Link>}{row.hasImage && <div className="sa-gallery"><ServiceGallery key={`${row.registrationId}-${row.revision}`} application={row} alt={row.serviceName}/></div>}<div className="sa-fact-strip"><div><span>Giá đăng ký</span><strong>{serviceApplicationPrice(row)}</strong></div><div><span><MapPin size={13}/>Khu vực phục vụ</span><strong>{row.serviceArea || 'Chưa có thông tin'}</strong></div></div><h3 className="sa-label">MÔ TẢ DỊCH VỤ</h3><p className="sa-description">{row.description || 'Chưa có mô tả.'}</p></section>
-        {(row.requestedChanges || row.resubmittedAt || row.resubmissionNote) && <section className="sa-panel"><PanelHeading icon={Info} title="Bổ sung & thay đổi hồ sơ"/>{row.requestedChanges && <><h3 className="sa-label">YÊU CẦU BỔ SUNG</h3><p className="sa-description">{row.requestedChanges}</p><p className="sa-field-hint">Yêu cầu lúc {time(row.supplementRequestedAt)}{row.status === 'NEEDS_SUPPLEMENT' && row.reviewerName && ' · ' + row.reviewerName}</p></>}{row.resubmittedAt && <p className="sa-field-hint">Lần nộp lại gần nhất: {time(row.resubmittedAt)}</p>}{row.resubmissionNote && <><h3 className="sa-label">{row.resubmittedAt ? 'NỘI DUNG NỘP LẠI' : 'LÝ DO THAY ĐỔI'}</h3><p className="sa-description">{row.resubmissionNote}</p></>}</section>}
-        <section className="sa-panel"><PanelHeading icon={UserRound} title="Người đăng ký & liên hệ"/><div className="sa-applicant"><span>{(row.applicantName || '?').trim().charAt(0).toLocaleUpperCase('vi')}</span><div><h3>{row.applicantName}</h3><small>Tài khoản #{row.applicantId}</small></div></div><dl className="sa-info-grid"><div><dt>Số điện thoại</dt><dd>{row.contactPhone || 'Chưa có thông tin'}</dd></div><div><dt>Email liên hệ</dt><dd>{row.contactEmail || 'Không cung cấp'}</dd></div><div><dt>Ngày gửi hồ sơ</dt><dd>{time(row.createdAt)}</dd></div><div><dt>Mã hồ sơ</dt><dd>DV-{row.registrationId}</dd></div></dl></section>
-        <section className="sa-panel"><PanelHeading icon={FileCheck2} title="Tài liệu xác minh" subtitle={`${row.documents.length} tài liệu đã được gửi kèm hồ sơ`}/><Notice><strong>Bảo mật tài liệu</strong><p>Chỉ sử dụng giấy tờ để đối chiếu và thẩm định. Tài liệu không hiển thị trong danh sách dịch vụ công khai.</p></Notice><div className="sa-document-list">{row.documents.map(doc => <div className="sa-document" key={doc.documentId}><span><FileText size={22}/></span><div><strong title={doc.name}>{serviceFileName(doc.name)}</strong><small>Tài liệu do người đăng ký gửi</small></div><MotionButton className="sa-button sa-secondary" disabled={!!downloadId} aria-label={`Tải tài liệu ${doc.name}`} onClick={() => download(doc)}>{downloadId === doc.documentId ? <LoaderCircle className="spin" size={16}/> : <Download size={16}/>}Tải xuống</MotionButton></div>)}{!row.documents.length && <p className="sa-muted">Hồ sơ chưa có tài liệu đính kèm.</p>}</div></section>
-        <section className="sa-panel"><PanelHeading icon={Clock3} title="Lịch sử xử lý"/><ol className="sa-history">{detail.history.map(item => <li key={item.id}><span/><div><strong>{({SUBMITTED:'Đã gửi hồ sơ',APPROVED:'Đã phê duyệt quyền cung cấp',REJECTED:'Đã từ chối',NEEDS_SUPPLEMENT:'Yêu cầu bổ sung',REQUESTED_SUPPLEMENT:'Yêu cầu bổ sung',RESUBMITTED:'Đã nộp lại hồ sơ'})[item.action] || item.action}</strong><p>{item.actor} · {time(item.time)}</p>{item.reason && <blockquote>{item.reason}</blockquote>}</div></li>)}</ol>{!detail.history.length && <p className="sa-muted">Chưa có lịch sử xử lý.</p>}</section>
-      </div><aside className="sa-decision-column"><section className="sa-panel sa-decision"><PanelHeading icon={ShieldCheck} title={row.reviewedAt ? 'Kết quả thẩm định' : 'Quyết định thẩm định'}/><div className="sa-state-row"><span>Trạng thái hồ sơ</span><Status value={row.status}/></div>
-        {row.status === 'PENDING' && row.applicantId !== user.userId && <form onSubmit={review} noValidate><fieldset disabled={busy || stale}>
-          <label htmlFor="sa-capability">1. {isChange ? 'Hướng xử lý yêu cầu' : 'Quyền cung cấp / Hướng xử lý'} <span>*</span></label><p className="sa-field-hint">{isChange ? operationLabel(row.operation) : 'Xét quyền cung cấp hoặc trả hồ sơ để bổ sung.'}</p><select id="sa-capability" required value={capability} onChange={e => {const value = e.target.value; setCapability(value); if(isChange || value === 'REJECT') setListing(value === 'SUPPLEMENT' ? '' : value); else if(value === 'SUPPLEMENT') setListing(''); setError('');}}><option value="">Chọn quyết định</option><option value="APPROVE">{isChange ? 'Duyệt yêu cầu' : 'Cấp quyền cung cấp dịch vụ'}</option><option value="SUPPLEMENT">Yêu cầu bổ sung</option><option value="REJECT">{isChange ? 'Từ chối yêu cầu' : 'Từ chối cấp quyền'}</option></select>
-          {!supplement && !isChange && <><label htmlFor="sa-listing">2. Nội dung dịch vụ <span>*</span></label><p className="sa-field-hint">Chỉ công khai khi tài khoản đã được cấp quyền.</p><select id="sa-listing" required value={listing} onChange={e => {setListing(e.target.value); setError('');}}><option value="">Chọn quyết định</option><option value="APPROVE" disabled={capability !== 'APPROVE'}>Duyệt và công khai dịch vụ</option><option value="REJECT">Từ chối công khai</option></select></>}
-          <label htmlFor="sa-reason">{reasonLabel}{needsReason && <span> *</span>}</label><textarea id="sa-reason" required={needsReason} minLength={needsReason ? 10 : undefined} maxLength={2000} rows={5} value={reason} aria-describedby="sa-reason-hint" onChange={e => {setReason(e.target.value); setError('');}} placeholder={supplement ? 'Nêu rõ thông tin cần sửa và tài liệu cần bổ sung...' : needsReason ? 'Nêu rõ căn cứ và lý do từ chối...' : 'Không bắt buộc khi duyệt toàn bộ hồ sơ.'}/><div id="sa-reason-hint" className="sa-reason-hint"><span>{needsReason ? 'Từ 10 đến 2.000 ký tự' : 'Tối đa 2.000 ký tự · Không bắt buộc'}</span><span>{reason.length}/2.000</span></div><Notice>{effect(capability, listing)}</Notice><MotionButton className="sa-button sa-primary sa-full" type="submit"><Check size={17}/>Kiểm tra & lưu quyết định</MotionButton>
-        </fieldset></form>}
-        {row.status === 'PENDING' && row.applicantId === user.userId && <Notice>Hồ sơ của bạn cần được một Staff hoặc Admin khác xét duyệt.</Notice>}
-        {row.status === 'NEEDS_SUPPLEMENT' && <Notice>Hồ sơ đang cần bổ sung. Chưa thể ra quyết định xét duyệt ở trạng thái này.</Notice>}
-        {row.reviewedAt && row.status !== 'NEEDS_SUPPLEMENT' && <div className="sa-review-result"><p className="sa-description">{row.status === 'REJECTED' ? 'Hồ sơ đã bị từ chối.' : row.listingDecision === 'REJECT' ? 'Đã cấp quyền; nội dung đề nghị chưa được chấp nhận.' : row.operation === 'DELETE' ? 'Đã duyệt yêu cầu xóa dịch vụ.' : row.operation === 'UPDATE' ? 'Đã duyệt cập nhật dịch vụ.' : 'Hồ sơ đã được duyệt.'}</p><dl className="sa-result-facts"><dt>Quyền cung cấp</dt><dd>{decisionLabel(row.capabilityDecision)}</dd><dt>{row.operation === 'DELETE' ? 'Yêu cầu xóa' : 'Nội dung dịch vụ'}</dt><dd>{decisionLabel(row.listingDecision)}</dd><dt>Người xét duyệt</dt><dd>{row.reviewerName || 'Chưa có thông tin'}</dd><dt>Ngày xử lý</dt><dd>{time(row.reviewedAt)}</dd><dt>Quyền hiện tại</dt><dd>{row.capabilityActive ? 'Đang hoạt động' : 'Chưa có / Đã ngừng'}</dd>{row.providerId && <><dt>Nhà cung cấp</dt><dd>#{row.providerId}</dd></>}{row.serviceId && <><dt>Dịch vụ</dt><dd>#{row.serviceId} · {row.serviceState}</dd></>}</dl><h3>Nhận xét xét duyệt</h3><p className="sa-description">{row.reasonNote || 'Không có nhận xét.'}</p>{row.publicEligible ? <Link className="sa-button sa-primary sa-full" to={`/services/detail?id=${row.serviceId}`}>Xem dịch vụ công khai<ArrowRight size={16}/></Link> : <Notice>Dịch vụ chưa đủ điều kiện hiển thị công khai.</Notice>}</div>}
-      </section><div className="sa-help"><ShieldCheck size={19}/><p><strong>{isChange ? 'Thẩm định thay đổi dịch vụ' : 'Hai quyết định độc lập'}</strong>{isChange ? 'Bản dịch vụ công khai chỉ thay đổi sau khi yêu cầu được duyệt. Từ chối không thu hồi quyền hiện có.' : 'Cấp quyền cho người cung cấp không đồng nghĩa nội dung dịch vụ được công khai. Hãy kiểm tra cả hai trước khi lưu.'}</p></div></aside></div>
-    </>)}
-    <AnimatePresence>{confirmation && <Modal title="Xác nhận quyết định xét duyệt" className="sa-confirm-modal" maxWidth="580px" closeOnEscape={!busy} closeOnBackdrop={false} onClose={() => {if(!busy) setConfirmation(null);}} footer={<div className="sa-confirm-footer"><MotionButton className="sa-button sa-secondary" disabled={busy} onClick={() => setConfirmation(null)}>Quay lại chỉnh sửa</MotionButton><MotionButton className={`sa-button ${confirmation.capability === 'REJECT' ? 'sa-danger' : 'sa-primary'}`} disabled={busy} onClick={saveDecision}>{busy ? <LoaderCircle className="spin" size={16}/> : <Check size={16}/>} {busy ? 'Đang lưu...' : 'Xác nhận lưu quyết định'}</MotionButton></div>}><div className="sa-confirm-content"><span className="sa-id">DV-{row?.registrationId}</span><h2>{row?.serviceName}</h2><dl><dt>Loại yêu cầu</dt><dd>{operationLabel(row?.operation)}</dd><dt>Phiên bản hồ sơ</dt><dd>{confirmation.revision}</dd><dt>{isChange || confirmation.capability === 'SUPPLEMENT' ? 'Hướng xử lý' : 'Quyền cung cấp dịch vụ'}</dt><dd>{decisionLabel(confirmation.capability)}</dd>{confirmation.capability !== 'SUPPLEMENT' && <><dt>{row?.operation === 'DELETE' ? 'Yêu cầu xóa' : 'Nội dung dịch vụ'}</dt><dd>{decisionLabel(confirmation.listing)}</dd></>}</dl><h3>Nhận xét gửi người đăng ký</h3><p className="sa-description">{confirmation.reason || 'Đã kiểm tra và duyệt thành công.'}</p><Notice>{effect(confirmation.capability, confirmation.listing)}</Notice>{error && <Notice error>{error}</Notice>}</div></Modal>}</AnimatePresence>
-  </div>;
+    </>}
+  </main>;
 }

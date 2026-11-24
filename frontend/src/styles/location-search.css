@@ -1,0 +1,17 @@
+.location-search-form { display: grid; gap: .75rem; }
+.location-search-form p { margin: 0; }
+.location-search-form label { display: grid; gap: .35rem; color: #334155; font-weight: 600; }
+.location-search-form input,
+.location-search-form textarea {
+  width: 100%;
+  padding: .65rem .75rem;
+  border: 1px solid #94a3b8;
+  border-radius: .5rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 400;
+}
+.location-search-form :is(input, textarea):focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.location-search-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.accommodation-freshness { color: #92400e; font-size: .875rem; }

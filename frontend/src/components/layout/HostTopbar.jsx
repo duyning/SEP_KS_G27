@@ -1,3 +1,4 @@
+import UIButton from '../common/Button.jsx';
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, ExternalLink, LogOut, Menu, User, UserRound } from 'lucide-react';
@@ -36,7 +37,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
   return (
     <header className="host-topbar" role="banner">
       <div className="topbar-left">
-        <button
+        <UIButton
           type="button"
           id="btnToggleSidebarMobile"
           className="btn-toggle-sidebar"
@@ -44,7 +45,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
           onClick={onToggleSidebar}
         >
           <Menu size={22} />
-        </button>
+        </UIButton>
         <div className="topbar-title-wrap">
           <h1 className="topbar-title">{title}</h1>
           <div className="topbar-status-chip">
@@ -85,7 +86,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
 
         {/* Direct Logout Button */}
         {user && (
-          <button
+          <UIButton
             type="button"
             className="btn-host-topbar-logout"
             title="Đăng xuất khỏi tài khoản Chủ trọ"
@@ -96,7 +97,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 12px',
+              padding: 'var(--space-2) var(--space-3)',
               borderRadius: '10px',
               border: '1px solid #fecdd3',
               backgroundColor: '#fff1f2',
@@ -108,13 +109,13 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
           >
             <LogOut size={16} />
             <span className="hide-mobile">{leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-          </button>
+          </UIButton>
         )}
 
         {/* Host User Dropdown */}
         {user && (
           <div className="host-user-menu-wrapper" ref={popoverRef} style={{ position: 'relative' }}>
-            <button
+            <UIButton
               type="button"
               className="host-user-btn"
               id="btnHostUserDropdown"
@@ -124,8 +125,8 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '6px 12px',
+                gap: 'var(--space-2)',
+                padding: '6px var(--space-3)',
                 borderRadius: '10px',
                 border: '1px solid #e2e8f0',
                 backgroundColor: '#ffffff',
@@ -141,7 +142,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                   width: '28px',
                   height: '28px',
                   borderRadius: '50%',
-                  background: '#0d9488',
+                  background: '#0f766e',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -156,12 +157,12 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                 <span className="host-user-name" style={{ display: 'block', fontSize: '13px', lineHeight: 1.2 }}>
                   {user.fullName || user.email}
                 </span>
-                <span className="host-user-role" style={{ display: 'block', fontSize: '11px', color: '#64748b', fontWeight: 400 }}>
+                <span className="host-user-role" style={{ display: 'block', fontSize: '11px', color: 'var(--ui-muted)', fontWeight: 400 }}>
                   Chủ trọ đối tác
                 </span>
               </div>
-              <ChevronDown size={14} style={{ color: '#94a3b8' }} />
-            </button>
+              <ChevronDown size={14} style={{ color: 'var(--ui-muted)' }} />
+            </UIButton>
 
             {/* Dropdown Popover */}
             {userMenuOpen && (
@@ -177,15 +178,15 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                   borderRadius: '10px',
                   border: '1px solid #e2e8f0',
                   boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-                  padding: '8px 0',
+                  padding: 'var(--space-2) 0',
                   zIndex: 100,
                 }}
               >
-                <div className="popover-header" style={{ padding: '8px 14px 10px', borderBottom: '1px solid #e2e8f0' }}>
+                <div className="popover-header" style={{ padding: 'var(--space-2) 14px 10px', borderBottom: '1px solid #e2e8f0' }}>
                   <div className="popover-name" style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
                     {user.fullName || 'Chủ trọ'}
                   </div>
-                  <div className="popover-phone" style={{ fontSize: '12px', color: '#64748b' }}>
+                  <div className="popover-phone" style={{ fontSize: '12px', color: 'var(--ui-muted)' }}>
                     {user.phoneNumber || user.email}
                   </div>
                 </div>
@@ -194,7 +195,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                     <Link
                       to="/profile"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '13px', color: '#0f172a', textDecoration: 'none' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) 14px', fontSize: '13px', color: '#0f172a', textDecoration: 'none' }}
                     >
                       <UserRound size={15} /> Hồ sơ cá nhân
                     </Link>
@@ -203,14 +204,14 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                     <Link
                       to="/"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '13px', color: '#0f172a', textDecoration: 'none' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) 14px', fontSize: '13px', color: '#0f172a', textDecoration: 'none' }}
                     >
                       <ExternalLink size={15} /> Xem trang công khai
                     </Link>
                   </li>
                   <li className="popover-divider" style={{ height: '1px', background: '#e2e8f0', margin: '6px 0' }} />
                   <li>
-                    <button
+                    <UIButton
                       type="button"
                       id="btnPopoverLogout"
                       className="btn-popover-logout"
@@ -222,9 +223,9 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
+                        gap: 'var(--space-2)',
                         width: '100%',
-                        padding: '8px 14px',
+                        padding: 'var(--space-2) 14px',
                         fontSize: '13px',
                         color: '#e11d48',
                         fontWeight: 600,
@@ -235,7 +236,7 @@ export default function HostTopbar({ title = 'Bảng điều khiển', onToggleS
                       }}
                     >
                       <LogOut size={15} /> {leaving ? 'Đang đăng xuất...' : 'Đăng xuất'}
-                    </button>
+                    </UIButton>
                   </li>
                 </ul>
               </div>

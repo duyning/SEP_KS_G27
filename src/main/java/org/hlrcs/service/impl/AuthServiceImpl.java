@@ -15,6 +15,7 @@ import org.hlrcs.entity.enums.UserRole;
 import org.hlrcs.entity.enums.UserStatus;
 import org.hlrcs.exception.AppException;
 import org.hlrcs.exception.BadRequestException;
+import org.hlrcs.exception.FieldValidationException;
 import org.hlrcs.exception.ResourceNotFoundException;
 import org.hlrcs.repository.UserCapabilityRepository;
 import org.hlrcs.repository.UserRepository;
@@ -23,6 +24,8 @@ import org.hlrcs.security.GoogleTokenVerifier;
 import org.hlrcs.security.GoogleUserInfo;
 import org.hlrcs.security.JwtTokenProvider;
 import org.hlrcs.service.AuthService;
+import org.hlrcs.service.RegistrationContact;
+import org.hlrcs.service.RegistrationOtpService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +36,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -47,51 +51,61 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final RegistrationOtpService registrationOtp;
+    private final org.hlrcs.service.PhoneVerificationService phoneVerification;
 
     public AuthServiceImpl(UserRepository userRepository,
                            UserCapabilityRepository userCapabilityRepository,
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
                            JwtTokenProvider tokenProvider,
-                           GoogleTokenVerifier googleTokenVerifier) {
+                           GoogleTokenVerifier googleTokenVerifier,
+                           RegistrationOtpService registrationOtp,
+                           org.hlrcs.service.PhoneVerificationService phoneVerification) {
+
         this.userRepository = userRepository;
         this.userCapabilityRepository = userCapabilityRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.registrationOtp = registrationOtp;
+        this.phoneVerification = phoneVerification;
     }
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email đã được sử dụng: " + request.getEmail());
+        boolean hasEmail = request.getEmail() != null && !request.getEmail().isBlank();
+        boolean hasPhone = request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank();
+        if (hasEmail == hasPhone) {
+            throw new FieldValidationException("identifier", "Vui lòng cung cấp một email hoặc một số điện thoại.");
         }
-
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-                throw new BadRequestException("Số điện thoại đã được sử dụng: " + request.getPhoneNumber());
-            }
+        RegistrationContact contact = RegistrationContact.parse(hasPhone ? request.getPhoneNumber() : request.getEmail());
+        if (contact.phone() != hasPhone) {
+            throw new FieldValidationException("identifier", "Email hoặc số điện thoại không hợp lệ.");
         }
-
-        // Mặc định role là USER nếu không chỉ định, chỉ cho phép tự đăng ký USER hoặc ROOM_HOST
-        UserRole assignedRole = request.getRole() != null ? request.getRole() : UserRole.USER;
-        if (assignedRole == UserRole.ADMIN || assignedRole == UserRole.STAFF) {
-            assignedRole = UserRole.USER;
+        if (request.getPassword().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new FieldValidationException("password", "Mật khẩu vượt quá 72 byte.");
         }
+        registrationOtp.consume(contact, request.getVerificationToken());
 
         User user = User.builder()
-                .email(request.getEmail().trim().toLowerCase())
+                .email(contact.accountEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
-                .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
-                .role(assignedRole)
+                .phoneNumber(contact.phone() ? contact.identifier() : null)
+                .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .authProvider("LOCAL")
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser;
+        try {
+            savedUser = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new AppException("Email hoặc số điện thoại đã được sử dụng.", HttpStatus.CONFLICT);
+        }
 
         String token = tokenProvider.generateTokenFromUser(savedUser);
 
@@ -102,6 +116,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(savedUser.getAuthProvider()) || savedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(savedUser.getPhoneVerifiedAt())
                 .role(savedUser.getRole())
                 .status(savedUser.getStatus())
                 .capabilities(List.of())
@@ -135,6 +151,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -148,13 +166,18 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
-        GoogleUserInfo googleUser = googleTokenVerifier.verifyToken(request.idToken());
+        return loginWithVerifiedGoogleUser(googleTokenVerifier.verifyToken(request.idToken()));
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithVerifiedGoogleUser(GoogleUserInfo googleUser) {
         User user = userRepository.findByGoogleSubject(googleUser.subject()).orElse(null);
 
         if (user == null) {
             String email = googleUser.email().trim().toLowerCase(Locale.ROOT);
             if (userRepository.existsByEmail(email)) {
-                throw new AppException("Email này đã thuộc một tài khoản HL-RCS. Hãy dùng phương thức đăng nhập ban đầu hoặc liên hệ hỗ trợ.", HttpStatus.CONFLICT);
+                throw new AppException("Email này đã thuộc một tài khoản NestHub. Hãy dùng phương thức đăng nhập ban đầu hoặc liên hệ hỗ trợ.", HttpStatus.CONFLICT);
             }
 
             String fullName = googleUser.fullName();
@@ -196,6 +219,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -259,6 +284,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(user.getAuthProvider()) || user.getGoogleSubject()!=null)
+                .phoneVerifiedAt(user.getPhoneVerifiedAt())
                 .organization(user.getOrganization())
                 .preferredArea(user.getPreferredArea())
                 .avatar(user.getAvatar())
@@ -272,15 +299,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserProfileResponse updateProfile(UpdateProfileRequest request) {
-        User user = getCurrentUser();
+        User user = userRepository.findForRegistrationUpdate(getCurrentUser().getUserId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName().trim());
         }
 
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank()) {
-            String newPhone = request.getPhoneNumber().trim();
-            if (!newPhone.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumber(newPhone)) {
+            String newPhone = org.hlrcs.service.PhoneVerificationService.normalize(request.getPhoneNumber());
+            if (org.hlrcs.service.PhoneVerificationService.requiresVerification(user, newPhone)) {
+                phoneVerification.consume(user,newPhone);
+            } else if (!newPhone.equals(org.hlrcs.service.PhoneVerificationService.normalize(user.getPhoneNumber()))) {
+                user.setPhoneVerifiedAt(null);
+            }
+            if (userRepository.existsByPhoneNumberInAndUserIdNot(
+                    RegistrationContact.parse(newPhone).phoneVariants(), user.getUserId())) {
                 throw new BadRequestException("Số điện thoại này đã được sử dụng bởi tài khoản khác: " + newPhone);
             }
             user.setPhoneNumber(newPhone);
@@ -305,6 +338,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(updatedUser.getEmail())
                 .fullName(updatedUser.getFullName())
                 .phoneNumber(updatedUser.getPhoneNumber())
+                .googleAccount("GOOGLE".equalsIgnoreCase(updatedUser.getAuthProvider()) || updatedUser.getGoogleSubject()!=null)
+                .phoneVerifiedAt(updatedUser.getPhoneVerifiedAt())
                 .organization(updatedUser.getOrganization())
                 .preferredArea(updatedUser.getPreferredArea())
                 .avatar(updatedUser.getAvatar())

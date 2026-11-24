@@ -1,69 +1,10 @@
-import CommunityNotificationBell from '../components/CommunityNotificationBell.jsx';
 import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
-import {ChevronDown,X,UserRound} from 'lucide-react';
-const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Nhà trọ đã lưu',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
-export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,mobileOpen,accountMenuOpen,announcementOpen,account,onClick,onSubmit,onChange,alert}) {
+import {ChevronDown,UserRound} from 'lucide-react';
+const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Phòng yêu thích',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
+export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,accountMenuOpen,onClick,onSubmit,onChange,alert}) {
 return <div className="prototype-home prototype-profile profile-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
-
-
-  <header className="navbar-wrapper">
-    <div className={`top-announcement ${announcementOpen?'pm-info-open':''}`}><MotionButton type="button" id="profileInfoToggle" className="pm-info-toggle" aria-expanded={announcementOpen} aria-controls="profileInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
-      <div className="container top-announcement-inner" id="profileInformation">
-        <div className="announcement-left">
-          <span className="badge-tag">Hòa Lạc Campus</span>
-          <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
-        </div>
-        <div className="announcement-right">
-          <a href="tel:0912345678" className="contact-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            <span>Hotline hỗ trợ: 0912 345 678</span>
-          </a>
-          <span className="sep">•</span>
-          <span className="status-live"><span className="live-dot"></span>Cập nhật phòng trống hôm nay</span>
-        </div>
-      </div>
-    </div>
-
-    <nav className="main-navbar">
-      <div className="container navbar-container">
-
-        <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">
-          <div className="brand-logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
-          </div>
-        </Link>
-
-
-        <ul id="navMenu" className={`nav-menu ${mobileOpen ? "show" : ""}`}>
-          <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>
-          <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">0</span>)</Link></li>
-          <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
-          <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
-          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
-          <li><Link className="nav-item active" to="/profile">Hồ sơ cá nhân</Link></li><li className="pm-menu-account">{account}</li>
-        </ul>
-
-
-        <div className="nav-actions"><CommunityNotificationBell />{account}</div>
-
-
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
-          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
-        </MotionButton>
-      </div>
-    </nav>
-  </header>
-  {mobileOpen&&<button type="button" className="pm-menu-backdrop pm-menu-dismiss" aria-label="Đóng thực đơn và quay lại hồ sơ"/>}
 
 
   <section className="profile-header-banner" id="profileHeaderBanner">
@@ -82,7 +23,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
           <div className="profile-user-info">
             <div className="profile-name-row">
-              <h1 className="profile-display-name" id="profileDisplayName">{user.fullName || 'Người dùng HL_RCS'}</h1>
+              <h1 className="profile-display-name" id="profileDisplayName">{user.fullName || 'Người dùng NestHub'}</h1>
               <span className="profile-role-badge" id="profileRoleBadge">{roleLabel}</span>
             </div>
             <div className="profile-user-meta">
@@ -98,13 +39,13 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
 
         <div className="profile-header-stats">
-          <Link className="profile-stat-box" title="Xem danh sách nhà trọ đã lưu" to="/favorites">
+          <Link className="profile-stat-box" title="Xem danh sách phòng yêu thích" to="/favorites">
             <div className="profile-stat-icon fav">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
             </div>
             <div>
               <div className="profile-stat-num" id="headerFavCount">0</div>
-              <div className="profile-stat-label">Nhà trọ đã lưu</div>
+              <div className="profile-stat-label">Phòng yêu thích</div>
             </div>
           </Link>
 
@@ -132,12 +73,11 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           <MotionButton type="button" className="pm-account-toggle" id="profileAccountToggle" aria-expanded={accountMenuOpen} aria-controls="profileAccountMenu"><span className="pm-account-icon"><UserRound size={20}/></span><span><small>Quản lý tài khoản</small><strong>{mobileTabLabels[tab]}</strong></span><ChevronDown size={20}/></MotionButton>
           <ul className="profile-nav-menu" id="profileAccountMenu">
             <li id="sidebarHostLinkItem" style={{display:user.role === "ROOM_HOST" || user.role === "ADMIN" ? "block" : "none"}}>
-              <Link className="profile-nav-btn" style={{"textDecoration": "none", "background": "rgba(13, 148, 136, 0.08)", "color": "var(--primary)"}} title="Vào Bảng điều khiển Chủ trọ" to="/host">
+              <Link className="profile-nav-btn" style={{"textDecoration": "none", "background": "rgba(13, 148, 136, 0.08)", "color": "var(--primary)"}} title="Nhà trọ của tôi" to="/host/property">
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                  <span>Bảng điều khiển Chủ trọ</span>
+                  <span>Nhà trọ của tôi</span>
                 </span>
-                <span className="profile-nav-badge" style={{"background": "var(--primary)", "color": "#fff"}}>Host</span>
               </Link>
             </li>
             <li id="sidebarBecomeHostItem" style={{display:user.role === "USER" ? "block" : "none"}}>
@@ -160,7 +100,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <MotionButton type="button" data-tab="favorites" id="navBtnFavorites" className={`profile-nav-btn ${tab === "favorites" ? "active" : ""}`} aria-selected={tab === "favorites"}>
                 <span className="profile-nav-item-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-                  <span>Nhà trọ đã lưu</span>
+                  <span>Phòng yêu thích</span>
                 </span>
                 <span className="profile-nav-badge" id="sidebarFavBadge">0</span>
               </MotionButton>
@@ -272,8 +212,9 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
                   </div>
 
                   <div className="form-field">
-                    <label htmlFor="editPhone">Số điện thoại <span style={{"color": "var(--rose)"}}>*</span></label>
-                    <input type="tel" id="editPhone" className="form-input" placeholder="Ví dụ: 0912345678" required maxLength="20" name="phoneNumber" value={values.phoneNumber} aria-invalid={!!errors.phoneNumber}/>
+                    <label htmlFor="editPhone">Số điện thoại</label>
+                    <input type="tel" id="editPhone" className="form-input" placeholder="Ví dụ: 0912345678" maxLength="20" name="phoneNumber" value={values.phoneNumber} aria-invalid={!!errors.phoneNumber}/>
+                    {user.googleAccount&&<span className="field-hint">Thêm hoặc đổi số điện thoại cần xác minh bằng mã OTP qua SMS.</span>}
                     <span id="errEditPhone" className={`field-error ${errors.phoneNumber || '' ? "show" : ""}`} role="alert">{errors.phoneNumber || ''}</span>
                   </div>
 
@@ -333,7 +274,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
             <div className="profile-card">
               <div className="profile-card-header">
                 <div className="profile-card-title-group">
-                  <h2>Nhà trọ đã lưu của bạn</h2>
+                  <h2>Phòng yêu thích của bạn</h2>
                   <p id="profileFavSummaryText">Xem lại và quản lý các phòng trọ bạn đã đánh dấu yêu thích.</p>
                 </div>
                 <Link className="btn-secondary" style={{"textDecoration": "none"}} to="/favorites">
@@ -438,7 +379,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="security-tips-box">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div className="security-tips-text">
-                  <strong>Khuyến nghị an toàn:</strong> Không chia sẻ mật khẩu hoặc mã xác thực với bất kỳ ai, kể cả người tự xưng là ban quản trị HL_RCS hoặc chủ trọ.
+                  <strong>Khuyến nghị an toàn:</strong> Không chia sẻ mật khẩu hoặc mã xác thực với bất kỳ ai, kể cả người tự xưng là ban quản trị NestHub hoặc chủ trọ.
                 </div>
               </div>
 
@@ -451,7 +392,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="profile-card-header">
                 <div className="profile-card-title-group">
                   <h2>Báo cáo nhà trọ của tôi</h2>
-                  <p id="profileReportsSummaryText">Theo dõi tiến độ kiểm duyệt và xử lý các vấn đề bạn đã phản hồi cho HL_RCS.</p>
+                  <p id="profileReportsSummaryText">Theo dõi tiến độ kiểm duyệt và xử lý các vấn đề bạn đã phản hồi cho NestHub.</p>
                 </div>
                 <Link className="btn-secondary" style={{"textDecoration": "none", "fontSize": "13px"}} to="/search">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -467,7 +408,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           </div>
           <h4 style={{"fontSize": "16px", "fontWeight": "700", "color": "var(--slate-900)", "marginBottom": "6px"}}>Bạn chưa gửi báo cáo nào</h4>
           <p style={{"fontSize": "13.5px", "color": "var(--slate-600)", "maxWidth": "480px", "margin": "0 auto 18px", "lineHeight": "1.5"}}>
-            Khi phát hiện thông tin nhà trọ bị sai giá, địa chỉ không đúng hoặc tin ảo, bạn có thể bấm <strong>"Báo cáo thông tin"</strong> trên trang chi tiết phòng để HL_RCS tiến hành kiểm tra.
+            Khi phát hiện thông tin nhà trọ bị sai giá, địa chỉ không đúng hoặc tin ảo, bạn có thể bấm <strong>"Báo cáo thông tin"</strong> trên trang chi tiết phòng để NestHub tiến hành kiểm tra.
           </p>
           <Link className="btn-primary-action" style={{"textDecoration": "none"}} to="/search">Khám phá phòng trọ Hòa Lạc</Link>
         </div>
@@ -477,7 +418,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <div className="reports-safety-tip-box" style={{"marginTop": "24px", "padding": "14px 18px", "background": "#f0fdfa", "border": "1px solid #ccfbf1", "borderRadius": "12px", "display": "flex", "alignItems": "flex-start", "gap": "12px", "fontSize": "13px", "color": "var(--primary-dark)", "lineHeight": "1.5"}}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{"flexShrink": "0", "color": "var(--primary)"}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <div>
-                  <strong>Chính sách bảo mật người báo cáo:</strong> HL_RCS cam kết không cung cấp danh tính người báo cáo cho chủ trọ. Mọi thông tin phản ánh được đội ngũ kiểm duyệt độc lập đối chiếu thực tế để đảm bảo môi trường thuê trọ an toàn, minh bạch tại Hòa Lạc.
+                  <strong>Chính sách bảo mật người báo cáo:</strong> NestHub cam kết không cung cấp danh tính người báo cáo cho chủ trọ. Mọi thông tin phản ánh được đội ngũ kiểm duyệt độc lập đối chiếu thực tế để đảm bảo môi trường thuê trọ an toàn, minh bạch tại Hòa Lạc.
                 </div>
               </div>
 
@@ -500,19 +441,18 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
       <div className="footer-col col-brand">
         <Link className="nav-brand white" to="/">
           <div className="brand-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
+            <span className="brand-name">NestHub</span>
+            <span className="brand-sub">Kết nối &amp; quản lý nhà trọ</span>
           </div>
         </Link>
         <p className="footer-desc">
           Nền tảng công nghệ kết nối trực tiếp người thuê và chủ nhà trọ tại khu vực ĐH FPT và Khu Công nghệ cao Hòa Lạc. Minh bạch thông tin, cam kết không môi giới.
         </p>
         <div className="footer-socials">
-          <a href="#" className="social-link" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-          <a href="#" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
+          <a href="https://zalo.me/0912345678" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
           <a href="tel:0912345678" className="social-link" aria-label="Hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
         </div>
       </div>
@@ -534,7 +474,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
         <h4 className="footer-col-title">Tiện ích hệ thống</h4>
         <ul className="footer-links">
           <li><Link to="/profile">Hồ sơ cá nhân</Link></li>
-          <li><Link to="/favorites">Nhà trọ đã lưu</Link></li>
+          <li><Link to="/favorites">Phòng yêu thích</Link></li>
           <li><Link to="/search">Tìm kiếm phòng trọ</Link></li>
           <li><a href="index.html#host-section">Hợp tác cho thuê nhà trọ</a></li>
           <li><a href="index.html#features">Quy trình xác minh chính chủ</a></li>
@@ -551,7 +491,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
           📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
         </p>
         <p className="footer-contact-item">
-          ✉️ Email: support@hlrcs.vn
+          ✉️ Email: support@nesthub.vn
         </p>
         <div className="verified-badge-footer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -562,14 +502,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
     <div className="footer-bottom">
       <div className="container footer-bottom-inner">
-        <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
-        <div className="bottom-links">
-          <a href="#">Điều khoản sử dụng</a>
-          <span className="dot">•</span>
-          <a href="#">Chính sách bảo mật</a>
-          <span className="dot">•</span>
-          <a href="#">Quy chế hoạt động</a>
-        </div>
+        <p>© 2026 NestHub. Bản quyền thuộc về nền tảng NestHub.</p>
       </div>
     </div>
   </footer>

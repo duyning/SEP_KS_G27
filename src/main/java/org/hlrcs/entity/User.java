@@ -3,12 +3,14 @@ package org.hlrcs.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hlrcs.entity.enums.UserRole;
 import org.hlrcs.entity.enums.UserStatus;
 
 import java.time.LocalDateTime;
 
 @Entity
+@DynamicUpdate
 @Table(name = "users")
 @Getter
 @Setter
@@ -31,6 +33,8 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    private java.time.Instant phoneVerifiedAt;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -41,6 +45,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private UserStatus status;
+
+    @Column(name = "session_version", nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private long sessionVersion;
 
     @Column(name = "organization", length = 255)
     private String organization;

@@ -2,7 +2,10 @@ package org.hlrcs.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hlrcs.dto.request.ViewingRequests.Create;
+import org.hlrcs.dto.request.ViewingRequests.Cancel;
 import org.hlrcs.dto.request.ViewingRequests.Decision;
+import org.hlrcs.dto.request.ViewingRequests.BatchApproval;
+import org.hlrcs.dto.request.ViewingRequests.ApprovalItem;
 import org.hlrcs.dto.response.ViewingResponses.*;
 import org.hlrcs.entity.Booking;
 import org.hlrcs.entity.RoomType;
@@ -21,6 +24,8 @@ import org.hlrcs.repository.ViewingNotificationRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,20 +33,27 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.EnumSet;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ViewingService {
     private static final ZoneId VIEWING_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final int BOOKING_LEAD_MINUTES = 30;
+    private static final int REVIEW_LEAD_MINUTES = 15;
+    private static final String EXPIRATION_REASON = "Quá hạn xác nhận. Chủ trọ chưa duyệt lịch trước giờ hẹn 15 phút.";
     private static final EnumSet<BookingStatus> OPEN = EnumSet.of(BookingStatus.PENDING, BookingStatus.APPROVED);
 
     private final AuthService auth;
     private final UserRepository users;
     private final RoomTypeRepository roomTypes;
+    private final AccommodationService accommodations;
     private final RoomRepository rooms;
     private final BookingRepository bookings;
     private final ViewingNotificationRepository notifications;
+    private final ApplicationEventPublisher events;
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Viewing create(Create request) {
@@ -108,20 +120,41 @@ public class ViewingService {
             throw new AppException("Bạn đã có yêu cầu xem loại phòng này vào cùng thời điểm.", HttpStatus.CONFLICT);
         }
 
+        requireReviewWindow(booking, LocalDateTime.now(VIEWING_ZONE));
         booking.setScheduledDate(date);
         booking.setContactName(request.contactName().strip());
         booking.setContactPhone(contactPhone(request.contactPhone()));
         booking.setNote(optionalText(request.note()));
+        publishChange(booking);
         return Viewing.from(booking);
     }
 
     @Transactional(readOnly = true)
-    public ViewingPage list(BookingStatus status, int page) {
+    public ViewingPage list(BookingStatus status, int page, String query, String sort) {
         Integer userId = currentId();
         var pageable = page(page, "bookingId");
-        var result = status == null ? bookings.findByRenter_UserId(userId, pageable)
-                : bookings.findByRenter_UserIdAndStatus(userId, status, pageable);
-        return new ViewingPage(result.map(Viewing::from).getContent(), result.hasNext());
+        String q = query == null ? "" : query.strip().toLowerCase(java.util.Locale.ROOT);
+        if (q.length() > 100) throw new BadRequestException("Từ khóa tối đa 100 ký tự.");
+        var ordering = switch (sort == null ? "newest" : sort) {
+            case "newest" -> Sort.by(Sort.Direction.DESC, "bookingId");
+            case "oldest" -> Sort.by("bookingId");
+            case "appointment" -> Sort.by("scheduledDate", "bookingId");
+            default -> throw new BadRequestException("Thứ tự sắp xếp không hợp lệ.");
+        };
+        var result = bookings.searchMine(userId, status, q, PageRequest.of(pageable.getPageNumber(), 20, ordering));
+        var items = result.map(Viewing::from).getContent();
+        var covers = accommodations.publicCoverImages(items.stream().map(Viewing::roomTypeId).distinct().toList());
+        var rooms = new java.util.HashMap<Integer, ViewingRoom>();
+        for (var booking : result.getContent()) {
+            var type = booking.getRoomType();
+            rooms.put(type.getRoomTypeId(), new ViewingRoom(type.getPrice(), type.getAreaSqm(), type.getProperty().getAddress()));
+        }
+        var counts = new java.util.EnumMap<BookingStatus, Long>(BookingStatus.class);
+        for (var row : bookings.countMine(userId)) counts.put((BookingStatus) row[0], ((Number) row[1]).longValue());
+        long upcoming = bookings.countByRenter_UserIdAndStatusAndScheduledDateAfter(userId, BookingStatus.APPROVED, LocalDateTime.now(VIEWING_ZONE));
+        long total = counts.values().stream().mapToLong(Long::longValue).sum();
+        return new ViewingPage(items, result.hasNext(), covers, rooms,
+                new ViewingSummary(counts, upcoming, total - upcoming - counts.getOrDefault(BookingStatus.PENDING, 0L)));
     }
 
     @Transactional(readOnly = true)
@@ -131,8 +164,51 @@ public class ViewingService {
     }
 
     @Transactional
+    public Viewing cancel(Integer id, Cancel request) {
+        var renter = auth.getCurrentUser();
+        if (!bookings.existsByBookingIdAndRenter_UserId(id, renter.getUserId())) throw missing();
+        var booking = bookings.findForDecision(id).orElseThrow(ViewingService::missing);
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new AppException("Chỉ lịch đang chờ xác nhận mới có thể hủy.", HttpStatus.CONFLICT);
+        }
+
+        var now = LocalDateTime.now(VIEWING_ZONE);
+        requireReviewWindow(booking, now);
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setProcessedBy(renter);
+        booking.setProcessedAt(now);
+        booking.setDecisionReason(optionalText(request.reason()));
+        notify(booking, booking.getRoomType().getProperty().getOwner(), Event.CANCELLED,
+                "Người đặt đã hủy lịch xem phòng.");
+        return Viewing.from(booking);
+    }
+
+    @Transactional
     public Viewing decide(Integer id, Decision request) {
+        return decide(id, request, auth.getCurrentUser());
+    }
+
+    @Transactional
+    public List<Viewing> approveBatch(BatchApproval request) {
+        if (!request.from().toLocalDate().equals(request.to().toLocalDate()) || !request.to().isAfter(request.from())) {
+            throw new BadRequestException("Chọn khung giờ hợp lệ trong cùng một ngày.");
+        }
+        if (request.items().stream().map(ApprovalItem::bookingId).distinct().count() != request.items().size()) {
+            throw new BadRequestException("Danh sách có yêu cầu trùng lặp.");
+        }
+        for (var item : request.items()) {
+            var scheduledMinute = item.expectedScheduledDate().withSecond(0).withNano(0);
+            if (scheduledMinute.isBefore(request.from()) || scheduledMinute.isAfter(request.to())) {
+                throw new BadRequestException("Có yêu cầu nằm ngoài khung giờ đã chọn.");
+            }
+        }
         var host = auth.getCurrentUser();
+        return request.items().stream().sorted(Comparator.comparing(ApprovalItem::bookingId))
+                .map(item -> decide(item.bookingId(), new Decision(BookingStatus.APPROVED, null, item.expectedScheduledDate()), host))
+                .toList();
+    }
+
+    private Viewing decide(Integer id, Decision request, User host) {
         // Scope before locking so another host cannot use this endpoint to lock a foreign request.
         if (!bookings.existsByBookingIdAndRoomType_Property_Owner_UserId(id, host.getUserId())) throw missing();
         var booking = bookings.findForDecision(id).orElseThrow(ViewingService::missing);
@@ -152,17 +228,16 @@ public class ViewingService {
         if (request.expectedScheduledDate() != null && !request.expectedScheduledDate().equals(booking.getScheduledDate())) {
             throw new AppException("Khách vừa đổi giờ hẹn. Vui lòng tải lại lịch trước khi phản hồi.", HttpStatus.CONFLICT);
         }
-        var now = LocalDateTime.now(VIEWING_ZONE);
-        if (decision == BookingStatus.APPROVED && !booking.getScheduledDate().isAfter(now)) {
-            throw new AppException("Giờ hẹn đã qua. Bạn có thể từ chối và đề nghị khách gửi lịch mới.", HttpStatus.CONFLICT);
-        }
+        requireReviewWindow(booking, LocalDateTime.now(VIEWING_ZONE));
 
         var type = booking.getRoomType();
         if (decision == BookingStatus.APPROVED
-                && rooms.findFirstByRoomTypeAndPropertyAndStatusOrderByRoomIdAsc(type, type.getProperty(), "VACANT").isEmpty()) {
+                && rooms.findFirstByRoomTypeAndPropertyAndStatusAndPublicVisibleTrueOrderByRoomIdAsc(type, type.getProperty(), "VACANT").isEmpty()) {
             throw new AppException("Loại phòng này đã hết phòng trống. Vui lòng tải lại trước khi xử lý.", HttpStatus.CONFLICT);
         }
 
+        var now = LocalDateTime.now(VIEWING_ZONE);
+        requireReviewWindow(booking, now);
         booking.setStatus(decision);
         booking.setDecisionReason(reason);
         booking.setProcessedBy(host);
@@ -190,6 +265,7 @@ public class ViewingService {
         var notification = notifications.findByNotificationIdAndRecipient_UserId(id, currentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo."));
         notification.setRead(true);
+        events.publishEvent(new ViewingUpdates.Changed(notification.getRecipient().getUserId()));
         return Notification.from(notification);
     }
 
@@ -197,6 +273,12 @@ public class ViewingService {
         notifications.save(ViewingNotification.builder().booking(booking).recipient(recipient)
                 .event(event).content(content + " Nhà trọ: " + booking.getRoomType().getProperty().getName())
                 .createdAt(LocalDateTime.now(VIEWING_ZONE)).build());
+        publishChange(booking);
+    }
+
+    private void publishChange(Booking booking) {
+        events.publishEvent(new ViewingUpdates.Changed(booking.getRenter().getUserId()));
+        events.publishEvent(new ViewingUpdates.Changed(booking.getRoomType().getProperty().getOwner().getUserId()));
     }
 
     private java.util.Optional<Booking> pendingFor(Integer renterId, Integer roomTypeId) {
@@ -211,9 +293,33 @@ public class ViewingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nhà trọ hoặc loại phòng không còn được công khai."));
     }
 
+    @Scheduled(fixedDelayString = "${app.viewing.expiration-interval-ms:5000}",
+               initialDelayString = "${app.viewing.expiration-initial-delay-ms:5000}")
+    @Transactional
+    public void expirePending() {
+        var now = LocalDateTime.now(VIEWING_ZONE);
+        var cutoff = now.plusMinutes(REVIEW_LEAD_MINUTES);
+        var dueIds = bookings.findDueIds(BookingStatus.PENDING, cutoff, PageRequest.of(0, 100));
+        for (Integer id : dueIds.stream().sorted().toList()) {
+            var booking = bookings.findForDecision(id).orElse(null);
+            if (booking == null || booking.getStatus() != BookingStatus.PENDING || booking.getScheduledDate().isAfter(cutoff)) continue;
+
+            booking.setStatus(BookingStatus.CANCELLED);
+            booking.setProcessedAt(now);
+            booking.setDecisionReason(EXPIRATION_REASON);
+            notify(booking, booking.getRenter(), Event.EXPIRED, "Lịch xem phòng đã tự hủy vì quá hạn xác nhận.");
+        }
+    }
+
+    private static void requireReviewWindow(Booking booking, LocalDateTime now) {
+        if (!booking.getScheduledDate().isAfter(now.plusMinutes(REVIEW_LEAD_MINUTES))) {
+            throw new AppException(EXPIRATION_REASON, HttpStatus.CONFLICT);
+        }
+    }
+
     private static void validateDate(LocalDateTime date, LocalDateTime now) {
-        if (!date.isAfter(now) || date.toLocalDate().isAfter(now.toLocalDate().plusDays(30))) {
-            throw new BadRequestException("Chọn giờ trong tương lai, tối đa 30 ngày tới theo giờ Việt Nam.");
+        if (date.isBefore(now.plusMinutes(BOOKING_LEAD_MINUTES)) || date.toLocalDate().isAfter(now.toLocalDate().plusDays(30))) {
+            throw new BadRequestException("Chọn giờ hẹn cách hiện tại ít nhất 30 phút và tối đa 30 ngày tới theo giờ Việt Nam.");
         }
     }
 

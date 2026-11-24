@@ -4,6 +4,7 @@ const basePath = '/api/host-applications';
 
 export const hostApplicationApi = {
   current: (signal) => request('/current', { basePath, signal }),
+  identityImage: (id,signal,side='front') => request(`/${id}/identity-image${side==='back'?'?side=back':''}`, { basePath, signal, responseType:'blob' }),
   submit: (body) => request('', { basePath, method: 'POST', body })
 };
 
@@ -20,9 +21,10 @@ export const rentalExperiences = [
 ];
 
 export const hostApplicationFieldLabels = {
+  identityImage: 'Ảnh mặt trước và mặt sau CCCD',
   targetCommune: 'Khu vực hoạt động chính',
   expectedScale: 'Quy mô phòng dự kiến',
-  introduction: 'Giới thiệu bản thân & cơ sở cho thuê',
+  introduction: 'Ghi chú cho nhân viên xét duyệt',
   applicantCapacity: 'Tư cách cho thuê',
   rentalExperience: 'Kinh nghiệm quản lý',
   accPhone: 'Số điện thoại liên hệ chính chủ',

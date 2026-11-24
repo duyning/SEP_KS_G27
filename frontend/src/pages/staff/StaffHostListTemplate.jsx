@@ -155,7 +155,7 @@ export default function StaffHostListTemplate(props) {
             <input
               id="searchHostReg"
               type="search"
-              placeholder="Tên, số điện thoại, email hoặc mã hồ sơ (HREG-...)..."
+              placeholder="Tìm theo tên, số điện thoại hoặc email..."
               autoComplete="off"
               value={props.filters.search}
               onKeyDown={props.onSearchKeyDown}
@@ -211,7 +211,7 @@ export default function StaffHostListTemplate(props) {
                 {[
                   'Người đăng ký',
                   'Liên hệ',
-                  'Thông tin đăng ký',
+                  'Giấy tờ định danh',
                   'Ngày gửi',
                   'Trạng thái',
                   'Thao tác',

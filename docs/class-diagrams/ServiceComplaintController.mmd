@@ -1,0 +1,145 @@
+classDiagram
+    direction TB
+    class ServiceComplaintController {
+        <<Controller>>
+        +mine()
+        +incoming()
+        +list()
+        +detail()
+        +submit()
+        +explain()
+        +review()
+    }
+    class ServiceComplaintService {
+        <<Service>>
+        +list()
+        +detail()
+        +submit()
+        +explain()
+        +review()
+        +image()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class ServiceComplaintRepository {
+        <<interface>>
+        +findAllByOrderByComplaintIdDesc()
+        +findByService_Provider_UserIdOrderByComplaintIdDesc()
+        +findByReporter_UserIdOrderByComplaintIdDesc()
+        +existsByService_ServiceIdAndReporter_UserIdAndStatusIn()
+        +findForReview()
+    }
+    class ServiceComplaintEventRepository {
+        <<interface>>
+        +findByComplaint_ComplaintIdOrderByEventIdAsc()
+    }
+    class ServiceRepository {
+        <<interface>>
+        +findByProvider_UserIdOrderByServiceIdDesc()
+        +existsByProvider_UserIdAndServiceNameIgnoreCaseAndStatusNot()
+        +existsByRegistration_RegistrationId()
+        +findByStatusOrderByServiceIdDesc()
+        +findByStatusAndCategory_CategoryIdOrderByServiceIdDesc()
+        +findByRegistration_RegistrationId()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class ModerationLogRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findByTargetTypeAndTargetIdOrderByCreatedAtDesc()
+    }
+    class ServicePublicationService {
+        <<Service>>
+        +hasCapability()
+        +isPublic()
+    }
+    class ServiceComplaint {
+        <<Entity>>
+        -Integer complaintId
+        -Service service
+        -User reporter
+        -String content
+        -String status
+        -Instant createdAt
+        -int revision
+        -List~ServiceImage~ images
+    }
+    class ServiceComplaintEvent {
+        <<Entity>>
+        -Integer eventId
+        -ServiceComplaint complaint
+        -User actor
+        -String action
+        -String content
+        -Instant createdAt
+        -List~ServiceImage~ images
+    }
+    class Service {
+        <<Entity>>
+        -Integer serviceId
+        -User provider
+        -ServiceCategory category
+        -ServiceRegistration registration
+        -String serviceName
+        -String contactInfo
+        -String contactEmail
+        -String pricingType
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class ModerationLog {
+        <<Entity>>
+        -Integer logId
+        -User staff
+        -String targetType
+        -Integer targetId
+        -String action
+        -String note
+        -LocalDateTime createdAt
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    ServiceComplaintController --> ServiceComplaintService : injected
+    ServiceComplaintService --> AuthService : injected
+    ServiceComplaintService --> ServiceComplaintRepository : injected
+    ServiceComplaintService --> ServiceComplaintEventRepository : injected
+    ServiceComplaintService --> ServiceRepository : injected
+    ServiceComplaintService --> UserRepository : injected
+    ServiceComplaintService --> ModerationLogRepository : injected
+    ServiceComplaintService --> ServicePublicationService : injected
+    ServiceComplaintRepository --|> JpaRepository
+    ServiceComplaintRepository ..> ServiceComplaint : entity - ID Integer
+    ServiceComplaintEventRepository --|> JpaRepository
+    ServiceComplaintEventRepository ..> ServiceComplaintEvent : entity - ID Integer
+    ServiceRepository --|> JpaRepository
+    ServiceRepository ..> Service : entity - ID Integer
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    ModerationLogRepository --|> JpaRepository
+    ModerationLogRepository ..> ModerationLog : entity - ID Integer

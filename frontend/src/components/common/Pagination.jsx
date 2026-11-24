@@ -1,3 +1,4 @@
+import UIButton from './Button.jsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { paginationRange } from '../../services/pagination.js';
 
@@ -32,7 +33,7 @@ export default function Pagination({
         Hiển thị <strong>{start}</strong> - <strong>{end}</strong> trên <strong>{totalItems}</strong> kết quả
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button
+        <UIButton
           type="button"
           onClick={() => onPageChange?.(currentPage - 1)}
           disabled={currentPage <= 1}
@@ -52,10 +53,10 @@ export default function Pagination({
           }}
         >
           <ChevronLeft size={16} />
-        </button>
+        </UIButton>
 
         {paginationRange(currentPage, totalPages).map((p) => typeof p === 'string' ? <span key={p} aria-hidden="true">…</span> : (
-          <button
+          <UIButton
             key={p}
             type="button"
             onClick={() => onPageChange?.(p)}
@@ -66,18 +67,18 @@ export default function Pagination({
               width: '32px',
               height: '32px',
               borderRadius: '6px',
-              border: p === currentPage ? '1px solid #0d9488' : '1px solid #e2e8f0',
-              backgroundColor: p === currentPage ? '#0d9488' : '#ffffff',
+              border: p === currentPage ? '1px solid #0f766e' : '1px solid #e2e8f0',
+              backgroundColor: p === currentPage ? '#0f766e' : '#ffffff',
               color: p === currentPage ? '#ffffff' : '#334155',
               fontWeight: p === currentPage ? 700 : 500,
               cursor: 'pointer',
             }}
           >
             {p}
-          </button>
+          </UIButton>
         ))}
 
-        <button
+        <UIButton
           type="button"
           onClick={() => onPageChange?.(currentPage + 1)}
           disabled={currentPage >= totalPages}
@@ -97,7 +98,7 @@ export default function Pagination({
           }}
         >
           <ChevronRight size={16} />
-        </button>
+        </UIButton>
       </div>
     </div>
   );

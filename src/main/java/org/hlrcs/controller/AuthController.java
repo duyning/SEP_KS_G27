@@ -7,11 +7,13 @@ import org.hlrcs.dto.request.ChangePasswordRequest;
 import org.hlrcs.dto.request.GoogleLoginRequest;
 import org.hlrcs.dto.request.LoginRequest;
 import org.hlrcs.dto.request.RegisterRequest;
+import org.hlrcs.dto.request.RegistrationOtpRequest;
 import org.hlrcs.dto.request.UpdateProfileRequest;
 import org.hlrcs.dto.response.ApiResponse;
 import org.hlrcs.dto.response.AuthResponse;
 import org.hlrcs.dto.response.UserProfileResponse;
 import org.hlrcs.service.AuthService;
+import org.hlrcs.service.RegistrationOtpService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +23,21 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final RegistrationOtpService registrationOtp;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, RegistrationOtpService registrationOtp) {
         this.authService = authService;
+        this.registrationOtp = registrationOtp;
+    }
+
+    @PostMapping("/register/otp/send")
+    public ApiResponse<RegistrationOtpService.Sent> sendRegistrationOtp(@Valid @RequestBody RegistrationOtpRequest.Send request) {
+        return ApiResponse.success(registrationOtp.send(request.identifier()));
+    }
+
+    @PostMapping("/register/otp/verify")
+    public ApiResponse<RegistrationOtpService.Verification> verifyRegistrationOtp(@Valid @RequestBody RegistrationOtpRequest.Verify request) {
+        return ApiResponse.success(registrationOtp.verify(request.identifier(), request.code()));
     }
 
     @PostMapping("/register")

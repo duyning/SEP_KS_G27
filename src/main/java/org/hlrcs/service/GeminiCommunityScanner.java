@@ -168,11 +168,19 @@ public class GeminiCommunityScanner {
 
     private JsonNode awaitVideo(JsonNode file, String name) throws IOException, InterruptedException {
         for (int attempt = 0; attempt < 20 && "PROCESSING".equals(file.path("state").asText()); attempt++) {
-            Thread.sleep(3000);
+            waitForVideoPoll();
             file = json.readTree(api("GET", "/v1beta/" + name, 10, Map.of(), null).body());
         }
         if (!"ACTIVE".equals(file.path("state").asText())) throw new IOException("Video processing incomplete");
         return file;
+    }
+
+    void waitForVideoPoll() throws InterruptedException {
+        Thread.sleep(3000);
+    }
+
+    HttpURLConnection openConnection(URI uri) throws IOException {
+        return (HttpURLConnection) uri.toURL().openConnection();
     }
 
     private Response api(String method, String path, int seconds, Map<String, String> headers, Object payload)
@@ -186,7 +194,7 @@ public class GeminiCommunityScanner {
 
     private Response send(String method, URI uri, int seconds, Map<String, String> headers, byte[] payload)
             throws IOException {
-        var connection = (HttpURLConnection) uri.toURL().openConnection();
+        var connection = openConnection(uri);
         try {
             connection.setConnectTimeout(10_000);
             connection.setReadTimeout(seconds * 1000);

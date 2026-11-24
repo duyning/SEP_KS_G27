@@ -20,6 +20,7 @@ public final class RegistrationEditPolicy {
         fields.put("coordinates",List.of("latitude","longitude"));fields.put("amenities",List.of("amenities"));fields.put("rules",List.of("selectedRules","rules"));
         for(var key:List.of("exterior","parking","common","corridor","safety"))fields.put(key,List.of("photos"));
         for(var key:List.of("OWNERSHIP","ID_CARD","FIRE_SAFETY"))fields.put(key,List.of(key));
+        fields.put("ID_CARD",List.of("ID_CARD","ID_CARD_BACK"));
         GROUPS=Collections.unmodifiableMap(fields);
         LEGACY_LABELS=Map.ofEntries(Map.entry("name","Tên nhà trọ"),Map.entry("propertyType","Loại hình nhà trọ"),Map.entry("description","Mô tả nhà trọ"),
             Map.entry("contact","Thông tin liên hệ quản lý tiếp khách"),Map.entry("address","Địa chỉ chi tiết (Số nhà, ngõ, xóm, thôn)"),Map.entry("commune","Xã / Khu vực tại Hòa Lạc"),

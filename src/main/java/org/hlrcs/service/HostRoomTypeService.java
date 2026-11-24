@@ -50,7 +50,8 @@ public class HostRoomTypeService {
         if (type.getAmenitiesJson() != null) try { amenities = java.util.Arrays.asList(json.readValue(type.getAmenitiesJson(), String[].class)); }
         catch (tools.jackson.core.JacksonException ignored) { /* Older rows may not have structured amenities. */ }
         var physical=rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(type.getRoomTypeId());
-        return new RoomTypeSummary(type.getRoomTypeId(), type.getProperty().getPropertyId(), type.getRoomType(), type.getPrice(), type.getAreaSqm(), type.getServicePrice(), type.getDescription(), type.getCapacity(), type.getDeposit(), type.getImageUrl(), amenities, type.getElectricityPrice(), type.getWaterPrice(), type.getInternetPrice(), physical.size(), (int)physical.stream().filter(room->"VACANT".equals(room.getStatus())).count(), type.getCreatedAt(), images.findByRoomType_RoomTypeIdOrderByImageIdAsc(type.getRoomTypeId()).stream().map(row -> new HostRoomTypesResponse.Image(row.getImageId(), row.getFileName())).toList(),physical.stream().map(roomMapper::summary).toList());
+        var freshness = AvailabilityFreshness.status(type.getAvailabilityConfirmedAt());
+        return new RoomTypeSummary(type.getRoomTypeId(), type.getProperty().getPropertyId(), type.getRoomType(), type.getPrice(), type.getAreaSqm(), type.getServicePrice(), type.getDescription(), type.getCapacity(), type.getDeposit(), type.getImageUrl(), amenities, type.getElectricityPrice(), type.getWaterPrice(), type.getInternetPrice(), physical.size(), (int)physical.stream().filter(room->"VACANT".equals(room.getStatus())).count(), type.getCreatedAt(), images.findByRoomType_RoomTypeIdOrderByImageIdAsc(type.getRoomTypeId()).stream().map(row -> new HostRoomTypesResponse.Image(row.getImageId(), row.getFileName())).toList(),physical.stream().map(roomMapper::summary).toList(),type.getAvailabilityConfirmedAt(),freshness,"STALE".equals(freshness));
     }
 
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
@@ -62,15 +63,18 @@ public class HostRoomTypeService {
     public RoomTypeSummary createWithRooms(RoomTypeRequest value,org.hlrcs.dto.request.RoomBatchRequest layout,List<MultipartFile> photos) {
         users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow();
         if(layout.rooms()==null||layout.rooms().isEmpty()||layout.rooms().size()>200)throw new BadRequestException("Cần từ 1 đến 200 phòng trong danh sách xem trước.");
-        var names=new java.util.HashSet<String>();
-        for(var draft:layout.rooms()){
-            String number=RoomRules.number(draft.roomNumber());RoomRules.floor(draft.floor());
-            if(!names.add(number))throw new BadRequestException("Trùng số phòng trong danh sách: "+number);
+        var submitted = new java.util.HashSet<String>();
+        for (var draft : layout.rooms()) {
+            var number = RoomRules.number(draft.roomNumber());
+            RoomRules.floor(draft.floor());
+            if (!submitted.add(RoomRules.numberKey(number))) throw new BadRequestException("Trùng số phòng trong danh sách: " + number);
         }
         var created=save(value,null,photos);
         var type=owned(created.roomTypeId());
-        var existing=rooms.findByProperty_Owner_UserIdOrderByRoomNumberAsc(authService.getCurrentUser().getUserId());
-        for(var room:existing)if(room.getProperty().getPropertyId().equals(type.getProperty().getPropertyId())&&names.contains(room.getRoomNumber().toUpperCase(java.util.Locale.ROOT)))throw new AppException("Số phòng đã tồn tại trong nhà trọ: "+room.getRoomNumber(),HttpStatus.CONFLICT);
+        var names = RoomRules.numberKeys(rooms.findRoomNumbers(type.getProperty().getPropertyId(), -1));
+        for(var draft:layout.rooms()){
+            RoomRules.reserveNumber(names, RoomRules.number(draft.roomNumber()));
+        }
         var now=java.time.LocalDateTime.now();
         for(var draft:layout.rooms())rooms.save(org.hlrcs.entity.Room.builder().property(type.getProperty()).roomType(type)
                 .roomNumber(RoomRules.number(draft.roomNumber())).floor(RoomRules.floor(draft.floor())).status("VACANT").confirmedAt(now).build());
@@ -117,6 +121,27 @@ public class HostRoomTypeService {
     }
     @Transactional(readOnly = true)
     public RoomTypeSummary detail(Integer id) { return summary(owned(id)); }
+
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public RoomTypeSummary confirmAvailability(Integer id) {
+        var owner = users.findForRegistrationUpdate(authService.getCurrentUser().getUserId()).orElseThrow();
+        var type = owned(id);
+        var property = type.getProperty();
+        if (!"ACTIVE".equalsIgnoreCase(property.getStatus()) || property.getRegistration() == null
+                || property.getRegistration().getStatus() != RegistrationStatus.APPROVED)
+            throw new AppException("Nhà trọ phải được duyệt và đang hoạt động để xác nhận phòng.", HttpStatus.CONFLICT);
+        var inventory = rooms.findByRoomType_RoomTypeIdOrderByRoomNumberAsc(id);
+        if (inventory.isEmpty())
+            throw new BadRequestException("Loại phòng chưa có phòng thực tế để xác nhận.");
+        var confirmedAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        var roomConfirmedAt = java.time.LocalDateTime.ofInstant(confirmedAt, java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        for (var room : inventory) room.setConfirmedAt(roomConfirmedAt);
+        rooms.flush();
+        type.setAvailabilityConfirmedAt(confirmedAt);
+        type.setAvailabilityConfirmedBy(owner);
+        roomTypes.saveAndFlush(type);
+        return summary(type);
+    }
 
     public record ImageContent(byte[] bytes, String contentType) {}
     @Transactional(readOnly = true)

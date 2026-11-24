@@ -1,0 +1,171 @@
+classDiagram
+    direction TB
+    class ServiceRegistrationController {
+        <<Controller>>
+        +cancel()
+        +categories()
+        +current()
+        +mine()
+        +myServices()
+        +change()
+        +image()
+    }
+    class ServiceRegistrationService {
+        <<Service>>
+        +current()
+        +mine()
+        +myServices()
+        +canManage()
+        +cancel()
+        +change()
+        +image()
+    }
+    class ServiceCategoryRepository {
+        <<interface>>
+        +existsByName()
+    }
+    class AuthService {
+        <<interface>>
+        +register()
+        +login()
+        +logout()
+        +getCurrentUser()
+        +getProfile()
+        +updateProfile()
+        +changePassword()
+    }
+    class UserRepository {
+        <<interface>>
+        +findByRoleAndStatusOrderByUserIdAsc()
+        +findForRegistrationUpdate()
+        +findByEmail()
+        +findByPhoneNumber()
+        +existsByEmail()
+        +existsByPhoneNumber()
+    }
+    class ServiceRegistrationRepository {
+        <<interface>>
+        +existsByTargetService_ServiceIdAndStatusIn()
+        +existsByUser_UserIdAndServiceNameIgnoreCaseAndStatusIn()
+        +findForReview()
+        +findAllByOrderByRegistrationIdDesc()
+        +findByAssignedStaff_UserIdOrderByRegistrationIdDesc()
+        +findByUser_UserIdOrderByRegistrationIdDesc()
+        +existsByUser_UserIdAndStatusIn()
+    }
+    class ServiceDocumentRepository {
+        <<interface>>
+        +findByRegistration_RegistrationIdOrderByDocumentIdAsc()
+        +findByDocumentIdAndRegistration_User_UserId()
+    }
+    class ServiceRepository {
+        <<interface>>
+        +findByProvider_UserIdOrderByServiceIdDesc()
+        +existsByProvider_UserIdAndServiceNameIgnoreCaseAndStatusNot()
+        +existsByRegistration_RegistrationId()
+        +findByStatusOrderByServiceIdDesc()
+        +findByStatusAndCategory_CategoryIdOrderByServiceIdDesc()
+        +findByRegistration_RegistrationId()
+    }
+    class ServicePublicationService {
+        <<Service>>
+        +hasCapability()
+        +isPublic()
+    }
+    class ModerationLogRepository {
+        <<interface>>
+        +findAllByOrderByCreatedAtDesc()
+        +findByTargetTypeAndTargetIdOrderByCreatedAtDesc()
+    }
+    class ServiceCategory {
+        <<Entity>>
+        -Integer categoryId
+        -String name
+        -String description
+    }
+    class User {
+        <<Entity>>
+        -Integer userId
+        -String fullName
+        -String email
+        -String phoneNumber
+        -String passwordHash
+        -UserRole role
+        -UserStatus status
+        -LocalDateTime createdAt
+    }
+    class ServiceRegistration {
+        <<Entity>>
+        -Integer registrationId
+        -User user
+        -ServiceCategory category
+        -String serviceName
+        -String contactInfo
+        -String applicantName
+        -String contactEmail
+        -String pricingType
+    }
+    class ServiceDocument {
+        <<Entity>>
+        -Integer documentId
+        -ServiceRegistration registration
+        -String documentName
+        -String documentUrl
+        -String verificationStatus
+        -String contentType
+        -byte[] fileContent
+    }
+    class Service {
+        <<Entity>>
+        -Integer serviceId
+        -User provider
+        -ServiceCategory category
+        -ServiceRegistration registration
+        -String serviceName
+        -String contactInfo
+        -String contactEmail
+        -String pricingType
+    }
+    class ModerationLog {
+        <<Entity>>
+        -Integer logId
+        -User staff
+        -String targetType
+        -Integer targetId
+        -String action
+        -String note
+        -LocalDateTime createdAt
+    }
+    class ServiceRegistrationRequest {
+        <<DTO>>
+    }
+    class ServiceResubmissionRequest {
+        <<DTO>>
+    }
+    class JpaRepository {
+        <<interface>>
+    }
+    ServiceRegistrationController --> ServiceRegistrationService : injected
+    ServiceRegistrationController --> ServiceCategoryRepository : injected
+    ServiceRegistrationService --> AuthService : injected
+    ServiceRegistrationService --> UserRepository : injected
+    ServiceRegistrationService --> ServiceCategoryRepository : injected
+    ServiceRegistrationService --> ServiceRegistrationRepository : injected
+    ServiceRegistrationService --> ServiceDocumentRepository : injected
+    ServiceRegistrationService --> ServiceRepository : injected
+    ServiceRegistrationService --> ServicePublicationService : injected
+    ServiceRegistrationService --> ModerationLogRepository : injected
+    ServiceCategoryRepository --|> JpaRepository
+    ServiceCategoryRepository ..> ServiceCategory : entity - ID Integer
+    UserRepository --|> JpaRepository
+    UserRepository ..> User : entity - ID Integer
+    ServiceRegistrationRepository --|> JpaRepository
+    ServiceRegistrationRepository ..> ServiceRegistration : entity - ID Integer
+    ServiceDocumentRepository --|> JpaRepository
+    ServiceDocumentRepository ..> ServiceDocument : entity - ID Integer
+    ServiceRepository --|> JpaRepository
+    ServiceRepository ..> Service : entity - ID Integer
+    ModerationLogRepository --|> JpaRepository
+    ModerationLogRepository ..> ModerationLog : entity - ID Integer
+    ServiceRegistrationController ..> ServiceRegistrationRequest : DTO
+    ServiceRegistrationController ..> ServiceResubmissionRequest : DTO

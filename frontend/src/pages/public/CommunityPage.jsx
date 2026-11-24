@@ -1,3 +1,5 @@
+import UIField from '../../components/common/Field.jsx';
+import UIButton from '../../components/common/Button.jsx';
 import { MotionButton, AnimatePresence } from '../../components/motion/MotionUI.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,7 +13,7 @@ import { POST_IMAGE_ACCEPT, validatePostImages } from '../../services/community-
 import { POST_VIDEO_ACCEPT, validatePostVideos } from '../../services/community-videos.js';
 import CommunityPostVideo, { LocalPostVideo } from '../../components/CommunityPostVideo.jsx';
 import CommunityPrototype from '../../components/CommunityPrototype.jsx';
-import CommunityFooter, { CommunityMenuSupport } from '../../components/CommunityFooter.jsx';
+import CommunityFooter from '../../components/CommunityFooter.jsx';
 import CommunityPostEditor, { GrowingPostTextarea } from '../../components/CommunityPostEditor.jsx';
 import { communityZones } from '../../services/community-prototype.js';
 import DetailPrototypeShell from '../../components/detail/DetailPrototypeShell.jsx';
@@ -350,7 +352,7 @@ export default function CommunityPage() {
   }, [errors, isCreateModalOpen]);
 
   return (
-    <DetailPrototypeShell className="prototype-community" footer={<CommunityFooter />} menuExtras={<CommunityMenuSupport />}>
+    <DetailPrototypeShell className="prototype-community" footer={<CommunityFooter />}>
       <CommunityPrototype state={state} mine={mine} user={user} params={params} setParams={setParams}
         onCreate={() => openForm()} onEdit={openForm} deleting={deleting}
         onDelete={post => { setPostToDelete(post); setDeleteError(''); }} />
@@ -402,9 +404,9 @@ export default function CommunityPage() {
               <section className="community-post-form-section community-post-form-main" aria-labelledby="post-content-heading">
                 <h4 id="post-content-heading">Nội dung bài viết</h4>
             <div className="community-post-form-category">
-              <label htmlFor="postType" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="postType" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Chuyên mục bài viết *
-              </label>
+              </UIField>
               <select
                 id="postType"
                 value={postType}
@@ -418,9 +420,9 @@ export default function CommunityPage() {
               <PostFieldError name="type" errors={errors} />
             </div>
             <div className="community-post-form-title">
-              <label htmlFor="postTitle" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField htmlFor="postTitle" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Tiêu đề bài viết * <span aria-hidden="true">{postTitle.length}/100</span>
-              </label>
+              </UIField>
               <GrowingPostTextarea
                 id="postTitle"
                 className="community-growing-title"
@@ -439,9 +441,9 @@ export default function CommunityPage() {
               <small id="post-title-help" className="community-input-help-hidden">Tiêu đề cần từ 10–100 ký tự (không tính khoảng trắng ở đầu và cuối).</small>
             </div>
             <div className="community-post-form-content">
-              <label id="post-content-label" htmlFor="postContent" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <UIField id="post-content-label" htmlFor="postContent" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                 Nội dung chi tiết * <span aria-hidden="true">{postContent.length}/2.500</span>
-              </label>
+              </UIField>
               <CommunityPostEditor
                 id="postContent"
                 format={contentFormat}
@@ -464,9 +466,9 @@ export default function CommunityPage() {
                   <h4 id="post-contact-heading">Giá & thông tin liên hệ</h4>
             <div className="community-post-form-row">
               <div>
-                <label htmlFor="postPrice" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="postPrice" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   {postType === 'SECOND_HAND' ? 'Giá bán (đ)' : postType === 'ROOMMATE' ? 'Chi phí (đ/người/tháng)' : 'Giá thuê (đ/tháng)'}
-                </label>
+                </UIField>
                 <input
                   id="postPrice"
                   type="text"
@@ -486,14 +488,14 @@ export default function CommunityPage() {
                   placeholder="Để trống nếu tự thỏa thuận giá"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
-                {priceImeActive && postPrice.trim() && !Number.isNaN(parsePostPrice(postPrice)) && <output htmlFor="postPrice" aria-live="polite" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0d9488', marginTop: 4 }}>Số tiền: {new Intl.NumberFormat('vi-VN').format(parsePostPrice(postPrice))} đ</output>}
+                {priceImeActive && postPrice.trim() && !Number.isNaN(parsePostPrice(postPrice)) && <output htmlFor="postPrice" aria-live="polite" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0f766e', marginTop: 4 }}>Số tiền: {new Intl.NumberFormat('vi-VN').format(parsePostPrice(postPrice))} đ</output>}
                 <small id="price-help" className="community-input-help-hidden">Để trống nếu thỏa thuận.{postType === 'SECOND_HAND' ? ' Có thể để 0 đồng.' : ''}</small>
                 <PostFieldError name="price" errors={errors} />
               </div>
               <div>
-                <label htmlFor="postZone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="postZone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Khu vực *
-                </label>
+                </UIField>
                 <select id="postZone" required value={postZone} onChange={changeZone}
                   aria-invalid={Boolean(errors.location)} aria-describedby={errors.location ? 'location-error' : undefined}
                   className="community-post-location-control">
@@ -501,7 +503,7 @@ export default function CommunityPage() {
                   {communityZones.filter(([key]) => key !== 'all').map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                 </select>
                 {postZone === 'khac' && <>
-                <label htmlFor="postLocation" className="community-post-custom-location-label community-post-required-label">Nhập khu vực / địa chỉ *</label>
+                <UIField htmlFor="postLocation" className="community-post-custom-location-label community-post-required-label">Nhập khu vực / địa chỉ *</UIField>
                 <input
                   id="postLocation"
                   type="text"
@@ -520,9 +522,9 @@ export default function CommunityPage() {
             </div>
             <div className="community-post-form-row">
               <div>
-                <label htmlFor="authorName" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="authorName" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Tên liên hệ *
-                </label>
+                </UIField>
                 <input
                   id="authorName"
                   type="text"
@@ -539,9 +541,9 @@ export default function CommunityPage() {
                 <small id="authorName-help" className="community-input-help-hidden">Tên liên hệ cần từ 2–50 ký tự.</small>
               </div>
               <div>
-                <label htmlFor="authorPhone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <UIField htmlFor="authorPhone" className="community-post-required-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Số điện thoại *
-                </label>
+                </UIField>
                 <input
                   id="authorPhone"
                   type="tel"
@@ -559,7 +561,7 @@ export default function CommunityPage() {
             </div>
             <div className="community-post-form-row">
               <div>
-                <label htmlFor="facebookUrl">Facebook <span>Không bắt buộc</span></label>
+                <UIField htmlFor="facebookUrl">Facebook <span>Không bắt buộc</span></UIField>
                 <input id="facebookUrl" type="url" maxLength={500} value={facebookUrl}
                   className="community-post-location-control" aria-invalid={Boolean(errors.facebookUrl)}
                   aria-describedby="facebookUrl-help facebookUrl-error" onChange={event => setFacebookUrl(event.target.value)}
@@ -568,13 +570,13 @@ export default function CommunityPage() {
                 <PostFieldError name="facebookUrl" errors={errors} />
               </div>
               <div>
-                <label htmlFor="zaloUrl">Số Zalo <span>Không bắt buộc</span></label>
+                <UIField htmlFor="zaloUrl">Số Zalo <span>Không bắt buộc</span></UIField>
                 <input id="zaloUrl" type="tel" autoComplete="off" maxLength={24} value={zaloNumber}
                   className="community-post-location-control" aria-invalid={Boolean(errors.zaloUrl)}
                   aria-describedby="zaloUrl-help zaloUrl-error" onChange={event => setZaloUrl(event.target.value)}
                   placeholder={hasLegacyZaloLink ? 'Nhập số để thay liên kết đã lưu' : 'VD: 0912345678'} />
                 <small id="zaloUrl-help" className="community-input-help-hidden">Nhập số điện thoại đăng ký Zalo để tạo liên kết công khai trên bài viết.</small>
-                {hasLegacyZaloLink && <button type="button" className="community-remove-saved-zalo" onClick={() => setZaloUrl('')}>Xóa liên kết Zalo đã lưu</button>}
+                {hasLegacyZaloLink && <UIButton type="button" className="community-remove-saved-zalo" onClick={() => setZaloUrl('')}>Xóa liên kết Zalo đã lưu</UIButton>}
                 <PostFieldError name="zaloUrl" errors={errors} />
               </div>
             </div>
@@ -583,7 +585,7 @@ export default function CommunityPage() {
                   <h4 id="post-media-heading">Ảnh & video <span>Không bắt buộc</span></h4>
                   <div className="community-post-form-media-grid">
             <div className="community-post-form-images">
-              <label htmlFor="postImages" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Hình ảnh <span>{retainedImages.length + photos.length}/6</span></label>
+              <UIField htmlFor="postImages" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Hình ảnh <span>{retainedImages.length + photos.length}/6</span></UIField>
               <input ref={imagePicker} id="postImages" type="file" multiple accept={POST_IMAGE_ACCEPT} onChange={addPhotos} style={{ display: 'none' }} />
               <MotionButton type="button" className="p-button" onClick={() => imagePicker.current?.click()}
                 aria-invalid={Boolean(errors.images)} aria-describedby="post-images-help images-error"><ImagePlus size={19} aria-hidden="true" /> Chọn ảnh</MotionButton>
@@ -605,7 +607,7 @@ export default function CommunityPage() {
               </div>
             </div>
             <div className="community-post-form-videos">
-              <label htmlFor="postVideos" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Video <span>{retainedVideos.length + videos.length}/1</span></label>
+              <UIField htmlFor="postVideos" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Video <span>{retainedVideos.length + videos.length}/1</span></UIField>
               <input ref={videoPicker} id="postVideos" type="file" accept={POST_VIDEO_ACCEPT} onChange={addVideos} style={{ display: 'none' }} />
               <MotionButton type="button" className="p-button" onClick={() => videoPicker.current?.click()} aria-invalid={Boolean(errors.videos)} aria-describedby="post-videos-help videos-error"><Video size={19} aria-hidden="true" /> Chọn video</MotionButton>
               <small id="post-videos-help">MP4 · Tối đa 1 video · 50 MB · 3 phút</small>

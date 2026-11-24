@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS room_utility_readings (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    revision BIGINT NOT NULL,
+    tenancy_id BIGINT NOT NULL,
+    room_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    billing_month DATE NOT NULL,
+    period_start DATE NOT NULL,
+    read_on DATE NOT NULL,
+    electricity_start DECIMAL(12,3) NOT NULL,
+    electricity_end DECIMAL(12,3) NOT NULL,
+    electricity_rate DECIMAL(9,0) NOT NULL,
+    electricity_amount DECIMAL(20,0) NOT NULL,
+    water_mode VARCHAR(14) NOT NULL,
+    water_start DECIMAL(12,3),
+    water_end DECIMAL(12,3),
+    water_rate DECIMAL(9,0) NOT NULL,
+    occupant_count INT,
+    water_amount DECIMAL(20,0) NOT NULL,
+    updated_at DATETIME(6),
+    CONSTRAINT uk_room_utility_tenancy_month UNIQUE (tenancy_id, billing_month),
+    INDEX ix_room_utility_room_month (room_id, billing_month)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

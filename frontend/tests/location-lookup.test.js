@@ -15,7 +15,7 @@ test('viewport centers, short links and arbitrary URLs never become fake exact p
 const result=()=>({formatted_address:'Số 18, Thôn 2, Tân Xã, Hà Nội',address_components:[{long_name:'Tân Xã',types:['administrative_area_level_3']}],geometry:{location:{lat:()=>21.0188,lng:()=>105.5215},location_type:'ROOFTOP'}});
 test('Google result supplies actual address and coordinates without fabricating unknown commune',()=>{
   const location=locationFromGoogle(result());assert.equal(location.commune,'Tân Xã');assert.equal(location.latitude,'21.018800');assert.equal(location.longitude,'105.521500');assert.equal(location.approximate,false);
-  const unknown=result();unknown.formatted_address='Xã Hòa Lạc, Hà Nội';unknown.address_components=[];assert.equal(locationFromGoogle(unknown).commune,'');
+  const unknown=result();unknown.formatted_address='Phường Ba Đình, Hà Nội';unknown.address_components=[];assert.equal(locationFromGoogle(unknown).commune,'');
   const approximate=result();approximate.partial_match=true;assert.equal(locationFromGoogle(approximate).approximate,true);
   assert.throws(()=>locationFromGoogle({formatted_address:'Address without geometry'}));
   const invalid=result();invalid.geometry.location={lat:NaN,lng:105};assert.throws(()=>locationFromGoogle(invalid));

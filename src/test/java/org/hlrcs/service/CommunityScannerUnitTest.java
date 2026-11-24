@@ -7,19 +7,11 @@ import java.io.*;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** HTTPS is intercepted inside this isolated test JVM. No request can reach Gemini. */
+/** Each scanner uses an in-memory connection. No request can reach Gemini. */
 class CommunityScannerUnitTest extends CommunityUnitSupport {
     record Reply(int status,String body,String uploadUrl){}
     static final Deque<Reply> replies=new ArrayDeque<>();
     static final List<FakeConnection> requests=new ArrayList<>();
-    static final ThreadLocal<Boolean> fakeHttps=ThreadLocal.withInitial(()->false);
-    static final URL defaultHttps;
-    static { try { defaultHttps=new URL("https://generativelanguage.googleapis.com/"); } catch(MalformedURLException e){throw new ExceptionInInitializerError(e);} }
-    static { URL.setURLStreamHandlerFactory(protocol->protocol.equals("https")?new URLStreamHandler(){protected URLConnection openConnection(URL url)throws IOException{
-        if(!fakeHttps.get())return new URL(defaultHttps,url.toExternalForm()).openConnection();
-        if(replies.isEmpty())throw new IOException("No fake response configured; real network prohibited");
-        var c=new FakeConnection(url,replies.remove());requests.add(c);return c;
-    }}:null); }
     static class FakeConnection extends HttpURLConnection {
         final Reply reply; final ByteArrayOutputStream output=new ByteArrayOutputStream();boolean disconnected;
         FakeConnection(URL url,Reply reply){super(url);this.reply=reply;}
@@ -27,12 +19,23 @@ class CommunityScannerUnitTest extends CommunityUnitSupport {
         public int getResponseCode(){return reply.status();}public InputStream getInputStream(){return new ByteArrayInputStream(reply.body().getBytes(java.nio.charset.StandardCharsets.UTF_8));}
         public OutputStream getOutputStream(){return output;}public String getHeaderField(String name){return name.equals("X-Goog-Upload-URL")?reply.uploadUrl():null;}
     }
-    static void reset(){replies.clear();requests.clear();fakeHttps.set(true);}
-    @Override void afterCase(){fakeHttps.remove();}
+    static void reset(){replies.clear();requests.clear();}
     static void response(int code,String body){replies.add(new Reply(code,body,null));}
     static String generated(String verdict,Object timestamp){var answer=new HashMap<String,Object>();answer.put("code",verdict);if(timestamp!=null)answer.put("timestampSeconds",timestamp);return JSON.writeValueAsString(Map.of("candidates",List.of(Map.of("finishReason","STOP","content",Map.of("parts",List.of(Map.of("thought",true,"text","ignore"),Map.of("text",JSON.writeValueAsString(answer))))))));}
     static PostMedia media(boolean video){return PostMedia.builder().mediaId(8).fileName(video?"a.mp4":"a.png").contentType(video?"video/mp4":"image/png").fileContent(new byte[]{1,2}).mediaType(video?MediaType.VIDEO:MediaType.IMAGE).build();}
-    static GeminiCommunityScanner scanner(){return new GeminiCommunityScanner(JSON," fake-test-key ","model-test");}
+    static GeminiCommunityScanner scanner() {
+        return new GeminiCommunityScanner(JSON, " fake-test-key ", "model-test") {
+            @Override HttpURLConnection openConnection(URI uri) throws IOException {
+                if (replies.isEmpty()) throw new IOException("No fake response configured");
+                var connection = new FakeConnection(uri.toURL(), replies.remove());
+                requests.add(connection);
+                return connection;
+            }
+            @Override void waitForVideoPoll() throws InterruptedException {
+                if (Thread.interrupted()) throw new InterruptedException();
+            }
+        };
+    }
     static void upload(String name,String state,String uri){replies.add(new Reply(200,"{}","https://generativelanguage.googleapis.com/upload/mock"));response(200,JSON.writeValueAsString(Map.of("file",Map.of("name",name,"state",state,"uri",uri))));}
     @TestFactory List<DynamicTest> scannerCases(){
         for(String key:List.of(""," ","dummy"))add("GeminiCommunityScanner.configured","Normal","key blank="+key.isBlank(),"Only nonblank trimmed key configured",()->assertEquals(!key.isBlank(),new GeminiCommunityScanner(JSON,key,"model").configured()));

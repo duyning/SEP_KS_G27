@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập Google · NestHub</title>
+  <style>
+    body { margin: 0; background: #fafaf7; color: #142d29; font: 1rem/1.5 system-ui, sans-serif; }
+    main { max-width: 26rem; margin: 10vh auto 0; padding: 0 1.25rem 2rem; }
+    h1 { margin-bottom: .5rem; line-height: 1.2; }
+    p { margin: 0 0 1rem; }
+    input { max-width: 100%; box-sizing: border-box; padding: .75rem; border: 1px solid #657570;
+      border-radius: .5rem; color: #086b62; font: 700 1.5rem/1.2 ui-monospace, monospace; letter-spacing: .12em; }
+  </style>
+  <script defer src="https://accounts.google.com/gsi/client"></script>
+  <script defer src="/api/auth/google/mobile/browser/script"></script>
+</head>
+<body>
+  <main>
+    <h1>Đăng nhập NestHub</h1>
+    <p id="status" role="status">Đang tải nút đăng nhập Google…</p>
+    <div id="google-button"></div>
+    <label id="confirmation" hidden>
+      Mã xác nhận
+      <input id="confirmation-code" readonly>
+    </label>
+    <noscript>Bật JavaScript để đăng nhập Google.</noscript>
+  </main>
+</body>
+</html>

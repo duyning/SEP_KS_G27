@@ -189,7 +189,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                     <Calendar size={36} strokeWidth={1.8} color="#94a3b8" />
                   </div>
                   <h4 className="empty-feed-title">Chưa có yêu cầu xem phòng</h4>
-                  <p className="empty-feed-desc">Các yêu cầu xem phòng từ sinh viên và người thuê sẽ xuất hiện tại đây khi họ đặt lịch hẹn qua HL_RCS.</p>
+                  <p className="empty-feed-desc">Các yêu cầu xem phòng từ sinh viên và người thuê sẽ xuất hiện tại đây khi họ đặt lịch hẹn qua NestHub.</p>
                 </div>
               ) : (
                 <div className="table-responsive-wrapper">
@@ -236,7 +236,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                     <div className="my-prop-info">
                       <div className="my-prop-name" style={{ fontWeight: 700, fontSize: '15px', color: '#0f172a' }}>{property.name}</div>
                       <div className="my-prop-address" style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>{property.address || 'Chưa cập nhật địa chỉ'}</div>
-                      <div className="my-prop-config" style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
+                      <div className="my-prop-config" style={{ fontSize: '12px', color: '#0f766e', marginTop: '4px' }}>{property.roomTypeCount} loại phòng · Giá từ: {money(property.minimumPrice)}</div>
                     </div>
                     <div className="my-prop-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <StatusBadge>{property.status === 'ACTIVE' ? 'Đang hoạt động' : property.status || 'Chưa cập nhật trạng thái'}</StatusBadge>
@@ -297,7 +297,7 @@ export function HostDashboardContent({ data, onRefresh, loading }) {
                 </div>
                 <div>
                   <h4 className="staff-card-title">Cần hỗ trợ vận hành?</h4>
-                  <p className="staff-card-sub">Đội ngũ hỗ trợ HL_RCS sẵn sàng đồng hành cùng bạn.</p>
+                  <p className="staff-card-sub">Đội ngũ hỗ trợ NestHub sẵn sàng đồng hành cùng bạn.</p>
                 </div>
               </div>
               <p className="staff-card-desc">

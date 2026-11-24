@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties="spring.datasource.url=jdbc:h2:mem:community-notification-test;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc @ActiveProfiles("test")
-class CommunityNotificationTests {
+class CommunityNotificationTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired PostRepository posts;
@@ -169,7 +169,9 @@ class CommunityNotificationTests {
     }
     private JsonNode inbox(String token) throws Exception { return api("GET",INBOX,token,null,200); }
     private String register() throws Exception {
-        return api("POST","/api/auth/register",null,Map.of("email","notif-"+UUID.randomUUID()+"@hlrcs.test","fullName","Thành viên","password","Password@123"),201).path("accessToken").asString();
+        String email = "notif-" + UUID.randomUUID() + "@hlrcs.test";
+        return api("POST", "/api/auth/register", null, Map.of("email", email, "fullName", "Thành viên",
+                "password", "Password@123", "verificationToken", verifyContact(email)), 201).path("accessToken").asString();
     }
     private JsonNode api(String method,String path,String token,Object body,int expected) throws Exception {
         var req=MockMvcRequestBuilders.request(method,java.net.URI.create(path));

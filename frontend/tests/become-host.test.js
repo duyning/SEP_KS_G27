@@ -2,32 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { transformWithEsbuild } from 'vite';
+import { createServer } from 'vite';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
 const root = path.resolve(import.meta.dirname, '..');
-
-// Helper to compile and import a JSX component in Node test runner
-async function loadComponent(filePath) {
-  const fullPath = path.join(root, filePath);
-  const source = fs.readFileSync(fullPath, 'utf8');
-  const compiled = (
-    await transformWithEsbuild(source, path.basename(filePath), {
-      format: 'cjs',
-      jsx: 'automatic'
-    })
-  ).code;
-  const mod = { exports: {} };
-  const fileRequire = createRequire(fullPath);
-  new Function('require', 'module', 'exports', compiled)(fileRequire, mod, mod.exports);
-  return mod.exports.default;
+const server = await createServer({
+  root, server: { middlewareMode: true, ws: false, watch: null }, appType: 'custom',
+});
+let BecomeHostPrototype;
+let AuthProvider;
+try {
+  ({ default: BecomeHostPrototype } = await server.ssrLoadModule('/src/pages/BecomeHostPrototype.jsx'));
+  ({ AuthProvider } = await server.ssrLoadModule('/src/context/AuthContext.jsx'));
+} finally {
+  await server.close();
 }
-
-const BecomeHostPrototype = await loadComponent('src/pages/BecomeHostPrototype.jsx');
 
 const mockUser = {
   userId: 101,
@@ -91,12 +81,12 @@ function renderPrototype(props = {}) {
     createElement(
       MemoryRouter,
       null,
-      createElement(BecomeHostPrototype, { ...defaultProps, ...props })
+      createElement(AuthProvider, null, createElement(BecomeHostPrototype, { ...defaultProps, ...props }))
     )
   );
 }
 
-test('PENDING_REVIEW state renders compact status card, horizontal stepper, banner, and accordion', () => {
+test('PENDING_REVIEW state renders compact status card, horizontal stepper and accordion', () => {
   const html = renderPrototype({ state: 'pending' });
 
   // 1. Compact Status Summary Card
@@ -116,16 +106,11 @@ test('PENDING_REVIEW state renders compact status card, horizontal stepper, bann
   assert.match(html, /Tiến trình xét duyệt/);
   assert.match(html, /Điền thông tin/);
   assert.match(html, /Gửi hồ sơ/);
-  assert.match(html, /Staff thẩm định/);
+  assert.match(html, /Nhân viên thẩm định/);
   assert.match(html, /Cấp quyền Chủ trọ/);
-
-  // 4. Compact Information Banner
-  assert.match(html, /id="becomeHostProgressHelp"/);
-  assert.match(html, /Sau khi được phê duyệt:/);
 
   // 5. Collapsible Accordion (default collapsed: title and toggle present)
   assert.match(html, /Thông tin hồ sơ đã gửi/);
-  assert.match(html, /HREG-42/);
   assert.match(html, /Xem chi tiết/);
   assert.match(html, /pendingSubmittedDate/);
 });
@@ -210,14 +195,11 @@ test('UNREGISTERED state renders horizontal stepper and registration form', () =
   });
 
   assert.match(html, /id="becomeHostForm"/);
-  assert.match(html, /id="applicantCapacity"/);
-  assert.match(html, /id="rentalExperience"/);
-  assert.match(html, /id="targetCommune"/);
-  assert.match(html, /id="expectedScale"/);
+  assert.match(html, /id="identityImage"/);
+  assert.match(html, /id="identityBackImage"/);
   assert.match(html, /id="introduction"/);
   assert.match(html, /id="agreementCheck"/);
   assert.match(html, /id="btnSubmitForm"/);
-  assert.match(html, /id="btnCancelForm"/);
 });
 
 test('CSS rules and design tokens satisfy SaaS minimal and accessibility guidelines', () => {

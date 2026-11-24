@@ -17,6 +17,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class StaffService {
+    private final NoticeService notices;
     private final AuthService auth;
     private final UserRepository users;
     private final PropertyRegistrationRepository registrations;
@@ -32,6 +33,8 @@ public class StaffService {
     private final ServiceRegistrationRepository serviceApplications;
     private final PropertyVerificationAccess verificationAccess;
     private final jakarta.persistence.EntityManager entityManager;
+    private final ServiceComplaintRepository serviceComplaints;
+    private final HostOnboardingService onboarding;
 
     private PropertyRegistrationRequest submission(PropertyRegistration registration) {
         if (registration.getRegistrationDetails() == null) return null;
@@ -45,12 +48,13 @@ public class StaffService {
         int required = (int) files.stream().filter(file -> Set.of("OWNERSHIP", "ID_CARD").contains(Objects.toString(file.getDocumentType(), ""))).map(PropertyDocumentRepository.Metadata::getDocumentType).distinct().count();
         int photoCount = (int) files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).count();
         boolean hasCoverPhoto = files.stream().anyMatch(file -> "PHOTO_0".equals(file.getDocumentType()));
-        boolean readyForApproval = details != null && Boolean.TRUE.equals(details.termsAccepted()) && required >= 2 && hasCoverPhoto;
+        boolean readyForApproval = details != null && Boolean.TRUE.equals(details.termsAccepted()) && required >= 2 && hasCoverPhoto
+                && (!registration.isHostOnboarding() || files.stream().anyMatch(f->"ID_CARD_BACK".equals(f.getDocumentType()))&&files.stream().anyMatch(f->"FIRE_SAFETY".equals(f.getDocumentType())));
         var cover = files.stream().filter(file -> Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")).findFirst().map(PropertyDocumentRepository.Metadata::getDocumentId).orElse(null);
         var linkedProperty = registration.getTargetPropertyId() != null
                 ? properties.findById(registration.getTargetPropertyId()).orElse(null)
                 : properties.findByRegistration_RegistrationId(registration.getRegistrationId()).orElse(null);
-        Integer publishedPropertyId = linkedProperty != null && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
+        Integer publishedPropertyId = linkedProperty != null && !linkedProperty.isReverificationRequired() && "ACTIVE".equalsIgnoreCase(linkedProperty.getStatus()) ? linkedProperty.getPropertyId() : null;
         String assignedStaffName = registration.getAssignedStaff() == null ? null : registration.getAssignedStaff().getFullName();
         return new Verification(registration.getRegistrationId(), registration.getName(), registration.getAddress(),
                 registration.getUser().getFullName(), registration.getUser().getEmail(), registration.getUser().getPhoneNumber(),
@@ -59,7 +63,7 @@ public class StaffService {
                 registration.getReviewer() == null ? null : registration.getReviewer().getFullName(), count, required, cover,
                 registration.getUser().getUserId(), registration.getTargetPropertyId(), registration.getSubmittedAt(),
                 assignedStaffName, registration.getAssignmentVersion(), verificationAccess.canReview(registration),
-                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote());
+                readyForApproval, photoCount, publishedPropertyId, registration.getReasonNote(), !PropertyReverification.reasons(registration.getReverificationReasonsJson(),json).isEmpty(), PropertyReverification.reasons(registration.getReverificationReasonsJson(),json),registration.isHostOnboarding());
     }
     private Activity activity(ModerationLog log) {
         return new Activity(log.getLogId(), log.getStaff().getFullName(), log.getTargetType(), log.getTargetId(), log.getAction(), log.getNote(), log.getCreatedAt());
@@ -75,14 +79,14 @@ public class StaffService {
         for (var file : documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id)) {
             var value = new Attachment(file.getDocumentId(), file.getDocumentType(), file.getFileName(), file.getVerificationStatus(),file.getContentType(),file.getFileSize(),file.getUploadedAt());
             if (Objects.toString(file.getDocumentType(), "").matches("PHOTO_\\d+")) photos.add(value);
-            else if (Set.of("OWNERSHIP", "ID_CARD", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))) privateFiles.add(value);
+            else if (Set.of("OWNERSHIP", "ID_CARD", "ID_CARD_BACK", "FIRE_SAFETY").contains(Objects.toString(file.getDocumentType(), ""))) privateFiles.add(value);
         }
-        var published=registration.getTargetPropertyId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).map(Property::getRegistration).map(this::submission).orElse(null);
+        var published=registration.getTargetPropertyId()==null||registration.getBaseRegistrationId()==null?null:properties.findById(registration.getTargetPropertyId()).filter(p->p.getOwner().getUserId().equals(registration.getUser().getUserId())).flatMap(p->registrations.findById(registration.getBaseRegistrationId())).filter(r->r.getUser().getUserId().equals(registration.getUser().getUserId())).map(this::submission).orElse(null);
         return new Detail(summary(registration), submission(registration), photos, privateFiles, registration.getReasonNote(),
                 logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("PROPERTY_REGISTRATION", id).stream().map(this::activity).toList(),published,
                 submissionEvents.findByRegistration_RegistrationIdOrderByCreatedAtAsc(id).stream().map(event->new SubmissionEvent(event.getEventId(),event.getActor().getFullName(),event.getAction(),event.getCreatedAt())).toList(),
                 registration.getAssignedStaff()==null?null:registration.getAssignedStaff().getUserId(), registration.getAssignedStaff()==null?null:registration.getAssignedStaff().getFullName(), registration.getAssignmentVersion(),
-                verificationAccess.canReview(registration));
+                verificationAccess.canReview(registration),onboarding.applicantNote(registration),onboarding.accountApplication(registration));
     }
     public record FileContent(byte[] bytes, String contentType) {}
     @Transactional(readOnly = true)
@@ -123,10 +127,12 @@ public class StaffService {
         }
         var reviewer = users.findById(auth.getCurrentUser().getUserId()).orElseThrow();
         boolean approve = decision.equals("APPROVE");
+        if(owner.getStatus()!=UserStatus.ACTIVE)throw new AppException("Tài khoản đăng ký không còn hoạt động.",HttpStatus.CONFLICT);
         if (approve) {
             var data = submission(registration);
             if (data == null || !Boolean.TRUE.equals(data.termsAccepted()) || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "PHOTO_0") || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "OWNERSHIP") || !documents.existsByRegistration_RegistrationIdAndDocumentTypeAndFileContentIsNotNull(id, "ID_CARD")) throw new BadRequestException("Hồ sơ thiếu dữ liệu hoặc tài liệu bắt buộc, chưa thể phê duyệt.");
             if (properties.existsByRegistration_RegistrationId(id)) throw new AppException("Hồ sơ này đã được tạo thành nhà trọ.", HttpStatus.CONFLICT);
+            onboarding.approve(registration,owner,reviewer);
             if(registration.getTargetPropertyId()==null){
                 properties.save(Property.builder().owner(owner).registration(registration).name(registration.getName()).address(registration.getAddress())
                         .contactInfo(registration.getContactInfo()).googleMapLink(registration.getGoogleMapLink()).description(data.description()).status("ACTIVE").build());
@@ -135,6 +141,10 @@ public class StaffService {
                 if(!property.getOwner().getUserId().equals(owner.getUserId())||property.getRegistration()==null||!Objects.equals(registration.getBaseRegistrationId(),property.getRegistration().getRegistrationId()))throw new AppException("Phiên bản công khai đã thay đổi. Không thể phê duyệt đề nghị cũ.",HttpStatus.CONFLICT);
                 property.getRegistration().setTargetPropertyId(property.getPropertyId());
                 property.setRegistration(registration);property.setName(registration.getName());property.setAddress(registration.getAddress());property.setContactInfo(registration.getContactInfo());property.setGoogleMapLink(registration.getGoogleMapLink());property.setDescription(data.description());
+                if (!PropertyReverification.reasons(registration.getReverificationReasonsJson(),json).isEmpty()) {
+                    property.setReverificationRequired(false);
+                    property.setReverificationReasonsJson(null);
+                }
                 properties.save(property);
             }
             for (var document : documents.findByRegistration_RegistrationId(id)) if (!Objects.toString(document.getDocumentType(), "").startsWith("PHOTO_")) document.setVerificationStatus("APPROVED");
@@ -144,6 +154,8 @@ public class StaffService {
         registration.setReviewedAt(LocalDateTime.now());
         registration.setReasonNote(reason.isBlank() ? "Hồ sơ đã được phê duyệt." : reason);
         registrations.saveAndFlush(registration);
+        String noticeTarget = registration.isHostOnboarding() ? "/become-host" : "/host/property/edit?registrationId="+id;
+        notices.send(registration.getUser(),"APPLICATION",registration.getStatus().name(),registration.getName(),registration.getReasonNote(),null,noticeTarget,id,null,null);
         logs.saveAndFlush(ModerationLog.builder().staff(reviewer).targetType("PROPERTY_REGISTRATION").targetId(id)
                 .action(supplement ? "REQUESTED_SUPPLEMENT" : approve ? "APPROVED" : "REJECTED").note(registration.getReasonNote()).build());
         return detail(id);
@@ -156,6 +168,11 @@ public class StaffService {
         var supportRows = support.findAllByOrderByCreatedAtAsc();
         var postRows = posts.findAllByOrderByCreatedAtAsc();
         var queue = new ArrayList<QueueItem>();
+        var complaintRows = serviceComplaints.findAllByOrderByComplaintIdDesc().stream()
+                .filter(c -> Set.of("PENDING", "EXPLAINED").contains(c.getStatus())).toList();
+        for (var c : complaintRows) queue.add(new QueueItem("SERVICE-REPORT-" + c.getComplaintId(), "REPORT", c.getService().getServiceName(),
+                c.getReporter().getFullName(), c.getContent(), "PENDING", LocalDateTime.ofInstant(c.getCreatedAt(), java.time.ZoneId.systemDefault()),
+                "/staff/service-complaints?id=" + c.getComplaintId()));
         var serviceRows = serviceApplications.findAllByOrderByRegistrationIdDesc();
         for (var row : serviceRows) if (row.getStatus() == RegistrationStatus.PENDING) {
             queue.add(new QueueItem("SERVICE-" + row.getRegistrationId(), "SERVICE", row.getServiceName(), row.getApplicantName(),
@@ -170,8 +187,8 @@ public class StaffService {
         for (var row : postRows) if (row.getStatus() == PostStatus.PENDING) queue.add(new QueueItem("COMMUNITY-" + row.getPostId(), "COMMUNITY", row.getTitle(), row.getAuthor().getFullName(), row.getDescription(), row.getStatus().name(), row.getCreatedAt(), "/staff/community/detail?id=" + row.getPostId()));
         queue.sort(Comparator.comparing(QueueItem::createdAt, Comparator.nullsLast(Comparator.naturalOrder())));
         var activityRows = actor.getRole()==UserRole.ADMIN ? logs.findAllByOrderByCreatedAtDesc() : logs.findVisibleForVerificationStaff(actor.getUserId());
-        long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
-        return new Dashboard(verification.stream().filter(row -> row.getStatus() == RegistrationStatus.PENDING).count(), reportRows.stream().filter(row -> row.getStatus() == ReportStatus.PENDING).count(), null,
+        long processed = activityRows.stream().filter(row -> Set.of("APPROVED", "REJECTED", "RESOLVED", "DISMISSED", "COMPLETED", "DISMISS", "REMOVE").contains(row.getAction())).map(row -> row.getTargetType() + ":" + row.getTargetId()).distinct().count();
+        return new Dashboard(verification.stream().filter(row -> row.getStatus() == RegistrationStatus.PENDING).count(), reportRows.stream().filter(row -> row.getStatus() == ReportStatus.PENDING).count() + complaintRows.size(), null,
                 supportRows.stream().filter(row -> row.getStatus() != SupportStatus.COMPLETED).count(), postRows.stream().filter(row -> row.getStatus() == PostStatus.PENDING).count(),
                 actor.getRole()==UserRole.ADMIN ? properties.findAll().stream().filter(row -> "ACTIVE".equalsIgnoreCase(row.getStatus())).count() : properties.countActiveForAssignedStaff(actor.getUserId()), processed, null, null, queue, activityRows.stream().limit(20).map(this::activity).toList());
     }

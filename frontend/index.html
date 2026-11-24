@@ -4,10 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0d9488" />
-    <title>HL_RCS | Kết nối phòng trọ Hòa Lạc</title>
+    <meta name="description" content="NestHub - Nền tảng kết nối người thuê và quản lý nhà trọ minh bạch tại khu vực Hòa Lạc." />
+    <meta property="og:title" content="NestHub - Nền tảng kết nối và quản lý nhà trọ" />
+    <meta property="og:description" content="Tìm phòng trọ minh bạch, quản lý hợp đồng, điện nước và công nợ trên NestHub." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>NestHub - Nền tảng kết nối và quản lý nhà trọ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; padding: 0; background-color: #f8fafc; }
+      .gl-boot { min-height: 100vh; min-height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 24px 20px; box-sizing: border-box; background-color: #f8fafc; color: #0f172a; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .gl-boot-card { display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; }
+      .gl-boot-orbit { position: relative; width: 92px; height: 92px; display: grid; place-items: center; }
+      .gl-boot-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .gl-boot-track { fill: none; stroke: rgba(13, 148, 136, 0.14); stroke-width: 3.5; }
+      .gl-boot-arc { fill: none; stroke: #0d9488; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 76 196; transform-origin: 48px 48px; animation: gl-boot-spin 0.95s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      .gl-boot-emblem { position: relative; z-index: 1; width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff; display: grid; place-items: center; box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.28), 0 2px 6px rgba(15, 118, 110, 0.16); }
+      .gl-boot-text { margin: 0; font-size: 15px; font-weight: 600; color: #334155; letter-spacing: -0.01em; }
+      @keyframes gl-boot-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @media (max-width: 640px) { .gl-boot-orbit { width: 80px; height: 80px; } .gl-boot-emblem { width: 46px; height: 46px; border-radius: 14px; } .gl-boot-text { font-size: 14px; } }
+      @media (prefers-reduced-motion: reduce) { .gl-boot-arc { animation: none; stroke-dasharray: 200 72; opacity: 0.85; } }
+    </style>
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+  <body>
+    <div id="root">
+      <div class="gl-boot" role="status" aria-live="polite" aria-busy="true" data-testid="bootstrap-loading">
+        <div class="gl-boot-card">
+          <div class="gl-boot-orbit" aria-hidden="true">
+            <svg class="gl-boot-ring" viewBox="0 0 96 96" focusable="false">
+              <circle class="gl-boot-track" cx="48" cy="48" r="43" />
+              <circle class="gl-boot-arc" cx="48" cy="48" r="43" />
+            </svg>
+            <span class="gl-boot-emblem">
+              <svg width="30" height="30" viewBox="0 0 48 48" fill="none" focusable="false">
+                <path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
+          <p class="gl-boot-text">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

@@ -5,6 +5,7 @@ import org.hlrcs.security.CustomUserDetailsService;
 import org.hlrcs.security.JwtAuthenticationEntryPoint;
 import org.hlrcs.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -33,6 +34,8 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomUserDetailsService customUserDetailsService;
+    @Value("${app.google.mobile-browser-origin:}")
+    private String googleMobileBrowserOrigin;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
@@ -71,6 +74,13 @@ public class SecurityConfig {
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        if (googleMobileBrowserOrigin != null && googleMobileBrowserOrigin.startsWith("https://")) {
+            var googleBrowser = new CorsConfiguration();
+            googleBrowser.setAllowedOrigins(List.of(googleMobileBrowserOrigin.trim().replaceFirst("/$", "")));
+            googleBrowser.setAllowedMethods(List.of("POST"));
+            googleBrowser.setAllowedHeaders(List.of("Content-Type", "Accept"));
+            source.registerCorsConfiguration("/api/auth/google/mobile/browser/**", googleBrowser);
+        }
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -86,6 +96,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/public/collected-posts").permitAll()
+
+                        .requestMatchers("/api/auth/profile/phone/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/properties/search", "/api/properties/location/nearby",
                                 "/api/properties/*/room-types/*", "/api/properties/*/room-types/*/details",
                                 "/api/properties/*/room-types/*/images/*").permitAll()
@@ -94,6 +107,7 @@ public class SecurityConfig {
                                 "/api/community/posts/*/images/*", "/api/community/posts/*/videos/*",
                                 "/api/community/posts/*/comments", "/api/community/posts/*/comments/*/replies").permitAll()
 
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/services/*/ratings", "/api/services/*/ratings/*/images/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/services", "/api/services/*", "/api/services/*/image").permitAll()
                         .requestMatchers(
                                 "/",

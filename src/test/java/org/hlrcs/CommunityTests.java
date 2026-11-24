@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
                 "community.ai.mode=OFF", "community.ai.poll-ms=3600000"})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CommunityTests {
+class CommunityTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired PostRepository posts;
@@ -82,8 +82,9 @@ class CommunityTests {
     }
 
     private String register() throws Exception {
-        return data(request("POST", "/api/auth/register", Map.of("email", "community-" + UUID.randomUUID() + "@hlrcs.test",
-                "password", "Password@123", "fullName", "Community Author"), null), 201).path("accessToken").asString();
+        String email = "community-" + UUID.randomUUID() + "@hlrcs.test";
+        return data(request("POST", "/api/auth/register", Map.of("email", email,
+                "password", "Password@123", "fullName", "Community Author", "verificationToken", verifyContact(email)), null), 201).path("accessToken").asString();
     }
 
     private String login(String email, String password) throws Exception {

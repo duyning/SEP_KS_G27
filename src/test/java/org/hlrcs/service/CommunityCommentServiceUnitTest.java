@@ -58,4 +58,3 @@ class CommunityCommentServiceUnitTest extends CommunityUnitSupport {
         return cases;
     }
 }
-

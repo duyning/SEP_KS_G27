@@ -1,0 +1,511 @@
+/* ============================================================================
+   NestHub — Unified Global Loading System
+   Brand Palette: Background #F8FAFC · Primary Teal #0D9488 · Dark Teal #0F766E · Text #0F172A
+   Tiers:
+     1. GlobalSplashLoading / GlobalLoading (.gl-screen) — App startup & session
+     2. GlobalLoadingOverlay (.gl-overlay) — Single blocking overlay (LoadingManager)
+     3. PageLoading (.pl-container) — In-layout lazy route transitions
+     4. ContentLoading / SkeletonLoading (.sk-group) — Partial in-page content
+     5. ButtonLoading (.bl-inline) — Action submit / save / confirm buttons
+   ============================================================================ */
+
+.gl-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.gl-screen.gl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  animation: gl-fade-in 160ms ease-out both;
+}
+
+.gl-screen.gl-overlay.gl-translucent-mode {
+  background-color: rgba(248, 250, 252, 0.92);
+  backdrop-filter: blur(4px);
+}
+
+.gl-screen.gl-overlay.gl-fullscreen-mode {
+  background-color: #F8FAFC;
+}
+
+.gl-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.gl-orbit {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.gl-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.gl-ring-track {
+  fill: none;
+  stroke: rgba(8, 127, 114, 0.14);
+  stroke-width: 3.5;
+}
+
+.gl-ring-arc {
+  fill: none;
+  stroke: #087F72;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 76 196;
+  transform-origin: 48px 48px;
+  animation: gl-rotate 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.gl-emblem {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #087F72 0%, #066057 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px -4px rgba(8, 127, 114, 0.28), 0 2px 6px rgba(6, 96, 87, 0.16);
+}
+
+.gl-emblem-breathe {
+  animation: gl-breathe 2.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.gl-emblem-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+  display: block;
+}
+
+.gl-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.gl-brand {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #142D29;
+}
+
+.gl-message {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: #526A65;
+}
+
+.gl-submessage {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #526A65;
+}
+
+.gl-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 6px;
+}
+
+.gl-dots i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #087F72;
+  opacity: 0.3;
+  animation: gl-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.gl-dots i:nth-child(2) {
+  animation-delay: 180ms;
+}
+
+.gl-dots i:nth-child(3) {
+  animation-delay: 360ms;
+}
+
+/* Error / Recovery state inside GlobalLoading (never spin forever) */
+.gl-card.is-error {
+  background: #ffffff;
+  border: 1px solid #E1EAE6;
+  border-radius: 18px;
+  padding: 28px 24px;
+  max-width: 420px;
+  box-shadow: 0 12px 28px -8px rgba(20, 45, 41, 0.08);
+  gap: 16px;
+}
+
+.gl-error-badge {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  display: grid;
+  place-items: center;
+}
+
+.gl-error-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #142D29;
+}
+
+.gl-error-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #526A65;
+  word-break: break-word;
+}
+
+.gl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.gl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.gl-btn-primary {
+  border: 1px solid #087F72;
+  background: #087F72;
+  color: #ffffff;
+}
+
+.gl-btn-primary:hover:not(:disabled) {
+  background: #066057;
+  border-color: #066057;
+}
+
+.gl-btn-secondary {
+  border: 1px solid #E1EAE6;
+  background: #ffffff;
+  color: #142D29;
+}
+
+.gl-btn-secondary:hover:not(:disabled) {
+  background: #FAFAF6;
+  border-color: #C7D7D1;
+}
+
+.gl-btn:focus-visible {
+  outline: 2px solid #087F72;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   PageLoading — In-layout Suspense / Route Content Loader
+   ============================================================================ */
+.pl-container {
+  width: 100%;
+  min-height: clamp(240px, 46vh, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  animation: gl-fade-in 140ms ease-out both;
+}
+
+.pl-orbit {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.pl-emblem {
+  position: relative;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #087F72 0%, #066057 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 14px -4px rgba(8, 127, 114, 0.25);
+}
+
+.pl-message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #526A65;
+}
+
+/* ============================================================================
+   ContentLoading / SkeletonLoading — Reusable Partial Content Skeletons
+   ============================================================================ */
+.sk-group {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+}
+
+.sk-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.sk-card {
+  background: #ffffff;
+  border: 1px solid #E1EAE6;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.sk-table {
+  background: #ffffff;
+  border: 1px solid #E1EAE6;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.sk-table-row {
+  display: grid;
+  grid-template-columns: repeat(var(--sk-cols, 4), minmax(0, 1fr));
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #F0F5F2;
+}
+
+.sk-table-row:last-child {
+  border-bottom: 0;
+}
+
+.sk-detail {
+  background: #ffffff;
+  border: 1px solid #E1EAE6;
+  border-radius: 16px;
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.sk-block {
+  display: block;
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #E7EFEA 25%, #F2F7F4 50%, #E7EFEA 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+.sk-block.sk-h-sm { height: 12px; }
+.sk-block.sk-h-md { height: 16px; }
+.sk-block.sk-h-lg { height: 26px; border-radius: 10px; }
+.sk-block.sk-h-media { height: 140px; border-radius: 12px; }
+
+.sk-w-100 { width: 100%; }
+.sk-w-80 { width: 80%; }
+.sk-w-65 { width: 65%; }
+.sk-w-45 { width: 45%; }
+
+.sk-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================================
+   ButtonLoading — Inline Action Spinner
+   ============================================================================ */
+.bl-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bl-spinner {
+  display: inline-block;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: gl-rotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   Keyframes, Responsive & Accessibility
+   ============================================================================ */
+@keyframes gl-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gl-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes gl-dot-pulse {
+  0%, 100% { opacity: 0.28; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes gl-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 640px) {
+  .gl-screen {
+    padding: 20px 16px;
+  }
+
+  .gl-orbit {
+    width: 82px;
+    height: 82px;
+  }
+
+  .gl-emblem {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+  }
+
+  .gl-brand {
+    font-size: 18px;
+  }
+
+  .gl-message {
+    font-size: 14px;
+  }
+
+  .gl-card.is-error {
+    padding: 24px 18px;
+  }
+
+  .gl-actions {
+    flex-direction: column;
+  }
+
+  .gl-btn {
+    width: 100%;
+  }
+
+  .pl-container {
+    min-height: 220px;
+    padding: 24px 16px;
+  }
+
+  .sk-table-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-screen,
+  .pl-container,
+  .gl-emblem-breathe {
+    animation: none;
+  }
+
+  .gl-ring-arc {
+    animation: none;
+    stroke-dasharray: 200 72;
+    opacity: 0.85;
+  }
+
+  .gl-dots i {
+    animation: none;
+    opacity: 0.65;
+  }
+
+  .sk-block {
+    animation: none;
+    background: #E7EFEA;
+  }
+
+  .bl-spinner {
+    animation: none;
+    border-right-color: currentColor;
+    opacity: 0.75;
+  }
+}

@@ -132,6 +132,8 @@ CREATE TABLE `properties` (
     `google_map_link` VARCHAR(500) NULL,
     `description` TEXT NULL,
     `status` VARCHAR(50) NULL,
+    `reverification_required` BOOLEAN NOT NULL DEFAULT FALSE,
+    `reverification_reasons_json` TEXT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_prop_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`),
@@ -147,9 +149,12 @@ CREATE TABLE `room_types` (
     `area_sqm` FLOAT NULL,
     `service_price` DECIMAL(12, 2) NULL,
     `description` TEXT NULL,
+    `availability_confirmed_at` DATETIME(6) NULL,
+    `availability_confirmed_by` INT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_rt_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`property_id`) ON DELETE CASCADE
+    CONSTRAINT `fk_rt_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`property_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_room_type_availability_actor` FOREIGN KEY (`availability_confirmed_by`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. ROOM_TYPE_IMAGES

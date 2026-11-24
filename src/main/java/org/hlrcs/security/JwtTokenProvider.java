@@ -1,6 +1,7 @@
 package org.hlrcs.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.hlrcs.entity.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,18 +27,7 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
-
-        return Jwts.builder()
-                .subject(user.getEmail())
-                .claim("userId", user.getUserId())
-                .claim("role", user.getRole() != null ? user.getRole().name() : null)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey())
-                .compact();
+        return generateTokenFromUser(userDetails.getUser());
     }
 
     public String generateTokenFromUser(User user) {
@@ -48,6 +38,7 @@ public class JwtTokenProvider {
                 .subject(user.getEmail())
                 .claim("userId", user.getUserId())
                 .claim("role", user.getRole() != null ? user.getRole().name() : null)
+                .claim("sessionVersion", user.getSessionVersion())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -55,25 +46,24 @@ public class JwtTokenProvider {
     }
 
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parser()
+        return readClaims(token).getSubject();
+    }
+
+    public boolean isCurrentSession(String token, User user) {
+        var claims = readClaims(token);
+        return user.getEmail().equals(claims.getSubject()) && isCurrentSession(claims, user);
+    }
+
+    boolean isCurrentSession(Claims claims, User user) {
+        Long sessionVersion = claims.get("sessionVersion", Long.class);
+        return user.getSessionVersion() == (sessionVersion == null ? 0L : sessionVersion);
+    }
+
+    Claims readClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return claims.getSubject();
-    }
-
-    public boolean validateToken(String authToken) {
-        try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(authToken);
-            return true;
-        } catch (JwtException | IllegalArgumentException ex) {
-            // Token không hợp lệ, hết hạn hoặc sai chữ ký
-            return false;
-        }
     }
 }

@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = "spring.datasource.url=jdbc:h2:mem:community-realtime-test;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @ActiveProfiles("test")
-class CommunityRealtimeTests {
+class CommunityRealtimeTests extends RegistrationOtpTestSupport {
     @LocalServerPort int port;
     @Autowired ObjectMapper json;
     @Autowired ApplicationEventPublisher events;
@@ -32,7 +32,10 @@ class CommunityRealtimeTests {
 
     @Test
     void committedChangesReachOnlyTheirAudienceAndReconnectResyncs() throws Exception {
-        var author = api("POST", "/api/auth/register", null, Map.of("email", "live-"+UUID.randomUUID()+"@test.local", "password", "Password@123", "fullName", "Thành viên realtime"), 201);
+        String email = "live-" + UUID.randomUUID() + "@test.local";
+        var author = api("POST", "/api/auth/register", null, Map.of("email", email,
+                "password", "Password@123", "fullName", "Thành viên realtime",
+                "verificationToken", verifyContact(email)), 201);
         String token = author.path("accessToken").asString();
         int userId = api("GET", "/api/auth/me", token, null, 200).path("userId").asInt();
         assertTrue(userId > 0);

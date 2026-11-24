@@ -1,5 +1,5 @@
-/* Phone-only authentication. Desktop/tablet layout stays in auth.css. */
-@media (max-width:600px), (max-width:960px) and (max-height:500px) and (pointer:coarse) {
+/* Single-column authentication for phones and tablets. */
+@media (max-width:960px) {
   .flip-viewport{--am-action:#0f766e;--am-ink:#102f36;--am-muted:#526774;width:100%;min-height:100svh;perspective:none;background:#edf6f4}
   .flip-viewport .auth-flip-box,.flip-viewport .auth-flip-box.is-flipped{min-height:100svh;transform:none;transform-style:flat}
   .flip-viewport .flip-face{position:relative;min-height:100svh;transform:none;backface-visibility:visible;background:transparent;overflow:visible}
@@ -56,6 +56,11 @@
   .flip-viewport .demo-grid strong{font-size:13px;line-height:1.5;color:#334b55}.flip-viewport .demo-grid span{font-size:12px;line-height:1.5;color:#647a82}
   .flip-viewport :is(a,button,input):focus-visible{outline:3px solid #0f766e;outline-offset:3px}
   .flip-viewport .auth-mobile-home:focus-visible{outline-color:#a6f4df}
+}
+@media (max-width:420px) {
+  .flip-viewport .register-otp-row { grid-template-columns: minmax(0, 1fr); }
+  .flip-viewport .register-otp-button { min-height: 44px; justify-self: end; }
+  .flip-viewport .register-verified { min-height: 32px; justify-self: start; }
 }
 @media(max-width:360px){
   .flip-viewport .form-side{padding-inline:12px}

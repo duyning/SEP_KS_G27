@@ -1,3 +1,4 @@
+import UIButton from '../common/Button.jsx';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -14,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { BrandIcon, BRAND } from '../brand/index.js';
 
 export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 }) {
   const { user, logout } = useAuth();
@@ -42,16 +44,14 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
       <aside id="hostSidebar" className={`host-sidebar ${isOpen ? 'mobile-open' : ''}`} aria-label="Thanh điều hướng chủ trọ">
         {/* Brand & Portal Logo */}
         <div className="sidebar-brand-box">
-          <Link to="/host" className="sidebar-brand-link" title="HL_RCS Rental Connection System">
-            <div className="brand-logo-icon">
-              <Home size={22} />
-            </div>
+          <Link to="/host" className="sidebar-brand-link" title={`${BRAND.name} - ${BRAND.tagline}`}>
+            <BrandIcon size={34} variant="teal" />
             <div className="brand-text-block">
-              <div className="brand-portal-title">HL_RCS</div>
+              <div className="brand-portal-title" style={{ color: '#0F5955', fontWeight: 800 }}>{BRAND.name}</div>
               <div className="brand-portal-role">ROOM HOST PORTAL</div>
             </div>
           </Link>
-          <button
+          <UIButton
             type="button"
             id="btnCloseSidebar"
             className="btn-close-sidebar-mobile"
@@ -59,7 +59,7 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
             onClick={onClose}
           >
             <X size={20} />
-          </button>
+          </UIButton>
         </div>
 
         {/* Navigation Links */}
@@ -124,7 +124,7 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
             <li>
               <NavLink to="/host/support" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={onClose}>
                 <MessageSquare className="nav-icon" size={18} />
-                <span>Yêu cầu Staff hỗ trợ</span>
+                <span>Yêu cầu nhân viên hỗ trợ</span>
               </NavLink>
             </li>
             <li>
@@ -151,20 +151,20 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
               </NavLink>
             </li>
             <li>
-              <button type="button" className="nav-link btn-nav-action btn-logout-sidebar" onClick={handleLogout}>
+              <UIButton type="button" className="nav-link btn-nav-action btn-logout-sidebar" onClick={handleLogout}>
                 <LogOut className="nav-icon" size={18} />
                 <span>Đăng xuất</span>
-              </button>
+              </UIButton>
             </li>
           </ul>
         </nav>
 
         {/* Sidebar Footer User Info */}
         {user && (
-          <div className="sidebar-user-footer" style={{ padding: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <div className="sidebar-user-footer" style={{ padding: 'var(--space-4)', borderTop: '1px solid #e2e8f0' }}>
             <div className="sidebar-user-card" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className="user-avatar-badge" style={{
-                width: '36px', height: '36px', borderRadius: '50%', background: '#0d9488',
+                width: '36px', height: '36px', borderRadius: '50%', background: '#0f766e',
                 color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
               }}>
                 {(user.fullName || 'H').slice(0, 2).toUpperCase()}
@@ -173,7 +173,7 @@ export default function HostSidebar({ isOpen, onClose, pendingViewingsCount = 1 
                 <div className="user-display-name" style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                   {user.fullName || user.email}
                 </div>
-                <div className="user-role-tag" style={{ fontSize: '11px', color: '#64748b' }}>
+                <div className="user-role-tag" style={{ fontSize: '11px', color: 'var(--ui-muted)' }}>
                   Chủ trọ đối tác
                 </div>
               </div>

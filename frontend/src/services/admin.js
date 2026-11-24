@@ -6,5 +6,14 @@ function page(data) {
 }
 export const adminApi={
   async dashboard(signal){const data=await request('/dashboard',{basePath,signal});if(!data || !['totalAccounts','activeAccounts','totalProperties','pendingVerifications','unassignedVerifications'].every(key=>Number.isInteger(data[key])&&data[key]>=0) || !['roles','staff','recentApplications','activities'].every(key=>Array.isArray(data[key])))throw new ApiError('Không xác minh được dữ liệu tổng quan.',502);return data;},
-  async list(view,filters,signal){const endpoint={accounts:'accounts',assignment:'assignments',activity:'activity'}[view];if(!endpoint)throw new ApiError('Mục quản trị không hợp lệ.',400);return page(await request(`/${endpoint}?${new URLSearchParams(filters)}`,{basePath,signal}));}
+  async list(view,filters,signal){const endpoint={accounts:'accounts',assignment:'assignments',activity:'activity'}[view];if(!endpoint)throw new ApiError('Mục quản trị không hợp lệ.',400);return page(await request(`/${endpoint}?${new URLSearchParams(filters)}`,{basePath,signal}));},
+  async changeAccountStatus(userId, status) {
+    const account = await request(`/accounts/${userId}/status`, {
+      basePath, method: 'PATCH', body: {status},
+    });
+    if (account?.userId !== userId || account.status !== status) {
+      throw new ApiError('Không xác minh được trạng thái tài khoản. Vui lòng thử lại.', 502);
+    }
+    return account;
+  },
 };

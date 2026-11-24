@@ -1,3 +1,4 @@
+import {formatDistance,withSearchOrigin} from './search-origin.js';
 import {favoritesApi} from './favorites.js';
 import {accommodationApi} from './accommodations.js';
 import {moveInEstimate} from './accommodation-detail.js';
@@ -13,15 +14,15 @@ export function parseComparisonIds(value='') {
     return {ids:[],error:'Chọn tối đa 4 loại phòng hợp lệ để so sánh.'};
   return {ids:[...new Set(parts.map(Number))],error:''};
 }
-export function favoritesSelectionUrl(ids) {
-  return `/favorites${ids.length?`?compare=${ids.join(',')}`:''}`;
+export function favoritesSelectionUrl(ids,origin) {
+  return withSearchOrigin(`/favorites${ids.length?`?compare=${ids.join(',')}`:''}`,origin);
 }
-export async function loadComparison(favoriteId,signal) {
+export async function loadComparison(favoriteId,signal,origin) {
   try {
     const favorite=await favoritesApi.get(favoriteId,signal);
     if(!favorite.available)return {favoriteId,status:'unavailable'};
     const summary=favorite.accommodation;
-    const data=await accommodationApi.detail(summary.propertyId,summary.roomTypeId,signal);
+    const data=await accommodationApi.detail(summary.propertyId,summary.roomTypeId,signal,origin);
     return {favoriteId,status:'ready',data};
   } catch(error) {
     if(error.name==='AbortError')throw error;
@@ -33,16 +34,17 @@ const validAmount=value=>Number.isFinite(value)&&value>=0;
 const money=value=>validAmount(value)?detailMoney(value):unknown;
 export function comparisonRows(columns) {
   const ready=columns.filter(column=>column.status==='ready');
-  const row=(key,label,value,format=String,better=null)=>{
+  const row=(key,label,value,format=String,better=null,missing=unknown)=>{
     const values=columns.map(column=>column.status==='ready'?value(column.data):null);
     const numbers=values.filter(value=>typeof value==='number'&&Number.isFinite(value));
     const best=better&&numbers.length>=2&&new Set(numbers).size>1?(better==='min'?Math.min(...numbers):Math.max(...numbers)):null;
-    return {key,label,cells:values.map(value=>({text:value==null?unknown:format(value),best:best!==null&&value===best})),
+    return {key,label,cells:values.map(value=>({text:value==null?missing:format(value),best:best!==null&&value===best})),
       different:ready.length<2||new Set(columns.flatMap((column,index)=>column.status==='ready'?[values[index]??unknown]:[])).size>1};
   };
   const amount=(key,label,unit='',better=null)=>row(key,label,data=>validAmount(data[key])?data[key]:null,value=>`${money(value)}${unit}`,better);
   const rows=[
     row('address','Khu vực / địa chỉ',data=>data.address||null),
+    row('distanceKm','Khoảng cách đến địa điểm đã chọn',data=>data.distanceKm,formatDistance,null,formatDistance(null)),
     amount('price','Giá thuê / tháng','','min'),
     row('areaSqm','Diện tích',data=>data.areaSqm,value=>`${value} m²`,'max'),
     row('capacity','Sức chứa',data=>data.capacity>0?data.capacity:null,value=>`${value} người`),

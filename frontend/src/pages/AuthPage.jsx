@@ -1,5 +1,6 @@
+import UIField from '../components/common/Field.jsx';
 import { MotionButton } from '../components/motion/MotionUI.jsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -20,6 +21,8 @@ import GoogleSignIn from '../components/GoogleSignIn.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
 import { sessionDestination } from '../routing/session-destination.js';
+import { authApi } from '../services/auth.js';
+import { BrandIcon, BRAND } from '../components/brand/index.js';
 import '../styles/auth-mobile.css';
 
 const DEMO_ACCOUNTS = [
@@ -29,6 +32,16 @@ const DEMO_ACCOUNTS = [
   ['Nhân viên (Staff)', 'staff@hlrcs.com', '123456'],
   ['Quản trị viên (Admin)', 'admin@hlrcs.com', 'admin123'],
 ];
+
+const registerEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const registerPhone = /^(?:0|\+84)[35789][0-9]{8}$/;
+const registerPassword = /^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{Nd}).{8,}$/su;
+
+function identifierError(value) {
+  if (!value) return 'Vui lòng nhập email hoặc số điện thoại.';
+  if (!registerEmail.test(value) && !registerPhone.test(value)) return 'Email hoặc số điện thoại không đúng định dạng.';
+  return undefined;
+}
 
 export default function AuthPage({ registerMode = false }) {
   const { login, loginWithGoogle, register, user } = useAuth();
@@ -53,25 +66,46 @@ export default function AuthPage({ registerMode = false }) {
   const [regIdentifier, setRegIdentifier] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [regRole, setRegRole] = useState(location.state?.role || 'USER');
   const [regAgree, setRegAgree] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [regErrors, setRegErrors] = useState({});
   const [regAlert, setRegAlert] = useState('');
   const [regBusy, setRegBusy] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpAction, setOtpAction] = useState('');
+  const [resendAt, setResendAt] = useState(0);
+  const [verification, setVerification] = useState(null);
+  const otpInput = useRef(null);
+  const regPasswordInput = useRef(null);
 
   useEffect(() => {
     document.title = isFlipped
-      ? 'HL_RCS | Tạo tài khoản mới'
-      : 'HL_RCS | Đăng nhập hệ thống kết nối phòng trọ';
+      ? `${BRAND.name} | Tạo tài khoản mới`
+      : `${BRAND.name} | Đăng nhập hệ thống kết nối phòng trọ`;
+    window.scrollTo(0, 0);
   }, [isFlipped]);
 
   useEffect(() => {
-    if (location.state?.role) {
-      setRegRole(location.state.role);
-    }
-  }, [location.state]);
+    if (!resendAt) return;
+    const timeout = setTimeout(() => setResendAt(0), Math.max(0, resendAt - Date.now()));
+    return () => clearTimeout(timeout);
+  }, [resendAt]);
+
+  useEffect(() => {
+    if (!verification) return;
+    const timeout = setTimeout(() => {
+      setVerification(null);
+      setOtpSent(false);
+      setRegErrors((previous) => ({ ...previous, identifier: 'Phiên xác minh đã hết hạn. Vui lòng xác minh lại.' }));
+    }, Math.max(0, verification.expiresAt - Date.now()));
+    return () => clearTimeout(timeout);
+  }, [verification]);
+
+  useEffect(() => {
+    if (isFlipped && otpSent) otpInput.current?.focus();
+  }, [otpSent, isFlipped]);
 
   // Already logged in redirect
   if (user) {
@@ -80,8 +114,7 @@ export default function AuthPage({ registerMode = false }) {
   }
 
   // Navigation flip actions
-  const goToRegister = (role = 'USER') => {
-    setRegRole(role);
+  const goToRegister = () => {
     setLoginAlert('');
     setRegAlert('');
     navigate('/register');
@@ -141,10 +174,54 @@ export default function AuthPage({ registerMode = false }) {
     }
   }
 
+  async function sendRegistrationOtp() {
+    if (otpAction || resendAt || verification || regBusy) return;
+    const identifier = regIdentifier.trim();
+    const error = identifierError(identifier);
+    setRegErrors((previous) => ({ ...previous, identifier: error, code: undefined }));
+    if (error) return;
+
+    setRegAlert('');
+    setOtpAction('send');
+    try {
+      const sent = await authApi.sendRegistrationOtp(identifier);
+      setOtpCode('');
+      setOtpSent(true);
+      setResendAt(Date.now() + sent.resendAfterSeconds * 1000);
+    } catch (err) {
+      setRegErrors((previous) => ({ ...previous, identifier: err.message }));
+    } finally {
+      setOtpAction('');
+    }
+  }
+
+  async function verifyRegistrationOtp() {
+    if (otpAction || !otpSent || regBusy) return;
+    if (!/^[0-9]{6}$/.test(otpCode)) {
+      setRegErrors((previous) => ({ ...previous, code: 'Mã OTP gồm 6 chữ số.' }));
+      return;
+    }
+
+    setOtpAction('verify');
+    setRegAlert('');
+    setRegErrors((previous) => ({ ...previous, identifier: undefined, code: undefined }));
+    try {
+      const result = await authApi.verifyRegistrationOtp(regIdentifier.trim(), otpCode);
+      setVerification({ token: result.verificationToken, expiresAt: Date.now() + result.expiresInSeconds * 1000 });
+      setOtpCode('');
+      setOtpSent(false);
+      regPasswordInput.current?.focus();
+    } catch (err) {
+      setRegErrors((previous) => ({ ...previous, code: err.fields?.code || err.message }));
+    } finally {
+      setOtpAction('');
+    }
+  }
+
   // Register Handler
   async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (regBusy) return;
+    if (regBusy || otpAction) return;
 
     const nextErrors = {};
     const fullName = regFullName.trim();
@@ -156,16 +233,18 @@ export default function AuthPage({ registerMode = false }) {
       nextErrors.fullName = 'Họ và tên cần có ít nhất 2 ký tự.';
     }
 
-    if (!id) {
-      nextErrors.identifier = 'Vui lòng nhập email hoặc số điện thoại.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id) && !/^(0\d{9}|\+84\d{9})$/.test(id)) {
-      nextErrors.identifier = 'Email hoặc số điện thoại không đúng định dạng.';
+    const invalidIdentifier = identifierError(id);
+    if (invalidIdentifier) nextErrors.identifier = invalidIdentifier;
+    else if (!verification || verification.expiresAt <= Date.now()) {
+      nextErrors.identifier = 'Vui lòng xác minh email hoặc số điện thoại trước khi đăng ký.';
     }
 
     if (!regPassword) {
       nextErrors.password = 'Vui lòng nhập mật khẩu.';
-    } else if (regPassword.length < 6) {
-      nextErrors.password = 'Mật khẩu cần có ít nhất 6 ký tự.';
+    } else if (!registerPassword.test(regPassword)) {
+      nextErrors.password = 'Mật khẩu cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường và chữ số.';
+    } else if (new TextEncoder().encode(regPassword).length > 72) {
+      nextErrors.password = 'Mật khẩu vượt quá 72 byte.';
     }
 
     if (!regConfirmPassword) {
@@ -184,21 +263,17 @@ export default function AuthPage({ registerMode = false }) {
     setRegBusy(true);
     setRegAlert('');
 
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
-    const emailPayload = isEmail ? id : `${id.replace(/\+/g, '')}@hlrcs.user`;
-    const phonePayload = isEmail ? null : id;
-
     try {
       await register({
         fullName,
-        email: emailPayload,
-        phoneNumber: phonePayload,
+        ...(registerEmail.test(id) ? { email: id } : { phoneNumber: id }),
         password: regPassword,
-        role: regRole,
+        verificationToken: verification.token,
       });
     } catch (err) {
       setRegAlert(err.message || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.');
       setRegErrors(err.fields || {});
+      if (err.fields?.verificationToken) setVerification(null);
     } finally {
       setRegBusy(false);
     }
@@ -213,18 +288,18 @@ export default function AuthPage({ registerMode = false }) {
         <div className="flip-face flip-login-face" inert={isFlipped} aria-hidden={isFlipped}>
           <div className="auth-wrapper">
             {/* CỘT TRÁI: SHOWCASE ĐĂNG NHẬP */}
-            <aside className="showcase-side login-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <aside className="showcase-side login-showcase-bg" aria-label={`Giới thiệu nền tảng ${BRAND.name}`}>
               <div className="page-overlay" />
               <div className="page-content">
                 {/* Header Showcase */}
                 <header className="showcase-header">
-                  <Link to="/" className="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <Link to="/" className="brand-badge" aria-label={`Trang chủ ${BRAND.name}`}>
                     <div className="brand-icon">
-                      <House size={22} />
+                      <BrandIcon size={24} variant="white" />
                     </div>
                     <div className="brand-text">
-                      <span className="brand-title">HL_RCS</span>
-                      <span className="brand-tagline">Rental Connection System</span>
+                      <span className="brand-title">{BRAND.name}</span>
+                      <span className="brand-tagline">{BRAND.shortTagline}</span>
                     </div>
                   </Link>
                   <span className="tag-pill">
@@ -284,7 +359,7 @@ export default function AuthPage({ registerMode = false }) {
 
                 {/* Footer Showcase */}
                 <footer className="showcase-footer">
-                  <p>© 2026 HL_RCS • Kết nối trực tiếp, minh bạch và an toàn.</p>
+                  <p>© 2026 {BRAND.name} • Kết nối trực tiếp, minh bạch và an toàn.</p>
                 </footer>
               </div>
             </aside>
@@ -294,7 +369,7 @@ export default function AuthPage({ registerMode = false }) {
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <Link to="/" className="auth-mobile-home" aria-label={`Trang chủ ${BRAND.name}`}><span className="brand-icon"><BrandIcon size={24} variant="white" /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">{BRAND.name}</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
                   <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
@@ -316,11 +391,11 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="loginForm" onSubmit={handleLoginSubmit} noValidate aria-busy={loginBusy}>
                   {/* Email hoặc SĐT */}
                   <div className="form-group">
-                    <label htmlFor="loginIdentifier" className="field-label">
+                    <UIField htmlFor="loginIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
+                    </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Mail size={18} />
                       </div>
                       <input
@@ -331,6 +406,7 @@ export default function AuthPage({ registerMode = false }) {
                         type="text"
                         className={`form-input ${loginErrors.identifier ? 'invalid' : ''}`}
                         autoComplete="username"
+                        autoCapitalize="none"
                         placeholder="Nhập email hoặc số điện thoại"
                         spellCheck="false"
                         value={loginIdentifier}
@@ -346,11 +422,11 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="loginPassword" className="field-label">
+                    <UIField htmlFor="loginPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Lock size={18} />
                       </div>
                       <input
@@ -384,7 +460,7 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Ghi nhớ & Quên mật khẩu */}
                   <div className="form-options">
-                    <label className="custom-checkbox">
+                    <UIField className="custom-checkbox">
                       <input
                         id="remember"
                         name="remember"
@@ -393,11 +469,11 @@ export default function AuthPage({ registerMode = false }) {
                         onChange={(e) => setLoginRemember(e.target.checked)}
                       />
                       <span>Ghi nhớ đăng nhập</span>
-                    </label>
+                    </UIField>
                     <MotionButton
                       type="button"
                       className="forgot-link"
-                      onClick={() => notify('Vui lòng liên hệ ban quản trị HL_RCS hoặc kiểm tra email để đặt lại mật khẩu.', 'info')}
+                      onClick={() => notify(`Vui lòng liên hệ ban quản trị ${BRAND.name} hoặc kiểm tra email để đặt lại mật khẩu.`, 'info')}
                     >
                       Quên mật khẩu?
                     </MotionButton>
@@ -432,18 +508,9 @@ export default function AuthPage({ registerMode = false }) {
                     type="button"
                     className="flip-trigger-btn"
                     id="btnGoToRegisterUser"
-                    onClick={() => goToRegister('USER')}
+                    onClick={goToRegister}
                   >
                     Đăng ký người thuê
-                  </MotionButton>
-                  <span>•</span>
-                  <MotionButton
-                    type="button"
-                    className="flip-trigger-btn"
-                    id="btnGoToRegisterHost"
-                    onClick={() => goToRegister('ROOM_HOST')}
-                  >
-                    Hợp tác chủ trọ
                   </MotionButton>
                 </div>
 
@@ -490,14 +557,13 @@ export default function AuthPage({ registerMode = false }) {
               <div className="auth-card">
                 {/* Mobile Brand */}
                 <div className="mobile-brand">
-                  <Link to="/" className="auth-mobile-home" aria-label="Trang chủ HL_RCS"><span className="brand-icon"><House size={23} /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">HL_RCS</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
+                  <Link to="/" className="auth-mobile-home" aria-label={`Trang chủ ${BRAND.name}`}><span className="brand-icon"><BrandIcon size={24} variant="white" /></span><span className="auth-mobile-brand-copy"><strong className="mobile-brand-name">{BRAND.name}</strong><small>Kết nối nơi ở, khởi đầu mới</small></span></Link>
                   <span className="auth-mobile-campus"><span />Hòa Lạc</span>
                 </div>
 
                 {/* Header Form */}
                 <div className="form-header">
                   <h2>Tạo tài khoản mới</h2>
-                  <p>Chỉ mất 30 giây để bắt đầu trải nghiệm thuê trọ thông minh tại Hòa Lạc.</p>
                 </div>
 
                 {/* Alert message if any */}
@@ -512,11 +578,11 @@ export default function AuthPage({ registerMode = false }) {
                 <form id="registerForm" onSubmit={handleRegisterSubmit} noValidate aria-busy={regBusy}>
                   {/* Họ và tên */}
                   <div className="form-group">
-                    <label htmlFor="regFullName" className="field-label">
+                    <UIField htmlFor="regFullName" className="field-label">
                       Họ và tên
-                    </label>
+                    </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <UserRound size={18} />
                       </div>
                       <input
@@ -530,6 +596,7 @@ export default function AuthPage({ registerMode = false }) {
                         placeholder="Ví dụ: Nguyễn Văn An"
                         spellCheck="false"
                         value={regFullName}
+                        maxLength={100}
                         onChange={(e) => {
                           setRegFullName(e.target.value);
                           setRegErrors((prev) => ({ ...prev, fullName: undefined }));
@@ -542,52 +609,112 @@ export default function AuthPage({ registerMode = false }) {
 
                   {/* Email hoặc Số điện thoại */}
                   <div className="form-group">
-                    <label htmlFor="regIdentifier" className="field-label">
+                    <UIField htmlFor="regIdentifier" className="field-label">
                       Email hoặc Số điện thoại
-                    </label>
-                    <div className="input-container">
-                      <div className="input-icon">
-                        <Mail size={18} />
+                    </UIField>
+                    <div className="register-otp-row">
+                      <div className="input-container">
+                        <div className="input-icon" aria-hidden="true"><Mail size={18} /></div>
+                        <input
+                          id="regIdentifier"
+                          aria-invalid={Boolean(regErrors.identifier)}
+                          aria-describedby={regErrors.identifier ? 'regIdentifier-error' :
+                            otpSent ? 'registerOtp-status' : verification ? 'regIdentifier-verified' : 'regIdentifier-help'}
+                          name="regIdentifier"
+                          type="text"
+                          className={`form-input ${regErrors.identifier ? 'invalid' : ''}`}
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          placeholder="Email hoặc số điện thoại"
+                          spellCheck="false"
+                          maxLength={254}
+                          value={regIdentifier}
+                          readOnly={Boolean(otpAction || regBusy)}
+                          onChange={(e) => {
+                            setRegIdentifier(e.target.value);
+                            setVerification(null);
+                            setOtpSent(false);
+                            setOtpCode('');
+                            setResendAt(0);
+                            setRegErrors((prev) => ({ ...prev, identifier: undefined, code: undefined }));
+                            setRegAlert('');
+                          }}
+                        />
                       </div>
-                      <input
-                        id="regIdentifier"
-                        aria-invalid={Boolean(regErrors.identifier)}
-                        aria-describedby={regErrors.identifier ? 'regIdentifier-error' : undefined}
-                        name="regIdentifier"
-                        type="text"
-                        className={`form-input ${regErrors.identifier ? 'invalid' : ''}`}
-                        autoComplete="username"
-                        placeholder="vd: an.nguyen@gmail.com hoặc 0912345678"
-                        spellCheck="false"
-                        value={regIdentifier}
-                        onChange={(e) => {
-                          setRegIdentifier(e.target.value);
-                          setRegErrors((prev) => ({ ...prev, identifier: undefined }));
-                          setRegAlert('');
-                        }}
-                      />
+                      {verification ? (
+                        <span id="regIdentifier-verified" className="register-verified" role="status"><ShieldCheck size={16} /> Đã xác minh</span>
+                      ) : (
+                        <MotionButton type="button" className="register-otp-button" onClick={sendRegistrationOtp}
+                          disabled={Boolean(otpAction || resendAt || regBusy)}>
+                          {otpAction === 'send' ? 'Đang gửi…' : otpSent ? 'Gửi lại mã' : 'Xác minh'}
+                        </MotionButton>
+                      )}
                     </div>
+                    {!otpSent && !verification && !regErrors.identifier && (
+                      <p id="regIdentifier-help" className="register-field-help">
+                        Nhận mã qua email hoặc qua Zalo theo số điện thoại.
+                      </p>
+                    )}
                     {regErrors.identifier && <p id="regIdentifier-error" className="error-message" role="alert">{regErrors.identifier}</p>}
                   </div>
 
+                  {otpSent && (
+                    <div className="form-group">
+                      <label htmlFor="registerOtpCode" className="field-label">Mã OTP</label>
+                      <div className="register-otp-row">
+                        <input
+                          ref={otpInput}
+                          id="registerOtpCode"
+                          className={`form-input register-otp-input ${regErrors.code ? 'invalid' : ''}`}
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          value={otpCode}
+                          readOnly={Boolean(otpAction || regBusy)}
+                          aria-invalid={Boolean(regErrors.code)}
+                          aria-describedby={regErrors.code ? 'registerOtp-error' : 'registerOtp-status'}
+                          onChange={(event) => {
+                            setOtpCode(event.target.value.replace(/[^0-9]/g, ''));
+                            setRegErrors((previous) => ({ ...previous, code: undefined }));
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              verifyRegistrationOtp();
+                            }
+                          }}
+                        />
+                        <MotionButton type="button" className="register-otp-button" onClick={verifyRegistrationOtp}
+                          disabled={Boolean(otpAction || regBusy)}>
+                          {otpAction === 'verify' ? 'Đang kiểm tra…' : 'Xác nhận mã'}
+                        </MotionButton>
+                      </div>
+                      <p id="registerOtp-status" className="register-field-help" role="status">
+                        Đã gửi mã qua {registerPhone.test(regIdentifier.trim()) ? 'Zalo' : 'email'}. Mã có hiệu lực 5 phút.
+                        {resendAt > 0 && ' Có thể gửi lại sau 60 giây.'}
+                      </p>
+                      {regErrors.code && <p id="registerOtp-error" className="error-message" role="alert">{regErrors.code}</p>}
+                    </div>
+                  )}
+
                   {/* Mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regPassword" className="field-label">
+                    <UIField htmlFor="regPassword" className="field-label">
                       Mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <Lock size={18} />
                       </div>
                       <input
+                        ref={regPasswordInput}
                         id="regPassword"
                         aria-invalid={Boolean(regErrors.password)}
-                        aria-describedby={regErrors.password ? 'regPassword-error' : undefined}
+                        aria-describedby={regErrors.password ? 'regPassword-error' : 'regPassword-help'}
                         name="regPassword"
                         type={showRegPassword ? 'text' : 'password'}
                         className={`form-input has-action ${regErrors.password ? 'invalid' : ''}`}
                         autoComplete="new-password"
-                        placeholder="Tối thiểu 8 ký tự"
                         value={regPassword}
                         onChange={(e) => {
                           setRegPassword(e.target.value);
@@ -605,16 +732,20 @@ export default function AuthPage({ registerMode = false }) {
                         {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </MotionButton>
                     </div>
-                    {regErrors.password && <p id="regPassword-error" className="error-message" role="alert">{regErrors.password}</p>}
+                    {regErrors.password ? (
+                      <p id="regPassword-error" className="error-message" role="alert">{regErrors.password}</p>
+                    ) : (
+                      <p id="regPassword-help" className="register-field-help">Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và chữ số.</p>
+                    )}
                   </div>
 
                   {/* Xác nhận mật khẩu */}
                   <div className="form-group">
-                    <label htmlFor="regConfirmPassword" className="field-label">
+                    <UIField htmlFor="regConfirmPassword" className="field-label">
                       Xác nhận mật khẩu
-                    </label>
+                    </UIField>
                     <div className="input-container">
-                      <div className="input-icon">
+                      <div className="input-icon" aria-hidden="true">
                         <ShieldCheck size={18} />
                       </div>
                       <input
@@ -662,22 +793,22 @@ export default function AuthPage({ registerMode = false }) {
                           setRegErrors((prev) => ({ ...prev, agree: undefined }));
                         }}
                       />
-                      <label htmlFor="regAgree" className="terms-text">
+                      <UIField htmlFor="regAgree" className="terms-text">
                         Tôi đồng ý với{' '}
-                        <MotionButton type="button" onClick={() => notify('Điều khoản dịch vụ HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify(`Điều khoản dịch vụ ${BRAND.name}`, 'info')}>
                           Điều khoản dịch vụ
                         </MotionButton>{' '}
                         và{' '}
-                        <MotionButton type="button" onClick={() => notify('Chính sách bảo mật HL_RCS', 'info')}>
+                        <MotionButton type="button" onClick={() => notify(`Chính sách bảo mật ${BRAND.name}`, 'info')}>
                           Chính sách bảo mật
                         </MotionButton>{' '}
-                        của HL_RCS.
-                      </label>
+                        của {BRAND.name}.
+                      </UIField>
                   </div>
                   {regErrors.agree && <p id="regAgree-error" className="error-message" style={{ marginTop: '-8px', marginBottom: '12px' }} role="alert">{regErrors.agree}</p>}
 
                   {/* Nút Đăng ký */}
-                  <MotionButton id="submitRegisterBtn" className="primary-button" type="submit" disabled={regBusy}>
+                  <MotionButton id="submitRegisterBtn" className="primary-button" type="submit" disabled={Boolean(regBusy || otpAction)}>
                     {regBusy ? (
                       <>
                         <LoaderCircle className="spin" size={18} />
@@ -715,18 +846,18 @@ export default function AuthPage({ registerMode = false }) {
             </main>
 
             {/* CỘT PHẢI: SHOWCASE ĐĂNG KÝ */}
-            <aside className="showcase-side register-showcase-bg" aria-label="Giới thiệu nền tảng HL_RCS">
+            <aside className="showcase-side register-showcase-bg" aria-label={`Giới thiệu nền tảng ${BRAND.name}`}>
               <div className="page-overlay" />
               <div className="page-content">
                 {/* Header Showcase */}
                 <header className="showcase-header">
-                  <Link to="/" className="brand-badge" aria-label="Trang chủ HL_RCS">
+                  <Link to="/" className="brand-badge" aria-label={`Trang chủ ${BRAND.name}`}>
                     <div className="brand-icon">
-                      <House size={22} />
+                      <BrandIcon size={24} variant="white" />
                     </div>
                     <div className="brand-text">
-                      <span className="brand-title">HL_RCS</span>
-                      <span className="brand-tagline">Rental Connection System</span>
+                      <span className="brand-title">{BRAND.name}</span>
+                      <span className="brand-tagline">{BRAND.shortTagline}</span>
                     </div>
                   </Link>
                   <span className="tag-pill">
@@ -739,7 +870,7 @@ export default function AuthPage({ registerMode = false }) {
                 <div className="hero-block">
                   <div className="inline-badge">
                     <Star size={14} />
-                    <span>Gia nhập cộng đồng HL_RCS</span>
+                    <span>Gia nhập cộng đồng {BRAND.name}</span>
                   </div>
                   <h1 className="hero-title">Tìm trọ chuẩn xác , an tâm gắn bó lâu dài</h1>
                   <p className="hero-desc">
@@ -785,7 +916,7 @@ export default function AuthPage({ registerMode = false }) {
 
                 {/* Footer Showcase */}
                 <footer className="showcase-footer">
-                  <p>© 2026 HL_RCS • Rental Connection System. Đồng hành cùng sinh viên &amp; người thuê Hòa Lạc.</p>
+                  <p>© 2026 {BRAND.name} • {BRAND.tagline}. Đồng hành cùng sinh viên &amp; người thuê Hòa Lạc.</p>
                 </footer>
               </div>
             </aside>

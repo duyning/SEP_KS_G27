@@ -1,6 +1,8 @@
 package org.hlrcs.service;
 
 import lombok.RequiredArgsConstructor;
+import org.hlrcs.entity.ModerationLog;
+import org.hlrcs.entity.User;
 import org.hlrcs.entity.enums.*;
 import org.hlrcs.exception.*;
 import org.hlrcs.repository.*;
@@ -11,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/** Read-only administration: never turns oversight into verification authority. */
 @Service @RequiredArgsConstructor @Transactional(readOnly=true)
 public class AdminOverviewService {
     private final AuthService auth;
@@ -48,7 +49,47 @@ public class AdminOverviewService {
         requireAdmin();UserRole selected=null;
         if(role!=null && !role.isBlank() && !role.equals("ALL"))try{selected=UserRole.valueOf(role);}catch(IllegalArgumentException e){throw new BadRequestException("Vai trò không hợp lệ.");}
         var result=users.findAdminAccounts(selected,search(q),page(page,size));
-        return new Page<>(result.stream().map(u->new Account(u.getUserId(),u.getFullName(),u.getEmail(),u.getPhoneNumber(),u.getRole().name(),u.getStatus().name(),u.getCreatedAt())).toList(),result.getTotalElements(),result.getTotalPages(),page,size);
+        return new Page<>(result.stream().map(AdminOverviewService::account).toList(),result.getTotalElements(),result.getTotalPages(),page,size);
+    }
+
+    @Transactional
+    public Account changeAccountStatus(User principal, int userId, UserStatus status) {
+        int adminId = principal.getUserId();
+        if (adminId == userId) {
+            throw new BadRequestException("Bạn không thể thay đổi trạng thái tài khoản của chính mình.");
+        }
+
+        // Lock in user ID order so simultaneous changes between two admins cannot deadlock.
+        User first = lockAccount(Math.min(adminId, userId));
+        User second = lockAccount(Math.max(adminId, userId));
+        User actor = adminId < userId ? first : second;
+        User target = adminId < userId ? second : first;
+        if (actor.getRole() != UserRole.ADMIN || actor.getStatus() != UserStatus.ACTIVE
+                || actor.getSessionVersion() != principal.getSessionVersion()) {
+            throw new AppException("Phiên quản trị không còn hiệu lực.", HttpStatus.UNAUTHORIZED);
+        }
+
+        if (target.getStatus() != status) {
+            target.setStatus(status);
+            target.setSessionVersion(target.getSessionVersion() + 1);
+            logs.save(ModerationLog.builder()
+                    .staff(actor)
+                    .targetType("USER_ACCOUNT")
+                    .targetId(userId)
+                    .action(status == UserStatus.ACTIVE ? "ACTIVATED" : "DEACTIVATED")
+                    .build());
+        }
+        return account(target);
+    }
+
+    private User lockAccount(int userId) {
+        return users.findForRegistrationUpdate(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản."));
+    }
+
+    private static Account account(User user) {
+        return new Account(user.getUserId(), user.getFullName(), user.getEmail(), user.getPhoneNumber(),
+                user.getRole().name(), user.getStatus().name(), user.getCreatedAt());
     }
     public Page<PropertyRegistrationRepository.AssignmentOverview> assignments(String q,boolean unassigned,int page,int size) {
         requireAdmin();var result=registrations.findAdminAssignments(search(q),unassigned,page(page,size));

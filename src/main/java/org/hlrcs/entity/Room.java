@@ -25,7 +25,12 @@ public class Room {
     private String status;
     @Column(precision=12,scale=2)
     private BigDecimal customPrice;
+    @Builder.Default
+    @Column(nullable=false, columnDefinition="boolean default false")
+    private boolean publicVisible = false;
     private LocalDateTime confirmedAt;
+    private java.time.LocalDate leaseStartDate;
+    private java.time.LocalDate leaseEndDate;
     @CreationTimestamp private LocalDateTime createdAt;
     @UpdateTimestamp private LocalDateTime updatedAt;
 }

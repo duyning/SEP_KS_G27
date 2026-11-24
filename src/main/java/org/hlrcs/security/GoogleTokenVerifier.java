@@ -31,6 +31,10 @@ public class GoogleTokenVerifier {
     }
 
     public GoogleUserInfo verifyToken(String idToken) {
+        return verifyToken(idToken, null);
+    }
+
+    public GoogleUserInfo verifyToken(String idToken, String expectedNonce) {
         if (clientId.isEmpty()) {
             throw new AppException("Đăng nhập Google chưa được cấu hình.", HttpStatus.SERVICE_UNAVAILABLE);
         }
@@ -45,6 +49,7 @@ public class GoogleTokenVerifier {
                     && jwt.getAudience() != null && jwt.getAudience().contains(clientId)
                     && (jwt.getAudience().size() == 1 || clientId.equals(jwt.getClaimAsString("azp")))
                     && jwt.getExpiresAt() != null && jwt.getExpiresAt().isAfter(Instant.now())
+                    && (expectedNonce == null || expectedNonce.equals(jwt.getClaimAsString("nonce")))
                     && Boolean.TRUE.equals(jwt.getClaimAsBoolean("email_verified"))
                     && email != null && email.contains("@") && email.length() <= 255
                     && subject != null && !subject.isBlank() && subject.length() <= 255) {

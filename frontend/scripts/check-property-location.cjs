@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const base=process.env.FRONTEND_URL||'http://127.0.0.1:5198';
 (async()=>{
  const browser=await chromium.launch({channel:'msedge',headless:true});const output=path.resolve(__dirname,'../../target/property-location');fs.mkdirSync(output,{recursive:true});
  try{
@@ -10,10 +11,13 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   const place={id:'node/1',name:'Chợ Tân Xã',category:'marketplace',latitude:21.0125,longitude:105.5253,distanceMeters:20};
   const result={latitude:21.0124167,longitude:105.5252892,addressDetail:'Địa chỉ gợi ý mới từ OSM',commune:'Thạch Hòa',nearby:'Gần Chợ Tân Xã (20 m) — khoảng cách đường chim bay',places:[place],warnings:[]};
   let mode='full',locked=false,version=1,calls=0;
+  await page.route('https://**/*',r=>r.abort());
   await page.route(/^https:\/\/tile\.openstreetmap\.(org|de)\//,r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e7efeb"/></svg>'}));
-  await page.route('**/api/**',async route=>{
+  await page.route(base+'/api/**',async route=>{
    const req=route.request(),url=new URL(req.url());let data;
    if(url.pathname==='/api/auth/me')data={userId:8,role:'ROOM_HOST',fullName:'Chủ trọ kiểm thử'};
+   else if(url.pathname==='/api/property-location/status')data={enabled:false,provider:'legacy'};
+   else if(url.pathname==='/api/favorites/state')data={items:[],total:0};
    else if(url.pathname.endsWith('/eligibility'))data={canRegister:true,reason:'ELIGIBLE'};
    else if(url.pathname.endsWith('/77/edit'))data={registrationId:77,propertyId:12,mode:'CHANGE_REQUEST',status:'APPROVED',versionToken:String(version),requestedFields:[],editableFields:locked?['latitude','longitude']:['latitude','longitude','addressDetail','commune','nearby'],photos:[],documents:[],details:old};
    else if(url.pathname.endsWith('/location/resolve')){
@@ -25,7 +29,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
    else throw new Error(`Unexpected request ${req.method()} ${url.pathname}`);
    await route.fulfill({json:{success:true,data}}).catch(()=>{});
   });
-  const open=async()=>{await page.goto('http://127.0.0.1:5174/host/property/edit?registrationId=77');await page.locator('.leaflet-marker-icon').waitFor();};
+  const open=async()=>{await page.goto(base+'/host/property/edit?registrationId=77');await page.locator('.leaflet-marker-icon').waitFor();};
   const draft=async()=>{await page.getByRole('button',{name:'Lưu bản nháp',exact:true}).click();return page.evaluate(()=>JSON.parse(sessionStorage.getItem('hlrcs:property-edit:8:77')).fields);};
   await open();assert.equal(await page.locator('#latitude,#longitude').count(),0);
   assert.equal(calls,0,'No automatic reverse lookup on mount');
@@ -44,7 +48,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   assert.equal(await page.locator('#addressDetail').inputValue(),result.addressDetail);
   mode='partial';await page.getByRole('button',{name:'Điền thông tin từ ghim hiện tại',exact:true}).click();await page.getByRole('status').filter({hasText:'Nguồn chưa có địa chỉ'}).waitFor();assert.equal(await page.locator('#nearby').inputValue(),result.nearby);
   mode='delay';await page.getByRole('button',{name:'Điền thông tin từ ghim hiện tại',exact:true}).click();await page.locator('#addressDetail').fill('Địa chỉ chủ trọ sửa trong lúc chờ');await page.waitForTimeout(650);assert.equal(await page.locator('#addressDetail').inputValue(),'Địa chỉ chủ trọ sửa trong lúc chờ');
-  locked=true;mode='full';version++;await open();await page.locator('#property-pasted-address').fill('21.0124167,105.5252892');await page.getByRole('button',{name:'Đặt ghim & điền thông tin',exact:true}).click();await page.getByRole('status').filter({hasText:'Đã đặt ghim và điền'}).waitFor();
+  locked=true;mode='full';version++;await open();await page.locator('#property-pasted-address').fill('21.0124167,105.5252892');await page.getByRole('button',{name:'Đặt ghim & điền thông tin',exact:true}).click();await page.getByRole('status').filter({hasText:'Đã đặt ghim'}).waitFor();
   assert.equal(await page.locator('#addressDetail').inputValue(),old.addressDetail);assert.equal(await page.locator('#commune').inputValue(),old.commune);assert.equal(await page.locator('#nearby').inputValue(),old.nearby);assert.equal(await page.locator('#addressDetail').isDisabled(),true);
   const kept=await draft();assert.equal(kept.latitude,String(result.latitude));assert.equal(kept.name,old.name);
   assert.deepEqual(errors,[]);console.log('PASS edit link autofill; internal coordinates; explicit nearby places; no pin movement from controls; provider error/partial/race; locked fields; responsive widths. Fixtures, no real property writes.');

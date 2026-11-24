@@ -59,7 +59,7 @@ Frontend can Node.js 22.12+ hoac 20.19+.
 API mac dinh duoc proxy sang http://localhost:8080. Neu backend tren cong khac:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ..\..\start-frontend.ps1 -ApiTarget http://localhost:8081
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\..\start-frontend.ps1 -ApiTarget http://localhost:8080
 ```
 
 Co the copy .env.example thanh .env.local va sua API_TARGET khi chay pnpm dev truc tiep.

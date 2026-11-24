@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import {useEffect,useRef,useState} from 'react';
-import {Marker,Popup} from 'react-leaflet';
+import {Marker,Popup,useMap} from 'react-leaflet';
 import {MapPin,X} from 'lucide-react';
 import {MotionButton} from './motion/MotionUI.jsx';
 import {nearbyPlaces} from '../services/property-location.js';
@@ -22,6 +22,7 @@ const categoryGroup=type=>['school','university','college','library','driver_tra
 const poiIcons=new Map();
 function placeIcon(category){const group=categoryGroup(category);if(!poiIcons.has(group)){const symbol=symbols[group];poiIcons.set(group,L.divIcon({className:'nh-poi-marker',html:`<span data-category="${group}" style="color:${symbol.color}"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${symbol.paths}</svg></span>`,iconSize:[29,29],iconAnchor:[14,14],popupAnchor:[0,-15]}));}return poiIcons.get(group);}
 export default function NearbyMapPlaces({point}){
+  const map=useMap();
   const key=point?.join(',')||'';
   const [visible,setVisible]=useState(false),[state,setState]=useState({key:'',data:null,loading:false,error:''});
   const request=useRef();
@@ -34,6 +35,13 @@ export default function NearbyMapPlaces({point}){
     catch(error){if(!controller.signal.aborted)setState({key,data:null,loading:false,error:error.message});}
   }
   const data=state.key===key?state.data:null;
+  const hasPlaces=Boolean(data?.places.length);
+  useEffect(()=>{
+    if(!hasPlaces)return;
+    const credit='Tiện ích: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    map.attributionControl.addAttribution(credit);
+    return()=>map.attributionControl.removeAttribution(credit);
+  },[map,hasPlaces]);
   return <>
     <div className="nh-nearby-control" ref={stopMapEvents}><MotionButton type="button" className={visible?'active':''} disabled={!point} aria-expanded={visible} aria-label="Tiện ích quanh ghim nhà trọ" onClick={event=>{event.stopPropagation();if(visible)setVisible(false);else if(data)setVisible(true);else void load();}}><MapPin size={16}/>Tiện ích</MotionButton></div>
     {!visible&&state.loading&&<span className="nh-nearby-auto-status" role="status">Đang tải địa điểm quanh ghim…</span>}

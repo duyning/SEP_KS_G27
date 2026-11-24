@@ -1,77 +1,10 @@
-import CommunityNotificationBell from '../../components/CommunityNotificationBell.jsx';
 import HomeFilterSelect from '../../components/HomeFilterSelect.jsx';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
 // Layout and static content preserved from Code/giao_dien/html/home.html.
 import {Link} from 'react-router-dom';
-import {ChevronDown,X} from 'lucide-react';
-export default function HomePrototype({listings,more,account,filters,savedCount,mobileOpen,announcementOpen,onClick,onSubmit,onChange}) {
+import {ChevronDown} from 'lucide-react';
+export default function HomePrototype({listings,more,filters,onClick,onSubmit,onChange}) {
  return <div className="prototype-home home-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
-
-
-  <header className="navbar-wrapper">
-    <div className={`top-announcement ${announcementOpen?'hm-info-open':''}`}><MotionButton type="button" id="homeInfoToggle" className="hm-info-toggle" aria-expanded={announcementOpen} aria-controls="homeInformation"><span>Hòa Lạc Campus · Thông tin &amp; hỗ trợ</span><ChevronDown size={14}/></MotionButton>
-      <div className="container top-announcement-inner" id="homeInformation">
-        <div className="announcement-left">
-          <span className="badge-tag">Hòa Lạc Campus</span>
-          <span className="announcement-text">Hệ thống phòng trọ đã xác thực 100% quanh ĐH FPT &amp; Khu Công nghệ cao Hòa Lạc</span>
-        </div>
-        <div className="announcement-right">
-          <a href="tel:0912345678" className="contact-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            <span>Hotline hỗ trợ: 0912 345 678</span>
-          </a>
-          <span className="sep">•</span>
-          <span className="status-live"><span className="live-dot"></span>Cập nhật phòng trống hôm nay</span>
-        </div>
-      </div>
-    </div>
-
-    <nav className="main-navbar">
-      <div className="container navbar-container">
-
-        <Link className="nav-brand" aria-label="Trang chủ HL_RCS" to="/">
-          <div className="brand-logo-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
-          </div>
-        </Link>
-
-
-        <ul className={`nav-menu ${mobileOpen ? "show" : ""}`} id="navMenu">
-          <li><Link className="nav-item" to="/search">Tìm phòng</Link></li>
-          <li><Link className="nav-item" to="/map">Bản đồ</Link></li>
-          <li><Link className="nav-item" to="/favorites">Đã lưu (<span className="menu-fav-count">{savedCount}</span>)</Link></li>
-          <li><Link className="nav-item" to="/bookings">Lịch xem phòng</Link></li>
-          <li><Link className="nav-item" to="/services">Dịch vụ</Link></li>
-          <li><Link className="nav-item" to="/community">Cộng đồng</Link></li>
-          <li><Link className="nav-item" to="/profile">Hồ sơ cá nhân</Link></li>
-          <li className="hm-menu-account">{account || <><Link className="btn-ghost" to="/login">Đăng nhập</Link><Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link></>}</li>
-        </ul>
-
-
-        <div className="nav-actions"><CommunityNotificationBell />{account || <>
-          <Link className="btn-wishlist-top" id="topWishlistBtn" aria-label="Danh sách phòng yêu thích" title="Nhà trọ đã lưu" style={{"textDecoration": "none"}} to="/favorites">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-            <span className="wishlist-count" id="wishlistCount">{savedCount}</span>
-          </Link>
-          <Link className="btn-ghost" to="/login">Đăng nhập</Link>
-          <Link className="btn-primary-sm" to="/register">Đăng ký ngay</Link>
-        </>}</div>
-
-
-        <MotionButton className="mobile-toggle" id="mobileMenuBtn" type="button" aria-label={mobileOpen?"Đóng thực đơn":"Mở thực đơn"} aria-controls="navMenu" aria-expanded={mobileOpen}>
-          {mobileOpen?<X size={24}/>:<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>}
-        </MotionButton>
-      </div>
-    </nav>
-  </header>
-  {mobileOpen&&<button type="button" className="hm-menu-backdrop hm-menu-dismiss" aria-label="Đóng thực đơn và quay lại trang"/>}
 
 
   <section className="hero-section">
@@ -322,7 +255,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
     <div className="container">
       <div className="section-header center">
         <span className="section-eyebrow">Cam kết chất lượng</span>
-        <h2 className="section-title">Vì sao hơn 6,000+ sinh viên tin chọn HL_RCS?</h2>
+        <h2 className="section-title">Vì sao hơn 6,000+ sinh viên tin chọn NestHub?</h2>
         <p className="section-desc">Giải quyết triệt để vấn đề tin ảo, ép giá điện nước và phát sinh phụ phí khi thuê trọ tại Hòa Lạc.</p>
       </div>
 
@@ -396,7 +329,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
     <div className="container">
       <div className="section-header center">
         <span className="section-eyebrow">Trải nghiệm thực tế</span>
-        <h2 className="section-title">Sinh viên &amp; Người thuê nói gì về HL_RCS?</h2>
+        <h2 className="section-title">Sinh viên &amp; Người thuê nói gì về NestHub?</h2>
         <p className="section-desc">Đánh giá thực tế từ các bạn sinh viên đã tìm được phòng ưng ý thông qua nền tảng.</p>
       </div>
 
@@ -404,7 +337,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
 
         <div className="review-card">
           <div className="review-stars">★★★★★</div>
-          <p className="review-text">"Mình là sinh viên K18 ĐH FPT, lúc mới lên Hòa Lạc tìm trọ rất sợ bị môi giới với cọc ảo. Nhờ HL_RCS mà mình tìm được phòng ở Tân Xã cách trường có 700m, giá điện nước chuẩn 100% như trên web."</p>
+          <p className="review-text">"Mình là sinh viên K18 ĐH FPT, lúc mới lên Hòa Lạc tìm trọ rất sợ bị môi giới với cọc ảo. Nhờ NestHub mà mình tìm được phòng ở Tân Xã cách trường có 700m, giá điện nước chuẩn 100% như trên web."</p>
           <div className="reviewer">
             <div className="reviewer-avatar">NA</div>
             <div className="reviewer-info">
@@ -430,7 +363,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
 
         <div className="review-card">
           <div className="review-stars">★★★★★</div>
-          <p className="review-text">"Nhà trọ của cô có 14 phòng, đợt sinh viên mới vào trường đăng lên HL_RCS được các bạn hỗ trợ chụp ảnh rất đẹp. Chỉ trong 1 tuần là đã kín phòng mà không mất phí môi giới nào."</p>
+          <p className="review-text">"Nhà trọ của cô có 14 phòng, đợt sinh viên mới vào trường đăng lên NestHub được các bạn hỗ trợ chụp ảnh rất đẹp. Chỉ trong 1 tuần là đã kín phòng mà không mất phí môi giới nào."</p>
           <div className="reviewer">
             <div className="reviewer-avatar host-av">CH</div>
             <div className="reviewer-info">
@@ -450,20 +383,19 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
       <div className="footer-col col-brand">
         <Link className="nav-brand white" to="/">
           <div className="brand-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><path d="M16.5 40H11.5C9.29 40 7.5 38.21 7.5 36V21.2C7.5 19.82 8.15 18.52 9.26 17.69L21.66 8.43C23.05 7.39 24.95 7.39 26.34 8.43L38.74 17.69C39.85 18.52 40.5 19.82 40.5 21.2V36C40.5 38.21 38.71 40 36.5 40H31.5" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M17.4 33.2V27.4C17.4 23.75 20.35 20.8 24 20.8C27.65 20.8 30.6 23.75 30.6 27.4V33.2" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div className="brand-title-wrap">
-            <span className="brand-name">HL_RCS</span>
-            <span className="brand-sub">Rental Connection System</span>
+            <span className="brand-name">NestHub</span>
+            <span className="brand-sub">Kết nối &amp; quản lý nhà trọ</span>
           </div>
         </Link>
         <p className="footer-desc">
           Nền tảng công nghệ kết nối trực tiếp người thuê và chủ nhà trọ tại khu vực ĐH FPT và Khu Công nghệ cao Hòa Lạc. Minh bạch thông tin, cam kết không môi giới.
         </p>
         <div className="footer-socials">
-          <a href="#" className="social-link" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
-          <a href="#" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
-          <a href="#" className="social-link" aria-label="Hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
+          <a href="https://zalo.me/0912345678" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Zalo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a>
+          <a href="tel:0912345678" className="social-link" aria-label="Hotline"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
         </div>
       </div>
 
@@ -501,7 +433,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
           📞 Hotline: <strong>0912 345 678</strong> (8:00 - 21:00)
         </p>
         <p className="footer-contact-item">
-          ✉️ Email: support@hlrcs.vn
+          ✉️ Email: support@nesthub.vn
         </p>
         <div className="verified-badge-footer">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -512,14 +444,7 @@ export default function HomePrototype({listings,more,account,filters,savedCount,
 
     <div className="footer-bottom">
       <div className="container footer-bottom-inner">
-        <p>© 2026 HL_RCS (Rental Connection System). Bản quyền thuộc về Dự án công nghệ HL_RCS.</p>
-        <div className="bottom-links">
-          <a href="#">Điều khoản sử dụng</a>
-          <span className="dot">•</span>
-          <a href="#">Chính sách bảo mật</a>
-          <span className="dot">•</span>
-          <a href="#">Quy chế hoạt động</a>
-        </div>
+        <p>© 2026 NestHub. Bản quyền thuộc về nền tảng NestHub.</p>
       </div>
     </div>
   </footer>

@@ -1,0 +1,34 @@
+.portal-modal.profile-phone-otp{--ppo-action:#0f766e;--ppo-text:#0f172a;--ppo-muted:#475569;--ppo-border:#cbd5e1;--ppo-soft:#f0fdfa;position:fixed;inset:0;margin:auto;box-sizing:border-box;width:calc(100% - 32px);max-width:440px;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;border:1px solid #dbe5e2;border-radius:18px;padding:24px;background:#fff;color:var(--ppo-text);font:inherit;box-shadow:0 24px 64px #0f172a26}
+.portal-modal.profile-phone-otp>header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0;padding:0;border:0}
+.portal-modal.profile-phone-otp>header h2{margin:0;font-size:1.125rem;line-height:1.4;font-weight:700;min-width:0}
+.ppo-heading{display:flex;align-items:center;gap:10px}.ppo-icon{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:10px;background:var(--ppo-soft);color:var(--ppo-action)}
+.portal-modal.profile-phone-otp>header button{display:grid;place-items:center;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;flex:none;border:0;background:transparent;border-radius:8px;color:#64748b;cursor:pointer}
+.portal-modal.profile-phone-otp form{display:block;margin:0;padding:0}
+.portal-modal.profile-phone-otp .ppo-intro{margin:12px 0 18px;font-size:.875rem;line-height:1.65;color:var(--ppo-muted)}
+.ppo-intro strong{font-weight:650;color:var(--ppo-text);white-space:nowrap}
+.portal-modal.profile-phone-otp .ppo-preview{margin:-4px 0 18px;padding:9px 11px;border:1px solid #fde68a;border-radius:9px;background:#fffbeb;color:#92400e;font-size:.75rem;line-height:1.6}
+.profile-phone-otp .ppo-field>label{display:block;margin:0 0 8px;font-size:.875rem;line-height:1.5;font-weight:650;color:var(--ppo-text)}
+.ppo-code{position:relative;isolation:isolate;min-width:0}.ppo-cells{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.ppo-cell{box-sizing:border-box;display:grid;place-items:center;height:52px;min-width:0;border:1px solid var(--ppo-border);border-radius:10px;background:#fff;font-size:1.375rem;line-height:1;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ppo-text);transition:border-color 140ms ease,background-color 140ms ease,box-shadow 140ms ease}
+.ppo-cell.is-filled{background:#f8fafc}.ppo-cell.is-active{border-color:var(--ppo-action);box-shadow:0 0 0 3px #0f766e1f;background:var(--ppo-soft)}
+.ppo-code.has-error .ppo-cell{border-color:#b91c1c}.ppo-code.is-verified .ppo-cell{border-color:#86bdaa;background:var(--ppo-soft)}
+.portal-modal.profile-phone-otp .ppo-code>input{position:absolute;inset:0;z-index:1;box-sizing:border-box;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:10px;outline:0;background:transparent;color:transparent;caret-color:transparent;font-size:16px;opacity:1;box-shadow:none;letter-spacing:normal;-webkit-text-fill-color:transparent}
+/* The active digit cell supplies the visible focus ring, not the overlay input. */
+.portal-modal.profile-phone-otp .ppo-code>input:focus{outline:0;box-shadow:none;border:0;background:transparent}
+/* Override the foundation's important focus rule in its own cascade layer. */
+@layer service-foundations{.portal-modal.profile-phone-otp .ppo-code>input:focus{outline:0 !important;outline-offset:0 !important}}
+.portal-modal.profile-phone-otp .ppo-hint{margin:8px 0 0;font-size:.75rem;line-height:1.65;color:#64748b}
+.portal-modal.profile-phone-otp .ppo-error{margin:8px 0 0;color:#991b1b;font-size:.8125rem;line-height:1.6;overflow-wrap:anywhere}
+.portal-modal.profile-phone-otp .ppo-status{margin:8px 0 0;color:var(--ppo-action);font-size:.8125rem;line-height:1.6}.ppo-status:empty{display:none}
+.ppo-resend-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0 10px;margin-top:10px;color:var(--ppo-muted);font-size:.8125rem;line-height:1.5}
+.profile-phone-otp .ppo-resend{min-height:44px;padding:8px 2px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:transparent;color:var(--ppo-action);font:inherit;font-weight:600;white-space:nowrap}
+.portal-modal.profile-phone-otp .ppo-actions{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;margin:12px 0 0;padding:16px 0 0;border-top:1px solid #e2e8f0}
+.portal-modal.profile-phone-otp .ppo-actions .p-button{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;margin:0;padding:10px 16px;border:1px solid var(--ppo-border);border-radius:10px;font:inherit;font-size:.875rem;line-height:1.5;font-weight:600;background:#fff;color:var(--ppo-muted)}
+.portal-modal.profile-phone-otp .ppo-actions .p-button.primary{border-color:var(--ppo-action);background:var(--ppo-action);color:#fff}
+.profile-phone-otp button:disabled{opacity:.5;cursor:not-allowed}.profile-phone-otp button:focus-visible{outline:2px solid var(--ppo-action);outline-offset:3px}
+@media(hover:hover) and (pointer:fine){.profile-phone-otp .ppo-resend:hover:not(:disabled){text-decoration:underline;text-underline-offset:4px}.portal-modal.profile-phone-otp .ppo-actions .primary:hover:not(:disabled){background:#115e59}}
+@media(max-width:480px){.portal-modal.profile-phone-otp{padding:18px}.portal-modal.profile-phone-otp>header h2{font-size:1rem}.ppo-heading{gap:8px}.ppo-icon{width:32px;height:32px}.portal-modal.profile-phone-otp>header button{width:40px;min-width:40px;height:40px}.ppo-cells{gap:6px}.ppo-cell{height:48px}}
+@media(max-width:340px){.portal-modal.profile-phone-otp{padding:16px}.ppo-cells{gap:5px}.ppo-heading{gap:7px}.ppo-icon{width:28px;height:28px}.portal-modal.profile-phone-otp .ppo-actions .p-button{padding-inline:12px}}
+@media(prefers-reduced-motion:reduce){.ppo-cell{transition:none}}
+.profile-phone-otp .hvp-phone-input{box-sizing:border-box;width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--ppo-border,#cbd5e1);border-radius:8px;background:transparent;color:inherit;font:inherit}
+.profile-phone-otp .hvp-phone-input:focus-visible{outline:2px solid #0f766e;outline-offset:2px}

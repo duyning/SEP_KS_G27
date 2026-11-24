@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:community-delete-test;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CommunityDeletionTests {
+class CommunityDeletionTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired PostRepository posts;
@@ -48,8 +48,9 @@ class CommunityDeletionTests {
     }
 
     private String register() throws Exception {
-        return data("POST", "/api/auth/register", Map.of("email", "delete-" + UUID.randomUUID() + "@hlrcs.test",
-                "password", "Password@123", "fullName", "Post Author"), null, 201).path("accessToken").asString();
+        String email = "delete-" + UUID.randomUUID() + "@hlrcs.test";
+        return data("POST", "/api/auth/register", Map.of("email", email,
+                "password", "Password@123", "fullName", "Post Author", "verificationToken", verifyContact(email)), null, 201).path("accessToken").asString();
     }
 
     private int create(String type) throws Exception {

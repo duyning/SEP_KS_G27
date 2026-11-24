@@ -7,5 +7,7 @@ public record RoomRequest(
         @NotBlank @Size(max=30) String roomNumber,
         @NotBlank @Size(max=50) String floor,
         @NotBlank @Pattern(regexp="VACANT|OCCUPIED") String status,
-        @DecimalMin("1") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal customPrice
+        @DecimalMin("1") @DecimalMax("999999999") @Digits(integer=9,fraction=0) BigDecimal customPrice,
+        java.time.LocalDate leaseStartDate,
+        java.time.LocalDate leaseEndDate
 ) {}

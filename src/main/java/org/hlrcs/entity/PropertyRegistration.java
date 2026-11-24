@@ -45,6 +45,11 @@ public class PropertyRegistration {
     // A change request references a published property without replacing its approved registration.
     private Integer targetPropertyId;
     private Integer baseRegistrationId;
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean hostOnboarding = false;
+    @Column(columnDefinition = "TEXT")
+    private String reverificationReasonsJson;
     @Column(columnDefinition = "TEXT")
     private String requestedFieldsJson;
     @Column(columnDefinition = "TEXT")

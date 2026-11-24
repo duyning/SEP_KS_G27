@@ -31,6 +31,8 @@ class PropertyAssignmentSecurityTests {
     @Autowired PropertyRegistrationRepository registrations;
     @Autowired PropertyDocumentRepository documents;
     @Autowired PropertyRepository properties;
+    @Autowired RoomTypeRepository roomTypes;
+    @Autowired RoomRepository rooms;
     @Autowired ModerationLogRepository logs;
     @Autowired PropertyAssignmentEventRepository events;
     @Autowired PropertySubmissionEventRepository submissions;
@@ -206,8 +208,14 @@ class PropertyAssignmentSecurityTests {
         transition(first,2,null,b.getUserId());var assigned=get(b,path(first));assertEquals(200,assigned.statusCode());assertTrue(assigned.body().contains("RESUBMITTED"));
     }
 
-    @Test void publicPhotosRemainPublicButPrivateDocumentsNeverBecomePublicAfterApproval() throws Exception {
+    @Test void onlyPublishedPropertiesExposePublicPhotosAndKeepPrivateDocumentsRestricted() throws Exception {
         assertEquals(200,review(a,first,"APPROVE",1).statusCode());
+        assertEquals(404,get(null,"/api/public/properties/photos/"+photoA.getDocumentId()).statusCode());
+        var property=properties.findByRegistration_RegistrationId(first.getRegistrationId()).orElseThrow();
+        var type=roomTypes.saveAndFlush(RoomType.builder().property(property).roomType("Studio")
+                .price(java.math.BigDecimal.valueOf(2_000_000)).areaSqm(25F).build());
+        rooms.saveAndFlush(Room.builder().property(property).roomType(type)
+                .roomNumber("101").floor("1").status("VACANT").publicVisible(true).build());
         assertEquals(200,get(null,"/api/public/properties/photos/"+photoA.getDocumentId()).statusCode());
         assertEquals(404,get(null,"/api/public/properties/photos/"+privateA.getDocumentId()).statusCode());
         assertEquals(1,json.readTree(get(a,"/api/staff/dashboard").body()).path("data").path("activeProperties").asInt());

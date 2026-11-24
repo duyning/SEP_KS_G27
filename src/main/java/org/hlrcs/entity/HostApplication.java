@@ -9,8 +9,8 @@ public class HostApplication {
  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Integer id;
  @OneToOne(fetch=FetchType.LAZY) @JoinColumn(name="user_id",nullable=false) private User user;
  @Column(nullable=false,length=40) private String status;
- @Column(nullable=false,length=100) private String targetCommune;
- @Column(nullable=false,length=100) private String expectedScale;
+ @Column(length=100) private String targetCommune;
+ @Column(length=100) private String expectedScale;
  @Column(nullable=false,length=1000) private String introduction;
  @Column(length=40) private String applicantCapacity;
  @Column(length=30) private String rentalExperience;

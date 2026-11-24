@@ -1,3 +1,4 @@
+import { notifyServiceUpdate } from './service-live.js';
 const TOKEN_KEY = 'hlrcs_access_token';
 export const getToken = () => sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 export function clearToken() {
@@ -27,6 +28,10 @@ export async function request(path, { method = 'GET', body, signal, basePath = '
     throw new ApiError('Không thể kết nối máy chủ. Vui lòng thử lại sau.', 0);
   }
   if (response.ok && responseType === 'blob') return response.blob();
+  if (response.ok && responseType === 'event-stream') {
+    if (response.body && response.headers.get('content-type')?.startsWith('text/event-stream')) return response.body;
+    throw new ApiError('Không thể nhận cập nhật trực tiếp.', 502);
+  }
   const result = await response.json().catch(() => null);
   if (response.status === 401 && token && getToken() === token && !['/login', '/register'].includes(path)) {
     clearToken();
@@ -36,14 +41,24 @@ export async function request(path, { method = 'GET', body, signal, basePath = '
     throw new ApiError(result?.message || 'Không thể xử lý yêu cầu. Vui lòng thử lại.', response.status,
       result?.data && typeof result.data === 'object' ? result.data : {});
   }
+  if (method !== 'GET' && /\/api\/(?:services|service-|staff\/service)/.test(basePath + path)) notifyServiceUpdate();
   return result.data;
 }
 export const authApi = {
   login: data => request('/login', { method: 'POST', body: data }),
-  register: data => request('/register', { method: 'POST', body: data }),
+  register: data => request('/register', { method: 'POST', body: data, authenticated: false }),
+  sendRegistrationOtp: identifier => request('/register/otp/send', {
+    method: 'POST', body: { identifier }, authenticated: false,
+  }),
+  verifyRegistrationOtp: (identifier, code) => request('/register/otp/verify', {
+    method: 'POST', body: { identifier, code }, authenticated: false,
+  }),
   me: signal => request('/me', { signal }),
   logout: () => request('/logout', { method: 'POST' }),
   updateProfile: data => request('/profile', { method: 'PUT', body: data }),
+  sendPhoneOtp: phoneNumber => request('/profile/phone/send-otp', { method: 'POST', body: { phoneNumber } }),
+  verifyPhoneOtp: (phoneNumber, code) => request('/profile/phone/verify-otp', { method: 'POST', body: { phoneNumber, code } }),
+  confirmPhone: phoneNumber => request('/profile/phone/confirm', {method:'POST',body:{phoneNumber}}),
   changePassword: data => request('/change-password', { method: 'PUT', body: data }),
   googleLogin: idToken => request('/google', { method: 'POST', body: { idToken }, authenticated: false }),
 };

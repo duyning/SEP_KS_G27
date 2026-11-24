@@ -23,7 +23,9 @@ test('PortalLayout contains all host logout mechanisms matching prototype', () =
 });
 
 test('ProfilePage contains host / user account logout button', () => {
-  const content = fs.readFileSync(new URL('../src/pages/ProfilePage.jsx', import.meta.url), 'utf8');
+  const page = fs.readFileSync(new URL('../src/pages/ProfilePage.jsx', import.meta.url), 'utf8');
+  const content = page + fs.readFileSync(new URL('../src/pages/ProfilePrototype.jsx', import.meta.url), 'utf8');
+  assert.match(page, /target\.closest\('#btnSidebarLogout'\)\)signOut\(\)/);
   assert.match(content, /id="btnSidebarLogout"/);
   assert.match(content, /btn-logout/);
   assert.match(content, /Đăng xuất tài khoản/);

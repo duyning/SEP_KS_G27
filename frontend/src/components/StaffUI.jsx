@@ -1,3 +1,4 @@
+import UIButton from './common/Button.jsx';
 import { useEffect, useState } from 'react';
 import { ImageOff, LoaderCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -21,7 +22,7 @@ export function useStaffLoad(type, id) {
   }, [type, id, revision, user?.userId]);
   return { ...state, reload: () => setRevision(value => value + 1), deny: error => setState({loading:false,data:null,error:error.message,errorStatus:error.status}), replace: data => setState({ loading: false, error: '', data }) };
 }
-export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={[403,404].includes(state.errorStatus) ? 'Hồ sơ không tồn tại hoặc bạn không còn quyền truy cập theo phân công. Vui lòng quay lại danh sách hoặc tải lại.' : state.error}><button className="p-button" onClick={state.reload}>Thử lại</button></StateView>; }
+export function StaffLoadState({ state }) { return state.loading ? <StateView kind="loading" /> : <StateView kind="error" message={[403,404].includes(state.errorStatus) ? 'Hồ sơ không tồn tại hoặc bạn không còn quyền truy cập theo phân công. Vui lòng quay lại danh sách hoặc tải lại.' : state.error}><UIButton className="p-button" onClick={state.reload}>Thử lại</UIButton></StateView>; }
 export function StaffThumbnail({ registrationId, fileId, name }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(Boolean(fileId));

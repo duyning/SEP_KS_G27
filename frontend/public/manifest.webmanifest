@@ -1,0 +1,17 @@
+{
+  "name": "NestHub - Nền tảng kết nối và quản lý nhà trọ",
+  "short_name": "NestHub",
+  "description": "Nền tảng kết nối người thuê và quản lý nhà trọ minh bạch tại khu vực Hòa Lạc.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0D9488",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -32,12 +32,15 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "app.google.client-id=test-client")
+@SpringBootTest(properties = {
+        "app.google.client-id=test-client", "app.google.mobile-browser-origin=https://login.example.com"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class GoogleAuthTests {
@@ -116,12 +119,51 @@ class GoogleAuthTests {
         org.junit.jupiter.api.Assertions.assertFalse(users.existsByEmail(email));
     }
 
+    @Test
+    void expoBrowserHandoffChecksSignedNonceAndCreatesSessionOnlyAtRedemption() throws Exception {
+        String base = "/api/auth/google/mobile";
+        var attempt = objectMapper.readTree(mockMvc.perform(post(base + "/start"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("data");
+        String id = attempt.path("id").asString();
+        String proof = attempt.path("proof").asString();
+        String origin = "https://login.example.com";
+        mockMvc.perform(get(base + "/browser")).andExpect(status().isOk());
+        mockMvc.perform(get(base + "/browser/script")).andExpect(status().isOk());
+        mockMvc.perform(post(base + "/browser/options").header("Origin", origin)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("id", id))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.clientId").value("test-client"));
+        mockMvc.perform(post(base + "/browser/complete").header("Origin", origin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("id", id, "idToken", token(email, "test-client", true, 300)))))
+                .andExpect(status().isUnauthorized());
+
+        String signed = token(email, "test-client", true, 300, id);
+        String result = mockMvc.perform(post(base + "/browser/complete").header("Origin", origin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("id", id, "idToken", signed))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.accessToken").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+        assertFalse(users.existsByEmail(email));
+
+        String code = objectMapper.readTree(result).path("data").path("code").asString();
+        String body = objectMapper.writeValueAsString(Map.of("id", id, "proof", proof, "code", code));
+        mockMvc.perform(post(base + "/redeem").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.role").value("USER"));
+        mockMvc.perform(post(base + "/redeem").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isGone());
+    }
+
     private org.springframework.test.web.servlet.ResultActions googleLogin(String idToken) throws Exception {
         return mockMvc.perform(post("/api/auth/google").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of("idToken", idToken, "role", "ADMIN"))));
     }
 
     private String token(String email, String audience, boolean verified, long expiresInSeconds) throws Exception {
+        return token(email, audience, verified, expiresInSeconds, null);
+    }
+
+    private String token(String email, String audience, boolean verified, long expiresInSeconds, String nonce) throws Exception {
         var claims = new JWTClaimsSet.Builder()
                 .issuer("https://accounts.google.com")
                 .audience(audience)
@@ -130,6 +172,7 @@ class GoogleAuthTests {
                 .claim("email", email)
                 .claim("email_verified", verified)
                 .claim("name", "Người dùng Google")
+                .claim("nonce", nonce)
                 .build();
         var jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(), claims);
         jwt.sign(new RSASSASigner(keys.getPrivate()));

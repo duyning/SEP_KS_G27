@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties={"spring.datasource.url=jdbc:h2:mem:community-report-ai;MODE=MySQL;DB_CLOSE_DELAY=-1",
         "community.report-ai.enabled=true", "community.report-ai.poll-ms=3600000"})
 @AutoConfigureMockMvc @ActiveProfiles("test")
-class CommunityReportAiTests {
+class CommunityReportAiTests extends RegistrationOtpTestSupport {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired CommunityReportAssistant assistant;
@@ -145,7 +145,11 @@ class CommunityReportAiTests {
                 .put("postQuote",quote).put("postQuote2",quote2).put("reportQuote","");
     }
     private String login(String email,String password) throws Exception { return api("POST","/api/auth/login",null,Map.of("email",email,"password",password),200).path("accessToken").asString(); }
-    private String register() throws Exception { return api("POST","/api/auth/register",null,Map.of("email","report-ai-"+UUID.randomUUID()+"@test.local","fullName","Thành viên","password","Password@123"),201).path("accessToken").asString(); }
+    private String register() throws Exception {
+        String email = "report-ai-" + UUID.randomUUID() + "@test.local";
+        return api("POST", "/api/auth/register", null, Map.of("email", email, "fullName", "Thành viên",
+                "password", "Password@123", "verificationToken", verifyContact(email)), 201).path("accessToken").asString();
+    }
     private int post() throws Exception {
         int id=api("POST","/api/community/posts",author,Map.of("type","SECOND_HAND","title","Bàn học gỗ còn sử dụng tốt","content","Mình nhượng bàn học tại Tân Xã, có thể kiểm tra trực tiếp.","location","Tân Xã","authorName","Người đăng","authorPhone","0912345678"),201).path("id").asInt();
         api("POST","/api/staff/community/posts/"+id+"/review",staff,Map.of("decision","APPROVE"),200); return id;

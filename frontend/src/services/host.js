@@ -6,6 +6,15 @@ function pendingRegistration(data) {
 }
 
 export const hostApi = {
+  async confirmAvailability(id, signal) {
+    const value = await request(`/room-types/${roomTypeId(id)}/availability-confirmation`, {basePath:'/api/host', method:'POST', signal});
+    if (!value || value.roomTypeId !== Number(id) || value.availabilityConfirmationStatus !== 'CURRENT'
+      || !value.availabilityConfirmedAt || !Number.isFinite(Date.parse(value.availabilityConfirmedAt))
+      || value.availabilityStale !== false || !Number.isInteger(value.vacantRooms) || !Number.isInteger(value.totalRooms)
+      || value.vacantRooms < 0 || value.vacantRooms > value.totalRooms || value.totalRooms < 1)
+      throw new ApiError('Chưa xác nhận được kết quả đã lưu. Vui lòng tải lại danh sách.', 502);
+    return value;
+  },
   async propertyEdit(id,signal){
     const data=await request(`/property-registrations/${roomTypeId(id)}/edit`,{basePath:'/api/host',signal});
     if(!data||data.registrationId!==Number(id)||!data.details||!['editableFields','requestedFields','photos','documents'].every(key=>Array.isArray(data[key]))||typeof data.versionToken!=='string')throw new ApiError('Dữ liệu chỉnh sửa không hợp lệ.',502);
@@ -31,6 +40,35 @@ export const hostApi = {
     return result;
   },
   deleteRoom(id, signal) {return request(`/rooms/${roomTypeId(id)}`,{basePath:'/api/host',method:'DELETE',signal});},
+  async createRoomLayout(data,signal){
+    const result=await request('/rooms/layout',{basePath:'/api/host',method:'POST',body:data,signal});
+    if(!Array.isArray(result)||result.length!==data.rooms.length||!result.every(room=>validRoom(room)&&room.propertyId===data.propertyId&&room.publicVisible===false))throw new ApiError('Chưa xác nhận được danh sách phòng đã tạo. Vui lòng tải lại trước khi thử lại.',502);
+    return result;
+  },
+  async createRoomSetup(data, photos, signal) {
+    const body = new FormData();
+    body.append('setup', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    for (const file of photos) body.append('photos', file);
+    const result = await request('/rooms/setup', { basePath: '/api/host', method: 'POST', body, signal });
+    const ids = data.types.map(type => result?.createdTypes?.[type.localId]);
+    if (ids.some(id => !Number.isInteger(id) || id < 1) || new Set(ids).size !== ids.length ||
+        !Array.isArray(result?.rooms) || result.rooms.length !== data.rooms.length ||
+        !result.rooms.every(room => validRoom(room) && room.propertyId === data.propertyId && room.publicVisible === false)) {
+      throw new ApiError('Chưa xác nhận được kết quả thiết lập. Vui lòng tải lại trước khi gửi lại.', 502);
+    }
+    return result;
+  },
+  async publishRooms(data,signal){
+    const result=await request('/rooms/publication',{basePath:'/api/host',method:'PUT',body:data,signal});
+    if(!Array.isArray(result)||!result.every(room=>validRoom(room)&&room.propertyId===data.propertyId&&typeof room.publicVisible==='boolean'&&room.publicVisible===data.roomIds.includes(room.roomId))||!data.roomIds.every(id=>result.some(room=>room.roomId===id)))throw new ApiError('Chưa xác nhận được kết quả công khai phòng. Vui lòng tải lại.',502);
+    return result;
+  },
+  async updateRoomStatuses(data,signal){
+    const result=await request('/rooms/status',{basePath:'/api/host',method:'PATCH',body:data,signal});
+    const expected=new Set(data.roomIds);
+    if(!Array.isArray(result)||result.length!==expected.size||new Set(result.map(room=>room.roomId)).size!==expected.size||!result.every(room=>validRoom(room)&&expected.has(room.roomId)&&room.propertyId===data.propertyId&&room.status===data.status&&(data.status!=='OCCUPIED'||room.leaseStartDate===data.leaseStartDate&&room.leaseEndDate===data.leaseEndDate)))throw new ApiError('Chưa xác nhận được đầy đủ kết quả cập nhật. Vui lòng tải lại danh sách.',502);
+    return result;
+  },
   async registrationEligibility(signal) {
     const data = await request('/property-registrations/eligibility', { basePath: '/api/host', signal });
     if (!data || typeof data.canRegister !== 'boolean' || !['HAS_PROPERTY','PENDING','NEEDS_SUPPLEMENT','ELIGIBLE'].includes(data.reason) || data.canRegister !== (data.reason === 'ELIGIBLE')) throw new ApiError('Không thể xác minh quyền đăng ký nhà trọ.', 502);
@@ -90,7 +128,7 @@ export const hostApi = {
     const body = new FormData();
     body.append('details', new Blob([JSON.stringify(details)], { type: 'application/json' }));
     for (const file of photos) body.append('photos', file);
-    for (const key of ['ownership', 'idCard', 'fireSafety']) if (documents[key]) body.append(key, documents[key]);
+      for (const key of ['ownership', 'idCard', 'fireSafety']) if (documents[key] && !documents[key].savedIdentity) body.append(key, documents[key]);
     return pendingRegistration(await request('/property-registrations', { basePath: '/api/host', method: 'POST', body, signal }));
   },
   async viewings(signal) {

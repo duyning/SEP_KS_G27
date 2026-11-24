@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Check, Copy } from 'lucide-react';
 import { MotionButton } from '../../components/motion/MotionUI.jsx';
@@ -12,18 +12,20 @@ import StaffHostShell, {
 } from './StaffHostShell.jsx';
 import StaffHostListTemplate, { StaffHostListSkeleton } from './StaffHostListTemplate.jsx';
 
-const initial = { search: '', status: 'ALL', sort: 'NEWEST', page: 0, size: 8 };
+const initial = { search: '', status: 'PENDING_REVIEW', sort: 'NEWEST', page: 0, size: 8 };
+
+function readFilters(params){return {...initial,search:params.get('search')||'',status:params.get('status')||initial.status,sort:params.get('sort')||initial.sort,page:Math.max(0,Number(params.get('page'))||0)};}
 
 export default function StaffHostRegistrationsPage() {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
-  const [filters, setFilters] = useState(() => ({
-    ...initial,
-    search: params.get('search') || '',
-    status: params.get('status') || 'ALL',
-    sort: params.get('sort') || 'NEWEST',
-    page: Math.max(0, Number(params.get('page')) || 0),
-  }));
+  const filters=useMemo(()=>readFilters(params),[params]);
+  const setFilters=useCallback(change=>setParams(current=>{
+    const previous=readFilters(current),next=typeof change==='function'?change(previous):change;
+    const query=new URLSearchParams();
+    for(const [key,value] of Object.entries(next))if(value!==initial[key])query.set(key,String(value));
+    return query;
+  },{replace:true}),[setParams]);
   const [searchInput, setSearchInput] = useState(params.get('search') || '');
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -34,15 +36,7 @@ export default function StaffHostRegistrationsPage() {
 
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
-  useEffect(() => {
-    const next = new URLSearchParams();
-    for (const [key, value] of Object.entries(filters)) {
-      if (value !== initial[key]) next.set(key, String(value));
-    }
-    if (next.toString() !== params.toString()) {
-      setParams(next, { replace: true });
-    }
-  }, [filters, params, setParams]);
+  useEffect(()=>setSearchInput(filters.search),[filters.search]);
 
   // Debounce search (~300ms) so typing does not fire redundant requests or lose focus
   useEffect(() => {
@@ -52,7 +46,7 @@ export default function StaffHostRegistrationsPage() {
       300
     );
     return () => clearTimeout(timer);
-  }, [searchInput, filters.search]);
+  }, [searchInput, filters.search, setFilters]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -216,8 +210,7 @@ export default function StaffHostRegistrationsPage() {
         </td>
         <td>
           <div className="shr-scope-cell">
-            <span className="shr-commune-pill">Khu vực: <strong>{item.targetCommune}</strong></span>
-            <span className="shr-scale-tag">Quy mô: {item.expectedScale}</span>
+            <span>{item.hasIdentityImage ? 'Đã có ảnh định danh' : 'Chưa có ảnh định danh'}</span>
           </div>
         </td>
         <td
@@ -276,7 +269,7 @@ export default function StaffHostRegistrationsPage() {
         {item.userPhone || 'Chưa có SĐT'} · {item.userEmail || 'Chưa có email'}
       </p>
       <p className="shr-mobile-scope">
-        Khu vực: <strong>{item.targetCommune}</strong> · Quy mô: {item.expectedScale}
+        {item.hasIdentityImage ? 'Đã có ảnh định danh' : 'Chưa có ảnh định danh'}
       </p>
       <div className="shr-mobile-footer">
         <small>

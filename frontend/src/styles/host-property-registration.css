@@ -15,8 +15,8 @@
 .registration-steps .current, .registration-steps .done { color: #009d92; }
 .registration-steps .current .registration-step-number { border-color: #00a69c; background: #fff; outline: 4px solid #f0fdfa; }
 .registration-steps .done { color: #0f172a; }
-.registration-steps .done .registration-step-number { background: #0d9488; border-color: #0d9488; color: white; }
-.registration-steps .done::after { background: #0d9488 !important; }
+.registration-steps .done .registration-step-number { background: #0f766e; border-color: #0f766e; color: white; }
+.registration-steps .done::after { background: #0f766e !important; }
 .registration-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
 .registration-grid form { min-width: 0; }
 .registration-form-lock { border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -58,10 +58,10 @@
 .registration-two-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .registration-amenities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .registration-amenities label { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; cursor: pointer; font-size: 13px; line-height: 1.4; min-height: 46px; }
-.registration-amenities label:has(:checked) { border-color: #0d9488; background: #f0fdfa; }
-.property-registration input[type=checkbox] { appearance: auto; width: 18px; height: 18px; margin: 0; flex: 0 0 18px; accent-color: #0d9488; }
+.registration-amenities label:has(:checked) { border-color: #0f766e; background: #f0fdfa; }
+.property-registration input[type=checkbox] { appearance: auto; width: 18px; height: 18px; margin: 0; flex: 0 0 18px; accent-color: #0f766e; }
 .registration-upload { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 36px 20px; text-align: center; }
-.registration-upload svg { color: #0d9488; }
+.registration-upload svg { color: #0f766e; }
 .registration-upload span { color: #64748b; }
 .property-registration input[type=file] { max-width: 100%; font: inherit; font-size: 12px; color: #475569; }
 .property-registration input[type=file]::file-selector-button { background: white; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-right: 10px; color: #0f766e; cursor: pointer; }
@@ -84,7 +84,7 @@
 .registration-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; padding: 18px 28px; margin-top: 48px; box-shadow: 0 1px 3px #0f172a0a; }
 .registration-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 20px; background: #fff; color: #0f172a; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
 .registration-actions button:disabled { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; cursor: default; }
-.registration-actions .registration-next { margin-left: auto; background: #0d9488; color: white; border-color: #0d9488; }
+.registration-actions .registration-next { margin-left: auto; background: #0f766e; color: white; border-color: #0f766e; }
 .registration-actions .registration-next:hover { background: #0f766e; }
 .registration-aside { display: grid; gap: 20px; min-width: 0; }
 .registration-aside section { padding: 24px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px #0f172a0a; }
@@ -93,8 +93,8 @@
 .registration-progress-label > span { color: #009d92; font-size: 16px; font-weight: 800; }
 .registration-aside progress { display: block; appearance: none; width: 100%; height: 8px; margin: 8px 0 16px; border: 0; border-radius: 8px; overflow: hidden; background: #e2e8f0; }
 .registration-aside progress::-webkit-progress-bar { background: #e2e8f0; }
-.registration-aside progress::-webkit-progress-value { background: #0d9488; border-radius: 8px; }
-.registration-aside progress::-moz-progress-bar { background: #0d9488; }
+.registration-aside progress::-webkit-progress-value { background: #0f766e; border-radius: 8px; }
+.registration-aside progress::-moz-progress-bar { background: #0f766e; }
 .registration-aside ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
 .registration-aside ol li { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #64748b; }
 .registration-aside ol li > span { flex: 0 0 17px; height: 17px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e2e8f0; font-size: 10px; margin-top: 2px; }
@@ -113,14 +113,14 @@
 .registration-other-rules[open] summary { margin-bottom: 16px; }
 .registration-upload-icon { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: white; box-shadow: 0 1px 3px #0f172a0a; margin-bottom: 4px; }
 .registration-upload p { font-size: 12px; color: #64748b; }
-.registration-upload.dragging { border-color: #0d9488; background: #f0fdfa; outline: 2px solid #99f6e4; }
-.registration-file-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #0d9488; border-radius: 6px; color: #009d92; background: white; font-size: 12px; font-weight: 700; padding: 6px 14px; cursor: pointer; line-height: 1.4; }
+.registration-upload.dragging { border-color: #0f766e; background: #f0fdfa; outline: 2px solid #99f6e4; }
+.registration-file-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #0f766e; border-radius: 6px; color: #009d92; background: white; font-size: 12px; font-weight: 700; padding: 6px 14px; cursor: pointer; line-height: 1.4; }
 .registration-upload .registration-file-button { margin-top: 8px; }
 .property-registration .registration-file-input { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.registration-upload:has(input:focus-visible), .registration-document:has(input:focus-visible) { outline: 2px solid #0d9488; outline-offset: 3px; }
+.registration-upload:has(input:focus-visible), .registration-document:has(input:focus-visible) { outline: 2px solid #0f766e; outline-offset: 3px; }
 .registration-upload:has([aria-invalid=true]), .registration-document:has([aria-invalid=true]) { border-color: #e11d48; }
-.registration-cover { display: inline-flex; align-items: center; gap: 4px; position: absolute; left: 6px; top: 6px; font-size: 10px; font-weight: 700; background: #0d9488; color: white; border-radius: 4px; padding: 3px 6px; }
-.registration-photos .registration-make-cover { position: static; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; border: 0; padding: 4px 0; background: transparent; color: #0d9488; font: inherit; font-size: 11px; cursor: pointer; text-align: left; }
+.registration-cover { display: inline-flex; align-items: center; gap: 4px; position: absolute; left: 6px; top: 6px; font-size: 10px; font-weight: 700; background: #0f766e; color: white; border-radius: 4px; padding: 3px 6px; }
+.registration-photos .registration-make-cover { position: static; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; border: 0; padding: 4px 0; background: transparent; color: #0f766e; font: inherit; font-size: 11px; cursor: pointer; text-align: left; }
 .registration-photo-remove { opacity: 0; transition: opacity .15s; }
 .registration-photos figure:hover .registration-photo-remove, .registration-photos figure:focus-within .registration-photo-remove { opacity: 1; }
 .registration-privacy { background: #f8fafc; border-color: #dce4ef; border-left-color: #0284c7; color: #334155; }
@@ -133,8 +133,12 @@
 .registration-document { position: relative; font-size: 12px; padding: 12px 14px; }
 .registration-document > svg { color: #64748b; }
 .registration-document .registration-file-button { flex-shrink: 0; }
+.registration-saved-identity { margin-top: 12px; }
+.registration-saved-identity summary { cursor: pointer; color: var(--p-primary, #0f766e); padding: 8px 0; }
+.registration-saved-identity summary:focus-visible { outline: 2px solid var(--p-primary, #0f766e); outline-offset: 3px; }
+.registration-saved-identity .host-identity-image { display: block; width: 100%; max-width: 420px; max-height: 300px; object-fit: contain; margin-top: 12px; border-radius: 8px; }
 .registration-aside li.done { color: #0f172a; }
-.registration-aside li.done > span { color: white; background: #0d9488; }
+.registration-aside li.done > span { color: white; background: #0f766e; }
 .registration-review-groups { display: grid; gap: 18px; margin-bottom: 24px; }
 .registration-review-section { border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; min-width: 0; }
 .registration-review-section > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
@@ -153,11 +157,11 @@
 .registration-review-photos .registration-cover { position: static; font-size: 9px; margin-top: 4px; }
 .registration-review-documents { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .registration-review-documents li { display: flex; align-items: flex-start; gap: 8px; color: #64748b; font-size: 12px; overflow-wrap: anywhere; }
-.registration-review-documents li svg { color: #0d9488; flex-shrink: 0; margin-top: 2px; }
+.registration-review-documents li svg { color: #0f766e; flex-shrink: 0; margin-top: 2px; }
 @media (hover: none) { .registration-photo-remove { opacity: 1; } }
 .host-property-create-route > .host-footer { margin-left: var(--p-sidebar-width); }
 .host-property-create-route .portal-topbar h1 { font-size: 16px; font-weight: 500; }
-.registration-topbar-parent a { color: #0d9488; text-underline-offset: 3px; }
+.registration-topbar-parent a { color: #0f766e; text-underline-offset: 3px; }
 .registration-location-address { gap: 18px; }
 .registration-map-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin: 24px 0; font-size: 13px; }
 .registration-map-heading > span { color: #64748b; font-size: 12px; }
@@ -168,9 +172,9 @@
 .registration-quick-pins { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 11px; }
 .registration-quick-pins > span { color: #64748b; }
 .registration-quick-pins button { font: inherit; font-weight: 600; line-height: 1.5; padding: 2px 10px; border: 1px solid #dce4ef; border-radius: 12px; background: white; color: #0f172a; cursor: pointer; }
-.registration-quick-pins button:hover { border-color: #0d9488; color: #0d9488; }
+.registration-quick-pins button:hover { border-color: #0f766e; color: #0f766e; }
 .registration-location-map { height: 320px; width: 100%; background: #eef3f7; font-family: inherit; }
-.registration-location-map:focus-visible { outline: 2px solid #0d9488; outline-offset: -2px; }
+.registration-location-map:focus-visible { outline: 2px solid #0f766e; outline-offset: -2px; }
 .registration-location-map .leaflet-popup-content { font-size: 12px; line-height: 1.5; min-width: 190px; }
 .registration-location-map .leaflet-popup-content strong { display: block; color: #0f172a; }
 .registration-location-map .leaflet-control-attribution { font-size: 10px; }
@@ -221,12 +225,12 @@
   .host-property-create-route > .host-footer { padding: 18px 16px; font-size: 11px; }
 }
 .registration-address-lookup{padding:18px 0 22px;margin-bottom:22px;border-bottom:1px solid #e2e8f0;min-width:0}
-.registration-address-lookup>label{display:block;font-size:13px;font-weight:700;margin-bottom:9px}.registration-lookup-input{display:flex;align-items:center;gap:12px}.registration-lookup-input input{min-width:0;flex:1;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:6px;height:44px;box-sizing:border-box;font:inherit;font-size:13px}.registration-lookup-input input:focus{outline:0;border-color:#0d9488;box-shadow:0 0 0 3px #0d948818}.registration-lookup-input>button{flex-shrink:0;white-space:nowrap}.registration-address-results{list-style:none;margin:12px 0 0;padding:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden}.registration-address-results li+li{border-top:1px solid #e2e8f0}.registration-address-results button{display:flex;align-items:flex-start;gap:8px;width:100%;padding:12px;border:0;background:white;text-align:left;font:inherit;color:#0f172a;font-size:12px;cursor:pointer}.registration-address-results button:hover{background:#f0fdfa}.registration-address-results svg{flex-shrink:0;color:#0d9488}.registration-address-lookup>p{margin-top:10px!important;font-size:12px}
+.registration-address-lookup>label{display:block;font-size:13px;font-weight:700;margin-bottom:9px}.registration-lookup-input{display:flex;align-items:center;gap:12px}.registration-lookup-input input{min-width:0;flex:1;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:6px;height:44px;box-sizing:border-box;font:inherit;font-size:13px}.registration-lookup-input input:focus{outline:0;border-color:#0f766e;box-shadow:0 0 0 3px #0f766e18}.registration-lookup-input>button{flex-shrink:0;white-space:nowrap}.registration-address-results{list-style:none;margin:12px 0 0;padding:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden}.registration-address-results li+li{border-top:1px solid #e2e8f0}.registration-address-results button{display:flex;align-items:flex-start;gap:8px;width:100%;padding:12px;border:0;background:white;text-align:left;font:inherit;color:#0f172a;font-size:12px;cursor:pointer}.registration-address-results button:hover{background:#f0fdfa}.registration-address-results svg{flex-shrink:0;color:#0f766e}.registration-address-lookup>p{margin-top:10px!important;font-size:12px}
 @media(max-width:600px){.registration-lookup-input{flex-direction:column}.registration-lookup-input>button{align-self:flex-end}}
 
 .registration-amenities .registration-quiet-hours{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #e2e8f0;border-radius:8px;padding:7px 10px 7px 14px;min-height:46px;background:#fff}
-.registration-amenities .registration-quiet-hours.selected{border-color:#0d9488;background:#f0fdfa}
+.registration-amenities .registration-quiet-hours.selected{border-color:#0f766e;background:#f0fdfa}
 .registration-amenities .registration-quiet-hours>label{border:0;padding:0;min-height:0;background:transparent;flex:1;min-width:0}
 .property-registration .registration-amenities .registration-quiet-hours input.registration-quiet-time{display:inline-block;width:auto;min-width:96px;min-height:32px;height:32px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:13px;font-weight:600;color:#0f172a;flex-shrink:0}
-.property-registration .registration-amenities .registration-quiet-hours input.registration-quiet-time:focus{outline:2px solid #99f6e4;border-color:#0d9488}
+.property-registration .registration-amenities .registration-quiet-hours input.registration-quiet-time:focus{outline:2px solid #99f6e4;border-color:#0f766e}
 @media(max-width:600px){.property-registration .registration-amenities .registration-quiet-hours input.registration-quiet-time{font-size:16px;min-height:36px;height:36px}}

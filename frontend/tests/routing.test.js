@@ -6,8 +6,9 @@ import { canAccess, landingFor, legacyTarget, screens } from '../src/routing/scr
 test('every source page has one explicit React migration target', () => {
   const inventory = JSON.parse(fs.readFileSync(new URL('../migration/inventory.json', import.meta.url)));
   const migrated = screens.filter(item => item.source);
-  assert.equal(migrated.length, 32);
-  assert.deepEqual(migrated.map(item => `html/${item.source}`).sort(), inventory.html.map(item => item.file).sort());
+  const sourceTargets = inventory.html.map(item => [item.file.replace(/^html\//, ''), item.target]);
+  const extensions = [['become-host.html', '/become-host'], ['staff-host-registrations.html', '/staff/host-registrations'], ['staff-host-registration-detail.html', '/staff/host-registrations/detail']];
+  assert.deepEqual(migrated.map(item => [item.source, item.path]).sort(), [...sourceTargets, ...extensions].sort());
   assert.equal(new Set(screens.map(item => item.path)).size, screens.length);
   for (const item of migrated) assert.equal(legacyTarget(item.source), item.path);
   assert.equal(screens.find(item => item.path === '/staff/service-applications').portal, 'staff');
@@ -38,8 +39,16 @@ test('actor landing routes and unsupported modules are explicit', () => {
   assert.equal(landingFor({ role: 'ROOM_HOST' }), '/host');
   assert.equal(landingFor({ role: 'STAFF' }), '/staff');
   assert.equal(landingFor({ role: 'ADMIN' }), '/admin');
-  for (const item of screens.filter(item => item.source && !['auth', 'redirect', 'profile'].includes(item.kind))) assert.equal(item.integration, 'blocked');
+  for (const item of screens) assert.ok(['blocked', 'partial', 'connected', 'merged'].includes(item.integration), item.path);
+  for (const path of ['/host/support', '/staff/assistance', '/staff/assistance/detail']) assert.equal(screens.find(item => item.path === path).integration, 'blocked', path);
   assert.equal(screens.find(item => item.path === '/staff/service-applications').integration, 'connected');
+  for (const path of ['/host/support', '/staff/assistance', '/staff/assistance/detail']) {
+    assert.equal(screens.find(item => item.path === path).integration, 'blocked', path);
+  }
+  for (const path of ['/favorites', '/become-host', '/staff/host-registrations',
+    '/staff/host-registrations/detail', '/staff/service-applications', '/admin']) {
+    assert.equal(screens.find(item => item.path === path).integration, 'connected', path);
+  }
 });
 test('active source contains no prototype storage identities or unsafe HTML', () => {
   const root = new URL('../src/', import.meta.url);

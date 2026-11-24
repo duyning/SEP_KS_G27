@@ -79,4 +79,3 @@ class CommunityMediaUnitTest extends CommunityUnitSupport {
         return cases;
     }
 }
-

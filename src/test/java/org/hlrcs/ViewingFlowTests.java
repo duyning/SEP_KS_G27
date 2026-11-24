@@ -47,6 +47,7 @@ class ViewingFlowTests {
     @Autowired RoomTypeRepository types;
     @Autowired RoomRepository rooms;
     @Autowired BookingRepository bookings;
+    @Autowired org.hlrcs.service.ViewingService viewingService;
 
     private User host;
     private User renter;
@@ -63,12 +64,55 @@ class ViewingFlowTests {
                 .name("Nhà trọ test").status("ACTIVE").build());
         type = types.save(RoomType.builder().property(property).roomType("Studio")
                 .price(BigDecimal.valueOf(2000000)).areaSqm(20F).build());
+        rooms.save(Room.builder().publicVisible(true).property(property).roomType(type).roomNumber("published").floor("1").status("OCCUPIED").build());
         appointment = LocalDateTime.now(ZONE).plusDays(1).withSecond(0).withNano(0);
     }
 
     @Test
+    void streamsCommittedChangesOnlyToTheRequesterAndPropertyOwner() throws Exception {
+        String updates = VIEWINGS + "/updates";
+        mvc.perform(get(updates)).andExpect(status().isUnauthorized());
+        var hostStream = getAs(updates, host).andExpect(request().asyncStarted()).andReturn();
+        var renterStream = getAs(updates, renter).andExpect(request().asyncStarted()).andReturn();
+        var otherStream = getAs(updates, account(UserRole.ROOM_HOST)).andExpect(request().asyncStarted()).andReturn();
+
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        update(renter, id, payload(appointment.plusMinutes(5))).andExpect(status().isOk());
+        decide(host, id, "REJECTED", "Bận").andExpect(status().isOk());
+        assertEquals(4, hostStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
+        assertEquals(4, renterStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
+        assertEquals(1, otherStream.getResponse().getContentAsString().split("data:refresh", -1).length - 1);
+    }
+
+    @Test
+    void memberSearchSortAndSummaryStayScopedToTheRequesterAcrossFilters() throws Exception {
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
+                .roomNumber("S101").floor("1").status("VACANT").build());
+        int first = data(create(renter, payload(appointment.plusHours(3))).andExpect(status().isOk())).path("bookingId").asInt();
+        decide(host, first, "APPROVED", "").andExpect(status().isOk());
+        int second = data(create(renter, payload(appointment.plusHours(2))).andExpect(status().isOk())).path("bookingId").asInt();
+        decide(host, second, "REJECTED", "Bận").andExpect(status().isOk());
+        int third = data(create(renter, payload(appointment.plusHours(1))).andExpect(status().isOk())).path("bookingId").asInt();
+        create(account(UserRole.USER), payload(appointment.plusHours(4))).andExpect(status().isOk());
+        getAs(VIEWINGS + "?q=TEST&sort=oldest", renter).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(3))
+                .andExpect(jsonPath("$.data.items[0].bookingId").value(first))
+                .andExpect(jsonPath("$.data.summary.counts.PENDING").value(1))
+                .andExpect(jsonPath("$.data.summary.counts.APPROVED").value(1))
+                .andExpect(jsonPath("$.data.summary.upcoming").value(1))
+                .andExpect(jsonPath("$.data.summary.ended").value(1))
+                .andExpect(jsonPath("$.data.rooms['" + type.getRoomTypeId() + "'].price").value(2000000));
+        getAs(VIEWINGS + "?sort=appointment", renter).andExpect(jsonPath("$.data.items[0].bookingId").value(third));
+        getAs(VIEWINGS + "?status=APPROVED", renter).andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.summary.counts.REJECTED").value(1));
+        getAs(VIEWINGS + "?q=no-such-property", renter).andExpect(jsonPath("$.data.items.length()").value(0))
+                .andExpect(jsonPath("$.data.summary.counts.PENDING").value(1));
+        getAs(VIEWINGS + "?sort=invalid", renter).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void viewingAndNotificationsPersistAcrossBothRolesAndDoNotReserveRooms() throws Exception {
-        var room = rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        var room = rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         var request = data(create(renter, payload(appointment)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
@@ -141,12 +185,12 @@ class ViewingFlowTests {
         int expiredId = bookings.save(Booking.builder().roomType(type).renter(renter).status(BookingStatus.PENDING)
                 .scheduledDate(appointment.minusDays(2)).build()).getBookingId();
         decide(host, expiredId, "APPROVED", "").andExpect(status().isConflict());
-        decide(host, expiredId, "REJECTED", "Giờ hẹn đã qua.").andExpect(status().isOk());
+        decide(host, expiredId, "REJECTED", "Giờ hẹn đã qua.").andExpect(status().isConflict());
     }
 
     @Test
     void concurrentRetriesAndConflictingDecisionsCreateExactlyOneEventEach() throws Exception {
-        rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         var sent = race(() -> create(renter, payload(appointment)), () -> create(renter, payload(appointment)));
         int id = data(sent[0].andExpect(status().isOk())).path("bookingId").asInt();
@@ -179,7 +223,7 @@ class ViewingFlowTests {
         getAs(availability, account(UserRole.ROOM_HOST)).andExpect(status().isNotFound());
         getAs(availability, host).andExpect(jsonPath("$.data").value(0));
         decide(host, id, "APPROVED", "").andExpect(status().isConflict());
-        var room = rooms.save(Room.builder().property(type.getProperty()).roomType(type)
+        var room = rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
                 .roomNumber("101").floor("1").status("VACANT").build());
         getAs(availability, host).andExpect(jsonPath("$.data").value(1));
         mvc.perform(post("/api/host/viewings/" + id + "/decision").header("Authorization", token(host))
@@ -194,6 +238,108 @@ class ViewingFlowTests {
     private ResultActions update(User user, int id, Map<String, Object> payload) throws Exception {
         return mvc.perform(put(VIEWINGS + "/" + id).header("Authorization", token(user))
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload)));
+    }
+
+    @Test
+    void onlyRequesterCancelsPendingAndNotifiesThePropertyOwnerOnce() throws Exception {
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        cancel(host, id).andExpect(status().isNotFound());
+        cancel(account(UserRole.USER), id).andExpect(status().isNotFound());
+
+        cancel(renter, id).andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.processedAt").isNotEmpty())
+                .andExpect(jsonPath("$.data.decisionReason").value("Đã đổi kế hoạch"));
+        cancel(renter, id).andExpect(status().isConflict());
+        decide(host, id, "REJECTED", "Không còn phòng").andExpect(status().isConflict());
+        getAs("/api/host/viewings", host).andExpect(jsonPath("$.data.viewings[0].status").value("CANCELLED"));
+        getAs(INBOX, host).andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.items[0].event").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.items[0].bookingId").value(id))
+                .andExpect(jsonPath("$.data.items[0].read").value(false));
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(0));
+    }
+
+    @Test
+    void cancellationAndHostDecisionShareOneFinalTransition() throws Exception {
+        int id = data(create(renter, payload(appointment)).andExpect(status().isOk())).path("bookingId").asInt();
+        var results = race(() -> cancel(renter, id), () -> decide(host, id, "REJECTED", "Không còn phòng"));
+        var statuses = new int[]{results[0].andReturn().getResponse().getStatus(), results[1].andReturn().getResponse().getStatus()};
+        java.util.Arrays.sort(statuses);
+        assertArrayEquals(new int[]{200, 409}, statuses);
+        int hostCount = data(getAs(INBOX, host)).path("items").size();
+        int renterCount = data(getAs(INBOX, renter)).path("items").size();
+        assertEquals(2, hostCount + renterCount);
+        cancel(renter, id).andExpect(status().isConflict());
+    }
+
+    private ResultActions cancel(User user, int id) throws Exception {
+        return mvc.perform(post(VIEWINGS + "/" + id + "/cancel").header("Authorization", token(user))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("reason", "Đã đổi kế hoạch"))));
+    }
+
+    @Test
+    void enforcesLeadTimeAndCancelsOnlyPendingRequestsAtTheDeadline() throws Exception {
+        var now = LocalDateTime.now(ZONE);
+        create(renter, payload(now.plusMinutes(29))).andExpect(status().isBadRequest());
+        int id = data(create(renter, payload(now.plusMinutes(31))).andExpect(status().isOk())).path("bookingId").asInt();
+        update(renter, id, payload(now.plusMinutes(29))).andExpect(status().isBadRequest());
+
+        var expired = bookings.findById(id).orElseThrow();
+        expired.setScheduledDate(now.plusMinutes(15));
+        bookings.save(expired);
+        var approved = bookings.save(Booking.builder().roomType(type).renter(renter)
+                .scheduledDate(now.plusMinutes(5)).status(BookingStatus.APPROVED).build());
+        var pending = bookings.save(Booking.builder().roomType(type).renter(renter)
+                .scheduledDate(now.plusMinutes(16)).status(BookingStatus.PENDING).build());
+
+        decide(host, id, "APPROVED", "").andExpect(status().isConflict());
+        update(renter, id, payload(appointment)).andExpect(status().isConflict());
+        viewingService.expirePending();
+        viewingService.expirePending();
+
+        getAs(VIEWINGS + "/" + id, renter).andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.processedAt").isNotEmpty());
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].event").value("EXPIRED"));
+        assertEquals(BookingStatus.APPROVED, bookings.findById(approved.getBookingId()).orElseThrow().getStatus());
+        assertEquals(BookingStatus.PENDING, bookings.findById(pending.getBookingId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    void approvesSelectedViewingsAtomicallyWithinHostWindow() throws Exception {
+        rooms.save(Room.builder().publicVisible(true).property(type.getProperty()).roomType(type)
+                .roomNumber("101").floor("1").status("VACANT").build());
+        var firstSlot = appointment.toLocalDate().atTime(10, 0);
+        int firstId = data(create(renter, payload(firstSlot)).andExpect(status().isOk())).path("bookingId").asInt();
+        var otherRenter = account(UserRole.USER);
+        var later = firstSlot.plusMinutes(30);
+        int secondId = data(create(otherRenter, payload(later)).andExpect(status().isOk())).path("bookingId").asInt();
+
+        var first = Map.of("bookingId", firstId, "expectedScheduledDate", firstSlot.toString());
+        var stale = Map.of("bookingId", secondId, "expectedScheduledDate", later.plusMinutes(1).toString());
+        var second = Map.of("bookingId", secondId, "expectedScheduledDate", later.toString());
+        String endpoint = "/api/host/viewings/batch-approval";
+        var window = new java.util.HashMap<String, Object>();
+        window.put("from", firstSlot.toString());
+        window.put("to", later.toString());
+        window.put("items", java.util.List.of(first, second));
+        mvc.perform(post(endpoint).header("Authorization", token(account(UserRole.ROOM_HOST)))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isNotFound());
+        window.put("items", java.util.List.of(first, stale));
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isBadRequest());
+        window.put("to", later.plusMinutes(10).toString());
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window))).andExpect(status().isConflict());
+        assertEquals(BookingStatus.PENDING, bookings.findById(firstId).orElseThrow().getStatus());
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items.length()").value(0));
+
+        window.put("items", java.util.List.of(first, second));
+        mvc.perform(post(endpoint).header("Authorization", token(host))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(window)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.length()").value(2));
+        getAs(INBOX, renter).andExpect(jsonPath("$.data.items[0].event").value("APPROVED"));
+        getAs(INBOX, otherRenter).andExpect(jsonPath("$.data.items[0].event").value("APPROVED"));
     }
 
     private ResultActions[] race(Callable<ResultActions> first, Callable<ResultActions> second) throws Exception {
