@@ -23,7 +23,6 @@ export const communityReportsApi = {
     if (evidence) body.append('evidence', evidence);
     return request(`/posts/${postId}/reports`, { basePath: '/api/community', method: 'POST', body });
   },
-  mine: (page, signal) => request(`/mine?page=${page}`, { basePath: '/api/community/reports', signal }),
   queue: (status, page, signal) => request(`?status=${status}&page=${page}`, { basePath: adminPath, signal }),
   stats: signal => request('/stats', { basePath: adminPath, signal }),
   detail: (id, signal) => request(`/${id}`, { basePath: adminPath, signal }).then(normalizeDetail),

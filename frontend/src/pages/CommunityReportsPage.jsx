@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, EyeOff, FileText, Flag, Inbox, ShieldCheck, Clock3, Layers3, ShieldAlert, Copy, FileWarning, MessageSquare, ListFilter, Check } from 'lucide-react';
 import { Modal, StateView, useToast } from '../components/PortalUI.jsx';
-import { communityReportsApi, reportDate, reportPage, reportReasons, reportStatuses } from '../services/community-reports.js';
+import { communityReportsApi, reportPage, reportReasons, reportStatuses } from '../services/community-reports.js';
 import CommunityFeedCard from '../components/CommunityFeedCard.jsx';
 import CommunityPostFooter from '../components/CommunityPostFooter.jsx';
 import CommunityReportAiPanel from '../components/CommunityReportAiPanel.jsx';
@@ -10,7 +10,7 @@ import useCommunityLive from '../components/useCommunityLive.js';
 import '../styles/community-reports.css';
 
 const adminPath = '/admin/community/reports';
-const minePath = '/community/reports';
+
 const queueFilters = { ALL: 'Tất cả', OPEN: reportStatuses.OPEN, RESOLVED: reportStatuses.RESOLVED, DISMISSED: reportStatuses.DISMISSED };
 const statusIcons = { ALL: Layers3, OPEN: Clock3, RESOLVED: ShieldCheck, DISMISSED: Inbox };
 const reasonOptions = {
@@ -270,35 +270,34 @@ function AdminReportDetail({ data, onRefresh, selected, reportUrl, reasonFilter,
   </div>;
 }
 
-export default function CommunityReportsPage({ admin = false }) {
+export default function CommunityReportsPage() {
   const [params, setParams] = useSearchParams();
   const status = params.get('status') === 'ALL' || Object.hasOwn(reportStatuses, params.get('status')) ? params.get('status') : 'OPEN';
   const page = reportPage(params.get('page'));
-  const id = admin ? reportPage(params.get('id')) : 0;
+  const id = reportPage(params.get('id'));
   const selected = id > 0 && params.get('review') === '1';
   const reason = params.get('reason');
   const reasonFilter = reason === legacyReason || Object.hasOwn(reportReasons, reason) ? reason : 'ALL';
-  const base = admin ? adminPath : minePath;
+  const base = adminPath;
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState({});
   const [stats, setStats] = useState(null);
-  const requestKey = `${admin}:${id}:${status}:${page}:${revision}`;
-  const dataScope = `${admin}:${id}:${status}:${page}`;
-  useCommunityLive(admin ? 'reports,posts' : 'my-reports', () => setRevision(value => value + 1));
+  const requestKey = `${id}:${status}:${page}:${revision}`;
+  const dataScope = `${id}:${status}:${page}`;
+  useCommunityLive('reports,posts', () => setRevision(value => value + 1));
 
   useEffect(() => {
     const controller = new AbortController();
     const load = id ? communityReportsApi.detail(id, controller.signal)
-      : admin ? Promise.all([communityReportsApi.queue(status, page, controller.signal), communityReportsApi.stats(controller.signal)])
-          .then(([queue, counts]) => { if (!controller.signal.aborted) setStats(counts); return queue; })
-        : communityReportsApi.mine(page, controller.signal);
+      : Promise.all([communityReportsApi.queue(status, page, controller.signal), communityReportsApi.stats(controller.signal)])
+          .then(([queue, counts]) => { if (!controller.signal.aborted) setStats(counts); return queue; });
     load.then(data => {
       if (!controller.signal.aborted) setState({ key: requestKey, scope: dataScope, data });
     }).catch(error => {
       if (!controller.signal.aborted) setState(current => ({ ...([401,403,404].includes(error.status) ? {} : current), key: requestKey, error: error.message }));
     });
     return () => controller.abort();
-  }, [admin, id, status, page, requestKey]);
+  }, [id, status, page, requestKey]);
 
   const refresh = () => setRevision(value => value + 1);
   const data = state.scope === dataScope ? state.data : null;
@@ -332,16 +331,15 @@ export default function CommunityReportsPage({ admin = false }) {
     setParams(next, { preventScrollReset: true });
   }
 
-  return <div className={`community-report-page ad-page${admin ? ' admin-report-page' : ''}`}>
+  return <div className="community-report-page ad-page admin-report-page">
     {id > 0 && <Link className="report-back-link" to={reportUrl(null)}><ArrowLeft size={17} aria-hidden="true" />Quay lại danh sách báo cáo</Link>}
-    {!admin && <Link to="/community">Quay lại Cộng đồng</Link>}
-    {admin ? <header className="report-page-heading">
+    <header className="report-page-heading">
       <span className="report-panel-icon"><Flag size={24} aria-hidden="true" /></span>
       <div>
         <h1>{id ? 'Chi tiết bài viết bị báo cáo' : 'Báo cáo bài viết cộng đồng'}</h1>
       </div>
-    </header> : <h1>Báo cáo của tôi</h1>}
-    {admin && !id && <div className="report-queue-toolbar">
+    </header>
+    {!id && <div className="report-queue-toolbar">
       <div className="report-status-filters" role="group" aria-label="Lọc theo trạng thái" aria-busy={!stats}>
         {Object.entries(queueFilters).map(([key, label]) => {
           const Icon=statusIcons[key], count=stats?.[key];
@@ -361,18 +359,10 @@ export default function CommunityReportsPage({ admin = false }) {
     {id > 0 && data && <AdminReportDetail key={id} data={data} onRefresh={refresh} selected={selected} reportUrl={reportUrl}
       reasonFilter={reasonFilter} onReasonFilterChange={changeReasonFilter} />}
     {!id && data && <>
-      {admin ? <AdminReportQueue data={data} status={status} reportUrl={reportUrl} onReset={() => changeStatus('ALL')} /> :
-      <section className="ad-panel community-report-panel" aria-label="Danh sách báo cáo">
-        {data.content.length === 0 ? <p role="status">Không có báo cáo ở trang này.</p> : <ul className="community-report-list">
-          {data.content.map(row => <li key={row.id}>
-            <strong>{row.postTitle || `Báo cáo #${row.id}`}</strong><span>Đã gửi báo cáo thành công</span>
-            <time dateTime={row.createdAt}>{reportDate(row.createdAt)}</time>
-          </li>)}
-        </ul>}
-      </section>}
+      <AdminReportQueue data={data} status={status} reportUrl={reportUrl} onReset={() => changeStatus('ALL')} />
       {(page > 0 || data.totalPages > 1) && <div className="community-report-actions" aria-label="Phân trang">
         <button className="p-button" type="button" disabled={!page} onClick={() => changePage(page - 1)}><ChevronLeft size={16} aria-hidden="true" />Trang trước</button>
-        {admin && data.totalPages > 0 && page < data.totalPages && <span>Trang {page + 1} / {data.totalPages}</span>}
+        {data.totalPages > 0 && page < data.totalPages && <span>Trang {page + 1} / {data.totalPages}</span>}
         <button className="p-button" type="button" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Trang sau<ChevronRight size={16} aria-hidden="true" /></button>
       </div>}
     </>}

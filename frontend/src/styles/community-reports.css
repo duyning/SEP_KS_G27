@@ -31,7 +31,6 @@
 .community-report-page dt { color: #475569; }
 .community-report-page dd { margin: 0; overflow-wrap: anywhere; }
 .community-report-evidence { display: block; max-width: 100%; max-height: 420px; object-fit: contain; margin: 12px 0; }
-.community-report-history-link { display: inline-flex; align-items: center; min-height: 44px; color: #0f766e; font-weight: 600; }
 
 .portal-content.report-portal-content:not(.public-content) { padding-top: 16px; }
 @media (min-width: 901px) {

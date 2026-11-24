@@ -63,8 +63,6 @@ export default function PortalScreens({ screen }) {
       return <BookingsPage />;
     case '/community':
       return <CommunityPage />;
-    case '/community/reports':
-      return <CommunityReportsPage />;
     case '/services':
       return <ServicesPage />;
     case '/services/detail':
@@ -108,7 +106,7 @@ export default function PortalScreens({ screen }) {
     case '/admin':
       return <AdminDashboardPage />;
     case '/admin/community/reports':
-      return <CommunityReportsPage admin />;
+      return <CommunityReportsPage />;
 
     default:
       return (

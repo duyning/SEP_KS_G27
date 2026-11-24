@@ -292,6 +292,28 @@
   color: #ffffff;
 }
 
+.prototype-community .community-discovery-controls {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  min-width: 0;
+}
+.prototype-community .community-discovery-controls .community-category-tabs {
+  background: transparent;
+  border: 0;
+  border-radius: 14px 14px 0 0;
+  box-shadow: none;
+  padding: 8px;
+}
+.prototype-community .community-discovery-controls .community-filters-card {
+  margin-top: 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 14px 14px;
+  box-shadow: none;
+}
+
 /* FILTERS CARD */
 .prototype-community .community-filters-card {
   background: #ffffff;

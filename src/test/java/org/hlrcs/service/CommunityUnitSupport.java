@@ -18,6 +18,12 @@ class CommunityUnitSupport {
     static final ObjectMapper JSON = new ObjectMapper();
     static final Path RESULT_DIR = Path.of("target/community-unit-results");
     final List<DynamicTest> cases = new ArrayList<>();
+    final Map<String,Map<String,Object>> caseDetails = new HashMap<>();
+    void detailed(String feature, String flow, String method, String title, Map<String,Object> inputs, String expected, Executable body) {
+        String id = getClass().getSimpleName() + "-" + String.format("%03d", cases.size() + 1);
+        caseDetails.put(id, Map.of("feature",feature,"flow",flow,"title",title,"inputs",inputs));
+        add(method, flow.equals("Exception") ? "Abnormal" : "Normal", title, expected, body);
+    }
     CommunityUnitSupport() {
         try { Files.deleteIfExists(RESULT_DIR.resolve(getClass().getSimpleName() + ".jsonl")); }
         catch (java.io.IOException error) { throw new java.io.UncheckedIOException(error); }
@@ -36,6 +42,7 @@ class CommunityUnitSupport {
                 row.put("preconditions", "Isolated unit; repositories/external dependencies mocked; no live DB/network.");
                 row.put("input", input); row.put("expected", expected); row.put("status", status);
                 row.put("error", error); row.put("executedAt", LocalDateTime.now().toString());
+                if(caseDetails.containsKey(id))row.put("details",caseDetails.get(id));
                 Files.writeString(RESULT_DIR.resolve(getClass().getSimpleName() + ".jsonl"), JSON.writeValueAsString(row) + System.lineSeparator(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             }
         }));
