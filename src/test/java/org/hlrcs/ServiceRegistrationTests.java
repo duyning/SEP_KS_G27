@@ -35,6 +35,19 @@ class ServiceRegistrationTests {
     @Autowired ServiceComplaintRepository complaints;
     private final HttpClient client = HttpClient.newHttpClient();
 
+    @Autowired org.hlrcs.service.ServiceReviewService serviceReviews;
+    @Test void automaticApprovalUsesSamePublicationRulesAndSerializesWithStaff() throws Exception {
+        var owner = account(); int id = application(owner);
+        var actor = users.save(User.builder().email("service-review-ai@system.invalid").fullName("AI xét duyệt dịch vụ")
+                .passwordHash(encoder.encode(UUID.randomUUID().toString())).role(UserRole.USER).status(UserStatus.ACTIVE).build());
+        serviceReviews.approveAutomatically(id, 0, "AI (test): Nội dung và ảnh phù hợp với dịch vụ.", actor.getUserId());
+        assertEquals(RegistrationStatus.APPROVED, registrations.findById(id).orElseThrow().getStatus());
+        int serviceId = listings.findByRegistration_RegistrationId(id).orElseThrow().getServiceId();
+        assertEquals(200, api(null, "GET", "/api/services/" + serviceId, null).statusCode());
+        assertEquals(409, review(token(account(UserRole.STAFF)), id, "APPROVE", "APPROVE", "Hồ sơ đã được kiểm tra đầy đủ.").statusCode());
+        assertTrue(logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("SERVICE_REGISTRATION", id).stream().anyMatch(l -> "AI_APPROVED".equals(l.getAction())));
+    }
+
     private User account() {
         return account(UserRole.USER);
     }

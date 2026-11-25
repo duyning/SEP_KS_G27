@@ -44,3 +44,5 @@
 /* Match the public catalog dropdown inside the report modal. */
 .svc-report-status-select{margin:16px 0 20px;position:relative;z-index:2}
 .svc-report-status-select .svc-select-menu{max-height:320px;overflow-y:auto}
+
+.svc-complaints .svc-complaint-row .svc-complaint-open{flex-shrink:0;width:auto;min-width:0;white-space:nowrap}

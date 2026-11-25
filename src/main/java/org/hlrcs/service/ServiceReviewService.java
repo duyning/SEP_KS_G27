@@ -71,6 +71,20 @@ public class ServiceReviewService {
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Detail review(Integer id, String capabilityDecision, String listingDecision, String reason, int revision) {
+        requireReviewer();
+        return applyReview(id, capabilityDecision, listingDecision, reason, revision, auth.getCurrentUser(), false);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void approveAutomatically(Integer id, int revision, String reason, Integer actorId) {
+        var actor = users.findById(actorId).orElseThrow();
+        if (actor.getStatus() != UserStatus.ACTIVE || actor.getRole() != UserRole.USER
+                || !"service-review-ai@system.invalid".equals(actor.getEmail()))
+            throw new AppException("AI reviewer unavailable", HttpStatus.CONFLICT);
+        applyReview(id, "APPROVE", "APPROVE", reason, revision, actor, true);
+    }
+
+    private Detail applyReview(Integer id, String capabilityDecision, String listingDecision, String reason, int revision, User actor, boolean automatic) {
         if (!Set.of("APPROVE", "REJECT").contains(Objects.toString(capabilityDecision, "")) || !Set.of("APPROVE", "REJECT").contains(Objects.toString(listingDecision, "")))
             throw new BadRequestException("Cần quyết định duyệt hoặc từ chối cho capability và nội dung dịch vụ.");
         String note = reason == null ? "" : reason.trim();
@@ -79,15 +93,19 @@ public class ServiceReviewService {
         if ((!approved && note.length() < 10) || note.length() > 2000) throw new BadRequestException("Lý do từ chối phải có từ 10 đến 2000 ký tự.");
         if (capabilityDecision.equals("REJECT") && listingDecision.equals("APPROVE")) throw new BadRequestException("Không thể công khai dịch vụ khi từ chối capability.");
         var row = registrations.findForReview(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ."));
-        requireReviewer();
-        var actor = auth.getCurrentUser();
         if (actor.getUserId().equals(row.getUser().getUserId()))
             throw new AppException("Không được tự xét duyệt hồ sơ của mình.", HttpStatus.FORBIDDEN);
+        boolean automaticCreate = row.getTargetService() == null && (row.getOperation() == null || "CREATE".equals(row.getOperation()));
+        boolean automaticDelete = "DELETE".equals(row.getOperation()) && row.getTargetService() != null;
+        if (automatic && !automaticCreate && !automaticDelete)
+            throw new AppException("Only create and delete applications can be reviewed automatically", HttpStatus.CONFLICT);
         pending(row);
         if (row.getRevision() != revision) throw new AppException("Hồ sơ đã có phiên bản mới. Vui lòng tải lại trước khi duyệt.", HttpStatus.CONFLICT);
         var owner = users.findForRegistrationUpdate(row.getUser().getUserId()).orElseThrow();
         if (owner.getStatus() != UserStatus.ACTIVE) throw new AppException("Tài khoản người đăng ký không còn hoạt động.", HttpStatus.CONFLICT);
         var target = row.getTargetService();
+        if (target != null && !Objects.equals(target.getProvider().getUserId(), owner.getUserId()))
+            throw new AppException("Dịch vụ không thuộc người gửi yêu cầu.", HttpStatus.CONFLICT);
         if (target != null && "APPROVE".equals(listingDecision) && (!submissions.canManage(owner.getUserId()) || "DELETED".equals(target.getStatus()) || !Objects.equals(row.getServiceRevision(), target.getRevision())))
             throw new AppException("Dịch vụ gốc đã thay đổi hoặc quyền quản lý đã ngừng. Không thể áp dụng yêu cầu cũ.", HttpStatus.CONFLICT);
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id);
@@ -128,9 +146,10 @@ public class ServiceReviewService {
         row.setRevision(row.getRevision() + 1);
         files.forEach(f -> f.setVerificationStatus(approveCapability ? "APPROVED" : "REJECTED"));
         registrations.saveAndFlush(row);
-        audit(row, approveCapability ? "APPROVED" : "REJECTED", "Capability: " + capabilityDecision + "; Listing: " + listingDecision + ". " + note);
+        logs.saveAndFlush(ModerationLog.builder().staff(actor).targetType("SERVICE_REGISTRATION").targetId(id)
+                .action(automatic ? "AI_APPROVED" : approveCapability ? "APPROVED" : "REJECTED").note(note).build());
         notices.send(row.getUser(),"APPLICATION",row.getStatus().name(),row.getServiceName(),note,null,"/services",id,null,null);
-        return detail(id);
+        return automatic ? null : detail(id);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)

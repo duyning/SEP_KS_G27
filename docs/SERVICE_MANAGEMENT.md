@@ -102,3 +102,11 @@ Form gửi mới/nộp bổ sung bỏ mục tài liệu xác minh; API cho phép
 ## Cập nhật nền giao diện dịch vụ (2026-11-20)
 
 Các màn dịch vụ tự đọc lại dữ liệu mỗi 5 giây khi tab hiển thị, khi quay lại tab, kết nối mạng trở lại và sau thao tác dịch vụ thành công, kể cả từ tab khác. Cơ chế dùng polling. Bỏ nút tải lại ở nhánh dịch vụ. Đọc nền giữ nội dung form đang nhập. Form hồ sơ kiểm tra dữ liệu khi nhập; dashboard admin có khối hồ sơ/báo cáo dịch vụ dùng API thực tế.
+
+## Tự duyệt đăng ký bằng AI (2026-11-25)
+
+Worker xét tối đa 3 hồ sơ CREATE/PENDING mỗi vòng (mặc định 60 giây), gồm hồ sơ đang chờ từ trước và hồ sơ nộp lại. Dùng Gemini transport/key/model community.ai.key và community.ai.model, đọc từ config/mysql-local.properties qua GEMINI_API_KEY hoặc giá trị property tương ứng; không cần chép khóa sang code. Bật bằng service.ai.auto-review.enabled=true trong file local; mặc định repository/test tắt. Scheduler riêng tránh chặn các công việc nền khác.
+
+AI nhận tên, danh mục, mô tả, giá, khu vực và toàn bộ ảnh dịch vụ; không gửi số điện thoại, email, tên người nộp hay giấy tờ xác minh. Chỉ APPROVE hợp lệ mới áp dụng quyết định APPROVE/APPROVE qua cùng logic transaction với nhân viên: khóa hồ sơ/tài khoản, revision, trạng thái, tên trùng, capability và snapshot. Hồ sơ thiếu ảnh, không rõ, lỗi AI hoặc bị safety block không tự duyệt/từ chối. HUMAN_REVIEW ghi audit theo revision và chờ nhân viên; lỗi mạng được thử lại vòng sau. UPDATE/DELETE vẫn duyệt thủ công.
+
+Lịch sử AI_APPROVED/AI_HUMAN_REVIEW ghi model và lý do. Actor riêng service-review-ai@system.invalid có role USER, mật khẩu ngẫu nhiên không công bố; không được cấp quyền STAFF/ADMIN. Không có API cho client gọi đường duyệt tự động. Không thay đổi role người đăng ký; chỉ cấp MANAGE_SERVICE sau duyệt hợp lệ. Cần khởi động lại backend sau cập nhật cấu hình.

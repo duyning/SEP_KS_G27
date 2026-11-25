@@ -95,7 +95,7 @@ export default function ServicesCatalog({ detail = false }) {
   };
   return <DetailPrototypeShell className="prototype-services"><main className={`svc-catalog${detail ? ' svc-detail-page' : ' svc-catalog-list'}`}>
     {!detail && <div className="svc-heading">
-      <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Tìm và liên hệ các đối tác đã được xác minh, đang hoạt động tại khu vực của bạn.</p></div>
+      <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Kết nối dịch vụ quanh bạn, thêm tiện lợi mỗi ngày.</p></div>
       <div className="svc-actions svc-heading-actions">
         {user && <UIButton className="svc-btn" onClick={() => setReportsOpen(true)}>Báo cáo của tôi</UIButton>}
         {user && <UIButton variant="secondary" className="svc-btn" onClick={() => setRequestsOpen(true)}>Yêu cầu dịch vụ</UIButton>}

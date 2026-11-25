@@ -63,3 +63,6 @@ scraper-python/.venv/
 scraper-python/__pycache__/
 scraper-python/data/
 scraper-python/.env
+
+# Local temporary work
+.tmp/

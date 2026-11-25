@@ -19,7 +19,6 @@ import ServiceExpandableText from './ServiceExpandableText.jsx';
 import '../styles/service-registration-form.css';
 import { useAuth } from '../context/AuthContext.jsx';
 import { serviceRegistrationApi as api, validateServiceRegistrationFields, serviceRegistrationFieldErrors } from '../services/service-registration.js';
-import {validateRegistrationFile} from '../services/property-registration.js';
 
 
 const statuses = { PENDING: 'Chờ xét duyệt', NEEDS_SUPPLEMENT: 'Cần bổ sung hồ sơ', APPROVED: 'Đã được duyệt', REJECTED: 'Bị từ chối', CANCELLED: 'Đã hủy' };
@@ -204,7 +203,6 @@ export default function ServiceRegistrationModal({ onClose, applicationId, creat
           {field('contactPhone', 'Số điện thoại liên hệ *', { type: 'tel', maxLength: 30 })}
           {field('contactEmail', 'Email liên hệ', { type: 'email', maxLength: 255, required: false })}
           {(supplement || editService) && <UIField><span>Nội dung thay đổi<span className="svc-required"> *</span></span><textarea name="note" aria-invalid={!!fieldErrors.note} aria-describedby={formId + '-note'} required minLength={10} maxLength={2000} rows={3} value={note} onChange={e => { setNote(e.target.value); clearFieldError('note'); }} className="svc-text-input" style={inputStyle} />{feedback('note', 'Mô tả thay đổi từ 10 đến 2000 ký tự.')}</UIField>}
-          {!editService&&<UIField><span>Tài liệu xác minh (không bắt buộc, tối đa 5 tệp)</span><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={event=>{const files=Array.from(event.target.files||[]);const invalid=files.map(file=>validateRegistrationFile(file,true)).find(Boolean);if(invalid)setFieldErrors(old=>({...old,documents:invalid}));else{setDocuments(files);clearFieldError('documents');}}}/>{documents.map((file,index)=><span key={`${file.name}-${index}`}>{file.name}<UIButton type="button" onClick={()=>setDocuments(old=>old.filter((_,i)=>i!==index))}>Bỏ tệp</UIButton></span>)}{supplement&&state.registration.documents.map(doc=><label key={doc.documentId}><input type="checkbox" checked={retained.includes(doc.documentId)} onChange={event=>setRetained(old=>event.target.checked?[...old,doc.documentId]:old.filter(id=>id!==doc.documentId))}/>{doc.name||doc.documentName||`Tài liệu #${doc.documentId}`}</label>)}{feedback('documents')}</UIField>}
           <UIButton type="submit" className="p-button primary">{busy ? 'Đang gửi hồ sơ...' : editService ? 'Gửi cập nhật cho nhân viên duyệt' : supplement ? 'Nộp lại hồ sơ xét duyệt' : 'Gửi hồ sơ xét duyệt'}</UIButton>
         </fieldset>
       </form>}
