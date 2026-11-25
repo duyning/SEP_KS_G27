@@ -965,6 +965,7 @@
 }
 
 .property-registration .prw-photo-card {
+  container: prw-photo / inline-size;
   margin: 0;
   border: 1px solid var(--prw-border);
   border-radius: 12px;
@@ -1039,6 +1040,7 @@
 .property-registration .prw-photo-meta {
   padding: 10px 12px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 9px;
 }
 
@@ -1062,13 +1064,15 @@
 }
 
 .property-registration .prw-photo-controls {
-  display: flex;
+  display: grid;
+  grid-template: 'cover actions' auto / minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
   gap: 6px;
 }
 
 .property-registration .prw-photo-btn {
+  grid-area: cover;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1081,13 +1085,21 @@
   font: inherit;
   font-size: 0.71rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.property-registration .prw-photo-order {
-  display: inline-flex;
+.property-registration .prw-photo-actions {
+  grid-area: actions;
+  justify-self: end;
+  display: flex;
   gap: 4px;
-  margin-left: auto;
+}
+
+@container prw-photo (max-width: 16rem) {
+  .property-registration .prw-photo-controls {
+    grid-template: 'cover' minmax(28px, auto) 'actions' auto / minmax(0, 1fr);
+  }
 }
 
 .property-registration .prw-photo-icon-btn {

@@ -88,50 +88,52 @@ function GalleryCard({
               <span>Đặt đại diện</span>
             </button>
           )}
-          {total > 1 && (
-            <div className="prw-photo-order">
-              <button
-                type="button"
-                className="prw-photo-icon-btn"
-                disabled={disabled || index === 0}
-                onClick={onMoveLeft}
-                aria-label={`Di chuyển ảnh ${index + 1} sang trái`}
-                title="Đưa lên trước"
-              >
-                <ChevronLeft size={14} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="prw-photo-icon-btn"
-                disabled={disabled || index === total - 1}
-                onClick={onMoveRight}
-                aria-label={`Di chuyển ảnh ${index + 1} sang phải`}
-                title="Đưa ra sau"
-              >
-                <ChevronRight size={14} aria-hidden="true" />
-              </button>
-            </div>
-          )}
-          <button
-            type="button"
-            className="prw-photo-icon-btn"
-            disabled={disabled}
-            onClick={() => replaceInputRef.current?.click()}
-            aria-label={`Thay ảnh ${file.name}`}
-            title="Thay ảnh"
-          >
-            <RefreshCw size={13} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="prw-photo-icon-btn danger"
-            disabled={disabled}
-            onClick={onRemove}
-            aria-label={`Xóa ảnh ${file.name}`}
-            title="Xóa ảnh"
-          >
-            <Trash2 size={13} aria-hidden="true" />
-          </button>
+          <div className="prw-photo-actions">
+            {total > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="prw-photo-icon-btn"
+                  disabled={disabled || index === 0}
+                  onClick={onMoveLeft}
+                  aria-label={`Di chuyển ảnh ${index + 1} sang trái`}
+                  title="Đưa lên trước"
+                >
+                  <ChevronLeft size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="prw-photo-icon-btn"
+                  disabled={disabled || index === total - 1}
+                  onClick={onMoveRight}
+                  aria-label={`Di chuyển ảnh ${index + 1} sang phải`}
+                  title="Đưa ra sau"
+                >
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="prw-photo-icon-btn"
+              disabled={disabled}
+              onClick={() => replaceInputRef.current?.click()}
+              aria-label={`Thay ảnh ${file.name}`}
+              title="Thay ảnh"
+            >
+              <RefreshCw size={13} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="prw-photo-icon-btn danger"
+              disabled={disabled}
+              onClick={onRemove}
+              aria-label={`Xóa ảnh ${file.name}`}
+              title="Xóa ảnh"
+            >
+              <Trash2 size={13} aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <input

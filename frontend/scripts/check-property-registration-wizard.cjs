@@ -152,14 +152,39 @@ async function run() {
     await page.locator('#photos').setInputFiles({ name: 'bad.txt', mimeType: 'text/plain', buffer: Buffer.from('bad') });
     await page.locator('#photos-error').waitFor({ state: 'visible', timeout: 5000 });
 
-    // Upload 2 valid images
+    // Long filenames must not push the text or photo actions out of alignment.
     await page.locator('#photos').setInputFiles([
-      { name: 'mat-tien.png', mimeType: 'image/png', buffer: TINY_PNG },
+      { name: 'Căn hộ studio hiện đại ngập nắng với cửa sổ lớn nhìn ra khuôn viên nhà trọ (1).png', mimeType: 'image/png', buffer: TINY_PNG },
       { name: 'phong-mau.png', mimeType: 'image/png', buffer: TINY_PNG }
     ]);
     await page.waitForFunction(() => document.querySelectorAll('.prw-photo-card').length === 2);
+    for (const width of [375, 768, 1024, 1440, 720]) {
+      await page.setViewportSize({ width, height: width === 720 ? 450 : 900 });
+      const measures = await page.locator('.prw-photo-card').evaluateAll(cards => cards.map(card => {
+        const cardBox = card.getBoundingClientRect();
+        const name = card.querySelector('.prw-photo-info strong').getBoundingClientRect();
+        const status = card.querySelector('.prw-photo-info span').getBoundingClientRect();
+        const actions = [...card.querySelectorAll('.prw-photo-icon-btn')].map(button => button.getBoundingClientRect());
+        const cover = card.querySelector('.prw-photo-btn')?.getBoundingClientRect();
+        return {
+          fits: name.right < cardBox.right && actions.every(button => button.right < cardBox.right)
+            && (!cover || (cover.right < cardBox.right
+              && (cover.bottom <= actions[0].top || cover.right <= actions[0].left))),
+          nameTop: name.top - cardBox.top,
+          statusTop: status.top - cardBox.top,
+          actionTops: actions.map(button => button.top - cardBox.top),
+        };
+      }));
+      for (const card of measures) {
+        assert(card.fits, `Photo labels and controls fit the card at ${width}px`);
+        assert(Math.abs(card.nameTop - measures[0].nameTop) < 1, `Photo filenames align at ${width}px`);
+        assert(Math.abs(card.statusTop - measures[0].statusTop) < 1, `Photo statuses align at ${width}px`);
+        assert(card.actionTops.every(top => Math.abs(top - measures[0].actionTops[0]) < 1), `Photo actions align at ${width}px`);
+      }
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
     // Set second photo as cover
-    await page.locator('.prw-photo-btn', { hasText: 'Đặt đại diện' }).click();
+    await page.locator('.prw-photo-btn', { hasText: 'Đặt đại diện' }).press('Enter');
     assert((await page.locator('.prw-photo-card').first().innerText()).includes('phong-mau.png'), 'Cover photo swap failed');
     // Lightbox preview
     await page.locator('.prw-photo-zoom').first().click();
