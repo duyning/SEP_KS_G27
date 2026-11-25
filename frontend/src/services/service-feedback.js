@@ -8,7 +8,7 @@ const multipart = (details, images = []) => {
   return body;
 };
 const rating = r => r && Number.isInteger(r.ratingId) && Number.isInteger(r.stars) && r.stars >= 0 && r.stars <= 5 && Array.isArray(r.imageUrls);
-export const complaintLabels = { PENDING: 'Chờ xử lý', NEEDS_EXPLANATION: 'Chờ giải trình', EXPLAINED: 'Đã giải trình', DISMISSED: 'Đã đóng báo cáo', REMOVED: 'Đã gỡ công khai' };
+export const complaintLabels = { PENDING: 'Chờ xử lý', RESOLVED: 'Đã xử lý' };
 const complaint = c => c && Number.isInteger(c.complaintId) && Number.isInteger(c.revision) && Object.hasOwn(complaintLabels, c.status);
 const detail = d => d && complaint(d.complaint) && Array.isArray(d.history) && Array.isArray(d.imageUrls);
 const verified = (value, check) => { if (!check(value)) throw new ApiError('Chưa xác nhận được dữ liệu. Vui lòng tải lại để kiểm tra.', 502); return value; };
@@ -20,7 +20,7 @@ export const serviceFeedbackApi = {
   report: async (serviceId, content, images) => verified(await call('/service-complaints', { method: 'POST', body: multipart({ serviceId, content }, images) }), d => detail(d) && d.complaint.status === 'PENDING'),
   complaints: async (scope, signal) => verified(await call(scope === 'staff' ? '/staff/service-complaints' : `/service-complaints/${scope}`, { signal }), rows => Array.isArray(rows) && rows.every(complaint)),
   complaint: async (id, signal) => verified(await call(`/service-complaints/${id}`, { signal }), d => detail(d) && d.complaint.complaintId === id),
-  explain: async (id, revision, content, images) => verified(await call(`/service-complaints/${id}/explanation`, { method: 'POST', body: multipart({ revision, content }, images) }), d => detail(d) && d.complaint.complaintId === id && d.complaint.revision === revision + 1 && d.complaint.status === 'EXPLAINED'),
+  explain: async (id, revision, content, images) => verified(await call(`/service-complaints/${id}/explanation`, { method: 'POST', body: multipart({ revision, content }, images) }), d => detail(d) && d.complaint.complaintId === id && d.complaint.revision === revision + 1 && d.complaint.status === 'PENDING' && d.complaint.responseRequested === false),
   decide: async (id, revision, action, content) => verified(await call(`/staff/service-complaints/${id}/review`, { method: 'POST', body: { revision, action, content } }), d => detail(d) && d.complaint.complaintId === id && d.complaint.revision === revision + 1),
   image: (url, signal) => request(url, { basePath: '', responseType: 'blob', signal }),
 };

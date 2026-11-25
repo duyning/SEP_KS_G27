@@ -17,12 +17,15 @@ async function main() {
   let complaint = null; let history = []; let writes = [];
   const details = req => JSON.parse(req.postDataBuffer().toString().split('Content-Type: application/json\r\n\r\n')[1].split('\r\n')[0]);
   const complaintDetail = () => ({ complaint, imageUrls: ['/api/service-complaints/1/images/0'], history,
-    reporterName: actor === 'staff' ? users.customer.fullName : null, canReview: actor === 'staff' && ['PENDING', 'EXPLAINED', 'NEEDS_EXPLANATION'].includes(complaint.status), canExplain: actor === 'owner' && complaint.status === 'NEEDS_EXPLANATION' });
+    reporterName: actor === 'staff' ? users.customer.fullName : null, canReview: actor === 'staff' && complaint.status === 'PENDING', canExplain: actor === 'owner' && complaint.responseRequested === true });
   await page.addInitScript(() => sessionStorage.setItem('hlrcs_access_token', 'browser-test'));
   await page.route('**/api/**', async route => {
     const req = route.request(), url = new URL(req.url()), p = url.pathname; let data;
     if (/\/images\/\d+$/.test(p)) { assert.ok(req.headers().authorization || p.includes('/ratings/')); return route.fulfill({ contentType: 'image/png', body: png }); }
-    if (p === '/api/auth/me') data = { ...users[actor], email: actor + '@test.local', capabilities: actor === 'owner' ? ['MANAGE_SERVICE'] : [] };
+    if (['/api/community/events', '/api/viewings/updates'].includes(p)) return route.fulfill({ contentType: 'text/event-stream', body: ': connected\n\n' });
+    if (p === '/api/community/notifications/unread-count') data = 0;
+    else if (p === '/api/notifications') data = { items: [], content: [], unreadCount: 0, total: 0, totalPages: 0 };
+    else if (p === '/api/auth/me') data = { ...users[actor], email: actor + '@test.local', capabilities: actor === 'owner' ? ['MANAGE_SERVICE'] : [] };
     else if (p === '/api/staff/dashboard') data = { queue: [], activities: [], pendingVerifications: 0, pendingReports: 1, pendingSupport: 0, pendingCommunity: 0, activeProperties: 0, processedTasks: 0 };
     else if (p === '/api/services/1/ratings' && req.method() === 'GET') {
       const stars = url.searchParams.get('stars'); const counts = [0, 0, 0, 0, 0, 0]; reviews.forEach(r => counts[r.stars]++);
@@ -41,16 +44,16 @@ async function main() {
       data = complaintDetail(); writes.push('report');
     } else if (p === '/api/staff/service-complaints/1/review') {
       assert.equal(actor, 'staff'); const input = req.postDataJSON(); assert.equal(input.revision, complaint.revision);
-      complaint = { ...complaint, revision: complaint.revision + 1, status: input.action === 'REMOVE' ? 'REMOVED' : 'NEEDS_EXPLANATION', moderationHidden: input.action === 'REMOVE' };
+      complaint = { ...complaint, revision: complaint.revision + 1, status: input.action === 'REQUEST_EXPLANATION' ? 'PENDING' : 'RESOLVED', outcome: input.action === 'REQUEST_EXPLANATION' ? null : input.action, responseRequested: input.action === 'REQUEST_EXPLANATION', moderationHidden: input.action === 'REMOVE' };
       history.push({ eventId: history.length + 1, actorName: users.staff.fullName, action: input.action, content: input.content, createdAt: '2026-11-18T04:00:00Z', imageUrls: [] });
       data = complaintDetail(); writes.push(input.action);
     } else if (p === '/api/service-complaints/1/explanation') {
       assert.equal(actor, 'owner'); const input = details(req); assert.equal(input.revision, complaint.revision);
-      complaint = { ...complaint, revision: complaint.revision + 1, status: 'EXPLAINED' };
+      complaint = { ...complaint, revision: complaint.revision + 1, status: 'PENDING', responseRequested: false };
       history.push({ eventId: history.length + 1, actorName: users.owner.fullName, action: 'EXPLAINED', content: input.content, createdAt: '2026-11-18T04:10:00Z', imageUrls: ['/api/service-complaints/1/events/2/images/0'] });
       data = complaintDetail(); writes.push('explanation');
     } else if (p === '/api/service-complaints/1') data = complaintDetail();
-    else if (['/api/service-complaints/mine', '/api/service-complaints/incoming', '/api/staff/service-complaints'].includes(p)) data = complaint ? [complaint] : [];
+    else if (['/api/service-complaints/mine', '/api/service-complaints/incoming', '/api/staff/service-complaints'].includes(p)) data = complaint && (p === '/api/service-complaints/mine' ? actor === 'customer' : p === '/api/service-complaints/incoming' ? actor === 'owner' : actor === 'staff') ? [complaint] : [];
     else if (p === '/api/services/1') data = listing;
     else if (p === '/api/services') data = [listing];
     else if (p === '/api/services/categories') data = [{ categoryId: 1, name: listing.categoryName }];
@@ -82,34 +85,67 @@ async function main() {
     await page.getByLabel('Nội dung báo cáo').fill('Tôi đã chuyển tiền nhưng chưa nhận được dịch vụ như cam kết.');
     await page.getByRole('dialog').getByLabel('Ảnh đính kèm (không bắt buộc)').setInputFiles({ name: 'proof.png', mimeType: 'image/png', buffer: png });
     await page.getByRole('button', { name: 'Gửi báo cáo cho nhân viên' }).click();
-    await page.getByText('Đã gửi báo cáo cho nhân viên', { exact: true }).waitFor();
+    await page.getByText('Đã nhận báo cáo', { exact: true }).waitFor();
     actor = 'owner'; await page.goto(base + '/services/detail?id=1');
     await page.getByLabel('Phản hồi đánh giá', { exact: true }).first().fill('Chúng tôi xin lỗi và sẽ liên hệ để hoàn lại tiền.');
     await page.getByRole('button', { name: 'Gửi phản hồi', exact: true }).first().click();
     await page.getByText('Chúng tôi xin lỗi và sẽ liên hệ để hoàn lại tiền.', { exact: true }).waitFor();
     actor = 'staff'; await page.setViewportSize({ width: 1440, height: 1050 }); await page.goto(base + '/staff/service-complaints?id=1');
-    await page.getByLabel('Thông tin cần nhà cung cấp trình báo lại').fill('Vui lòng cung cấp thông tin giao dịch và bằng chứng hoàn tiền.');
-    await page.getByRole('button', { name: 'Lưu quyết định' }).click();
-    await page.getByText('Đã lưu và gửi kết quả xử lý.').waitFor();
+    assert.equal(await page.getByLabel('Lý do xử lý').count(), 0);
+    await page.getByRole('button', { name: 'Yêu cầu phản hồi', exact: true }).click();
+    assert.equal(await page.getByRole('radio').count(), 0);
+    await page.getByLabel('Thông tin cần chủ dịch vụ cung cấp').fill('Bản nháp yêu cầu cung cấp thông tin.');
+    await page.getByRole('button', { name: 'Hủy yêu cầu phản hồi' }).click();
+    await page.getByRole('radio', { name: /Không gỡ dịch vụ/ }).check();
+    assert.equal(await page.getByLabel('Lý do xử lý').inputValue(), '');
+    await page.getByRole('button', { name: 'Yêu cầu phản hồi', exact: true }).click();
+    assert.equal(await page.getByLabel('Thông tin cần chủ dịch vụ cung cấp').inputValue(), 'Bản nháp yêu cầu cung cấp thông tin.');
+    await page.screenshot({path: path.join(output, 'request-response-desktop.png'), fullPage: true});
+    await page.getByLabel('Thông tin cần chủ dịch vụ cung cấp').fill('Vui lòng cung cấp thông tin giao dịch và bằng chứng hoàn tiền.');
+    await page.getByRole('button', { name: 'Gửi yêu cầu phản hồi' }).click();
+    await page.getByText('Đã gửi yêu cầu phản hồi cho chủ dịch vụ.').waitFor();
     actor = 'owner'; await page.goto(base + '/services');
-    await page.getByRole('button', { name: 'Dịch vụ của tôi', exact: true }).click();
-    await page.getByRole('button', { name: 'Gửi giải trình', exact: true }).click();
-    await page.getByLabel('Thông tin giải trình').fill('Chúng tôi đã hoàn lại toàn bộ khoản tiền, đính kèm chứng từ.');
+    await page.getByRole('button', { name: 'Báo cáo đã gửi', exact: true }).click();
+    const reportDialog = page.getByRole('dialog');
+    await reportDialog.getByText('Chưa có báo cáo ở trạng thái này.', {exact:true}).waitFor();
+    await reportDialog.getByRole('button', {name:'Yêu cầu từ nhân viên', exact:true}).click();
+    await reportDialog.getByRole('button', {name:'Gửi phản hồi cho nhân viên', exact:true}).waitFor();
+    await page.screenshot({path:path.join(output,'report-scope-desktop.png'),fullPage:true});
+    await page.setViewportSize({width:375,height:844});
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await page.screenshot({path:path.join(output,'report-scope-mobile.png'),fullPage:true});
+    await page.getByRole('button', { name: 'Gửi phản hồi cho nhân viên', exact: true }).click();
+    const requestPanel = page.getByRole('region', {name: 'Yêu cầu từ nhân viên'});
+    await requestPanel.getByRole('heading', {name: 'Nhân viên yêu cầu bạn phản hồi'}).waitFor();
+    assert.ok((await requestPanel.textContent()).includes('Vui lòng cung cấp thông tin giao dịch và bằng chứng hoàn tiền.'));
+    assert.equal(await page.locator('.report-detail-history').getAttribute('open'), null);
+    await page.screenshot({path: path.join(output, 'owner-request-desktop.png'), fullPage: true});
+    await page.getByLabel('Nội dung phản hồi').fill('Chúng tôi đã hoàn lại toàn bộ khoản tiền, đính kèm chứng từ.');
     await page.getByRole('dialog').getByLabel('Ảnh đính kèm (không bắt buộc)').setInputFiles({ name: 'refund.png', mimeType: 'image/png', buffer: png });
-    await page.getByRole('button', { name: 'Gửi giải trình cho nhân viên' }).click();
-    await page.getByText('Đã lưu và gửi kết quả xử lý.').waitFor();
+    await page.getByRole('button', { name: 'Gửi phản hồi cho nhân viên', exact: true }).click();
+    await page.getByText('Đã gửi phản hồi, đang chờ kết quả.').waitFor();
     actor = 'staff'; await page.goto(base + '/staff/service-complaints?id=1');
     await page.getByRole('radio', { name: /Gỡ dịch vụ khỏi công khai/ }).check();
     await page.getByLabel('Lý do xử lý').fill('Đã xác minh hành vi vi phạm, cần gỡ dịch vụ khỏi công khai.');
-    assert.equal(await page.getByRole('button', { name: 'Lưu quyết định' }).isDisabled(), true);
+    assert.equal(await page.getByRole('button', { name: 'Hoàn tất xử lý' }).isDisabled(), true);
     await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: 'Lưu quyết định' }).click();
+    await page.getByRole('button', { name: 'Hoàn tất xử lý' }).click();
     await page.getByText('Dịch vụ đã bị nhân viên gỡ khỏi chế độ công khai.').waitFor();
     await page.screenshot({ path: path.join(output, 'staff-desktop.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
     await page.screenshot({ path: path.join(output, 'staff-mobile.png'), fullPage: true });
+    for (const width of [375, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 1050 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'overflow at ' + width);
+    }
+    await page.evaluate(() => { document.body.style.zoom = '2'; });
+    if (!await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)) console.warn('LIMITATION: shared portal header overflows with CSS zoom 200%; normal responsive widths pass.');
+    await page.evaluate(() => { document.body.style.zoom = ''; });
+    await page.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.report-detail-history').getAttribute('open'), '');
     assert.deepEqual(writes, ['rating', 'report', 'reply', 'REQUEST_EXPLANATION', 'explanation', 'REMOVE']);
     assert.deepEqual(errors, []);
     console.log('PASS: rating 0, star filter, photos, owner reply, complaint, staff request, owner explanation, removal; desktop/mobile layouts.');

@@ -46,7 +46,9 @@ export default function ServicesCatalog({ detail = false }) {
   const [ownership, setOwnership] = useState(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(() => !!params.get('report'));
+  const [reportScope, setReportScope] = useState('mine');
+  useEffect(() => { if (params.get('report')) { setReportScope('mine'); setReportsOpen(true); } }, [params]);
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const notify = useToast();
   useEffect(() => {
@@ -97,12 +99,19 @@ export default function ServicesCatalog({ detail = false }) {
     {!detail && <div className="svc-heading">
       <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Kết nối dịch vụ quanh bạn, thêm tiện lợi mỗi ngày.</p></div>
       <div className="svc-actions svc-heading-actions">
-        {user && <UIButton className="svc-btn" onClick={() => setReportsOpen(true)}>Báo cáo của tôi</UIButton>}
+        {user && <UIButton className="svc-btn" onClick={() => { setReportScope('mine'); setReportsOpen(true); }}>Báo cáo đã gửi</UIButton>}
         {user && <UIButton variant="secondary" className="svc-btn" onClick={() => setRequestsOpen(true)}>Yêu cầu dịch vụ</UIButton>}
         <UIButton variant="primary" className="svc-btn svc-btn-primary" disabled={checkingOwnership} onClick={openServices}>{actionLabel}</UIButton>
       </div>
     </div>}
-    {reportsOpen && <Modal title="Báo cáo của tôi" maxWidth="900px" onClose={() => setReportsOpen(false)}><ServiceComplaints key={user?.userId} /></Modal>}
+    {reportsOpen && <Modal title="Báo cáo dịch vụ" maxWidth="900px" onClose={() => setReportsOpen(false)}>
+      <div className="svc-report-scope" role="group" aria-label="Loại báo cáo">
+        <UIButton type="button" aria-pressed={reportScope === 'mine'} variant={reportScope === 'mine' ? 'primary' : 'secondary'} onClick={() => setReportScope('mine')}>Báo cáo đã gửi</UIButton>
+        <UIButton type="button" aria-pressed={reportScope === 'incoming'} variant={reportScope === 'incoming' ? 'primary' : 'secondary'} onClick={() => setReportScope('incoming')}>Yêu cầu từ nhân viên</UIButton>
+      </div>
+      <p className="report-owner-intro">{reportScope === 'mine' ? 'Các báo cáo do bạn gửi. Nếu bạn là chủ dịch vụ, chọn mục bên cạnh để xem yêu cầu từ nhân viên.' : 'Các báo cáo về dịch vụ bạn sở hữu. Mở báo cáo có nhãn “Cần phản hồi” để xem nội dung nhân viên yêu cầu.'}</p>
+      <ServiceComplaints key={`${user?.userId}-${reportScope}`} scope={reportScope} />
+    </Modal>}
     {requestsOpen && <ServiceRequests key={user?.userId} onClose={() => setRequestsOpen(false)} />}
     {!detail && ownState?.error && <p role="alert" className="service-error">Không tải được hồ sơ dịch vụ: {ownState.error}</p>}
     {!detail && <><div className="svc-discovery-toolbar" role="search" aria-label="Tìm kiếm và lọc dịch vụ">

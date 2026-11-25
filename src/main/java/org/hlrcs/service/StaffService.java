@@ -169,7 +169,7 @@ public class StaffService {
         var postRows = posts.findAllByOrderByCreatedAtAsc();
         var queue = new ArrayList<QueueItem>();
         var complaintRows = serviceComplaints.findAllByOrderByComplaintIdDesc().stream()
-                .filter(c -> Set.of("PENDING", "EXPLAINED").contains(c.getStatus())).toList();
+                .filter(c -> "PENDING".equals(c.workflowStatus())).toList();
         for (var c : complaintRows) queue.add(new QueueItem("SERVICE-REPORT-" + c.getComplaintId(), "REPORT", c.getService().getServiceName(),
                 c.getReporter().getFullName(), c.getContent(), "PENDING", LocalDateTime.ofInstant(c.getCreatedAt(), java.time.ZoneId.systemDefault()),
                 "/staff/service-complaints?id=" + c.getComplaintId()));

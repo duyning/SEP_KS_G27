@@ -45,3 +45,14 @@ Kiểm thử HTTP/H2 bao phủ 0 sao, filter/average, unique đồng thời, quy
 - 67 backend tests trên H2 thành công; sau chỉnh validation sao/thống kê, chạy lại 27 tests phân hệ dịch vụ thành công. Hồ sơ không tài liệu được kiểm chứng đến bước phê duyệt.
 - 76 frontend tests và production build thành công.
 - Edge headless chạy đủ luồng đánh giá 0 sao/ảnh/filter, phản hồi owner, báo cáo, staff yêu cầu giải trình, owner gửi ảnh giải trình, staff gỡ công khai. Kiểm tra 1440px và 390px không tràn ngang; đã xem ảnh chụp trong target/service-feedback-browser. Các API trong browser test là giả lập.
+
+## Simplified complaint workflow — 2026-11-25
+
+This section supersedes the five-state complaint workflow above.
+- Public API and new writes use PENDING (awaiting resolution) and RESOLVED only.
+- outcome is null until resolved, then DISMISS (no publication change) or REMOVE (hide service).
+- responseRequested is independent of status. REQUEST_EXPLANATION keeps PENDING and sets it true; the owner's response keeps PENDING and resets it false. Requests and responses remain audit events.
+- Both final decisions clear responseRequested. No automatic decision follows an unanswered request. Staff may conclude without requesting a response. No default decision is selected in the UI.
+- Lists and dashboard count all unresolved reports, including those awaiting a response. Detail shows outcome, latest response, and collapsed history. Reporter identity and private image access retain existing restrictions.
+- Nullable columns outcome and response_requested are added through the existing Hibernate schema-update setup. Legacy states are normalized on reads and subsequent writes, so existing requests remain actionable. Optional backfill: sql/migrations/20261125_simplify_service_complaints.sql, after schema update. No production database migration was executed by this change.
+- Deploy backend and frontend together. Existing action names/endpoints, revision checks, ownership checks and moderationHidden behavior remain unchanged.

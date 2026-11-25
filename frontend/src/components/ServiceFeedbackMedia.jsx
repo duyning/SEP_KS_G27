@@ -12,7 +12,7 @@ export function FeedbackUpload({ images, onChange, disabled }) {
   }, [images]);
   return <div>
     <UIField label="Ảnh đính kèm (không bắt buộc)" helper="Tối đa 5 ảnh JPG, PNG, WEBP; 5 MB/ảnh." error={error}>
-      <input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={disabled} onChange={e => {
+      <input className="svc-feedback-file-input" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={disabled} onChange={e => {
         const next = [...images, ...Array.from(e.target.files || [])]; e.target.value = '';
         const message = feedbackImageError(next); setError(message); if (!message) onChange(next);
       }} />

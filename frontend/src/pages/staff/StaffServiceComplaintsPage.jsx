@@ -4,10 +4,7 @@ import { StaffListIcon as Icon, StaffListPanel, StaffListFilters, StaffListStatu
 
 const statuses = {
   PENDING: ['Chờ xử lý', 'pending'],
-  NEEDS_EXPLANATION: ['Yêu cầu giải trình', 'explanation'],
-  EXPLAINED: ['Đã giải trình', 'explained'],
-  REMOVED: ['Đã gỡ', 'removed'],
-  DISMISSED: ['Hoàn tất', 'completed'],
+  RESOLVED: ['Đã xử lý', 'completed'],
 };
 function ReportList({ rows, filtered, filter, setFilter, loading, error, refresh, onSelect }) {
   return <StaffListPanel title="Báo cáo dịch vụ" description="Theo dõi và xử lý phản ánh từ người dùng" loading={loading} onReload={refresh}>
@@ -20,7 +17,7 @@ function ReportList({ rows, filtered, filter, setFilter, loading, error, refresh
         return <article className="staff-report-card" key={row.complaintId}>
           <div className="staff-report-card-content"><div className="staff-report-card-heading"><span className="staff-report-id">#{row.complaintId}</span><strong>{row.providerName || row.serviceName}</strong><StaffListStatus label={label} tone={tone} /></div>
             {row.providerName && row.providerName !== row.serviceName && <StaffListTag>{row.serviceName}</StaffListTag>}
-            <p className="staff-report-excerpt">{row.content}</p><time dateTime={row.createdAt}><Icon type="clock" />{new Date(row.createdAt).toLocaleString('vi-VN')}</time>
+            {row.outcome && <p>{row.outcome === 'REMOVE' ? 'Kết quả: Đã gỡ dịch vụ' : 'Kết quả: Không gỡ dịch vụ'}</p>}{row.responseRequested && <p>Đang chờ chủ dịch vụ phản hồi</p>}<p className="staff-report-excerpt">{row.content}</p><time dateTime={row.createdAt}><Icon type="clock" />{new Date(row.createdAt).toLocaleString('vi-VN')}</time>
           </div><StaffListOpen onClick={() => onSelect(row.complaintId)}>Xem báo cáo</StaffListOpen>
         </article>;
       })}</div>
@@ -29,5 +26,5 @@ function ReportList({ rows, filtered, filter, setFilter, loading, error, refresh
 }
 
 export default function StaffServiceComplaintsPage() {
-  return <section className="staff-service-list-page"><h1>Xử lý báo cáo dịch vụ</h1><p>Xem phản ánh và minh chứng, yêu cầu nhà cung cấp giải trình hoặc gỡ dịch vụ vi phạm khỏi chế độ công khai.</p><ServiceComplaints scope="staff" renderList={props => <ReportList {...props} />} /></section>;
+  return <section className="staff-service-list-page"><h1>Xử lý báo cáo dịch vụ</h1><p>Xem phản ánh và minh chứng, kết luận xử lý hoặc yêu cầu phản hồi khi cần thêm thông tin.</p><ServiceComplaints scope="staff" renderList={props => <ReportList {...props} />} /></section>;
 }

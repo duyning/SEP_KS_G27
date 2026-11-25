@@ -26,7 +26,7 @@ public class ServiceComplaintService {
     private final jakarta.persistence.EntityManager entityManager;
 
     public record Summary(Integer complaintId, Integer serviceId, String serviceName, String providerName,
-                          String content, String status, Instant createdAt, int revision, boolean moderationHidden) {}
+                          String content, String status, Instant createdAt, int revision, boolean moderationHidden, String outcome, boolean responseRequested) {}
     public record Event(Integer eventId, String actorName, String action, String content, Instant createdAt, List<String> imageUrls) {}
     public record Detail(Summary complaint, String reporterName, List<String> imageUrls, List<Event> history,
                          boolean canReview, boolean canExplain) {}
@@ -43,7 +43,7 @@ public class ServiceComplaintService {
     }
     private Summary summary(ServiceComplaint c) {
         return new Summary(c.getComplaintId(), c.getService().getServiceId(), c.getService().getServiceName(), c.getService().getProvider().getFullName(),
-                c.getContent(), c.getStatus(), c.getCreatedAt(), c.getRevision(), c.getService().isModerationHidden());
+                c.getContent(), c.workflowStatus(), c.getCreatedAt(), c.getRevision(), c.getService().isModerationHidden(), c.resolution(), c.awaitingResponse());
     }
     private List<String> urls(String base, int count) { return java.util.stream.IntStream.range(0, count).mapToObj(i -> base + i).toList(); }
     public List<Summary> list(String scope) {
@@ -64,7 +64,7 @@ public class ServiceComplaintService {
                 urls(base + "/images/", c.getImages().size()),
                 events.findByComplaint_ComplaintIdOrderByEventIdAsc(id).stream().map(e -> new Event(e.getEventId(), e.getActor().getFullName(),
                         e.getAction(), e.getContent(), e.getCreatedAt(), urls(base + "/events/" + e.getEventId() + "/images/", e.getImages().size()))).toList(),
-                staff(actor) && impartial(c, actor) && OPEN.contains(c.getStatus()), owner(c, actor) && "NEEDS_EXPLANATION".equals(c.getStatus()));
+                staff(actor) && impartial(c, actor) && OPEN.contains(c.getStatus()), owner(c, actor) && c.awaitingResponse());
     }
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public Detail submit(Integer serviceId, String content, List<MultipartFile> images) throws IOException {
@@ -98,10 +98,10 @@ public class ServiceComplaintService {
         var c = complaints.findForReview(id).orElseThrow(this::missing);
         if (!owner(c, auth.getCurrentUser())) throw missing();
         fresh(c, revision);
-        if (!"NEEDS_EXPLANATION".equals(c.getStatus())) throw new AppException("Báo cáo không chờ giải trình.", HttpStatus.CONFLICT);
+        if (!c.awaitingResponse()) throw new AppException("Báo cáo không chờ giải trình.", HttpStatus.CONFLICT);
         String note = ServiceFeedbackImages.text(content, 10);
         var photos = ServiceFeedbackImages.read(images);
-        c.setStatus("EXPLAINED"); event(c, "EXPLAINED", note, photos);
+        c.setStatus("PENDING"); c.setResponseRequested(false); event(c, "EXPLAINED", note, photos);
         return detail(id);
     }
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -111,17 +111,17 @@ public class ServiceComplaintService {
         if (!impartial(c, auth.getCurrentUser())) throw new AppException("Không được xử lý báo cáo liên quan đến dịch vụ của mình hoặc do mình gửi.", HttpStatus.FORBIDDEN);
         fresh(c, revision);
         if (!Set.of("REQUEST_EXPLANATION", "DISMISS", "REMOVE").contains(action)) throw new AppException("Quyết định không hợp lệ.");
-        if (action.equals("REQUEST_EXPLANATION") && c.getStatus().equals("NEEDS_EXPLANATION")) throw new AppException("Đang chờ nhà cung cấp giải trình.", HttpStatus.CONFLICT);
+        if (action.equals("REQUEST_EXPLANATION") && c.awaitingResponse()) throw new AppException("Đang chờ nhà cung cấp giải trình.", HttpStatus.CONFLICT);
         String note = ServiceFeedbackImages.text(content, 10);
         var listing = c.getService();
         users.findForRegistrationUpdate(listing.getProvider().getUserId()).orElseThrow(this::missing);
         entityManager.refresh(listing);
         switch (action) {
-            case "REQUEST_EXPLANATION" -> c.setStatus("NEEDS_EXPLANATION");
-            case "DISMISS" -> c.setStatus("DISMISSED");
+            case "REQUEST_EXPLANATION" -> { c.setStatus("PENDING"); c.setResponseRequested(true); }
+            case "DISMISS" -> { c.setStatus("RESOLVED"); c.setOutcome("DISMISS"); c.setResponseRequested(false); }
             case "REMOVE" -> {
                 listing.setModerationHidden(true); listing.setRevision(listing.getRevision() + 1);
-                services.saveAndFlush(listing); c.setStatus("REMOVED");
+                services.saveAndFlush(listing); c.setStatus("RESOLVED"); c.setOutcome("REMOVE"); c.setResponseRequested(false);
             }
         }
         event(c, action, note, new ArrayList<>());

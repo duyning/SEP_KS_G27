@@ -1,0 +1,69 @@
+@startuml
+title Service Complaint Handling
+hide footbox
+autonumber
+skinparam sequenceParticipantBackgroundColor #A9DDE7
+skinparam sequenceLifeLineBackgroundColor #A9DDE7
+actor Reporter as R
+actor "Service Provider" as P
+actor "Staff / Admin" as A
+participant "ServiceComplaints\n<<UI>>" as U
+participant "ServiceComplaintController" as C
+participant "ServiceComplaintService" as S
+database "Complaint / Event\nService / ModerationLog" as E
+== 1. Submit a complaint ==
+R -> U: submitReport(content, images)
+U -> C: submit(serviceId, content, images)
+C -> S: submit(serviceId, content, images)
+S -> E: save validated complaint\nstatus = PENDING
+E --> S: saved complaint
+S --> C: return Detail
+C --> U: 201 Created + Detail
+U --> R: display receipt and tracking link
+== 2. Review the complaint ==
+A -> U: openComplaint(id)
+U -> C: detail(id)
+C -> S: detail(id): check access
+S -> E: load complaint, evidence and history
+E --> S: return complaint data
+S --> C: return Detail + permissions
+C --> U: return result
+U --> A: display complaint
+opt Additional information is needed; no response request is outstanding
+A -> U: requestProviderResponse(reason)
+U -> C: review(id, revision,\nREQUEST_EXPLANATION, reason)
+C -> S: review(...)
+S -> E: keep PENDING; responseRequested = true\nappend event and audit; increment revision
+S --> C: return updated Detail
+C --> U: return result
+U --> A: display request confirmation
+opt The provider responds before the report is resolved
+P -> U: open staff request and read instructions
+U -> C: detail(id)
+C -> S: detail(id): check ownership
+S --> C: return Detail + canExplain
+C --> U: return staff request
+U --> P: display staff request and response form
+P -> U: sendResponseToStaff(content, images)
+U -> C: explain(id, revision, content, images)
+C -> S: explain(...): verify pending request
+S -> E: keep PENDING; responseRequested = false\nsave response event, images and audit
+S --> C: return updated Detail
+C --> U: return result
+U --> P: display response confirmation
+end
+end
+== 3. Resolve the complaint ==
+A -> U: review available evidence; choose decision
+U -> C: review(id, revision, action, reason)
+C -> S: review(...): check staff access,\nconflict of interest and revision
+alt DISMISS — no removal
+S -> E: save RESOLVED + outcome DISMISS\npreserve current publication state
+else REMOVE — staff confirms removal
+S -> E: save RESOLVED + outcome REMOVE\nset moderationHidden = true
+end
+S -> E: clear response request; increment revision\nappend decision event and moderation audit
+S --> C: return updated Detail
+C --> U: return result
+U --> A: display outcome and reason
+@enduml

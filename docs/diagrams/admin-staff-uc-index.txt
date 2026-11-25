@@ -1,0 +1,64 @@
+ADMIN
+UC-AD01 — View administrative dashboard
+UC-AD01.1 — Inspect property dossiers and assignment overview
+UC-AD01.2 — View system activity history
+UC-AD02 — Browse and inspect user accounts
+UC-AD02.1 — Activate or deactivate another account
+UC-AD02.2 — Send an in-app announcement
+UC-AD03 — Inspect standalone host applications
+UC-AD03.1 — Approve, reject or request changes
+UC-AD04 — Inspect community posts and comments
+UC-AD04.1 — Review posts or remove inappropriate comments
+UC-AD04.2 — Configure automatic moderation OFF / ASSIST / AUTO
+UC-AD05 — Inspect community violation reports
+UC-AD05.1 — Hide the post or dismiss related reports
+UC-AD05.2 — Request or view AI report analysis
+UC-AD06 — Inspect service applications
+UC-AD06.1 — Decide capability and listing approval
+UC-AD06.2 — Request application supplementation
+UC-AD07 — Inspect service complaints and history
+UC-AD07.1 — Resolve complaint DISMISS / REMOVE
+UC-AD07.2 — Request a response from the service provider
+UC-AD08 — Browse collected external posts
+UC-AD08.1 — Collect posts from a supported Facebook group
+UC-AD08.2 — Publish, unpublish or delete collected posts
+UC-AD09 — Manage own profile and credentials
+UC-AD10 — Read and manage own notifications
+UC-AD11 — Sign in and sign out
+
+STAFF
+UC-ST01 — View operational dashboard
+UC-ST02 — Inspect property verification dossiers
+UC-ST02.1 — Approve or reject a property dossier
+UC-ST02.2 — Request property supplementation
+UC-ST03 — Inspect standalone host applications
+UC-ST03.1 — Approve, reject or request changes
+UC-ST04 — Inspect community posts and comments
+UC-ST04.1 — Approve, reject or request post changes
+UC-ST04.2 — Remove inappropriate comments
+UC-ST05 — Inspect service applications
+UC-ST05.1 — Decide capability and listing approval
+UC-ST05.2 — Request application supplementation
+UC-ST06 — Inspect service complaints and history
+UC-ST06.1 — Resolve complaint DISMISS / REMOVE
+UC-ST06.2 — Request a response from the service provider
+UC-ST07 — Browse collected external posts
+UC-ST07.1 — Collect posts from a supported Facebook group
+UC-ST07.2 — Publish, unpublish or delete collected posts
+UC-ST08 — Manage own profile and credentials
+UC-ST09 — Read and manage own notifications
+UC-ST10 — Sign in and sign out
+
+IDs are local to these diagrams; they do not renumber the Word catalogue.
+Source: src/main/java/org/hlrcs/controller and service.
+AdminOverviewController/Service: dashboard, accounts, status, assignments overview and activity (no personnel creation).
+StaffController, StaffService, PropertyVerificationAccess: property inspection versus Staff-only decisions, assignment/version/conflict checks.
+HostApplicationController/Service: retained standalone role applications, distinct from combined property onboarding.
+CommunityModerationController, CommunityService, CommunityCommentService: post review and comment deletion; Admin-only automatic moderation settings.
+CommunityReportController/Service, CommunityReportAiController/Assistant: Admin-only report resolution and optional configured AI analysis.
+ServiceReviewController/Service: shared service reviews, separate capability/listing decisions, supplementation; no assignment prerequisite.
+ServiceComplaintController/Service: impartial Staff/Admin decisions, DISMISS/REMOVE or requesting the provider response.
+CollectedPostController/Service: collection worker, publication and deletion.
+AuthController/AuthServiceImpl, NoticeController/Service: own profile, credentials, sessions, recipient-scoped notices and Admin announcements.
+AI analysis is advisory; the administrator resolves community reports. The collection worker is the actual external integration, not an invented payment/email service.
+No Admin-to-Staff actor generalization: Admin cannot perform property-verification decisions.

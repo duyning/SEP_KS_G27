@@ -660,7 +660,12 @@ class ServiceRegistrationTests {
         assertEquals(403, api(customer, "GET", "/api/staff/service-complaints", null).statusCode());
         assertTrue(api(staff, "GET", "/api/staff/service-complaints", null).body().contains("Đã chuyển khoản"));
         assertTrue(api(staff, "GET", "/api/staff/dashboard", null).body().contains("/staff/service-complaints?id=" + complaintId));
-        assertEquals(200, decide(staff, complaintId, 0, "REQUEST_EXPLANATION").statusCode());
+        var requested = decide(staff, complaintId, 0, "REQUEST_EXPLANATION");
+        assertEquals(200, requested.statusCode());
+        var waiting = json.readTree(requested.body()).path("data").path("complaint");
+        assertEquals("PENDING", waiting.path("status").asString());
+        assertTrue(waiting.path("responseRequested").asBoolean());
+        assertEquals(409, decide(staff, complaintId, 1, "REQUEST_EXPLANATION").statusCode());
         assertEquals(409, decide(admin, complaintId, 0, "REMOVE").statusCode());
         var explanation = Map.of("revision", 1, "content", "Chúng tôi đã hoàn trả tiền, gửi kèm bằng chứng.");
         assertEquals(404, serviceMultipart(customer, path + "/explanation", explanation, false, cover()).statusCode());
@@ -668,13 +673,19 @@ class ServiceRegistrationTests {
         var explained = serviceMultipart(own, path + "/explanation", explanation, false, cover());
         assertEquals(200, explained.statusCode(), explained.body());
         var explainedData = json.readTree(explained.body()).path("data");
-        assertEquals("EXPLAINED", explainedData.path("complaint").path("status").asString());
+        assertEquals("PENDING", explainedData.path("complaint").path("status").asString());
+        assertFalse(explainedData.path("complaint").path("responseRequested").asBoolean());
         assertEquals(2, explainedData.path("history").size());
         String proof = explainedData.path("history").get(1).path("imageUrls").get(0).asString();
         assertEquals(404, api(outsider, "GET", proof, null).statusCode());
         assertEquals(200, api(staff, "GET", proof, null).statusCode());
         assertEquals(409, serviceMultipart(own, path + "/explanation", explanation, false, null).statusCode());
-        assertEquals(200, decide(admin, complaintId, 2, "DISMISS").statusCode());
+        var closed = decide(admin, complaintId, 2, "DISMISS");
+        assertEquals(200, closed.statusCode());
+        var resolution = json.readTree(closed.body()).path("data").path("complaint");
+        assertEquals("RESOLVED", resolution.path("status").asString());
+        assertEquals("DISMISS", resolution.path("outcome").asString());
+        assertFalse(resolution.path("responseRequested").asBoolean());
         assertEquals(409, decide(staff, complaintId, 3, "REMOVE").statusCode());
         assertEquals(200, api(null, "GET", "/api/services/" + id, null).statusCode());
         assertEquals(3, logs.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("SERVICE_COMPLAINT", complaintId).size());
@@ -698,7 +709,7 @@ class ServiceRegistrationTests {
         assertEquals(200, review(staff, proposal, "APPROVE", "APPROVE", "").statusCode());
         assertEquals(404, api(null, "GET", "/api/services/" + id, null).statusCode());
         assertFalse(api(null, "GET", "/api/services", null).body().contains("Thông tin mới sau khi bị gỡ"));
-        assertTrue(api(own, "GET", "/api/service-complaints/incoming", null).body().contains("REMOVED"));
+        assertTrue(api(own, "GET", "/api/service-complaints/incoming", null).body().contains("RESOLVED"));
     }
     @Test void staffCannotModerateOwnServiceOrOwnReportAndConcurrentDecisionsAreSafe() throws Exception {
         var owner = account(UserRole.STAFF); String own = token(owner), staff = token(account(UserRole.STAFF)), admin = token(account(UserRole.ADMIN));

@@ -66,3 +66,8 @@ scraper-python/.env
 
 # Local temporary work
 .tmp/
+
+# Office lock files and generated working artifacts
+~$*
+/output/*
+!/output/*.drawio

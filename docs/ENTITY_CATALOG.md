@@ -545,3 +545,6 @@ Entity `CommunityReportAnalysis` ánh xạ `community_report_analyses`, khóa ch
 Các trường: `state` (QUEUED/RUNNING/READY/FAILED/DISABLED/SKIPPED), `generation`, `fingerprint`, `rulesVersion`, `model`, `findings` (JSON TEXT), `recommendation`, `errorCode`, `completedChecks`, `totalChecks`, `requestedAt`, `startedAt`, `finishedAt`. State STALE/CLOSED/UNAVAILABLE là trạng thái suy ra cho API, không phải enum database. Chỉ admin ACTIVE đọc/xếp lại tác vụ. Kết quả không tự sửa Post/Report hoặc ModerationLog.
 
 Chi tiết luồng/rule/cấu hình: [COMMUNITY_REPORT_AI_RULES.md](COMMUNITY_REPORT_AI_RULES.md).
+
+## Service complaint simplification — 2026-11-25
+ServiceComplaint adds nullable `outcome` (DISMISS/REMOVE) and `responseRequested` (Boolean). New status values are PENDING/RESOLVED. Legacy rows are normalized on reads; events and all relations are unchanged. See SERVICE_FEEDBACK.md for backfill/deployment details.

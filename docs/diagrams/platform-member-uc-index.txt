@@ -1,0 +1,55 @@
+PLATFORM MEMBER — source-based use-case index
+
+UC-PM01 — Search accommodations and inspect maps/details
+UC-PM01.1 — Manage and compare favorite room types
+UC-PM01.2 — Get accommodation recommendations from a needs description
+UC-PM02 — Track room-viewing appointments
+UC-PM02.1 — Request a room-viewing appointment
+UC-PM02.2 — Edit or cancel an owned appointment
+UC-PM03 — Browse community posts and discussions
+UC-PM03.1 — Comment, reply and manage own comments
+UC-PM03.2 — Report a post and track own reports
+UC-PM04 — Manage own community posts and review status
+UC-PM04.1 — Create and submit a community post
+UC-PM04.2 — Revise, resubmit or delete own posts
+UC-PM05 — Discover services and inspect provider details
+UC-PM05.1 — Send and track service requests
+UC-PM05.2 — Submit a service rating with optional images
+UC-PM06 — Track own service complaints and outcomes
+UC-PM06.1 — Report a service with optional evidence
+UC-PM07 — Track host-onboarding application and feedback
+UC-PM07.1 — Submit host information and first property dossier
+UC-PM07.2 — Supplement and resubmit the property dossier
+UC-PM08 — Track service-provider application and feedback
+UC-PM08.1 — Submit first service listing and capability application
+UC-PM08.2 — Supplement or cancel own applications
+UC-PM09 — Open and review a rental contract
+UC-PM09.1 — Sign the contract as the identified tenant
+UC-PM10 — Manage own profile and credentials
+UC-PM10.1 — Verify account phone using an SMS code
+UC-PM11 — Browse published collected posts
+UC-PM12 — Read and manage own notifications
+UC-PM13 — Sign in and sign out (password / Google)
+
+Scope and interpretation
+Platform Member denotes an ordinary authenticated USER, not a fifth persisted role and not a generalization that grants all USER-only permissions to STAFF/ADMIN.
+All IDs are local to this diagram and do not renumber the Word catalogue. Main operations are grouped; children are optional extensions, not a chronological sequence.
+Account registration belongs to the guest-to-member journey. Existing members sign in with password or Google and may sign out.
+Host and service-provider management after approval are outside this diagram. MANAGE_SERVICE is a capability independent of account role.
+
+Evidence and constraints
+UC-PM01: AccommodationController, AccommodationRecommendationService, GeminiAccommodationClient; public search/detail, map UI, AI-assisted criteria. FavoriteController limits favorites to USER/ROOM_HOST. FavoritesPage and RoomComparisonPage implement comparison (up to four selections).
+UC-PM02: ViewingController and ViewingService. Create/list/detail for USER/ROOM_HOST; editing and cancellation require an owned PENDING appointment. No member-side approval or payment.
+UC-PM03: CommunityController/feed, CommunityCommentController/Service, CommunityReportController/Service. Published feed, comments/replies, author-scoped comment edits/removal, private own report tracking.
+UC-PM04: CommunityController and CommunityService. Create with media, list own review state, resubmit under service checks, delete own posts. CommunityPostRequest accepts ROOMMATE, ROOM_TRANSFER and SECOND_HAND categories.
+UC-PM05: PublicServiceController, ServiceRequestController/Service, ServiceRatingController/Service. Requests require a public service, future schedule and a different provider. Member tracks requests; provider accepts/rejects. One rating per author/service, no self-rating. No member request-cancellation endpoint.
+UC-PM06: ServiceComplaintController/Service. Submit evidence, inspect own complaints and outcomes. Explanation requests go to the service provider, not to the reporter.
+UC-PM07: HostOnboardingController/Service and frontend become-host flow. USER submits account information plus first property dossier; approval can grant ROOM_HOST. Supplementation uses ownership and state checks. Legacy HostApplicationController remains, but is not shown as a second main onboarding journey.
+UC-PM08: ServiceRegistrationController/Service. Authenticated applicant submits first CREATE listing, tracks decisions, supplements NEEDS_SUPPLEMENT, cancels PENDING with revision. Later provider listing management is outside scope.
+UC-PM09: RentalContractSigningController and RentalContractService.openAsTenant/signAsTenant. Valid unexpired signing token, contract/party checks and verified matching tenant identity are required.
+UC-PM10: AuthController/AuthServiceImpl and PhoneVerificationController/Service. Own profile/password rules and SMS phone verification. SMS provider depends on runtime configuration.
+UC-PM11: CollectedPostController.publicFeed; read published collected posts, without import or moderation authority.
+UC-PM12: NoticeController/Service, CommunityNotificationController, ViewingController notifications; own notification feeds and read-state updates.
+UC-PM13: AuthController and GoogleBrowserSignInController, AuthServiceImpl. Password/Google authentication and sign-out; no password-reset workflow inferred.
+Routes checked: frontend/src/routing/screens.js and frontend/src/pages/PortalScreens.jsx.
+Source date: 25 November 2026. Verification is against source, not the live database or deployment.

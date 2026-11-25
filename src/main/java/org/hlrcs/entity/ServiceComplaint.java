@@ -16,6 +16,12 @@ public class ServiceComplaint {
     private User reporter;
     @Column(nullable = false, length = 3000) private String content;
     @Column(nullable = false, length = 30) private String status;
+    @Column(length = 20) private String outcome;
+    private Boolean responseRequested;
+    // Legacy rows remain readable before the optional data migration is run.
+    public String workflowStatus() { return Set.of("DISMISSED", "REMOVED", "RESOLVED").contains(status) ? "RESOLVED" : "PENDING"; }
+    public String resolution() { return outcome != null ? outcome : "DISMISSED".equals(status) ? "DISMISS" : "REMOVED".equals(status) ? "REMOVE" : null; }
+    public boolean awaitingResponse() { return "PENDING".equals(workflowStatus()) && (responseRequested != null ? responseRequested : "NEEDS_EXPLANATION".equals(status)); }
     @Column(nullable = false) private Instant createdAt;
     @Column(nullable = false) private int revision;
     @ElementCollection @CollectionTable(name = "service_complaint_images", joinColumns = @JoinColumn(name = "complaint_id"))

@@ -31,7 +31,7 @@ test('rating API preserves zero stars, submits images, and rejects unconfirmed r
 test('complaints send revision, evidence and explicit staff decisions; private photos use authentication', async () => {
   const saved = [globalThis.fetch, globalThis.sessionStorage, globalThis.localStorage];
   globalThis.sessionStorage = globalThis.localStorage = { getItem: () => 'owner-token' };
-  const result = { complaint: { complaintId: 3, revision: 2, status: 'EXPLAINED' }, history: [], imageUrls: [] };
+  const result = { complaint: { complaintId: 3, revision: 2, status: 'PENDING', responseRequested: false }, history: [], imageUrls: [] };
   try {
     globalThis.fetch = async (url, options) => {
       assert.equal(url, '/api/service-complaints/3/explanation');
@@ -39,11 +39,11 @@ test('complaints send revision, evidence and explicit staff decisions; private p
       assert.equal(options.body.getAll('image').length, 0);
       return { ok: true, status: 200, json: async () => ({ success: true, data: result }) };
     };
-    assert.equal((await api.explain(3, 1, 'Giải trình giao dịch', [])).complaint.status, 'EXPLAINED');
+    assert.equal((await api.explain(3, 1, 'Giải trình giao dịch', [])).complaint.status, 'PENDING');
     globalThis.fetch = async (url, options) => {
       assert.equal(url, '/api/staff/service-complaints/3/review');
       assert.deepEqual(JSON.parse(options.body), { revision: 2, action: 'REMOVE', content: 'Có bằng chứng vi phạm' });
-      return { ok: true, status: 200, json: async () => ({ success: true, data: { ...result, complaint: { complaintId: 3, revision: 3, status: 'REMOVED' } } }) };
+      return { ok: true, status: 200, json: async () => ({ success: true, data: { ...result, complaint: { complaintId: 3, revision: 3, status: 'RESOLVED', outcome: 'REMOVE' } } }) };
     };
     await api.decide(3, 2, 'REMOVE', 'Có bằng chứng vi phạm');
     globalThis.fetch = async (url, options) => {
