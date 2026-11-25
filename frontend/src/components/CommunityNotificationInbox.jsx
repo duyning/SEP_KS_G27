@@ -26,7 +26,7 @@ export default function CommunityNotificationInbox({ compact = false, onOpen }) 
     const controller = new AbortController();
     communityNotifications.inbox(page, unread, controller.signal).then(data => {
       if (!controller.signal.aborted) setState({ key, scope, data });
-    }).catch(error => { if (!controller.signal.aborted) setState({ key, error: error.message }); });
+    }).catch(error => { if (!controller.signal.aborted) setState(current=>({...([401,403,404].includes(error.status)||current.scope!==scope?{}:current),key,error:error.message})); });
     return () => controller.abort();
   }, [key, page, unread]);
   const data = state.scope === scope ? state.data : null;

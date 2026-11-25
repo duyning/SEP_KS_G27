@@ -1,7 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFeedFilters, appendFeedPosts } from '../src/services/community-feed.js';
+import { readFeedFilters, appendFeedPosts, retryFeedRead } from '../src/services/community-feed.js';
 import { communityApi } from '../src/services/community.js';
+
+test('feed background read retries temporary failures without accepting empty success or retrying access errors',async()=>{
+  const waits=[];let calls=0;const data={items:[{id:8}]};
+  assert.equal(await retryFeedRead(async()=>{if(++calls<3)throw Object.assign(new Error('Temporary'),{status:503});return data;},new AbortController().signal,async ms=>waits.push(ms)),data);
+  assert.equal(calls,3);assert.deepEqual(waits,[500,1500]);
+  for(const status of [400,401,403,404]){calls=0;await assert.rejects(retryFeedRead(async()=>{calls++;throw Object.assign(new Error('Denied'),{status});},null,async()=>assert.fail('Access failures must not retry')));assert.equal(calls,1);}
+  calls=0;await assert.rejects(retryFeedRead(async()=>{calls++;throw Object.assign(new Error('Unavailable'),{status:0});},null,async()=>{}));assert.equal(calls,3);
+});
+
+test('changing feed scope aborts the retry before another request is sent',async()=>{
+  const controller=new AbortController();let calls=0;
+  await assert.rejects(retryFeedRead(async()=>{calls++;throw Object.assign(new Error('Network'),{status:0});},controller.signal,async()=>controller.abort()),error=>error.name==='AbortError');
+  assert.equal(calls,1);
+});
 
 test('feed filters preserve supported URL values and reject unknown filter choices', () => {
   assert.deepEqual(readFeedFilters(new URLSearchParams('category=ROOMMATE&q=điều+hòa&location=tan-xa&sort=price-asc')),

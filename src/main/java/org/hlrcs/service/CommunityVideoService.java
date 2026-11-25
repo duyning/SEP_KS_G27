@@ -53,7 +53,7 @@ public class CommunityVideoService {
         media.flush();
     }
 
-    private CommunityImageService.ImageContent validate(MultipartFile file) {
+    CommunityImageService.ImageContent validate(MultipartFile file) {
         String name = Objects.toString(file.getOriginalFilename(), "video").replaceAll("[\\p{Cntrl}\\\\/]", "_");
         name = name.substring(0, Math.min(name.length(), 200));
         String prefix = "Video “" + name + "”: ";

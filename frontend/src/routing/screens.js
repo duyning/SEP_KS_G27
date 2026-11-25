@@ -23,6 +23,7 @@ export const screens = [
   screen('bookings.html', '/bookings', 'member', 'Lịch xem phòng', 'list', { columns: ['Nhà trọ', 'Chủ trọ', 'Lịch hẹn', 'Trạng thái'], filters: ['Tất cả lịch hẹn', 'Chờ xác nhận', 'Đã xác nhận', 'Đã hoàn thành', 'Đã hủy'] }),
   screen('community.html', '/community', 'public', 'Cộng đồng Cư dân & Sinh viên Hòa Lạc', 'community'),
   screen(null, '/community/reports', 'member', 'Báo cáo của tôi', 'communityReports', { integration: 'connected' }),
+  screen(null, '/messages', 'member', 'Tin nhắn', 'messages', {integration:'connected'}),
   screen('services.html', '/services', 'public', 'Dịch vụ', 'services'),
   screen('service-detail.html', '/services/detail', 'public', 'Chi tiết dịch vụ', 'detail', { sections: ['Thông tin dịch vụ', 'Loại dịch vụ', 'Khu vực phục vụ', 'Nhà cung cấp'], actions: ['Liên hệ nhà cung cấp'] }),
   screen('notifications.html', '/notifications', 'member', 'Thông báo của bạn', 'notifications'),

@@ -6,6 +6,7 @@ import CommunityNotificationBell from '../CommunityNotificationBell.jsx';
 import { CommunitySupportLinks } from '../CommunityFooter.jsx';
 import HostRegistrationBanner from '../HostRegistrationBanner.jsx';
 import NotificationBell from '../NotificationBell.jsx';
+import MessagingBell from '../messaging/MessagingBell.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useFavorites } from '../../context/FavoritesContext.jsx';
 import { useToast } from '../PortalUI.jsx';
@@ -108,6 +109,7 @@ export default function PublicNavbar() {
               ) : (
                 <li className="site-menu-extra"><Link className="nav-item" to="/register" onClick={closeMenu}>Đăng ký tài khoản</Link></li>
               )}
+              {user && <li className="site-menu-extra"><Link className="nav-item" to="/favorites" onClick={closeMenu}>Phòng yêu thích</Link></li>}
               {pathname === '/community' && <li className="site-menu-extra site-community-support"><CommunitySupportLinks /></li>}
               {user && <li className="site-menu-extra site-mobile-logout">
                 <button type="button" className="nav-item site-menu-logout" onClick={signOut} disabled={leaving}>
@@ -118,6 +120,7 @@ export default function PublicNavbar() {
           </nav>
 
           <div className="nav-actions site-nav-actions">
+            <MessagingBell />
             {communityBell ? <CommunityNotificationBell /> : user && <NotificationBell />}
             <NavLink className="btn-wishlist-top site-favorite" to="/favorites"
               aria-label={`Phòng yêu thích, ${savedCount} phòng đã lưu`} title="Phòng yêu thích" onClick={closeMenu}>

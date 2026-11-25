@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 /** Pure service unit tests: no Spring context, network or database. */
 @ExtendWith(MockitoExtension.class)
 class ServicePublicationIsPublicUnitTest {
-    @Mock(mockMaker = "mock-maker-subclass") private UserCapabilityRepository capabilities;
+    @Mock private UserCapabilityRepository capabilities;
     private ServicePublicationService service;
     private Service row;
 

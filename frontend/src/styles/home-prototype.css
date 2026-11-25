@@ -42,6 +42,12 @@
 
 .prototype-home *, .prototype-home *::before, .prototype-home *::after {
   box-sizing: border-box;
+}
+
+/* Community owns its card/comment spacing; lazy shell styles must not reset it. */
+.prototype-home:not(:where(.prototype-community)) *,
+.prototype-home:not(:where(.prototype-community)) *::before,
+.prototype-home:not(:where(.prototype-community)) *::after {
   margin: 0;
   padding: 0;
 }

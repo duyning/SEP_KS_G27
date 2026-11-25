@@ -1,5 +1,20 @@
 # HL-RCS — ERD theo JPA hiện tại
 
+## Nhắn tin dùng chung (2026-11-25)
+
+```mermaid
+erDiagram
+    users ||--o{ messaging_conversations : low_member
+    users ||--o{ messaging_conversations : high_member
+    messaging_conversations ||--o{ messaging_messages : contains
+    users ||--o{ messaging_messages : sender
+    messaging_messages |o--o{ messaging_messages : replied_to
+    messaging_messages ||--o{ messaging_attachments : contains
+```
+
+Context bài viết là tham chiếu mềm để xóa/ẩn bài không xóa lịch sử chat.
+Chi tiết trường và index: [MESSAGING.md](MESSAGING.md).
+
 Đối chiếu ngày **2026-11-05**, commit `350dc13`; **29 entities**, tách thành 5 sơ đồ để dễ đọc.
 Nguồn: [entity catalog](ENTITY_CATALOG.md) và `src/main/java/org/hlrcs/entity/`. Không tìm thấy file ERD riêng trong repository trước lượt đọc này; các sơ đồ dưới đây được dựng từ JPA, không phải schema live.
 

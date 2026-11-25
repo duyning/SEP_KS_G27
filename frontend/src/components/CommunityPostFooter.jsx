@@ -6,9 +6,13 @@ import Comments from './CommunityPostComments.jsx';
 import { canReportCommunityPost, isOwnCommunityPost } from '../services/community.js';
 import { communityApi } from '../services/community.js';
 import useCommunityLive from './useCommunityLive.js';
+import {useNavigate} from 'react-router-dom';
+import {useMessaging} from '../context/messagingState.js';
 
 export default function CommunityPostFooter({ post, deleting, onDelete, onReport, preview = false, focus = null }) {
   const { user } = useAuth();
+  const messaging=useMessaging(),navigate=useNavigate();
+  const [openingChat,setOpeningChat]=useState(false);
   const notify = useToast();
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -55,6 +59,10 @@ export default function CommunityPostFooter({ post, deleting, onDelete, onReport
         onClick={() => setExpanded(value => !value)}>
         <MessageCircle size={20} aria-hidden="true" /><span>{count} bình luận</span>
       </button>}
+      {!preview&&approved&&!owner&&<button type="button" className="community-message-action" disabled={openingChat} onClick={async()=>{
+        if(!user){navigate('/login',{state:{from:`/messages?recipient=${post.authorId}&post=${post.id}`}});return;}
+        setOpeningChat(true);try{await messaging.openTo(post.authorId,{kind:'COMMUNITY_POST',referenceId:post.id});}catch(e){notify?.(e.message,'error');}finally{setOpeningChat(false);}
+      }}><MessageCircle size={19} aria-hidden="true"/>{openingChat?'Đang mở…':'Nhắn tin'}</button>}
       <div className="community-post-footer-actions">
         <div className="community-post-options" ref={menuRef}>
           <button type="button" ref={trigger} className="community-post-options-trigger" aria-label={`Tùy chọn bài viết ${post.title}`}

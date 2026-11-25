@@ -7,6 +7,9 @@ import CommunityFeedCard from '../components/CommunityFeedCard.jsx';
 import CommunityPostFooter from '../components/CommunityPostFooter.jsx';
 import CommunityReportAiPanel from '../components/CommunityReportAiPanel.jsx';
 import useCommunityLive from '../components/useCommunityLive.js';
+import '../styles/admin-dashboard.css';
+import '../styles/community-feed.css';
+import '../styles/community-prototype-integration.css';
 import '../styles/community-reports.css';
 
 const adminPath = '/admin/community/reports';

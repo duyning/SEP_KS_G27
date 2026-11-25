@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import {lazyPage as lazy} from '../routing/lazy-page.js';
 
 // Public Pages (lazy-loaded per route)
 const HomePage = lazy(() => import('./public/HomePage.jsx'));
@@ -9,6 +9,7 @@ const FavoritesPage = lazy(() => import('./public/FavoritesPage.jsx'));
 const RoomComparisonPage = lazy(() => import('./public/RoomComparisonPage.jsx'));
 const BookingsPage = lazy(() => import('./public/BookingsPage.jsx'));
 const CommunityPage = lazy(() => import('./public/CommunityPage.jsx'));
+const MessagesPage = lazy(() => import('./MessagesPage.jsx'));
 const ServicesPage = lazy(() => import('./public/ServicesPage.jsx'));
 const ServiceDetailPage = lazy(() => import('./public/ServiceDetailPage.jsx'));
 const NotificationsPage = lazy(() => import('./public/NotificationsPage.jsx'));
@@ -70,6 +71,8 @@ export default function PortalScreens({ screen }) {
       return <CommunityPage />;
     case '/community/reports':
       return <CommunityReportsPage />;
+    case '/messages':
+      return <MessagesPage />;
     case '/services':
       return <ServicesPage />;
     case '/services/detail':

@@ -9,6 +9,7 @@ import {adminDashboardViews, getAdminDashboardView} from '../../routing/admin-na
 import {roleLabels} from '../../routing/screens.js';
 import {adminApi} from '../../services/admin.js';
 import useCommunityLive from '../../components/useCommunityLive.js';
+import {beginCommunityLoad,failCommunityLoad} from '../../services/community-load.js';
 import '../../styles/admin-dashboard.css';
 
 const statuses={PENDING:'Chờ xét duyệt',NEEDS_SUPPLEMENT:'Cần bổ sung',APPROVED:'Đã phê duyệt',REJECTED:'Đã từ chối',ACTIVE:'Đang hoạt động',INACTIVE:'Đã vô hiệu hóa'};
@@ -102,8 +103,8 @@ export default function AdminDashboardPage(){
  useCommunityLive('posts,reports',()=>{if(['overview','activity'].includes(view))setRevision(value=>value+1);});
  const [overview,setOverview]=useState({loading:true,data:null,error:''}),[list,setList]=useState({loading:true,data:null,error:''});
  useEffect(()=>{const timer=setTimeout(()=>setQuery(q),250);return()=>clearTimeout(timer);},[q]);
- useEffect(()=>{const controller=new AbortController();setOverview({loading:true,data:null,error:''});adminApi.dashboard(controller.signal).then(data=>{if(!controller.signal.aborted)setOverview({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setOverview({loading:false,data:null,error:error.message});});return()=>controller.abort();},[user.userId,revision,overviewRevision]);
- useEffect(()=>{if(view==='overview')return;const controller=new AbortController();setList({loading:true,data:null,error:''});adminApi.list(view,{q:query,role,unassigned:String(unassigned),page:String(page),size:'8'},controller.signal).then(data=>{if(!controller.signal.aborted)setList({loading:false,data,error:''});}).catch(error=>{if(!controller.signal.aborted)setList({loading:false,data:null,error:error.message});});return()=>controller.abort();},[view,query,role,unassigned,page,user.userId,revision]);
+ useEffect(()=>{const controller=new AbortController(),scope=`overview:${user.userId}`;setOverview(current=>beginCommunityLoad(current,scope));adminApi.dashboard(controller.signal).then(data=>{if(!controller.signal.aborted)setOverview({loading:false,data,error:'',scope});}).catch(error=>{if(!controller.signal.aborted)setOverview(current=>[401,403,404].includes(error.status)?{loading:false,data:null,error:error.message,scope}:failCommunityLoad(current,scope,error.message));});return()=>controller.abort();},[user.userId,revision,overviewRevision]);
+ useEffect(()=>{if(view==='overview')return;const controller=new AbortController(),scope=JSON.stringify([user.userId,view,query,role,unassigned,page]);setList(current=>beginCommunityLoad(current,scope));adminApi.list(view,{q:query,role,unassigned:String(unassigned),page:String(page),size:'8'},controller.signal).then(data=>{if(!controller.signal.aborted)setList({loading:false,data,error:'',scope});}).catch(error=>{if(!controller.signal.aborted)setList(current=>[401,403,404].includes(error.status)?{loading:false,data:null,error:error.message,scope}:failCommunityLoad(current,scope,error.message));});return()=>controller.abort();},[view,query,role,unassigned,page,user.userId,revision]);
  function change(key,value){const next=new URLSearchParams(params);if(value===''||value==='ALL'||value===false)next.delete(key);else next.set(key,String(value));if(key!=='page')next.delete('page');setParams(next,{replace:key==='q'});}
  function openStatusChange(change) {
   setStatusError('');

@@ -1,5 +1,12 @@
 # HL-RCS — Entity catalog
 
+Bổ sung 2026-11-25: `DirectConversation` → `messaging_conversations` và
+`DirectMessage` → `messaging_messages`. Hai thành viên User, unique cặp có thứ tự,
+sequence/read cursor và client key chống gửi trùng. Xem [MESSAGING.md](MESSAGING.md).
+`DirectMessage.replyTo` là self FK tùy chọn; `DirectMessageAttachment` →
+`messaging_attachments` giữ FK tin nhắn, loại tệp, tên, MIME, kích thước, SHA-256
+và LONGBLOB riêng tư. Chỉ thành viên hội thoại được tải, kể cả với Admin.
+
 Bổ sung 2026-11-19: `CollectedPost` → `collected_posts` và element collection
 `collected_post_images`; quan hệ người thu thập/người đăng tới `User`. Chi tiết
 fields, index, FK và sơ đồ bổ sung trong [COLLECTED_POSTS.md](COLLECTED_POSTS.md).
