@@ -46,6 +46,8 @@ try {
   const { createServer } = await import('vite');
   server = await createServer({ server: { host: '127.0.0.1', port: 5173, strictPort: true } });
   await server.listen();
+  console.log('[frontend] Preparing browser modules...');
+  await server.warmupRequest('/src/main.jsx');
   console.log('\n[frontend] Ready: http://127.0.0.1:5173/login');
   console.log(`[frontend] API: ${process.env.API_TARGET || 'http://localhost:8080'}`);
 } catch (error) {

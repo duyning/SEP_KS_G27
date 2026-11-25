@@ -84,6 +84,18 @@ class CommunityRealtimeTests extends RegistrationOtpTestSupport {
         assertFalse(CommunityRealtimeEvent.reports(5).visibleTo(3, UserRole.STAFF));
     }
 
+    @Test
+    @org.junit.jupiter.api.Timeout(90)
+    void openConnectionStillDeliversAfterTheFormerSixtySecondExpiry() throws Exception {
+        try (var guest = stream(null)) {
+            CompletableFuture.runAsync(() -> {}, CompletableFuture.delayedExecutor(66, TimeUnit.SECONDS)).get(70, TimeUnit.SECONDS);
+            assertNull(guest.next.poll()); // Heartbeats and connection age do not trigger a resync.
+            new TransactionTemplate(transactions).executeWithoutResult(s ->
+                    events.publishEvent(new CommunityRealtimeEvent("posts", null, null, true, true, true)));
+            assertEquals("posts", guest.take().path("type").asString());
+        }
+    }
+
     private URI uri(String path) { return URI.create("http://127.0.0.1:"+port+path); }
     private Stream stream(String token) throws Exception {
         var request = HttpRequest.newBuilder(uri("/api/community/events")).header("Accept", "text/event-stream");

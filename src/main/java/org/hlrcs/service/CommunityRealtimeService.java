@@ -16,6 +16,8 @@ import java.util.concurrent.*;
 public class CommunityRealtimeService {
     private final JwtTokenProvider tokens;
     private final UserRepository users;
+    private static final long CONNECTION_TTL_MS = TimeUnit.MINUTES.toMillis(5);
+    private final java.util.function.LongSupplier now = System::currentTimeMillis;
     private record Client(SseEmitter emitter, Integer userId, UserRole role, String token, long expiresAt) {}
     private final Set<Client> clients = ConcurrentHashMap.newKeySet();
     private final ScheduledExecutorService heartbeatClock = Executors.newSingleThreadScheduledExecutor(task -> {
@@ -25,8 +27,8 @@ public class CommunityRealtimeService {
             new ArrayBlockingQueue<>(256), task -> { var t = new Thread(task, "community-live"); t.setDaemon(true); return t; });
 
     public SseEmitter connect(Integer id, UserRole role, String token) {
-        var emitter = new SseEmitter(65000L);
-        var client = new Client(emitter, id, role, token, System.currentTimeMillis() + 60000);
+        var emitter = new SseEmitter(CONNECTION_TTL_MS + 5000);
+        var client = new Client(emitter, id, role, token, now.getAsLong() + CONNECTION_TTL_MS);
         clients.add(client);
         emitter.onCompletion(() -> clients.remove(client));
         emitter.onTimeout(() -> close(client));
@@ -42,12 +44,18 @@ public class CommunityRealtimeService {
                     : Map.of("type", event.type(), "postId", event.postId()));
     }
 
+    @TransactionalEventListener
+    public void messagesChanged(MessagingChanged event) {
+        for (var client : clients) if (event.visibleTo(client.userId()))
+            send(client, Map.of("type", "messages", "conversationId", event.conversationId()));
+    }
+
     @jakarta.annotation.PostConstruct
     public void start() { heartbeatClock.scheduleWithFixedDelay(this::heartbeat, 15, 15, TimeUnit.SECONDS); }
     public void heartbeat() { for (var client : clients) send(client, Map.of("type", "heartbeat")); }
 
     private boolean valid(Client client) {
-        if (System.currentTimeMillis() >= client.expiresAt()) return false;
+        if (now.getAsLong() >= client.expiresAt()) return false;
         if (client.userId() == null) return true;
         return users.findById(client.userId()).filter(u -> u.getStatus() == UserStatus.ACTIVE
                 && u.getRole() == client.role() && tokens.isCurrentSession(client.token(), u)).isPresent();

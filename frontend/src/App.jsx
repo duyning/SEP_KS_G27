@@ -1,5 +1,6 @@
 
-import { Suspense, lazy, useLayoutEffect, useRef } from 'react';
+import { Suspense, useLayoutEffect, useRef } from 'react';
+import {lazyPage as lazy} from './routing/lazy-page.js';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import PortalLayout from './layouts/PortalLayout.jsx';

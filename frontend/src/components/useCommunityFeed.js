@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { communityApi } from '../services/community.js';
-import { appendFeedPosts, readFeedFilters } from '../services/community-feed.js';
+import { appendFeedPosts, readFeedFilters, retryFeedRead } from '../services/community-feed.js';
 import useCommunityLive from './useCommunityLive.js';
 
 // Keep loaded posts and scroll positions for filter changes within the feed.
@@ -40,13 +40,15 @@ export default function useCommunityFeed(mine, params) {
     if (previous.scope !== scope || !previous.data) { pendingLive.current = true; return; }
     active.current?.abort();
     const controller = new AbortController(); active.current = controller;
-    setState(current => ({ ...current, loadingMore: false, refreshing: true, refreshError: '' }));
+    // Reconnect/resync is a background read; keep the visible feed and its height stable.
+    setState(current => ({ ...current, loadingMore: false }));
     try {
-      let result = await communityApi.feed({ ...filters, mine }, controller.signal);
+      const fetchPage=cursor=>retryFeedRead(()=>communityApi.feed({ ...filters, mine, cursor }, controller.signal),controller.signal);
+      let result = await fetchPage(null);
       let items = result.items;
       // Rebuild the currently loaded window, preserving cursor correctness after insertions/deletions.
       while (result.hasMore && items.length < previous.data.length) {
-        result = await communityApi.feed({ ...filters, mine, cursor: result.nextCursor }, controller.signal);
+        result = await fetchPage(result.nextCursor);
         items = appendFeedPosts(items, result.items);
       }
       if (controller.signal.aborted || currentScope.current !== scope) return;
@@ -57,8 +59,13 @@ export default function useCommunityFeed(mine, params) {
         hasMore: result.hasMore, nextCursor: result.nextCursor };
       stateRef.current = next; setState(next);
     } catch (error) {
-      if (!controller.signal.aborted && currentScope.current === scope)
-        setState(current => ({ ...current, refreshing: false, refreshError: error.message }));
+      if (!controller.signal.aborted && currentScope.current === scope) {
+        setState(current => {
+          const next = { ...current, refreshing: false, refreshError: error.message };
+          stateRef.current = next;
+          return next;
+        });
+      }
     } finally { if (active.current === controller) active.current = null; }
   };
   useCommunityLive('posts', refreshFromLive);

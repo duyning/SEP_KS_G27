@@ -27,6 +27,7 @@ export function startCommunityRealtime() {
   let stopped = false, controller, retry, attempt = 0;
   const connect = async () => {
     if (stopped || !navigator.onLine) return;
+    clearTimeout(retry);
     controller?.abort();
     const current = new AbortController(); controller = current;
     const token = getToken();
@@ -41,7 +42,7 @@ export function startCommunityRealtime() {
       }
       if (!response.ok || !response.body || !response.headers.get('content-type')?.includes('text/event-stream')) throw new Error('Stream unavailable');
       let lastActivity = Date.now();
-      const watchdog = setInterval(() => { if (Date.now() - lastActivity > 45000) reconnect(); }, 15000);
+      const watchdog = setInterval(() => { if (controller === current && Date.now() - lastActivity > 45000) reconnect(); }, 15000);
       try { await readCommunityStream(response.body, event => {
         if (current.signal.aborted || stopped || token !== getToken()) return;
         received = true; attempt = 0;
@@ -50,14 +51,15 @@ export function startCommunityRealtime() {
       finally { clearInterval(watchdog); }
     } catch { /* Reconnect and resync through the authorized REST APIs. */ }
     finally { clearTimeout(handshake); }
-    if (!stopped && !current.signal.aborted) {
+    if (!stopped && controller === current && !current.signal.aborted) {
       const delay = received ? 500 : Math.min(30000, 1000 * 2 ** Math.min(attempt++, 5));
       retry = setTimeout(connect, delay + Math.random() * 300);
     }
   };
   const reconnect = () => { clearTimeout(retry); connect(); };
   const online = () => reconnect();
-  const visible = () => { if (!document.hidden) { window.dispatchEvent(new CustomEvent('hlrcs:community-live', { detail: { type: 'resync' } })); reconnect(); } };
+  // The new connection sends resync itself; dispatching here too duplicates all reads.
+  const visible = () => { if (!document.hidden) reconnect(); };
   window.addEventListener('online', online);
   document.addEventListener('visibilitychange', visible);
   connect();

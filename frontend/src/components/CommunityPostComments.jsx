@@ -14,7 +14,7 @@ function useCommentPage(postId, parentId, page, revision, enabled, onCount) {
     if (!enabled) return;
     const controller = new AbortController();
     const scope = `${postId}:${parentId}:${page}`;
-    setState(current => ({ loading: true, result: current.scope === scope ? current.result : null, error: '', scope }));
+    setState(current => ({ loading: !(current.scope === scope && current.result), result: current.scope === scope ? current.result : null, error: '', scope }));
     const task = parentId == null ? communityApi.comments(postId, page, controller.signal)
       : loadReplyThread(communityApi, postId, parentId, controller.signal);
     task.then(result => {

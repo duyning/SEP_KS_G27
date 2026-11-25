@@ -14,6 +14,7 @@ import { staffHostApi } from '../services/staff-host-applications.js';
 import PublicNavbar from '../components/layout/PublicNavbar.jsx';
 import { BrandIcon, BRAND, formatDocumentTitle } from '../components/brand/index.js';
 import NotificationBell from '../components/NotificationBell.jsx';
+import MessagingBell from '../components/messaging/MessagingBell.jsx';
 import { getHostWorkspaceMemory } from '../services/host-management.js';
 import '../styles/host-workspace.css';
 import '../styles/host-header.css';
@@ -319,7 +320,8 @@ function OperationsLayout({ screen, children }) {
             <Link className="btn-view-public-site" to="/" title="Xem giao diện tìm kiếm phòng của người thuê">
               <ExternalLink size={15} /> <span className="hide-mobile">Trang người thuê</span>
             </Link>
-            {workspace ? (
+              <MessagingBell />
+              {workspace ? (
               <NotificationBell className="p-icon workspace-notification" to={portal === 'host' ? '/host/notifications' : '/notifications'} />
             ) : (
               <Link className="p-icon" title="Thông báo" aria-label="Thông báo" to="/notifications"><Bell size={18} /></Link>
@@ -362,10 +364,11 @@ function OperationsLayout({ screen, children }) {
             <section className="portal-nav-group">
               <p>TÀI KHOẢN</p>
               {user && (
+                <><Link className="portal-nav-link" to="/messages" onClick={() => setOpen(false)}><MessagesSquare size={18}/><span>Tin nhắn</span></Link>
                 <Link className="portal-nav-link" to="/profile" onClick={() => setOpen(false)}>
                   <UserRound size={19} />
                   <span>Hồ sơ cá nhân</span>
-                </Link>
+                </Link></>
               )}
               {user ? sidebarLogoutButton : <Link className="portal-nav-link" to="/login" onClick={() => setOpen(false)}>Đăng nhập</Link>}
             </section>

@@ -14,7 +14,7 @@
             <list>
               <option value="spring-boot:run" />
               <option value="-Dspring-boot.run.jvmArguments=-Dhlrcs.frontend.enabled=true -Djdk.net.unixdomain.tmpdir=target" />
-              <option value="-Dspring-boot.run.arguments=--server.port=8080" />
+              <option value="-Dspring-boot.run.arguments=--server.port=8081" />
             </list>
           </option>
         </MavenRunnerParameters>

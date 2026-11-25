@@ -1,5 +1,9 @@
 # HL-RCS — context và kiến trúc hiện tại
 
+Bổ sung 2026-11-25: [nhắn tin dùng chung](MESSAGING.md), hội thoại riêng giữa hai
+tài khoản ACTIVE, lịch sử/read cursor, gửi idempotent và SSE riêng theo thành viên.
+Tích hợp Community trước, có route `/messages` và resolver tham chiếu để mở rộng.
+
 Bổ sung 2026-11-19: [module bài đăng tổng hợp Facebook](COLLECTED_POSTS.md)
 dùng worker Python/Playwright nội bộ, nháp trong MySQL, Staff/Admin chọn đăng hoặc
 gỡ công khai; public feed riêng tải thêm bằng cursor. Xem tài liệu module để cấu

@@ -1,5 +1,7 @@
 import { communityCategories, communitySorts, communityZones } from './community-prototype.js';
 
+export {retryRead as retryFeedRead} from './retry-read.js';
+
 export function readFeedFilters(params) {
   return {
     category: communityCategories.some(([key]) => key === params.get('category')) ? params.get('category') : 'ALL',

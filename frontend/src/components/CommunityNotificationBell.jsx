@@ -28,7 +28,7 @@ function MemberBell() {
       request = new AbortController();
       const current = request;
       communityNotifications.count(current.signal).then(value => { if (!current.signal.aborted) setCount(value); })
-        .catch(() => { if (!current.signal.aborted) setCount(null); });
+        .catch(() => { /* Keep the last confirmed count during a background network failure. */ });
     };
     refresh();
     window.addEventListener('hlrcs:community-notifications', refresh);
