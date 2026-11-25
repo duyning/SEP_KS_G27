@@ -83,3 +83,22 @@
 
 .svc-price-unit{font-size:.65em;font-weight:500;color:#475569;white-space:normal}
 .svc-detail-price .svc-price-unit{font-size:15px}
+
+/* Compact deletion review, scoped to the DELETE application only. */
+.service-applications .service-delete-banner{--delete-ink:#9a3412;display:flex;align-items:flex-start;gap:14px;padding:18px 20px;background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:var(--delete-ink)}
+.service-delete-banner .service-delete-icon{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:10px;background:#ffedd5}
+.service-applications .service-delete-banner h2{font-size:17px;line-height:1.5;margin:0 0 4px;color:inherit}
+.service-applications .service-delete-banner p{font-size:14px;line-height:1.65;margin:0;color:inherit}
+.service-applications .service-delete-review{--delete-teal:var(--ui-primary,#0f766e);padding:24px;border-radius:14px;border-color:#cce5e0}
+.service-applications .service-delete-review h2{margin:0;font-size:19px}
+.service-delete-review .service-review-intro{margin:6px 0 18px}
+.service-applications .service-delete-review .service-review-choices{grid-template-columns:1fr}
+.service-applications .service-delete-review .service-review-choice{padding:16px;align-items:center;max-width:none;border-radius:10px}
+.service-delete-review .service-review-choice input{width:18px;height:18px;margin:0}
+.service-delete-review .service-review-choice strong{font-size:14px}
+.service-delete-review .service-review-choice small{margin-top:3px;font-size:13px}
+.service-delete-review .service-review-effect{padding:0;background:transparent;color:var(--ui-muted,#475569);margin:12px 0 0;font-size:13px}
+.service-delete-review .service-review-actions{border-top:1px solid #e2e8f0;padding-top:16px;margin-top:18px}
+.service-applications .service-delete-review .service-review-submit{min-height:44px;border-radius:9px;background:var(--delete-teal);border-color:var(--delete-teal);padding:10px 18px}
+.service-applications .service-delete-review .service-review-submit:disabled{opacity:1;background:#e2e8f0;color:#64748b;border-color:#cbd5e1;cursor:not-allowed}
+@media(max-width:600px){.service-applications .service-delete-banner{padding:16px;gap:10px}.service-delete-banner .service-delete-icon{width:34px;height:34px}.service-applications .service-delete-review{padding:18px}.service-delete-review .service-review-actions button{width:100%}}

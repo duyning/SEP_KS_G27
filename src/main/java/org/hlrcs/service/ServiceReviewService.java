@@ -88,6 +88,8 @@ public class ServiceReviewService {
         var owner = users.findForRegistrationUpdate(row.getUser().getUserId()).orElseThrow();
         if (owner.getStatus() != UserStatus.ACTIVE) throw new AppException("Tài khoản người đăng ký không còn hoạt động.", HttpStatus.CONFLICT);
         var target = row.getTargetService();
+        if (target != null && !Objects.equals(target.getProvider().getUserId(), owner.getUserId()))
+            throw new AppException("Dịch vụ không thuộc người gửi yêu cầu.", HttpStatus.CONFLICT);
         if (target != null && "APPROVE".equals(listingDecision) && (!submissions.canManage(owner.getUserId()) || "DELETED".equals(target.getStatus()) || !Objects.equals(row.getServiceRevision(), target.getRevision())))
             throw new AppException("Dịch vụ gốc đã thay đổi hoặc quyền quản lý đã ngừng. Không thể áp dụng yêu cầu cũ.", HttpStatus.CONFLICT);
         var files = documents.findByRegistration_RegistrationIdOrderByDocumentIdAsc(id);
