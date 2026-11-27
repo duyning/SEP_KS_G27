@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import AvailabilityNotice from './AvailabilityNotice.jsx';
-import { roomAvailability } from '../services/availability.js';
+import { AVAILABILITY_STALE_LABEL, roomAvailability } from '../services/availability.js';
 import {
   Check,
   CheckCircle2,
@@ -149,7 +149,7 @@ export default function RoomDetailModal({
             <header className="hm-drawer-section-head">
               <h3>Cập nhật nhanh tình trạng</h3>
               {!room.confirmedAt && <span className="hm-badge tone-warning">Chưa xác nhận</span>}
-              {confirmation.availabilityConfirmationStatus === 'STALE' && <span className="hm-badge tone-warning">Quá 7 ngày chưa xác nhận</span>}
+              {confirmation.availabilityConfirmationStatus === 'STALE' && <span className="hm-badge tone-warning">{AVAILABILITY_STALE_LABEL}</span>}
             </header>
             <div className="hm-quick-status-grid">
               {[

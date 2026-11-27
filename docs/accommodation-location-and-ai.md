@@ -7,7 +7,7 @@
 - Gửi cả hai tọa độ hoặc bỏ cả hai. Vĩ độ thuộc [-90, 90], kinh độ thuộc [-180, 180]. Bán kính tính bằng km, thuộc (0, 50] và yêu cầu có điểm gốc. `sort=nearest` cũng yêu cầu điểm gốc. Giá trị sai trả HTTP 400.
 - Khoảng cách đường thẳng Haversine tính từ hồ sơ đã duyệt. Bán kính bao gồm ranh giới. Sắp gần nhất đưa phòng thiếu tọa độ xuống cuối, rồi dùng `roomTypeId` tăng dần khi bằng khoảng cách. Khi lọc bán kính, các phòng thiếu tọa độ bị loại trước khi đếm và phân trang.
 - `distanceKm` bằng `null` khi thiếu điểm gốc hoặc tọa độ nhà trọ. Hai endpoint chi tiết `/api/properties/{propertyId}/room-types/{roomTypeId}` và `.../details` nhận cùng cặp tọa độ. Chi tiết đầy đủ trả giá trị trong `data.summary.distanceKm`. UI định dạng tối đa hai chữ số thập phân.
-- `availabilityStale` chỉ bật khi lần xác nhận tình trạng của cả loại phòng đã quá bảy ngày. API cũng trả mốc UTC `availabilityConfirmedAt` và trạng thái `availabilityConfirmationStatus` theo hợp đồng của Ninh. Nhà trọ có `properties.reverification_required=true` bị loại khỏi API công khai. Hồ sơ cũ chưa có cờ được xem như `false`.
+- `availabilityStale` chỉ bật khi lần xác nhận tình trạng của cả loại phòng đã quá 30 ngày. API cũng trả mốc UTC `availabilityConfirmedAt` và trạng thái `availabilityConfirmationStatus` theo hợp đồng của Ninh. Nhà trọ có `properties.reverification_required=true` bị loại khỏi API công khai. Hồ sơ cũ chưa có cờ được xem như `false`.
 
 Ví dụ JSON cho một kết quả ở điểm gốc:
 

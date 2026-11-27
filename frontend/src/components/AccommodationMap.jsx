@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { availabilityWarning, formatDistance, withSearchOrigin } from '../services/search-origin.js';
+import { SEARCH_CAMPUSES, availabilityWarning, formatDistance, searchCampusForOrigin, withSearchOrigin } from '../services/search-origin.js';
 import '../styles/location-search.css';
 import L from 'leaflet';
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import { MapPin, ArrowUpRight, Building2, Check, Navigation, Expand, Minimize, Focus, Map as MapIcon, Satellite, Plus, Minus, Tags } from 'lucide-react';
+import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { MapPin, ArrowUpRight, Building2, Check, GraduationCap, Expand, Minimize, Focus, Map as MapIcon, Satellite, Plus, Minus, Tags } from 'lucide-react';
 import NearbyMapPlaces from './NearbyMapPlaces.jsx';
 import GoogleMapCanvas, { googleMapsEnabled } from './GoogleMapCanvas.jsx';
 import { Effects } from '@animate-ui/react/primitives/effects/effect';
@@ -38,6 +38,17 @@ function priceIcon(rooms, selected=false) {
   const text = new Intl.NumberFormat('vi-VN', {maximumFractionDigits:1}).format(price / 1000000);
   return L.divIcon({className:`nh-map-price-marker${selected?' is-selected':''}`,html:`<span>${rooms.length>1?'Từ ':''}${text} tr<span class="nh-map-price-unit">/tháng</span></span>`,iconSize:[108,38],iconAnchor:[54,42],popupAnchor:[0,-40]});
 }
+
+function landmarkIcon(label, selected) {
+  const content = document.createElement('span');
+  content.className = `nh-map-landmark-label${selected ? ' is-selected' : ''}`;
+  content.textContent = label;
+  return L.divIcon({
+    className: 'nh-map-landmark-marker', html: content, iconSize: [54, 30], iconAnchor: [27, 34], popupAnchor: [0, -31],
+  });
+}
+
+const radiusStyle = { color: '#6d348c', fillColor: '#a777c7', fillOpacity: 0.13, weight: 2, opacity: 0.75 };
 
 function Viewport({ points }) {
   const map = useMap();
@@ -84,7 +95,7 @@ export function MapCanvas(props) {
   return <LeafletMapCanvas {...props}/>;
 }
 
-function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nhà trọ', nearbyPoint }) {
+function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nhà trọ', nearbyPoint, radiusArea, legend }) {
   const [state,setState]=useState('loading');
   const [view,setView]=useState(satelliteAvailable&&import.meta.env.VITE_MAP_DEFAULT_VIEW!=='street'?'satellite':'street');
   const [showLabels,setShowLabels]=useState(true),[expanded,setExpanded]=useState(false),[revision,setRevision]=useState(0);
@@ -113,7 +124,9 @@ function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nh�
       <MapContainer center={AREA_CENTERS['Tân Xã']} zoom={14} minZoom={3} maxZoom={19} scrollWheelZoom={false} zoomControl={false}>
         <TileLayer key={`${view}-${revision}`} url={url} attribution={view==='satellite'?satelliteAttribution:streetAttribution} maxZoom={19} keepBuffer={1} eventHandlers={events}/>
         {view==='satellite'&&showLabels&&labelsUrl&&<TileLayer key={`labels-${revision}`} url={labelsUrl} attribution={labelsAttribution} maxZoom={19} keepBuffer={1} zIndex={2}/>}
-        <Viewport points={points}/>{children}<NearbyMapPlaces point={nearbyPoint===undefined?points[0]:nearbyPoint}/>
+        <Viewport points={points}/>
+        {radiusArea&&<Circle center={radiusArea.center} radius={radiusArea.meters} pathOptions={radiusStyle} interactive={false}/>}
+        {children}<NearbyMapPlaces point={nearbyPoint===undefined?points[0]:nearbyPoint}/>
         <MapTools points={points} expanded={expanded} onExpand={()=>{expandButton.current=document.activeElement;setExpanded(value=>!value);}}/>
       </MapContainer>
       <div className={`nh-map-layers${!satelliteAvailable?' nh-map-layers-street':''}`} aria-label="Lớp nền bản đồ">
@@ -121,7 +134,7 @@ function LeafletMapCanvas({ points, children, label = 'Bản đồ vị trí nh�
         {satelliteAvailable&&<MotionButton type="button" aria-pressed={view==='satellite'} className={view==='satellite'?'active':''} disabled={!satelliteAvailable} title={satelliteAvailable?'Xem ảnh vệ tinh':'Ảnh vệ tinh chưa khả dụng'} onClick={()=>{if(view!=='satellite'){setView('satellite');setState('loading');}}}><Satellite size={17}/>Vệ tinh</MotionButton>}
         {view==='satellite'&&labelsUrl&&<MotionButton type="button" aria-pressed={showLabels} title="Tên đường và địa điểm" onClick={()=>setShowLabels(value=>!value)}><Tags size={17}/><span>Nhãn</span></MotionButton>}
       </div>
-      <div className="nh-map-hint"><span className="nh-map-legend-pin"/>Vị trí nhà trọ <span>· Chạm ghim để xem thông tin</span></div>
+      <div className="nh-map-hint">{legend ?? <><span className="nh-map-legend-pin"/>Vị trí nhà trọ <span>· Chạm ghim để xem thông tin</span></>}</div>
       {state==='loading'&&<div className="nh-map-loading" role="status">Đang tải bản đồ…</div>}
     </div>
     {state==='error'&&<div className="accommodation-map-status" role="status"><span>Chưa tải được đầy đủ nền bản đồ.</span><div><MotionButton type="button" onClick={()=>{loading();setRevision(value=>value+1);}}>Thử lại</MotionButton>{view==='satellite'&&<MotionButton type="button" onClick={()=>{setView('street');setState('loading');}}>Dùng bản đồ đường phố</MotionButton>}</div></div>}
@@ -158,7 +171,24 @@ function SelectedRoomSummary({room,origin}) {
   return <motion.div className="nh-map-selection" inert={!present||undefined} aria-hidden={!present||undefined} initial={{opacity:0,y:reduce?0:shift.step,filter:blur.surface}} animate={{opacity:1,y:0,filter:'blur(0px)',transition:spring.pop}} exit={{opacity:0,y:reduce?0:shift.handoff,filter:blur.surface,transition:transition.dismiss}}><span className="nh-map-selection-icon"><MapPin size={20}/></span><div><small>ĐANG XEM VỊ TRÍ</small><strong>{room.propertyName} – {room.roomTypeName}</strong></div><Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Chi tiết phòng<ArrowUpRight size={17}/></Link></motion.div>;
 }
 
-export default function RoomsMap({ rooms, origin }) {
+const money = new Intl.NumberFormat('vi-VN');
+const mapPrice = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+
+function RoomMapPopup({ group, origin, distanceLabel }) {
+  return <div className="accommodation-map-popup">
+    {group.map(room => <article key={room.roomTypeId}>
+      {room.imageUrl&&<img src={room.imageUrl} alt="" loading="lazy" onError={event=>{event.currentTarget.hidden=true;}}/>}
+      <strong>{room.propertyName} – {room.roomTypeName}</strong>
+      <p>{money.format(room.price)} đ/tháng</p>
+      <p>{room.address}</p>
+      {origin&&<p>{distanceLabel}: {formatDistance(room.distanceKm)}</p>}
+      {room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}
+      <Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link>
+    </article>)}
+  </div>;
+}
+
+export default function RoomsMap({ rooms, origin, radiusKm, loading, error, retry, onCampusSelect, onOpenFilters }) {
   const [selectedId,setSelectedId]=useState(null);
   const [focusRequest,setFocusRequest]=useState(0);
   const {spring,shift,stagger,scale,blur}=useMotionTokens();
@@ -166,33 +196,78 @@ export default function RoomsMap({ rooms, origin }) {
   const selected=located.find(room=>room.roomTypeId===selectedId);
   const groups=new Map();
   for(const room of located){const key=roomCoordinates(room).join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(room);}
-  if(!located.length)return <p className="accommodation-map-empty" role="status">Các phòng trên trang này chưa có tọa độ hợp lệ. Hãy xem danh sách hoặc chuyển trang.</p>;
-  const money=value=>new Intl.NumberFormat('vi-VN').format(value);
+  const activeCampus = searchCampusForOrigin(origin);
+  const originPoint = origin && [origin.originLat, origin.originLng];
+  const radiusArea = originPoint && radiusKm ? { center: originPoint, meters: radiusKm * 1000 } : null;
+  const distanceLabel = activeCampus ? `Cách ${activeCampus.name}` : 'Khoảng cách';
+  const landmarks = SEARCH_CAMPUSES.map(school => {
+    const active = school.id === activeCampus?.id;
+    return {
+      id: school.id, point: [school.origin.originLat, school.origin.originLng],
+      title: school.name, landmarkLabel: school.mapLabel, active,
+      popup: <div className="nh-map-landmark-popup">
+        <strong>{school.name}</strong>
+        <p>{school.site}</p>
+        {active ? <span>Đang dùng làm mốc tìm phòng</span>
+          : <button type="button" onClick={()=>onCampusSelect(school)}>Tìm phòng quanh trường này</button>}
+      </div>,
+    };
+  });
+  if(originPoint && !activeCampus)landmarks.push({
+    id: 'search-origin', point: originPoint, title: 'Ghim đã chọn', landmarkLabel: 'Mốc tìm', active: true,
+  });
+  const roomMarkers = [...groups.entries()].map(([id, group]) => ({
+    id, group, point: roomCoordinates(group[0]), title: group[0].propertyName,
+    price: mapPrice.format(Math.min(...group.map(room=>room.price))/1000000)+' tr/tháng',
+    popup: <RoomMapPopup group={group} origin={origin} distanceLabel={distanceLabel}/>,
+  }));
+  const markers = [...landmarks, ...roomMarkers];
+  const bounds = radiusArea && L.latLng(radiusArea.center).toBounds(radiusArea.meters * 2);
+  const points = bounds
+    ? [bounds.getSouthWest(), bounds.getNorthEast()].map(({ lat, lng }) => [lat, lng])
+    : markers.map(marker => marker.point);
+  const selectRoomMarker = id => {
+    const room = groups.get(id)?.[0];
+    if(room)setSelectedId(room.roomTypeId);
+  };
+  const legend = <><span className="nh-map-campus-legend"><GraduationCap size={15} aria-hidden="true"/>Trường</span><span className="nh-map-room-legend"><span className="nh-map-legend-pin"/>Nhà trọ</span></>;
   return <section className="nh-map-explorer" aria-label="Khám phá phòng trên bản đồ">
-    <header className="nh-map-explorer-heading"><div><span className="nh-map-eyebrow"><Navigation size={14}/>KHÁM PHÁ KHU VỰC</span><h3>Tìm một nơi để gọi là nhà</h3><p>Chọn phòng, xem vị trí và khám phá khu vực xung quanh.</p></div><span className="nh-map-total"><Building2 size={17}/>{new Set(located.map(room=>room.propertyId)).size} nhà trọ <span>· {located.length} loại phòng</span></span></header>
+    <header className="nh-map-explorer-heading">
+      <div><h3>{activeCampus ? `Phòng trọ quanh ${activeCampus.name}` : 'Bản đồ nhà trọ Hòa Lạc'}</h3>
+        <p>{radiusKm ? `Bán kính ${formatDistance(radiusKm)} theo đường thẳng` : 'Chọn ghim trường để tìm phòng gần trường.'}</p></div>
+      {!loading&&!error&&located.length>0&&<span className="nh-map-total"><Building2 size={17}/>{new Set(located.map(room=>room.propertyId)).size} nhà trọ <span>· {located.length} loại phòng trên trang</span></span>}
+    </header>
     <div className="nh-map-workspace">
       <aside className="nh-map-room-panel" aria-label="Phòng có vị trí trên trang này"><div className="nh-map-panel-heading"><strong>Phòng trên bản đồ</strong><span>Chọn thẻ để định vị</span></div>
-        <div className="nh-map-room-list"><Effects asChild fade slide={{offset:shift.step}} zoom={{initialScale:scale.menu}} blur={{initialBlur:parseFloat(blur.surface.replace('blur(',''))}} holdDelay={stagger.stack*1000} transition={spring.entrance}>
+        {!located.length && <div className="nh-map-panel-status" role={error ? 'alert' : 'status'}>
+          <strong>{loading ? 'Đang tìm phòng trọ…' : error ? 'Không thể tải danh sách nhà trọ' : rooms.length ? 'Phòng chưa có vị trí trên bản đồ' : 'Không tìm thấy phòng trọ phù hợp'}</strong>
+          {!loading&&<p>{error || (rooms.length ? 'Bạn vẫn có thể xem các phòng này ở chế độ danh sách.' : 'Thử nới bán kính hoặc bỏ bớt tiêu chí lọc.')}</p>}
+          {error&&<button type="button" className="p-button" onClick={retry}>Thử tải phòng lại</button>}
+          {!loading&&!error&&!rooms.length&&<button type="button" className="p-button" onClick={onOpenFilters}>Chỉnh bộ lọc</button>}
+        </div>}
+        {located.length>0&&<div className="nh-map-room-list"><Effects asChild fade slide={{offset:shift.step}} zoom={{initialScale:scale.menu}} blur={{initialBlur:parseFloat(blur.surface.replace('blur(',''))}} holdDelay={stagger.stack*1000} transition={spring.entrance}>
           {located.map(room=><article key={room.roomTypeId} className={`nh-map-room-card${selectedId===room.roomTypeId?' selected':''}`}>
             <MotionButton type="button" className="nh-map-room-choice" tapScale={scale.choice} aria-pressed={selectedId===room.roomTypeId} aria-label={`Xem vị trí ${room.propertyName} – ${room.roomTypeName}`} onClick={()=>{setSelectedId(room.roomTypeId);setFocusRequest(value=>value+1);}}>
               <span className="nh-map-room-photo"><RoomMapPhoto room={room}/>{selectedId===room.roomTypeId&&<span className="nh-map-chosen"><Check size={13}/></span>}</span>
-              <span className="nh-map-room-copy"><span className="nh-map-card-title">{room.propertyName}</span><span className="nh-map-card-type">{room.roomTypeName}</span><span className="nh-map-card-address"><MapPin size={12}/>{room.address||'Chưa cập nhật địa chỉ'}</span>{origin&&<span>Khoảng cách: {formatDistance(room.distanceKm)}</span>}{room.availabilityStale===true&&<span className="accommodation-freshness">{availabilityWarning}</span>}<span className="nh-map-card-price">{money(room.price)} đ <small>/tháng</small></span></span>
+              <span className="nh-map-room-copy"><span className="nh-map-card-title">{room.propertyName}</span><span className="nh-map-card-type">{room.roomTypeName}</span><span className="nh-map-card-address"><MapPin size={12}/>{room.address||'Chưa cập nhật địa chỉ'}</span>{origin&&<span>{distanceLabel}: {formatDistance(room.distanceKm)}</span>}{room.availabilityStale===true&&<span className="accommodation-freshness">{availabilityWarning}</span>}<span className="nh-map-card-price">{money.format(room.price)} đ <small>/tháng</small></span></span>
             </MotionButton>
           </article>)}
-        </Effects></div>
-        <footer className="nh-map-panel-footer"><span className="nh-map-legend-pin"/>{located.length}/{rooms.length} loại phòng có tọa độ trên trang này</footer>
+        </Effects></div>}
+        {rooms.length>0&&<footer className="nh-map-panel-footer"><span className="nh-map-legend-pin"/>{located.length}/{rooms.length} loại phòng có tọa độ trên trang này</footer>}
       </aside>
-      <div className="nh-map-explorer-canvas"><MapCanvas points={[...groups.values()].map(group=>roomCoordinates(group[0]))} nearbyPoint={selected?roomCoordinates(selected):undefined}
- markers={[...groups.entries()].map(([id,group])=>({id,point:roomCoordinates(group[0]),title:group[0].propertyName,price:new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(Math.min(...group.map(r=>r.price))/1000000)+' tr/tháng',popup:<div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}><strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link></article>)}</div>}))}
- selectedKey={selected?roomCoordinates(selected).join(','):null} onMarkerSelect={id=>setSelectedId(groups.get(id)[0].roomTypeId)} focusRequest={focusRequest} focusPoint={selected?roomCoordinates(selected):null}>
+      <div className="nh-map-explorer-canvas"><MapCanvas points={points} nearbyPoint={roomCoordinates(selected??located[0])}
+        label="Bản đồ trường học và nhà trọ Hòa Lạc" markers={markers} radiusArea={radiusArea} legend={legend}
+        selectedKey={selected?roomCoordinates(selected).join(','):null} onMarkerSelect={selectRoomMarker} focusRequest={focusRequest} focusPoint={selected?roomCoordinates(selected):null}>
         <SelectedRoomFocus room={selected} request={focusRequest}/>
-        {[...groups.entries()].map(([key,group])=><Marker key={key} position={roomCoordinates(group[0])} icon={priceIcon(group,group.some(room=>room.roomTypeId===selectedId))} title={group[0].propertyName} eventHandlers={{click:()=>setSelectedId(group[0].roomTypeId)}}>
-          <Popup maxHeight={190}><div className="accommodation-map-popup">{group.map(room=><article key={room.roomTypeId}>
-            {room.imageUrl&&<img src={room.imageUrl} alt="" loading="lazy" onError={event=>{event.currentTarget.hidden=true;}}/>}<strong>{room.propertyName} – {room.roomTypeName}</strong><p>{money(room.price)} đ/tháng</p><p>{room.address}</p>{origin&&<p>Khoảng cách: {formatDistance(room.distanceKm)}</p>}{room.availabilityStale===true&&<p className="accommodation-freshness">{availabilityWarning}</p>}<Link to={withSearchOrigin(accommodationDetailUrl(room),origin)}>Xem chi tiết phòng</Link>
-          </article>)}</div></Popup>
+        {landmarks.map(({ id, point, title, landmarkLabel, active, popup })=><Marker key={id} position={point}
+          icon={landmarkIcon(landmarkLabel,active)} title={title} alt={title} zIndexOffset={active?700:500}>
+          {popup&&<Popup maxWidth={265} autoPanPaddingTopLeft={[12,112]}>{popup}</Popup>}
+        </Marker>)}
+        {roomMarkers.map(({ id, point, title, group, popup })=><Marker key={id} position={point} icon={priceIcon(group,group.some(room=>room.roomTypeId===selectedId))} title={title} eventHandlers={{click:()=>selectRoomMarker(id)}}>
+          <Popup maxHeight={190} autoPanPaddingTopLeft={[12,112]}>{popup}</Popup>
         </Marker>)}
       </MapCanvas></div>
     </div>
-    <div className="nh-map-selection-slot" aria-live="polite"><AnimatePresence initial={false} mode="wait">{selected?<SelectedRoomSummary key={selected.roomTypeId} room={selected} origin={origin}/>:<div className="nh-map-selection-empty"><Focus size={18}/><span>Chọn một thẻ phòng hoặc ghim giá để bắt đầu khám phá.</span></div>}</AnimatePresence></div>
+    <div className="nh-map-selection-slot" aria-live="polite"><AnimatePresence initial={false} mode="wait">{selected&&<SelectedRoomSummary key={selected.roomTypeId} room={selected} origin={origin}/>}</AnimatePresence></div>
   </section>;
 }

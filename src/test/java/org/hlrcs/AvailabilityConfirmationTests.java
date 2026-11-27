@@ -92,7 +92,7 @@ class AvailabilityConfirmationTests {
     }
     @Test void publicReadersFlagOldDataEvenWhenNoRoomsAreVacantAndRenewalClearsWarning() throws Exception {
         occupied.setStatus("VACANT");rooms.save(occupied);
-        type.setAvailabilityConfirmedAt(Instant.now().minus(Duration.ofDays(8)));type.setAvailabilityConfirmedBy(owner);types.save(type);
+        type.setAvailabilityConfirmedAt(Instant.now().minus(Duration.ofDays(31)));type.setAvailabilityConfirmedBy(owner);types.save(type);
         var old=publicDetail();assertEquals("STALE",old.path("availabilityConfirmationStatus").asString());assertTrue(old.path("availabilityStale").asBoolean());assertEquals(2,old.path("availableRooms").asInt());
         vacant.setStatus("OCCUPIED");occupied.setStatus("OCCUPIED");rooms.save(vacant);rooms.save(occupied);
         assertEquals(0,publicDetail().path("availableRooms").asInt());assertTrue(publicDetail().path("availabilityStale").asBoolean());
@@ -127,7 +127,7 @@ class AvailabilityConfirmationTests {
     @Test void legacyPublicListingAndSearchExposeSameFreshnessWithoutReviewerIdentity() throws Exception {
         var registration=registrations.findById(type.getProperty().getRegistration().getRegistrationId()).orElseThrow();
         registration.setRegistrationDetails("{\"termsAccepted\":true}");registrations.save(registration);
-        type.setAvailabilityConfirmedAt(Instant.now().minus(Duration.ofDays(8)));type.setAvailabilityConfirmedBy(owner);types.save(type);
+        type.setAvailabilityConfirmedAt(Instant.now().minus(Duration.ofDays(31)));type.setAvailabilityConfirmedBy(owner);types.save(type);
         var response=call("GET","/api/public/properties",null,null);assertEquals(200,response.statusCode(),response.body());
         JsonNode listing=null;
         for(var row:json.readTree(response.body()).path("data"))if(row.path("propertyId").asInt()==type.getProperty().getPropertyId())listing=row;

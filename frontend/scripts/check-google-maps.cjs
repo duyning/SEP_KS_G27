@@ -5,9 +5,10 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  await page.addInitScript(()=>{
   class Events{handlers={};addListener(n,fn){(this.handlers[n]??=[]).push(fn);return {remove:()=>{this.handlers[n]=this.handlers[n].filter(f=>f!==fn);}};}emit(n,e){this.handlers[n]?.forEach(fn=>fn(e));}}
   class MapMock extends Events{constructor(el,options){super();this.el=el;this.zoom=options.zoom;window.testMap=this;el.style.background='#e7efeb';el.addEventListener('click',e=>{if(e.target===el)this.emit('click',{latLng:{lat:()=>21.02,lng:()=>105.53}});});setTimeout(()=>this.emit('tilesloaded'),100);}setCenter(p){this.center=p;}setZoom(z){this.zoom=z;}getZoom(){return this.zoom;}fitBounds(b){this.bounds=b;}setMapTypeId(v){this.view=v;}}
-  class Marker extends Events{constructor(o){super();Object.assign(this,o);this.button=document.createElement('button');this.button.type='button';Object.assign(this.button.style,{position:'absolute',top:'200px',left:'40%'});this.button.setAttribute('aria-label',o.title);this.button.append(o.content);this.button.addEventListener('click',()=>this.emit('click'));o.map.el.append(this.button);(window.testMarkers??=[]).push(this);}set map(v){this._map=v;if(!v)this.button?.remove();}get map(){return this._map;}}
+  class Marker extends Events{constructor(o){super();Object.assign(this,o);this.button=document.createElement('button');this.button.type='button';Object.assign(this.button.style,{position:'absolute',top:'200px',left:'40%'});this.button.setAttribute('aria-label',o.title);this.button.append(o.content);this.button.addEventListener('click',()=>this.emit(o.gmpClickable?'gmp-click':'click'));o.map.el.append(this.button);(window.testMarkers??=[]).push(this);}set map(v){this._map=v;if(!v)this.button?.remove();}get map(){return this._map;}addEventListener(name,fn){this.addListener(name,fn);}removeEventListener(name,fn){this.handlers[name]=this.handlers[name].filter(handler=>handler!==fn);}}
   class InfoWindow{constructor(o){this.node=o.content;}open(o){o.map.el.append(this.node);}close(){this.node.remove();}}
-  window.google={maps:{importLibrary:async()=>({Map:MapMock,AdvancedMarkerElement:Marker,InfoWindow}),LatLngBounds:class{extend(){}},event:{trigger(){},clearInstanceListeners(){}}}};
+  class Circle{constructor(options){Object.assign(this,options);window.testSearchCircle=this;}setMap(map){this.map=map;}}
+  window.google={maps:{importLibrary:async()=>({Map:MapMock,AdvancedMarkerElement:Marker,InfoWindow,Circle}),LatLngBounds:class{extend(){}},event:{trigger(){},clearInstanceListeners(){}}}};
  });
 
  const room={propertyId:12,roomTypeId:34,propertyName:'Nhà trọ kiểm thử',roomTypeName:'Studio',price:2200000,areaSqm:25,verificationStatus:'APPROVED',availableRooms:2,address:'Tân Xã',latitude:21.0188,longitude:105.5215};
@@ -25,7 +26,17 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  for(const width of [375,768,1024,1440]){await page.setViewportSize({width,height:1000});await page.locator('.nh-map-explorer').screenshot({path:'target/google-fixture-'+width+'.png'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Fits '+width);await page.screenshot({path:'target/google-fixture-'+width+'.png'});}
  await page.evaluate(()=>document.documentElement.style.zoom='2');assert.ok(await page.locator('.nh-map-layers button').first().isVisible());await page.evaluate(()=>document.documentElement.style.zoom='1');
  await page.locator('.nh-map-layers').getByRole('button',{name:'Bản đồ',exact:true}).focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>window.testMap.view),'roadmap');
+ assert.equal(await page.locator('.nh-google-canvas .nh-map-landmark-label').count(),4);
+ await page.locator('.nh-google-canvas').getByRole('button',{name:'Học viện Tài chính',exact:true}).focus();
+ await page.keyboard.press('Enter');
+ await page.getByRole('button',{name:'Tìm phòng quanh trường này',exact:true}).click();
+ await page.waitForURL(url=>url.searchParams.get('originLat')==='21.0212183'&&url.searchParams.get('radiusKm')==='2');
+ await page.waitForFunction(()=>window.testSearchCircle?.radius===2000);
+ assert.equal(await page.locator('.nh-google-canvas .nh-map-landmark-label.is-selected').innerText(),'HVTC');
+ await page.getByRole('button',{name:/Xem vị trí Nhà trọ kiểm thử/}).waitFor();
  await page.evaluate(()=>window.dispatchEvent(new Event('hlrcs:google-maps-auth-error')));await page.locator('.leaflet-container').waitFor();assert.equal(await page.locator('.nh-map-room-choice[aria-pressed="true"]').count(),1);
+ assert.equal(await page.locator('.nh-map-landmark-marker .is-selected').innerText(),'HVTC');
+ assert.equal(await page.evaluate(()=>window.testSearchCircle.map),null);
  await page.evaluate(()=>sessionStorage.setItem('hlrcs_access_token','google-fixture'));await page.goto('http://127.0.0.1:5174/host/property/new');await page.locator('#name').fill('Nhà trọ Google');await page.locator('#description').fill('Nhà trọ đầy đủ thông tin, sạch sẽ và thoáng mát.');await page.locator('#managerName').fill('Chủ trọ kiểm thử');await page.locator('#contactPhone').fill('0912345678');await page.getByRole('button',{name:/Tiếp tục/}).click();
  await page.locator('.registration-map-shell .nh-google-canvas').waitFor();await page.locator('#addressDetail').fill('Giữ địa chỉ đã nhập');await page.locator('.registration-map-shell .nh-google-canvas').click({position:{x:200,y:230}});await page.locator('.nh-google-pin').waitFor();assert.ok(await page.evaluate(()=>window.testMap.center.lat===21.02));await page.evaluate(()=>window.testMarkers.at(-1).emit('dragend',{latLng:{lat:()=>21.03,lng:()=>105.54}}));await page.waitForFunction(()=>window.testMap.center.lat===21.03);
  await page.evaluate(()=>window.dispatchEvent(new Event('hlrcs:google-maps-auth-error')));await page.locator('.leaflet-container').waitFor();assert.equal(await page.locator('#addressDetail').inputValue(),'Giữ địa chỉ đã nhập');assert.equal(await page.locator('.nh-map-marker').count(),1);assert.deepEqual(errors,[]);

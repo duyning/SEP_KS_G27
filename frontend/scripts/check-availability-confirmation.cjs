@@ -54,7 +54,7 @@ async function main(){
   await page.getByRole('dialog').waitFor({state:'hidden'});assert.equal(writes,2,'one failed and one successful request');
   await page.reload();await page.getByText(/Đã xác nhận:/).waitFor();
   Object.assign(type,{availabilityConfirmedAt:'2026-01-01T13:00:00Z',availabilityConfirmationStatus:'STALE',availabilityStale:true});
-  await page.reload();await page.getByText(/Quá 7 ngày chưa xác nhận/).waitFor();
+  await page.reload();await page.getByText(/Quá 30 ngày chưa xác nhận/).waitFor();
   await page.screenshot({path:path.join(output,'host-stale-1440.png'),fullPage:true});
   await page.getByRole('button',{name:'Dạng bảng dữ liệu',exact:true}).click();
   await page.getByRole('button',{name:'Xác nhận tình trạng phòng',exact:true}).click();
@@ -64,13 +64,13 @@ async function main(){
   await page.addInitScript(()=>sessionStorage.removeItem('hlrcs_access_token'));
   for(const width of [375,768,1024,1440]){
    await page.setViewportSize({width,height:1000});await page.goto(base+'/search');
-   await page.getByText(/Quá 7 ngày chưa xác nhận/).first().waitFor();
+   await page.getByText(/Quá 30 ngày chưa xác nhận/).first().waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),true,`search overflow ${width}`);
    await page.screenshot({path:path.join(output,`search-stale-${width}.png`),fullPage:true});
   }
-  await page.goto(base+'/properties/detail?propertyId=1&roomTypeId=12');await page.getByText(/Quá 7 ngày chưa xác nhận/).first().waitFor();
+  await page.goto(base+'/properties/detail?propertyId=1&roomTypeId=12');await page.getByText(/Quá 30 ngày chưa xác nhận/).first().waitFor();
   await page.screenshot({path:path.join(output,'detail-stale-1440.png'),fullPage:true});
-  await page.goto(base+'/');await page.getByText(/Quá 7 ngày chưa xác nhận/).first().waitFor();
+  await page.goto(base+'/');await page.getByText(/Quá 30 ngày chưa xác nhận/).first().waitFor();
   await page.screenshot({path:path.join(output,'home-stale-1440.png'),fullPage:true});
   assert.deepEqual(errors,[]);console.log('PASS: host confirmation, failure/retry, duplicate protection, reload, stale search/detail, four widths, keyboard/focus and zoom.');
  } finally {await browser.close();}

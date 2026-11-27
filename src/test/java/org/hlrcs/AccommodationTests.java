@@ -157,7 +157,7 @@ class AccommodationTests {
         eligible.setPrice(BigDecimal.valueOf(2345678));
         eligible.setCapacity(2);
         eligible.setAmenitiesJson("[\"airConditioner\"]");
-        eligible.setAvailabilityConfirmedAt(Instant.now().minus(8, ChronoUnit.DAYS));
+        eligible.setAvailabilityConfirmedAt(Instant.now().minus(31, ChronoUnit.DAYS));
         types.save(eligible);
         var registration = eligible.getProperty().getRegistration();
         registration.setRegistrationDetails("{\"amenities\":[\"laundry\"]}");

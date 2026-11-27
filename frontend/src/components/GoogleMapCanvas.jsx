@@ -23,7 +23,7 @@ function createHouseIcon() {
 }
 
 // React owns the surrounding UI; Google alone owns the canvas and marker transforms.
-export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarkerSelect, selectedKey, focusRequest, focusPoint, label, fallback }) {
+export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarkerSelect, selectedKey, focusRequest, focusPoint, radiusArea, legend, label, fallback }) {
   const host=useRef(), runtime=useRef(), latest=useRef();
   latest.current={points,markers,onSelect,onMarkerSelect,selectedKey,focusPoint};
   const [ready,setReady]=useState(false),[loaded,setLoaded]=useState(false),[failed,setFailed]=useState(false),[view,setView]=useState('roadmap'),[popup,setPopup]=useState(null);
@@ -41,10 +41,10 @@ export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarker
     (async()=>{
       try{
         const maps=await loadGoogleMaps();
-        const [{Map:GoogleMap,InfoWindow},{AdvancedMarkerElement}]=await Promise.all([maps.importLibrary('maps'),maps.importLibrary('marker')]);
+        const [{Map:GoogleMap,InfoWindow,Circle},{AdvancedMarkerElement}]=await Promise.all([maps.importLibrary('maps'),maps.importLibrary('marker')]);
         if(!active)return;
         const map=new GoogleMap(host.current,{center:{lat:points[0][0],lng:points[0][1]},zoom:16,mapId:GOOGLE_MAPS_MAP_ID,mapTypeId:'roadmap',mapTypeControl:false,streetViewControl:false,fullscreenControl:true,zoomControl:true,gestureHandling:'cooperative',clickableIcons:true});
-        runtime.current={map,maps,AdvancedMarkerElement,InfoWindow,items:new globalThis.Map()};
+        runtime.current={map,maps,AdvancedMarkerElement,InfoWindow,Circle,items:new globalThis.Map()};
         fit();
         click=map.addListener('click',e=>{if(e.latLng&&!e.placeId)latest.current.onSelect?.(e.latLng.lat(),e.latLng.lng());});
         idle=map.addListener('tilesloaded',()=>{if(active){clearTimeout(timer);setLoaded(true);}});
@@ -63,6 +63,17 @@ export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarker
   },[failed]);
   const pointsKey=JSON.stringify(points);
   useEffect(()=>{if(ready)fit();},[ready,pointsKey]);
+  const [radiusLat,radiusLng]=radiusArea?.center??[];
+  const radiusMeters=radiusArea?.meters;
+  useEffect(()=>{
+    const r=runtime.current;
+    if(!r||!ready||!radiusMeters)return;
+    const circle=new r.Circle({
+      map:r.map,center:{lat:radiusLat,lng:radiusLng},radius:radiusMeters,clickable:false,
+      strokeColor:'#6d348c',strokeOpacity:.75,strokeWeight:2,fillColor:'#a777c7',fillOpacity:.13,
+    });
+    return ()=>circle.setMap(null);
+  },[ready,radiusLat,radiusLng,radiusMeters]);
   useEffect(()=>{
     const r=runtime.current;if(!r||!ready||failed)return;
     const keys=new Set(markers.map(m=>m.id));
@@ -71,18 +82,30 @@ export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarker
       let item=r.items.get(data.id);
       if(!item){
         const content=document.createElement('div');
-        const marker=new r.AdvancedMarkerElement({map:r.map,position:{lat:data.point[0],lng:data.point[1]},title:data.title||'Vị trí nhà trọ',content,gmpDraggable:Boolean(onSelect)});
-        const listeners=[marker.addListener('click',()=>{
+        const campusButton=Boolean(data.landmarkLabel&&data.popup);
+        const marker=new r.AdvancedMarkerElement({map:r.map,position:{lat:data.point[0],lng:data.point[1]},title:data.title||'Vị trí nhà trọ',content,gmpDraggable:Boolean(onSelect),gmpClickable:campusButton});
+        const activate=()=>{
           const current=latest.current.markers.find(m=>m.id===data.id);if(!current)return;
           latest.current.onMarkerSelect?.(current.id);
-          if(current.popup){r.info?.close();const node=document.createElement('div');r.info=new r.InfoWindow({content:node,maxWidth:290});setPopup({node,content:current.popup});r.info.open({map:r.map,anchor:marker});}
-        }),marker.addListener('dragend',e=>{if(e.latLng)latest.current.onSelect?.(e.latLng.lat(),e.latLng.lng());})];
+          if(current.popup){r.info?.close();const node=document.createElement('div');r.info=new r.InfoWindow({content:node,maxWidth:290});setPopup({node,id:current.id});r.info.open({map:r.map,anchor:marker});}
+        };
+        const listeners=[marker.addListener('dragend',e=>{if(e.latLng)latest.current.onSelect?.(e.latLng.lat(),e.latLng.lng());})];
+        if(campusButton){
+          marker.addEventListener('gmp-click',activate);
+          listeners.push({remove:()=>marker.removeEventListener('gmp-click',activate)});
+        }else listeners.push(marker.addListener('click',activate));
         item={marker,content,listeners};r.items.set(data.id,item);
       }
       item.marker.position={lat:data.point[0],lng:data.point[1]};
-      item.content.className=`nh-google-pin${data.price?' nh-google-price':''}${data.id===selectedKey?' is-selected':''}`;
-      if(data.price)item.content.textContent=data.price;
-      else if (!item.content.firstElementChild) item.content.replaceChildren(createHouseIcon());
+      if(data.landmarkLabel){
+        item.marker.zIndex=data.active?700:500;
+        item.content.className=`nh-map-landmark-label${data.active?' is-selected':''}`;
+        item.content.textContent=data.landmarkLabel;
+      }else{
+        item.content.className=`nh-google-pin${data.price?' nh-google-price':''}${data.id===selectedKey?' is-selected':''}`;
+        if(data.price)item.content.textContent=data.price;
+        else if (!item.content.firstElementChild) item.content.replaceChildren(createHouseIcon());
+      }
     }
   },[ready,failed,markers,selectedKey,onSelect]);
   useEffect(()=>{const r=runtime.current,p=latest.current.focusPoint;if(r&&focusRequest&&p){r.info?.close();r.map.setCenter({lat:p[0],lng:p[1]});r.map.setZoom(Math.max(15,r.map.getZoom()));}},[focusRequest,ready]);
@@ -94,8 +117,8 @@ export default function GoogleMapCanvas({ points, markers=[], onSelect, onMarker
         <MotionButton type="button" aria-pressed={view==='hybrid'} className={view==='hybrid'?'active':''} onClick={()=>{runtime.current?.map.setMapTypeId('hybrid');setView('hybrid');}}><Satellite size={17}/>Vệ tinh</MotionButton>
         <MotionButton type="button" aria-label="Xem vị trí các ghim" onClick={fit}><Focus size={17}/></MotionButton>
       </div>
-      <div className="nh-map-hint">{onSelect?'Nhấn bản đồ hoặc kéo ghim để chọn vị trí':'Chạm ghim để xem phòng'} · Địa điểm xung quanh hiển thị theo mức thu phóng</div>
+      <div className="nh-map-hint">{legend ?? <>{onSelect?'Nhấn bản đồ hoặc kéo ghim để chọn vị trí':'Chạm ghim để xem phòng'} · Địa điểm xung quanh hiển thị theo mức thu phóng</>}</div>
       {!loaded&&<div className="nh-map-loading" role="status">Đang kết nối Google Maps…</div>}
-    </div>{popup&&createPortal(popup.content,popup.node)}
+    </div>{popup&&createPortal(markers.find(marker=>marker.id===popup.id)?.popup,popup.node)}
   </div>;
 }

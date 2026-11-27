@@ -8,7 +8,7 @@ const base=process.env.AVAILABILITY_TEST_URL||'http://127.0.0.1:5187';
  await page.addInitScript(()=>sessionStorage.setItem('hlrcs_access_token','room-fixture-only'));
  const property={propertyId:12,name:'Nhà trọ kiểm thử',address:'Tân Xã',status:'ACTIVE'};
  const type={roomTypeId:34,propertyId:12,roomType:'Studio Ban công',price:2200000,areaSqm:25,capacity:2,deposit:2200000,amenities:[],images:[],totalRooms:1,vacantRooms:1};
- let room={...type,roomId:1,roomNumber:'P.204',floor:'Tầng 2',status:'VACANT',customPrice:null,confirmedAt:'2026-10-25T22:39:00',confirmationStatus:'STALE',confirmationStale:true};let writes=0;
+ let room={...type,roomId:1,roomNumber:'P.204',floor:'Tầng 2',status:'VACANT',customPrice:null,confirmedAt:'2026-10-01T22:39:00',confirmationStatus:'STALE',confirmationStale:true};let writes=0;
  await page.route('**/api/**',async route=>{
  const p=new URL(route.request().url()).pathname;let data;
  if(p==='/api/auth/me')data={userId:1,fullName:'Chủ trọ kiểm thử',role:'ROOM_HOST'};
@@ -23,16 +23,16 @@ const base=process.env.AVAILABILITY_TEST_URL||'http://127.0.0.1:5187';
  });
  await page.goto(base+'/host/rooms?propertyId=12');await page.getByRole('button',{name:/^Phòng P\.204 ·/}).click();
  const dialog=page.getByRole('dialog',{name:'Phòng P.204',exact:true});await dialog.waitFor();
- await dialog.getByText(/Quá 7 ngày chưa xác nhận · Lần cuối:/).waitFor();
+ await dialog.getByText(/Quá 30 ngày chưa xác nhận · Lần cuối:/).waitFor();
  const button=dialog.getByRole('button',{name:/Còn trống/});assert.equal(await button.isEnabled(),true);
  const output=path.resolve(__dirname,'../../target/availability-browser');fs.mkdirSync(output,{recursive:true});
  for(const width of [375,1440]){
   await page.setViewportSize({width,height:1000});assert.equal(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true);
-  await dialog.getByText(/Quá 7 ngày chưa xác nhận · Lần cuối:/).scrollIntoViewIfNeeded();
+  await dialog.getByText(/Quá 30 ngày chưa xác nhận · Lần cuối:/).scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(output,`room-204-stale-${width}.png`)});
  }
  await button.click();await dialog.getByText(/Đã xác nhận:/).waitFor();assert.equal(writes,1);assert.equal(room.status,'VACANT');
- assert.equal(await button.isDisabled(),true);assert.equal(await dialog.getByText(/Quá 7 ngày chưa xác nhận/).count(),0);
+ assert.equal(await button.isDisabled(),true);assert.equal(await dialog.getByText(/Quá 30 ngày chưa xác nhận/).count(),0);
  assert.deepEqual(errors,[]);console.log('PASS: P.204 stale warning, 25/10 Vietnam date, mobile/desktop, re-confirm same status without changing vacancy.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

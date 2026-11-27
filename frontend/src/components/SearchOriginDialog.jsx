@@ -28,17 +28,20 @@ export default function SearchOriginDialog({ origin, radiusKm, onApply, onClose 
     onApply(selectedOrigin, km);
   }
 
-  return <Modal title="Tìm quanh địa điểm" onClose={onClose}>
+  return <Modal title="Tìm quanh địa điểm" onClose={onClose} className="search-location-dialog">
     <form className="location-search-form" onSubmit={submit}>
-      <p>Nhấn vào bản đồ hoặc kéo ghim để chọn địa điểm. Nhập bán kính nếu muốn giới hạn khu vực tìm kiếm.</p>
-      <MapCanvas label="Bản đồ chọn địa điểm tính khoảng cách" onSelect={select} nearbyPoint={null}
-        points={[point || [FPT_ORIGIN.originLat, FPT_ORIGIN.originLng]]}
-        markers={point ? [{ id: 'search-origin', point, title: 'Địa điểm tính khoảng cách' }] : []}>
-        <LocationMarker point={point} onSelect={select} title="Địa điểm tính khoảng cách" hint="Kéo ghim để đổi địa điểm tính khoảng cách." />
-      </MapCanvas>
-      <label>Bán kính (km)<input type="number" step="any" max={MAX_RADIUS_KM} placeholder="Không giới hạn"
-        value={radius} onChange={event => setRadius(event.target.value)} /></label>
-      {error && <p className="portal-form-alert" role="alert">{error}</p>}
+      <div className="location-search-body">
+        <p>Nhấn bản đồ hoặc kéo ghim để chọn địa điểm.</p>
+        <MapCanvas label="Bản đồ chọn địa điểm tính khoảng cách" onSelect={select} nearbyPoint={null}
+          legend="Ghim địa điểm tìm phòng"
+          points={[point || [FPT_ORIGIN.originLat, FPT_ORIGIN.originLng]]}
+          markers={point ? [{ id: 'search-origin', point, title: 'Địa điểm tính khoảng cách' }] : []}>
+          <LocationMarker point={point} onSelect={select} title="Địa điểm tính khoảng cách" hint="Kéo ghim để đổi địa điểm tính khoảng cách." />
+        </MapCanvas>
+        <label>Bán kính (km)<input type="number" step="any" max={MAX_RADIUS_KM} placeholder="Không giới hạn"
+          value={radius} onChange={event => setRadius(event.target.value)} /></label>
+        {error && <p className="portal-form-alert" role="alert">{error}</p>}
+      </div>
       <div className="location-search-actions">
         <button type="button" className="p-button" onClick={onClose}>Hủy</button>
         <button type="submit" className="p-button primary">Áp dụng địa điểm</button>

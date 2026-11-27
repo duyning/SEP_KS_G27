@@ -19,6 +19,34 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  });
  const base='http://127.0.0.1:5173/search';await page.goto(base);await page.locator('.room-card').first().waitFor();
  assert.equal(await page.locator('.room-card').count(),6);assert.equal(await page.locator('.navbar-wrapper').count(),1);assert.equal(await page.locator('.footer-wrapper').count(),1);assert.equal(await page.locator('#resultsCount strong').innerText(),'8');
+ const keyword=page.getByRole('searchbox',{name:'Tìm kiếm phòng trọ'});
+ await keyword.focus();
+ const ime=await page.context().newCDPSession(page);
+ for(const text of ['Nha','Nhà','Nhà trọ']){
+  await ime.send('Input.imeSetComposition',{text,selectionStart:text.length,selectionEnd:text.length});
+  assert.equal(await keyword.inputValue(),text);
+  assert.equal(new URL(page.url()).searchParams.has('q'),false);
+ }
+ await Promise.all([
+  page.waitForURL(url=>url.searchParams.get('q')==='Nhà trọ'),
+  page.waitForResponse(response=>new URL(response.url()).searchParams.get('q')==='Nhà trọ'),
+  ime.send('Input.insertText',{text:'Nhà trọ'}),
+ ]);
+ assert.equal(await keyword.inputValue(),'Nhà trọ');
+ await page.getByRole('button',{name:'Xóa tất cả',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#searchInput').value==='');
+ await page.goBack();
+ await page.waitForFunction(()=>document.querySelector('#searchInput').value==='Nhà trọ');
+ await keyword.fill('Tân Xã');
+ await page.waitForURL(url=>url.searchParams.get('q')==='Tân Xã');
+ await keyword.fill('');
+ await page.waitForURL(url=>!url.searchParams.has('q'));
+ await keyword.pressSequentially('Studio');
+ await page.waitForURL(url=>url.searchParams.get('q')==='Studio');
+ assert.equal(await keyword.inputValue(),'Studio');
+ await page.getByRole('button',{name:'Xóa tất cả',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#resultsCount strong')?.textContent==='8');
+ await ime.detach();
  let referenceCompared=false;
  if(process.env.PROTOTYPE_URL){const ref=await browser.newPage({viewport:{width:1440,height:1000}});await ref.goto(process.env.PROTOTYPE_URL);await ref.locator('.room-card').first().waitFor();await ref.evaluate(()=>document.fonts.ready);await page.evaluate(()=>document.fonts.ready);
   for(const selector of ['.search-controls-box','.listing-grid-container']){

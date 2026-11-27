@@ -1,6 +1,69 @@
-.location-search-form { display: grid; gap: .75rem; }
-.location-search-form p { margin: 0; }
-.location-search-form label { display: grid; gap: .35rem; color: #334155; font-weight: 600; }
+.prototype-search dialog:is(.search-filter-dialog, .search-location-dialog):modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+}
+.prototype-search .search-location-dialog {
+  width: min(520px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  padding: 0;
+  border: 1px solid #dbe5e8;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.search-location-dialog[open],
+.prototype-search .location-search-form {
+  display: flex;
+  flex-direction: column;
+}
+.search-location-dialog > header {
+  flex: none;
+  padding: 8px 16px;
+  border-bottom: 1px solid #dbe5e8;
+}
+.search-location-dialog > header .p-icon { flex: none; min-width: 44px; min-height: 44px; }
+.prototype-search .location-search-form {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.search-location-dialog .location-search-body {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.prototype-search .search-location-dialog .accommodation-map:not(.accommodation-map-expanded)
+  .nh-map-stage:not(:fullscreen) :is(.leaflet-container, .nh-google-canvas) {
+  height: clamp(152px, 38dvh, 264px);
+}
+.search-location-dialog .nh-map-hint { padding: 4px 8px; }
+.search-location-dialog .accommodation-map:not(.accommodation-map-expanded) .nh-map-actions {
+  flex-direction: row;
+  gap: 6px;
+  right: 8px;
+  bottom: 22px;
+}
+.search-location-dialog .accommodation-map:not(.accommodation-map-expanded) .nh-map-zoom { display: flex; }
+.search-location-dialog .accommodation-map:not(.accommodation-map-expanded) .nh-map-zoom button + button {
+  border-top: 1px solid var(--map-border);
+  border-inline-start: 0;
+}
+.search-location-dialog .location-search-body > p { margin: 0; }
+.search-location-dialog .location-search-body > label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 160px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #334155;
+  font-weight: 600;
+}
 .location-search-form input,
 .location-search-form textarea {
   width: 100%;
@@ -13,5 +76,14 @@
   font-weight: 400;
 }
 .location-search-form :is(input, textarea):focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
-.location-search-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.search-location-dialog .location-search-actions {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #dbe5e8;
+}
+.location-search-actions .p-button { min-height: 44px; padding: 8px 12px; }
 .accommodation-freshness { color: #92400e; font-size: .875rem; }

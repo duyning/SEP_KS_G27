@@ -121,7 +121,7 @@ SELECT d.property_id, d.room_type, d.price, d.area_sqm,
     END,
     3500, 80000, 100000, 50000,
     CASE MOD(d.ordinal + d.type_no, 3)
-        WHEN 0 THEN NULL WHEN 1 THEN UTC_TIMESTAMP(6) - INTERVAL 8 DAY ELSE UTC_TIMESTAMP(6) END,
+        WHEN 0 THEN NULL WHEN 1 THEN UTC_TIMESTAMP(6) - INTERVAL 31 DAY ELSE UTC_TIMESTAMP(6) END,
     IF(MOD(d.ordinal + d.type_no, 3) = 0, NULL, @demo_host), NOW(6), NOW(6)
 FROM tmp_hlrcs_demo_types d
 WHERE NOT EXISTS (SELECT 1 FROM room_types t WHERE t.property_id = d.property_id AND t.room_type = d.room_type);

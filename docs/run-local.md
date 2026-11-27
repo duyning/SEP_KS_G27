@@ -15,6 +15,11 @@ On this machine the default short-name TEMP path caused `Selector.open()` to fai
 `UnixDomainSockets.connect0: Invalid argument: connect`; using a project-local directory
 passed the same diagnostic. The script also sets TEMP/TMP only for its own child processes.
 Existing MySQL credentials in ignored `config/mysql-local.properties` are loaded automatically.
+With the bundled Windows MySQL under `.local/`, Spring Boot starts it on demand and waits for
+MySQL to respond on port 3306 before configuring the datasource. This also works with the direct `HlRcsApplication`
+configuration and `mvnw.cmd spring-boot:run`, when the working directory is the repository root.
+A linked worktree can use the bundle from the main checkout. Spring uses the schema in the datasource URL.
+For a separately managed MySQL on the same address, pass the JVM option `-Dhlrcs.mysql.auto-start=false`.
 
 ## Terminal fallback
 

@@ -13,7 +13,7 @@ từ chối không tự mở lại. Sửa nội dung thông thường giữ bả
 
 Cập nhật 2026-11-11: [Xác nhận phòng trống N01–N04](ROOM_AVAILABILITY_CONFIRMATION.md)
 thêm mốc UTC/người xác nhận ở RoomType, API xác nhận theo loại phòng, ba trạng thái
-UNCONFIRMED/CURRENT/STALE và cảnh báo quá 7 ngày trên host/public. Không lấy
+UNCONFIRMED/CURRENT/STALE và cảnh báo quá 30 ngày trên host/public. Không lấy
 Room.confirmedAt hoặc RoomType.updatedAt làm mốc xác nhận toàn loại.
 
 HL-RCS kết nối người thuê, chủ trọ và nhà cung cấp dịch vụ hỗ trợ tại Hòa Lạc.

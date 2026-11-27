@@ -40,12 +40,14 @@ Mo thu muc co `pom.xml` nay nhu Maven project. Trong danh sach Run/Debug,
 chon **HL-RCS Full Stack** roi bam Run (Shift+F10). Cau hinh cung duoc cung cap
 o thu muc cha neu ban dang mo `Code/HL-RCS` trong IntelliJ.
 
-- Spring Boot ket noi MySQL va chay API tren cong 8080.
+- Spring Boot khoi dong MySQL local neu can va chay API tren cong 8081.
 - Sau khi backend khoi dong thanh cong, React/Vite tu khoi dong tren cong 5173.
 - Mo http://127.0.0.1:5173/login; sua React se cap nhat ngay.
 - Bam Stop de dung ca hai. Neu frontend loi, backend cung dung va console hien nguyen nhan.
 
-Can MySQL dang chay va Node.js 22.12+ (hoac 20.19+). Launcher tim Node trong
+Can MySQL va Node.js 22.12+ (hoac 20.19+). Neu da cai MySQL local trong `.local/`
+theo huong dan ben duoi, cac cau hinh IntelliJ tu bat MySQL truoc khi mo API.
+Launcher tim Node trong
 NODE_HOME, PATH, bo runtime Codex co san tren may, hoac Program Files/nodejs.
 Neu thieu frontend dependencies, launcher tu chay pnpm/npm install; lan dau can Internet.
 Khong can goi run-frontend.cmd hay cai plugin Node.js cho IntelliJ.
@@ -58,7 +60,7 @@ khong tu khoi dong Vite. Neu cong 5173 dang bi chiem, dung frontend cu truoc khi
 ## Cau truc hien tai
 
 Day la ung dung Java 17+ / Spring Boot 4.1.1, build bang Maven Wrapper.
-Frontend la React/Vite chay tren cong 5173 va goi REST API Spring Boot tren cong 8080.
+Frontend la React/Vite chay tren cong 5173 va goi REST API Spring Boot tren cong 8081.
 
 ```text
 src/main/java/org/hlrcs/
@@ -77,27 +79,20 @@ sql/schema.sql   Schema MySQL tham khao; khong tu dong import
 
 ## Chay nhanh tren Windows
 
-Tu thu muc KS_G27:
+Tu thu muc chua `pom.xml`, chay ca backend va frontend:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Code\HL-RCS\start.ps1
+.\run-local.cmd
 ```
 
-Mo terminal thu hai va chay:
-
-```powershell
-.\Code\HL-RCS\run-frontend.cmd
-```
-
-Mo http://localhost:5173/login. Dung Ctrl+C trong tung terminal de dung server.
-Neu cong 8080 dang duoc su dung, them `-Port 8081`.
+Mo http://localhost:5173/login. Dung Ctrl+C de dung backend va frontend.
 Script tu tim JDK tu JAVA_HOME hoac thu muc cai Java thong dung va su dung Maven Wrapper.
 Lan build dau can Internet de tai cac thu vien Maven.
 
 Khong dung Live Server hoac mo HTML truc tiep: cac trang can REST API cua Spring Boot.
 
 Che do mac dinh `mysql` ket noi MySQL localhost:3306/hlrcs.
-Can khoi dong MySQL va tao database hlrcs truoc khi chay ung dung.
+Neu dung MySQL cai rieng, can khoi dong server va tao database `hlrcs` truoc khi chay ung dung.
 Chi co mot file cau hinh chay ung dung: src/main/resources/application.properties.
 H2 chi dung trong kiem thu tu dong, khong duoc dong goi vao ung dung chay that.
 File du lieu H2 cu trong data/ duoc giu nguyen, khong tu dong chuyen sang MySQL.
@@ -127,11 +122,11 @@ APP_JWT_SECRET=YOUR_RANDOM_SECRET_AT_LEAST_32_BYTES
 ```
 
 Bien moi truong co do uu tien cao hon file cuc bo. Gia tri tren may hien tai duoc giu trong file rieng, khong commit.
-Khoi dong MySQL va tao database hlrcs neu chua co.
-Chay tu thu muc KS_G27:
+Neu dung MySQL cai rieng, khoi dong server va tao database `hlrcs` neu chua co.
+De chay backend tu thu muc chua `pom.xml`:
 
 ```powershell
-.\Code\HL-RCS\run.cmd -Profile mysql
+.\mvnw.cmd spring-boot:run
 ```
 
 Trong IntelliJ, co the chon cau hinh `HL-RCS MySQL (Maven)`.
@@ -145,8 +140,9 @@ Ket noi thanh cong hay khong phu thuoc thong tin tai khoan MySQL tren may.
 
 MySQL Community Server 8.4.13 duoc cai rieng trong `.local/mysql-8.4.13-winx64/`.
 Du lieu nam trong `.local/mysql-data/`; toan bo `.local/` duoc Git bo qua.
-Khong xoa thu muc nay neu can giu database. Ban cai nay chi lang nghe tren `127.0.0.1:3306`,
-khong cai Windows Service va can bat lai sau khi khoi dong Windows:
+Khong xoa thu muc nay neu can giu database. Ban cai nay chi lang nghe tren `127.0.0.1:3306`.
+Khi Run tu IntelliJ hoac Maven tai thu muc chua `pom.xml`, backend tu bat MySQL neu can
+va cho server san sang truoc khi ket noi. De bat rieng MySQL, vi du khi dung Workbench:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-mysql.ps1
@@ -160,7 +156,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-local.ps1
 
 Script tim JDK 17+ tren may va dung thu muc `.local/java-tmp/` cho Java Unix socket,
 tranh loi loopback khi chay tu moi truong ung dung Windows dong goi.
-Hoac chay backend bang cau hinh IntelliJ `HL-RCS MySQL (Maven)` sau khi da bat MySQL.
+Hoac chay backend bang cau hinh IntelliJ `HL-RCS MySQL (Maven)`.
 Database la `hlrcs`, user ung dung la `hlrcs_app`; mat khau ngau nhien duoc luu trong
 `config/mysql-local.properties` tai `DB_PASSWORD`. JWT secret cung nam trong file nay.
 Day la database local moi; backend tu tao bang va tai khoan demo khi khoi dong.
@@ -180,7 +176,7 @@ file cau hinh local theo huong dan ben tren.
 
 ## Đăng ký cung cấp dịch vụ
 
-Khởi động MySQL (database `hlrcs`), chạy backend bằng `./mvnw.cmd spring-boot:run`.
+Chạy backend bằng `./mvnw.cmd spring-boot:run`. Nếu dùng MySQL cài riêng, bật MySQL và chuẩn bị database `hlrcs` trước.
 Trong thư mục `frontend`, chạy `npm install` (lần đầu) và `npm run dev`.
 Đăng nhập bằng tài khoản người dùng, mở `/services` và chọn **Đăng ký cung cấp dịch vụ**.
 Nhập người đăng ký, danh mục, thông tin dịch vụ đầu tiên, loại giá/số tiền, khu vực,

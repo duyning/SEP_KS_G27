@@ -17,8 +17,8 @@ HostRoomTypesResponse.RoomTypeSummary, AccommodationSummary (Search/detail/simil
 `vacantRooms` ở host/public property và `availableRooms` ở accommodation vẫn lấy từ Room, không lưu snapshot count. Không tự đổi số phòng thành 0 khi thông tin quá hạn, không ẩn nhà trọ hoặc chặn lịch xem chỉ vì quá hạn.
 
 - UNCONFIRMED: null hoặc timestamp bất thường nằm trong tương lai.
-- CURRENT: từ thời điểm xác nhận tới đúng 7 × 24 giờ.
-- STALE: lớn hơn 7 × 24 giờ; backend tính bằng Instant, không phụ thuộc timezone máy.
+- CURRENT: từ thời điểm xác nhận tới đúng 30 × 24 giờ.
+- STALE: lớn hơn 30 × 24 giờ; backend tính bằng Instant, không phụ thuộc timezone máy.
 - UI định dạng thời gian Việt Nam (Asia/Ho_Chi_Minh). Tải lại/refetch nhận trạng thái theo đồng hồ server; không có timer cập nhật khi giữ trang mở vô hạn.
 
 Ví dụ fixture với `now=2026-11-11T13:00:00Z`: null → UNCONFIRMED; `2026-11-10T13:00:00Z` → CURRENT; `2026-11-04T13:00:00Z` → CURRENT đúng biên; `2026-11-03T13:00:00Z` → STALE. Số phòng trống có thể bằng 0 trong mọi trạng thái.
@@ -59,7 +59,7 @@ N02 trong tracking nhắc ghi mốc khi đổi trạng thái phòng: đã giữ 
 7. Trở lại host, vào `/host/rooms`, đổi một phòng Trống → Đang thuê. Quay lại/tải lại loại phòng: số trống giảm và trở về Chưa xác nhận. Xác nhận lại, Search/detail sau tải lại thấy số và mốc mới.
 8. Thử loại phòng có tất cả phòng đang thuê: vẫn được xác nhận, khách vẫn thấy “Hết phòng” và mốc mới. Loại chưa tạo Room thì nút bị khóa, có giải thích.
 
-### Xem cảnh báo quá 7 ngày mà không chờ một tuần
+### Mô phỏng cảnh báo quá 30 ngày trên dữ liệu demo
 
 Chỉ thực hiện trên database phát triển/test, chọn đúng ID loại phòng của bạn. Đầu tiên xác nhận một lần qua UI để có người xác nhận hợp lệ, sau đó dùng MySQL client:
 
@@ -69,11 +69,11 @@ FROM room_types WHERE room_type_id = 12;
 
 -- Thay 12 bằng ID vừa kiểm tra. Chỉ thay mốc của đúng loại phòng này.
 UPDATE room_types
-SET availability_confirmed_at = UTC_TIMESTAMP(6) - INTERVAL 8 DAY
+SET availability_confirmed_at = UTC_TIMESTAMP(6) - INTERVAL 31 DAY
 WHERE room_type_id = 12 AND availability_confirmed_by IS NOT NULL;
 ```
 
-Tải lại trang host và Search/chi tiết: hiện “Quá 7 ngày chưa xác nhận”, số phòng trống giữ nguyên. Bấm xác nhận lại ở host để khôi phục mốc hiện tại; tải lại trang khách sẽ hết cảnh báo. Không có API công khai cho phép giả lập thời gian. Không có dữ liệu MySQL nào được đổi ngày tự động trong quá trình triển khai này.
+Tải lại trang host và Search/chi tiết để thấy “Quá 30 ngày chưa xác nhận”. Số phòng trống giữ nguyên. Bấm xác nhận lại ở host để khôi phục mốc hiện tại rồi tải lại trang khách.
 
 ## Schema và kiểm thử
 
@@ -81,7 +81,7 @@ Tải lại trang host và Search/chi tiết: hiện “Quá 7 ngày chưa xác 
 
 Khung chi tiết `/host/rooms` cũng hiển thị cảnh báo cạnh “Xác nhận gần nhất” của
 từng Room. DTO RoomSummary thêm `confirmationStatus`/`confirmationStale`, dùng
-cùng mốc 7 ngày; datetime Room cũ được hiểu theo giờ Việt Nam. Nếu backend chưa
+cùng mốc 30 ngày; datetime Room cũ được hiểu theo giờ Việt Nam. Nếu backend chưa
 restart, UI vẫn có fallback cho confirmedAt legacy. Phòng quá hạn có thể bấm
 lại lựa chọn trạng thái hiện tại để xác nhận mà không phải đổi sang trạng thái khác.
 Xác nhận một Room không làm mới mốc của toàn RoomType. Đây là cảnh báo trong
@@ -89,7 +89,7 @@ giao diện, không tự tạo thông báo ở biểu tượng chuông.
 
 Schema development dùng ddl-auto=update sẽ thêm hai cột nullable và FK. Có script MySQL bổ sung/chạy lại an toàn ở `sql/migrations/20261111_room_type_availability.sql` cho môi trường quản lý schema thủ công; không cần chạy thêm nếu Hibernate đã cập nhật. Không xóa dữ liệu cũ.
 
-- Backend: AvailabilityFreshnessTests kiểm tra null/tương lai/trước/đúng/sau 7 ngày; AvailabilityConfirmationTests dùng H2 cô lập kiểm tra auth, ownership, property state, inventory rỗng/hết phòng, giữ trạng thái Room, persist và public result, thay giá không làm mới mốc, đổi trạng thái vô hiệu xác nhận.
+- Backend: AvailabilityFreshnessTests kiểm tra null, tương lai và ranh giới 30 ngày. AvailabilityConfirmationTests dùng H2 cô lập để kiểm tra quyền, trạng thái nhà trọ, số phòng, dữ liệu công khai, thay giá và vô hiệu xác nhận khi đổi trạng thái phòng.
 - Frontend: availability.test.js kiểm tra nhãn, múi giờ và hợp đồng POST/lỗi.
 - Browser: `frontend/scripts/check-availability-confirmation.cjs`; API fixture cô lập, không ghi MySQL. Vite kiểm thử mặc định cổng 5187; PLAYWRIGHT_MODULE trỏ Playwright nếu cần. Ảnh/kết quả trong target/availability-browser.
 - Luồng tái xác minh nhà trọ N05–N10 không thuộc thay đổi này.

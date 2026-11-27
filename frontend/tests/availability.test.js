@@ -8,20 +8,20 @@ test('availability labels distinguish missing, fresh, expired and invalid dates 
   assert.equal(availabilityPresentation({availabilityConfirmedAt:'invalid',availabilityConfirmationStatus:'CURRENT'}).state, 'UNCONFIRMED');
   const value={availabilityConfirmedAt:'2026-11-11T13:00:00Z',availabilityConfirmationStatus:'CURRENT'};
   assert.match(availabilityPresentation(value).text, /20:00/);
-  assert.match(availabilityPresentation({...value,availabilityConfirmationStatus:'STALE',availableRooms:0}).text, /Quá 7 ngày/);
+  assert.match(availabilityPresentation({...value,availabilityConfirmationStatus:'STALE',availableRooms:0}).text, /Quá 30 ngày/);
   assert.equal(availabilityPresentation({...value,availabilityConfirmationStatus:'UNKNOWN'}).state,'UNCONFIRMED');
 });
 
 const original={fetch:globalThis.fetch, sessionStorage:globalThis.sessionStorage, localStorage:globalThis.localStorage};
-test('physical room confirmation handles old Vietnam dates, the seven-day boundary and server status', () => {
+test('physical room confirmation handles old Vietnam dates, the 30-day boundary and server status', () => {
   const now=Date.parse('2026-11-11T13:00:00Z');
-  assert.equal(roomAvailability({confirmedAt:'2026-10-25T22:39:00'},now).availabilityConfirmationStatus,'STALE');
+  assert.equal(roomAvailability({confirmedAt:'2026-10-25T22:39:00'},now).availabilityConfirmationStatus,'CURRENT');
   assert.match(availabilityPresentation(roomAvailability({confirmedAt:'2026-10-25T22:39:00'},now)).text,/25\/10\/2026/);
-  assert.equal(roomAvailability({confirmedAt:'2026-11-04T20:00:00'},now).availabilityConfirmationStatus,'CURRENT');
-  assert.equal(roomAvailability({confirmedAt:'2026-11-04T19:59:59'},now).availabilityConfirmationStatus,'STALE');
+  assert.equal(roomAvailability({confirmedAt:'2026-10-12T20:00:00'},now).availabilityConfirmationStatus,'CURRENT');
+  assert.equal(roomAvailability({confirmedAt:'2026-10-12T19:59:59'},now).availabilityConfirmationStatus,'STALE');
   assert.equal(roomAvailability({confirmedAt:null},now).availabilityConfirmationStatus,'UNCONFIRMED');
   assert.equal(roomAvailability({confirmedAt:'invalid'},now).availabilityConfirmationStatus,'UNCONFIRMED');
-  assert.equal(roomAvailability({confirmedAt:'2026-10-25T22:39:00',confirmationStatus:'CURRENT'},now).availabilityConfirmationStatus,'CURRENT');
+  assert.equal(roomAvailability({confirmedAt:'2026-10-12T19:59:59',confirmationStatus:'CURRENT'},now).availabilityConfirmationStatus,'CURRENT');
 });
 after(()=>Object.assign(globalThis,original));
 test('confirmation uses authenticated POST without trusting client counts and rejects malformed success or server failure', async () => {

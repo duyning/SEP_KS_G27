@@ -193,7 +193,7 @@ async function check() {
     await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
     assert.ok(await ai.getByText('7,5/10 phù hợp', { exact: true }).isVisible());
     await page.evaluate(() => { document.documentElement.style.zoom = ''; });
-    await ai.getByText(/Quá 7 ngày chưa xác nhận/).waitFor();
+    await ai.getByText(/Quá 30 ngày chưa xác nhận/).waitFor();
     aiMode = 'empty';
     await ai.getByLabel('Nhu cầu thuê phòng').fill('Tìm phòng Tân Xã dưới 100 nghìn');
     await ai.getByRole('button', { name: 'Tìm phòng', exact: true }).click();

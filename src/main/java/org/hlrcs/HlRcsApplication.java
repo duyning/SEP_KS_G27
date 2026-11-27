@@ -1,8 +1,9 @@
 package org.hlrcs;
 
+import org.hlrcs.development.LocalFrontend;
+import org.hlrcs.development.LocalMySql;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.hlrcs.development.LocalFrontend;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -10,7 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class HlRcsApplication {
 
     public static void main(String[] args) {
-        var context = SpringApplication.run(HlRcsApplication.class, args);
+        var application = new SpringApplication(HlRcsApplication.class);
+        application.addInitializers(context -> LocalMySql.ensureReady(context.getEnvironment()));
+        var context = application.run(args);
         if (Boolean.getBoolean("hlrcs.frontend.enabled")) {
             try {
                 LocalFrontend.start(context);
