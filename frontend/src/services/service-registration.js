@@ -8,6 +8,12 @@ const validRegistration = data => data && Number.isInteger(data.registrationId) 
   && ['PENDING', 'NEEDS_SUPPLEMENT', 'APPROVED', 'REJECTED', 'CANCELLED'].includes(data.status)
   && typeof data.serviceName === 'string' && Array.isArray(data.documents);
 export const serviceRegistrationApi = {
+  remove: async (id, revision) => {
+    const data = await request('/services/' + id + '/remove', { basePath, method: 'POST', body: { revision } });
+    if (!validRegistration(data) || data.serviceId !== id || data.serviceState !== 'DELETED' || data.serviceRevision !== revision + 1)
+      throw new ApiError('Chưa xác nhận được việc gỡ dịch vụ. Vui lòng tải lại danh sách.', 502);
+    return data;
+  },
   cancel: async (id, revision) => {
     const data = await request('/' + id + '/cancel', { basePath, method: 'POST', body: { revision } });
     if (!validRegistration(data) || data.registrationId !== id || data.status !== 'CANCELLED' || data.revision !== revision + 1)

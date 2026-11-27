@@ -1,5 +1,17 @@
 # Quản lý nhiều dịch vụ, ảnh và duyệt thay đổi
 
+## Chủ dịch vụ gỡ trực tiếp (2026-11-26)
+
+Web dùng `POST /api/service-registrations/services/{id}/remove` với `{revision}`:
+xác nhận một lần, không nhập lý do, không tạo hồ sơ DELETE chờ duyệt.
+Backend khóa tài khoản, kiểm tra chủ sở hữu, phiên bản, hồ sơ gốc và hồ sơ thay đổi đang xử lý; endpoint gỡ trực tiếp không yêu cầu MANAGE_SERVICE còn ACTIVE;
+chuyển Service sang DELETED và tăng revision trong cùng transaction với ModerationLog
+OWNER_REMOVED (người thao tác, thời điểm, trạng thái trước/sau). Không xóa bản ghi,
+ảnh, tài liệu, đánh giá hay yêu cầu đã có; không thu hồi capability.
+Dịch vụ đã gỡ được ẩn khỏi danh sách thẻ dịch vụ của chủ sở hữu; hồ sơ và lịch sử vẫn được giữ lại,
+không công khai và không nhận yêu cầu mới. Luồng DELETE chờ duyệt cũ vẫn được giữ
+để tương thích hồ sơ/API cũ; mô tả luồng xóa chờ duyệt bên dưới là luồng cũ.
+
 ## Hủy hồ sơ chờ duyệt (2026-11-14)
 
 Chủ hồ sơ được hủy hồ sơ CREATE/UPDATE/DELETE khi trạng thái còn PENDING qua
@@ -18,8 +30,8 @@ Cập nhật 2026-11-08. Luồng này mở rộng service; không thay luồng h
 - `/services`: toolbar tìm kiếm tên dịch vụ/nhà cung cấp (không phân biệt dấu), lọc kết hợp danh mục và khu vực lấy từ dữ liệu công khai; query q/category/area giữ trên URL, có chip bỏ từng điều kiện và xóa toàn bộ. Frontend lọc trên toàn bộ danh sách được API public trả về, không thay điều kiện eligibility. Card dùng ảnh 16:9, mô tả 2 dòng, tiêu đề 2 dòng, metadata có icon, giá/nút căn đáy; CSS giới hạn trong danh sách công khai. Grid 3 card/hàng trên màn hình trên 1000 px, 2 card trên tablet và 1 trên mobile. Mỗi card có ảnh, danh mục, mô tả, khu vực, giá và nút **Xem chi tiết**, **Liên hệ**. Liên hệ mở thông tin nhà cung cấp với nút gọi điện/gửi email.
 - Hồ sơ cần bổ sung hiển thị yêu cầu và nhân viên xét duyệt ở đầu modal. Mô tả/ghi chú dài mặc định rút gọn, có Xem thêm/Thu gọn; nội dung ô chỉnh sửa giữ đầy đủ. Người đăng nhập mở **Dịch vụ của tôi** để xem các dịch vụ đã duyệt và toàn bộ hồ sơ/yêu cầu, kể cả bị từ chối hoặc cần bổ sung.
 - Sau onboarding và được cấp MANAGE_SERVICE ACTIVE, một người dùng có thể gửi thêm nhiều dịch vụ. Trước khi được cấp quyền, vẫn chỉ một hồ sơ onboarding đang xử lý. Tránh trùng tên trong dịch vụ còn hoạt động và yêu cầu chưa xử lý của cùng người cung cấp.
-- Thêm dịch vụ có thông tin, ảnh đại diện và tài liệu xác minh. Sửa dịch vụ dùng cùng form thông tin, có thể thay ảnh; backend sao chép tài liệu gốc sang hồ sơ thay đổi riêng để Staff thẩm định, không buộc tải lại giấy tờ khi cập nhật.
-- Yêu cầu xóa cần lý do và có bước hủy/xác nhận. Xóa có hiệu lực sau khi Staff duyệt, sử dụng trạng thái DELETED để bảo toàn lịch sử; card dịch vụ được loại khỏi danh sách quản lý sau khi duyệt xóa, không hiển thị card “Đã xóa”.
+- Thêm dịch vụ có thông tin và 1–5 ảnh bắt buộc; tài liệu xác minh là tùy chọn (tối đa 5 tệp nếu gửi qua API). Sửa dịch vụ dùng cùng form thông tin, có thể thay ảnh; backend sao chép tài liệu gốc sang hồ sơ thay đổi riêng để Staff thẩm định, không buộc tải lại giấy tờ khi cập nhật.
+- Luồng hiện hành: chủ sở hữu xác nhận gỡ một lần, không nhập lý do, hiệu lực ngay bằng DELETED và OWNER_REMOVED. Luồng DELETE proposal cũ vẫn yêu cầu lý do và Staff duyệt để tương thích; không dùng luồng cũ để mô tả nút gỡ hiện tại.
 - Trong lúc chờ duyệt, bản công khai vẫn giữ nguyên. Không hiển thị ảnh hoặc thông tin đang chờ duyệt ra public. Từ chối cập nhật/xóa giữ nguyên bản đang công khai.
 
 ## Mô hình
@@ -33,7 +45,7 @@ ServiceRegistration là snapshot đề nghị, bổ sung:
 
 Service thêm `revision` integer NOT NULL DEFAULT 0. Mỗi lần tạo/cập nhật/xóa được duyệt tăng revision. `Service.registration` OneToOne trỏ snapshot đã duyệt gần nhất; các yêu cầu cũ giữ targetService để tra lịch sử. Không tạo Service mới khi duyệt UPDATE/DELETE.
 
-Ảnh public đọc từ snapshot đang được Service tham chiếu, không đọc từ proposal mới nhất bất kể trạng thái. Ảnh tối đa 5 MB, JPG/PNG/WEBP với kiểm tra MIME và chữ ký nội dung. Giấy tờ vẫn riêng tư và dùng endpoint riêng. UI thêm mới yêu cầu chọn ảnh; backend tiếp tục nhận hồ sơ legacy chưa có ảnh để tương thích dữ liệu hiện có; catalog có placeholder khi thiếu ảnh.
+Ảnh public đọc từ snapshot đang được Service tham chiếu, không đọc từ proposal mới nhất bất kể trạng thái. Ảnh tối đa 5 MB, JPG/PNG/WEBP với kiểm tra MIME và chữ ký nội dung. Giấy tờ vẫn riêng tư và dùng endpoint riêng. Từ 2026-11-26, đăng ký mới bắt buộc ít nhất 1 ảnh ở cả web và backend; API trả 400 nếu danh sách ảnh null/rỗng. Cập nhật/bổ sung không chọn ảnh mới vẫn giữ bộ ảnh đã lưu; catalog có placeholder cho dữ liệu cũ thiếu ảnh.
 
 Không có role mới; Service Owner vẫn là capability MANAGE_SERVICE độc lập. Staff/Admin không tự duyệt hồ sơ của mình. Yêu cầu cập nhật đã bị thu hồi quyền không thể tự kích hoạt lại capability qua phê duyệt; Staff có thể từ chối yêu cầu đó. Xóa một dịch vụ không thu hồi capability của người cung cấp và không ảnh hưởng dịch vụ khác.
 
@@ -51,7 +63,7 @@ Không có role mới; Service Owner vẫn là capability MANAGE_SERVICE độc 
 
 ## Đồng thời và quyền
 
-Mọi thay đổi owner lấy applicant từ principal, khóa user trước khi đọc Service và kiểm tra ownership, capability ACTIVE, serviceRevision. Mỗi Service chỉ có một yêu cầu PENDING/NEEDS_SUPPLEMENT. Staff khóa application rồi user theo cùng thứ tự với vòng resubmit; không có khóa application ngược từ owner change. Phê duyệt kiểm tra lại trạng thái/quyền/version của Service gốc. Double-submit hoặc request dựa trên bản cũ nhận 409; lỗi ảnh/validation rollback toàn bộ yêu cầu.
+Mọi thao tác owner lấy applicant từ principal. Proposal UPDATE/DELETE khóa user trước khi đọc Service và kiểm tra ownership, capability ACTIVE, serviceRevision. Gỡ trực tiếp kiểm tra ownership, revision, hồ sơ gốc và không có PENDING/NEEDS_SUPPLEMENT; không kiểm tra capability ACTIVE. Web hiện vẫn vô hiệu hóa nút Gỡ dịch vụ khi capability không ACTIVE; đây là khác biệt giữa điều kiện UI và endpoint backend. Mỗi Service chỉ có một yêu cầu PENDING/NEEDS_SUPPLEMENT. Staff khóa application rồi user theo cùng thứ tự với vòng resubmit; không có khóa application ngược từ owner change. Phê duyệt kiểm tra lại trạng thái/quyền/version của Service gốc. Double-submit hoặc request dựa trên bản cũ nhận 409; lỗi ảnh/validation rollback toàn bộ yêu cầu.
 
 Phiên bản application tiếp tục chặn quyết định từ màn hình Staff cũ; serviceRevision bảo vệ snapshot dịch vụ đích. Trùng tên cũng được kiểm tra lại khi duyệt, để không bỏ qua kiểm tra thông qua lần bổ sung. Backend không nhận providerId, status, reviewer hoặc quyền từ nội dung client.
 
@@ -80,7 +92,7 @@ Nếu API `/api/services` chỉ có `imageUrl`, không có `imageUrls`, tiến t
 
 ## Lifecycle completion — 2026-11-14
 
-GET /api/service-registrations/services returns the authenticated owner’s approved non-deleted snapshots. Staff detail includes currentListing comparison for proposal review. Rejecting an update does not reactivate a revoked capability. Customer service requests are documented separately in [SERVICE_REQUESTS.md](SERVICE_REQUESTS.md); existing DELETE approval/public-snapshot semantics are retained.
+GET /api/service-registrations/services returns the authenticated owner’s services with an associated registration, including DELETED rows; the web filters deleted services out of its cards. Staff detail includes currentListing comparison for proposal review. Rejecting an update does not reactivate a revoked capability. Customer service requests are documented separately in [SERVICE_REQUESTS.md](SERVICE_REQUESTS.md); legacy DELETE proposal approval semantics remain supported; direct owner removal is the current web flow described above.
 
 
 ## Mở rộng khu vực dịch vụ (2026-11-14)

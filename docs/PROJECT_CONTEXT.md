@@ -1,5 +1,7 @@
 # HL-RCS — context và kiến trúc hiện tại
 
+Đối chiếu bổ sung 2026-11-28: JPA có **53 @Entity, 2 @Embeddable và 12 enum độc lập và 6 enum lồng trong entity**; catalog và ERD đã được dựng lại từ source hiện tại. Các mục mang ngày 2026-11-05 bên dưới là lịch sử kiến trúc, không phải trạng thái tích hợp mới nhất. Dịch vụ: CREATE/UPDATE là proposal; chủ sở hữu gỡ trực tiếp thành DELETED, giữ lịch sử. Yêu cầu dịch vụ đã có API PENDING → ACCEPTED/REJECTED; xem SERVICE_MANAGEMENT.md và SERVICE_REQUESTS.md.
+
 Bổ sung 2026-11-19: [module bài đăng tổng hợp Facebook](COLLECTED_POSTS.md)
 dùng worker Python/Playwright nội bộ, nháp trong MySQL, Staff/Admin chọn đăng hoặc
 gỡ công khai; public feed riêng tải thêm bằng cursor. Xem tài liệu module để cấu
@@ -107,8 +109,7 @@ Một ngoại lệ thực tế: `PublicServiceController` đọc repository tr�
 | Frontend state | React hooks và AuthContext; không có Redux trong package hiện tại |
 | Test | Spring Boot HTTP trên cổng ngẫu nhiên + H2; Node native test runner |
 
-Android, Firebase, Google OAuth, Gemini và AWS xuất hiện trong định hướng tổng thể.
-Không suy ra chúng đã tích hợp chỉ từ README hoặc dependencies OAuth trong POM.
+Google sign-in đã được triển khai qua AuthController `/api/auth/google`, AuthServiceImpl và GoogleTokenVerifier; cấu hình Google hợp lệ vẫn cần cho triển khai. Gemini đã có các luồng riêng được mô tả trong tài liệu module. Không suy trạng thái triển khai Android, Firebase hoặc AWS chỉ từ README/dependencies.
 Mã hiện tại có công cụ tra địa chỉ/bản đồ Google Maps và bản đồ Leaflet; cần đọc
 `frontend/migration/GOOGLE-MAPS-SETUP.md` và services tương ứng trước khi sửa.
 
@@ -124,7 +125,7 @@ Mã hiện tại có công cụ tra địa chỉ/bản đồ Google Maps và b�
 | `service/` | Business rules, owner isolation, transactions, mapping |
 | `service/impl/AuthServiceImpl.java` | Authentication, profile, password và logout |
 | `repository/` | JPA queries, metadata projections, pessimistic locks |
-| `entity/`, `entity/enums/` | 29 entities, 1 embeddable ID, 11 enums |
+| `entity/`, `entity/enums/` | 53 @Entity, 2 @Embeddable và 12 enum độc lập và 6 enum lồng trong entity |
 | `exception/` | AppException và response error mapping |
 | `development/LocalFrontend.java` | Optional Vite child process khi chạy full stack trong IDE |
 | `frontend/src/main.jsx`, `App.jsx` | Bootstrap, router, AuthProvider, screen guards |
@@ -138,7 +139,7 @@ Mã hiện tại có công cụ tra địa chỉ/bản đồ Google Maps và b�
 | `frontend/reference/auth/` | Prototype auth tham khảo, không phải runtime |
 | `frontend/migration/`, `scripts/` | Inventory, module notes, browser-check scripts |
 | `src/test/`, `frontend/tests/` | Backend HTTP tests và frontend unit/contract tests |
-| `sql/schema.sql` | 28 bảng tham khảo cũ; không tự import khi startup |
+| `sql/schema.sql` | 31 bảng tham khảo cũ; không tự import khi startup |
 
 Trong backend, các service mới thường là concrete Spring services dùng constructor
 injection; `AuthService` là interface với implementation riêng. Một số services dùng
@@ -302,7 +303,7 @@ Không có booking/order dịch vụ hoặc notification delivery được tri�
 Response JSON dùng `{success, message, data, timestamp}`; file endpoint trả binary.
 Các request/response chi tiết phải đọc DTO/controller thay vì suy từ tên entity.
 
-Frontend có 33 route entries: 32 legacy screens và route native
+Snapshot frontend ngày 2026-11-05 (không dùng làm danh sách tính năng hiện hành): có 33 route entries: 32 legacy screens và route native
 `/staff/service-applications` với `source: null`. Các trang thiếu API vẫn còn
 fixture/demo: public property search/detail/maps, favorites/bookings/community/
 notifications, host property edit/support/notifications, staff community/support,
@@ -312,7 +313,7 @@ Các trường `integration` trong registry và báo cáo migration ban đầu c
 
 ## 9. Database, schema drift và tài liệu cũ
 
-JPA hiện có **29 entities/bảng**, còn `sql/schema.sql` chỉ có **28 bảng** và không
+JPA hiện có **53 entities** và các bảng element collection; `sql/schema.sql` có **31 bảng tham khảo cũ** và không
 được tự động import. `Room`/`rooms` là bảng bổ sung; nhiều cột upload, registration
 details, service decisions và giá/tiện ích room type chưa có trong SQL cũ.
 Chi tiết phần thiếu được liệt kê trong [ENTITY_CATALOG.md](ENTITY_CATALOG.md).

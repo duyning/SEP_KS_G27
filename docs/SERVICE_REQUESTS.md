@@ -1,4 +1,6 @@
-# Service listing and customer request handoff — 2026-11-14
+# Service listing and customer request handoff
+
+Source synchronisation: 2026-11-28. Verification results dated 2026-11-14 below are historical and were not rerun for this documentation update.
 
 Implemented on DungDT. This is source/test documentation, not a live MySQL inspection.
 
@@ -6,9 +8,9 @@ Implemented on DungDT. This is source/test documentation, not a live MySQL inspe
 
 | Requirement | Implementation |
 | --- | --- |
-| View services / propose changes | `GET /api/service-registrations/services` returns the owner's approved snapshots; existing multipart changes enforce ownership, active capability and service revision. |
+| View services / propose changes | `GET /api/service-registrations/services` returns the owner's services with a registration, including DELETED rows; the web excludes deleted cards; existing multipart changes enforce ownership, active capability and service revision. |
 | Review listing changes | Staff detail includes `currentListing` for price, description, area and name comparison. Existing review applies a proposal atomically, records reason/history and rejects stale revisions. All active STAFF/ADMIN may review except their own applications; assignment is not required. |
-| Edit / unpublish | My services uses the approved-service API and existing update/delete forms. DELETE remains a proposal: public content disappears only after approval. It is soft deletion, not a temporary pause/resume feature. |
+| Edit / unpublish | My services proposes updates for approval and directly removes an owned service through POST /api/service-registrations/services/{id}/remove with revision. Removal sets DELETED and records OWNER_REMOVED immediately, without a reason or staff approval, after ownership/revision/open-change checks. Legacy DELETE proposals remain supported. There is no pause/resume toggle. |
 | Listing lifecycle | Existing H2 tests cover update/rejection/delete, images, ownership, revoked capability and stale proposals. Added comparison and approved-service API checks. |
 | Submit / read requests | Authenticated customers send contact name/phone, description, future offset timestamp and optional address. Owner IDs, status and handler are server-owned. Own-service requests are rejected. |
 | Respond | Owners read their incoming queue, accept or reject PENDING only. Rejection requires 10–2000 trimmed characters; response stores actor/time/reason and increments version. Concurrent responses yield one success and one conflict. |
@@ -27,7 +29,7 @@ All `/api/service-requests` routes require authentication. Lists are scoped to t
 | GET | `/api/service-requests/incoming` | Requests for services owned by current account |
 | GET | `/api/service-requests/{id}` | Customer or service owner only; others 404 |
 | POST | `/api/service-requests/{id}/response` | Owner-only response; body `{decision: "ACCEPTED" or "REJECTED", reason, revision}` |
-| GET | `/api/service-registrations/services` | Current approved snapshots of own non-deleted services |
+| GET | `/api/service-registrations/services` | Own services with a registration, including DELETED rows; web hides deleted cards |
 
 Create body example (choose a real future date and service ID):
 

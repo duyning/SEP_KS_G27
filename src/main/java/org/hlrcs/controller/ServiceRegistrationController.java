@@ -23,6 +23,12 @@ public class ServiceRegistrationController {
     public record Category(Integer categoryId, String name) {}
     public record CancellationRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(0) Integer revision) {}
 
+    @PostMapping("/services/{id}/remove")
+    public ApiResponse<ServiceRegistrationService.RegistrationInfo> remove(@PathVariable Integer id,
+            @Valid @RequestBody CancellationRequest request) {
+        return ApiResponse.success(service.remove(id, request.revision()));
+    }
+
     @PostMapping("/{id}/cancel")
     public ApiResponse<ServiceRegistrationService.RegistrationInfo> cancel(@PathVariable Integer id,
             @Valid @RequestBody CancellationRequest request) {

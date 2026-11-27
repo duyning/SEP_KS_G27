@@ -25,6 +25,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { MapPin, Phone, ArrowRight, ShieldCheck, Search, SlidersHorizontal, UserRound, Flag, X } from 'lucide-react';
 import { publicServicesApi as api } from '../services/public-services.js';
 import { serviceRegistrationApi } from '../services/service-registration.js';
+import { serviceFeedbackApi } from '../services/service-feedback.js';
 import { filterPublicServices, serviceAreaOptions } from '../services/service-catalog.js';
 import '../styles/service-applications.css';
 import '../styles/service-detail-layout.css';
@@ -48,6 +49,22 @@ export default function ServicesCatalog({ detail = false }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(() => !!params.get('report'));
   const [reportScope, setReportScope] = useState('mine');
+  const [staffRequests, setStaffRequests] = useState(null);
+  const applyStaffRequests = records => setStaffRequests({ userId: user.userId, count: records.filter(record => record.responseRequested).length });
+  useEffect(() => {
+    setStaffRequests(null);
+    if (!user) return;
+    const controller = new AbortController();
+    serviceFeedbackApi.complaints('incoming', controller.signal)
+      .then(records => { if (!controller.signal.aborted) applyStaffRequests(records); })
+      .catch(() => { /* Keep an unknown count distinct from zero; live refresh retries. */ });
+    return () => controller.abort();
+  }, [user?.userId]);
+  useServiceLive(signal => serviceFeedbackApi.complaints('incoming', signal), applyStaffRequests,
+    { enabled: !!user, identity: `staff-requests-${user?.userId}`, onError: () => setStaffRequests(null) });
+  const staffRequestCount = staffRequests?.userId === user?.userId ? staffRequests?.count : null;
+  const staffRequestBadge = staffRequestCount > 0
+    ? <span className="svc-report-count" aria-label={`${staffRequestCount} yêu cầu cần phản hồi`}>{staffRequestCount}</span> : null;
   useEffect(() => { if (params.get('report')) { setReportScope('mine'); setReportsOpen(true); } }, [params]);
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const notify = useToast();
@@ -99,7 +116,7 @@ export default function ServicesCatalog({ detail = false }) {
     {!detail && <div className="svc-heading">
       <div className="svc-heading-copy"><h1>Dịch vụ</h1><p>Kết nối dịch vụ quanh bạn, thêm tiện lợi mỗi ngày.</p></div>
       <div className="svc-actions svc-heading-actions">
-        {user && <UIButton className="svc-btn" onClick={() => { setReportScope('mine'); setReportsOpen(true); }}>Báo cáo đã gửi</UIButton>}
+        {user && <UIButton className="svc-btn" onClick={() => { setReportScope(staffRequestCount > 0 ? 'incoming' : 'mine'); setReportsOpen(true); }}>Báo cáo đã gửi {staffRequestBadge}</UIButton>}
         {user && <UIButton variant="secondary" className="svc-btn" onClick={() => setRequestsOpen(true)}>Yêu cầu dịch vụ</UIButton>}
         <UIButton variant="primary" className="svc-btn svc-btn-primary" disabled={checkingOwnership} onClick={openServices}>{actionLabel}</UIButton>
       </div>
@@ -107,7 +124,7 @@ export default function ServicesCatalog({ detail = false }) {
     {reportsOpen && <Modal title="Báo cáo dịch vụ" maxWidth="900px" onClose={() => setReportsOpen(false)}>
       <div className="svc-report-scope" role="group" aria-label="Loại báo cáo">
         <UIButton type="button" aria-pressed={reportScope === 'mine'} variant={reportScope === 'mine' ? 'primary' : 'secondary'} onClick={() => setReportScope('mine')}>Báo cáo đã gửi</UIButton>
-        <UIButton type="button" aria-pressed={reportScope === 'incoming'} variant={reportScope === 'incoming' ? 'primary' : 'secondary'} onClick={() => setReportScope('incoming')}>Yêu cầu từ nhân viên</UIButton>
+        <UIButton type="button" aria-pressed={reportScope === 'incoming'} variant={reportScope === 'incoming' ? 'primary' : 'secondary'} onClick={() => setReportScope('incoming')}>Yêu cầu từ nhân viên {staffRequestBadge}</UIButton>
       </div>
       <p className="report-owner-intro">{reportScope === 'mine' ? 'Các báo cáo do bạn gửi. Nếu bạn là chủ dịch vụ, chọn mục bên cạnh để xem yêu cầu từ nhân viên.' : 'Các báo cáo về dịch vụ bạn sở hữu. Mở báo cáo có nhãn “Cần phản hồi” để xem nội dung nhân viên yêu cầu.'}</p>
       <ServiceComplaints key={`${user?.userId}-${reportScope}`} scope={reportScope} />

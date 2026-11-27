@@ -71,3 +71,6 @@ scraper-python/.env
 ~$*
 /output/*
 !/output/*.drawio
+
+# Generated reports and local verification artifacts
+/outputs/

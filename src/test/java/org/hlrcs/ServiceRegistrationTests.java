@@ -77,10 +77,14 @@ class ServiceRegistrationTests {
         String boundary = "ServiceTestBoundary";
         var body = new StringBuilder("--" + boundary + "\r\nContent-Disposition: form-data; name=\"details\"\r\nContent-Type: application/json\r\n\r\n" + json.writeValueAsString(data) + "\r\n");
         for (int i = 0; i < count; i++) body.append("--").append(boundary).append("\r\nContent-Disposition: form-data; name=\"documents\"; filename=\"license.pdf\"\r\nContent-Type: application/pdf\r\n\r\n").append(fileContent).append("\r\n");
-        body.append("--").append(boundary).append("--\r\n");
+        body.append("--").append(boundary).append("\r\nContent-Disposition: form-data; name=\"image\"; filename=\"cover.png\"\r\nContent-Type: image/png\r\n\r\n");
+        var bytes = new java.io.ByteArrayOutputStream();
+        bytes.write(body.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        bytes.write(cover());
+        bytes.write(("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
         var request = HttpRequest.newBuilder(uri("/api/service-registrations")).header("Content-Type", "multipart/form-data; boundary=" + boundary);
         if (token != null) request.header("Authorization", "Bearer " + token);
-        return client.send(request.POST(HttpRequest.BodyPublishers.ofString(body.toString())).build(), HttpResponse.BodyHandlers.ofString());
+        return client.send(request.POST(HttpRequest.BodyPublishers.ofByteArray(bytes.toByteArray())).build(), HttpResponse.BodyHandlers.ofString());
     }
     private HttpResponse<String> api(String token, String method, String path, Object data) throws Exception {
         var builder = HttpRequest.newBuilder(uri(path));
@@ -114,6 +118,21 @@ class ServiceRegistrationTests {
                 .POST(HttpRequest.BodyPublishers.ofByteArray(bytes.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
     }
     private byte[] cover() { return Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jTbkAAAAASUVORK5CYII="); }
+    @Test void newRegistrationRequiresAtLeastOneImage() throws Exception {
+        var owner = account(); var own = token(owner);
+        for (byte[] image : new byte[][] { null, new byte[0] }) {
+            var response = serviceMultipart(own, "/api/service-registrations", details(), false, image);
+            assertEquals(400, response.statusCode(), response.body());
+            String message = json.readTree(response.body()).path("message").asString();
+            assertEquals(image == null ? "Vui lòng chọn ít nhất 1 ảnh dịch vụ." : "Ảnh phải có nội dung, tối đa 5 MB.", message);
+            assertTrue(registrations.findByUser_UserIdOrderByRegistrationIdDesc(owner.getUserId()).isEmpty());
+        }
+        var response = serviceMultipart(own, "/api/service-registrations", details(), false, cover());
+        assertEquals(201, response.statusCode(), response.body());
+        var data = json.readTree(response.body()).path("data");
+        assertEquals(1, data.path("imageCount").asInt());
+        assertEquals("PENDING", data.path("status").asString());
+    }
     @Test void pendingApplicationsCanBeCancelledOnlyByOwnerWithFreshRevision() throws Exception {
         var owner = account(); var own = token(owner); var staff = token(account(UserRole.STAFF));
         int id = application(owner); String path = "/api/service-registrations/" + id + "/cancel";

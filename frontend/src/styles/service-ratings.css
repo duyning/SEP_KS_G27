@@ -88,12 +88,12 @@
 .svc-ratings-upload-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 14px; }
 .svc-ratings-upload-heading label { font-weight: 600; }
 .svc-ratings-upload-heading > span,.svc-ratings-upload-heading label span { color: var(--rating-muted); font-size: 13px; font-weight: 400; }
-.svc-ratings-dropzone { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 16px; border: 1.5px dashed var(--rating-border); border-radius: 12px; background: var(--rating-subtle); color: var(--rating-muted); text-align: center; cursor: pointer; font-size: 14px; }
+.svc-ratings-dropzone { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 4px; padding: 14px 16px; border: 1.5px dashed var(--rating-border); border-radius: 12px; background: var(--rating-subtle); color: var(--rating-muted); text-align: left; cursor: pointer; font-size: 14px; }
 .svc-ratings-dropzone:not(.is-disabled):hover,.svc-ratings-dropzone.is-dragging { border-color: var(--rating-teal); background: var(--rating-teal-soft); }
 .svc-ratings-dropzone strong { color: var(--rating-teal); }
-.svc-ratings-dropzone small { font-size: 12px; }
-.svc-ratings-upload-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--rating-teal-soft); color: var(--rating-teal); }
-.svc-ratings-upload-icon svg { width: 22px; height: 22px; }
+.svc-ratings-dropzone small { grid-column: 2; font-size: 12px; }
+.svc-ratings-upload-icon { grid-row: 1 / 3; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--rating-teal-soft); color: var(--rating-teal); }
+.svc-ratings-upload-icon svg { width: 18px; height: 18px; }
 .svc-ratings-dropzone.is-disabled { cursor: not-allowed; }
 .svc-ratings-upload-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-width: 600px; margin-top: 14px; }
 .svc-ratings-upload-preview { position: relative; min-width: 0; }

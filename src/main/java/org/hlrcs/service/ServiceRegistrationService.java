@@ -60,11 +60,30 @@ public class ServiceRegistrationService {
     @Transactional(readOnly = true)
     public List<RegistrationInfo> myServices() {
         return listings.findByProvider_UserIdOrderByServiceIdDesc(auth.getCurrentUser().getUserId()).stream()
-                .filter(listing -> !"DELETED".equals(listing.getStatus()) && listing.getRegistration() != null)
+                .filter(listing -> listing.getRegistration() != null)
                 .map(listing -> info(listing.getRegistration())).toList();
     }
 
     public boolean canManage(Integer userId) { return publication.hasCapability(userId); }
+
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public RegistrationInfo remove(Integer serviceId, int revision) {
+        var owner = users.findForRegistrationUpdate(auth.getCurrentUser().getUserId()).orElseThrow();
+        var listing = listings.findById(serviceId).filter(s -> s.getProvider().getUserId().equals(owner.getUserId()))
+                .orElseThrow(() -> new AppException("Không tìm thấy dịch vụ của bạn.", HttpStatus.NOT_FOUND));
+        if ("DELETED".equals(listing.getStatus()) || listing.getRevision() != revision)
+            throw new AppException("Dịch vụ đã thay đổi. Vui lòng tải lại.", HttpStatus.CONFLICT);
+        if (registrations.existsByTargetService_ServiceIdAndStatusIn(serviceId, List.of(RegistrationStatus.PENDING, RegistrationStatus.NEEDS_SUPPLEMENT)))
+            throw new AppException("Dịch vụ đang có yêu cầu chờ xử lý. Hãy xử lý hồ sơ hiện tại trước khi gỡ.", HttpStatus.CONFLICT);
+        if (listing.getRegistration() == null) throw new AppException("Dịch vụ thiếu hồ sơ gốc.", HttpStatus.CONFLICT);
+        String previousStatus = listing.getStatus();
+        listing.setStatus("DELETED");
+        listing.setRevision(listing.getRevision() + 1);
+        listings.saveAndFlush(listing);
+        logs.save(org.hlrcs.entity.ModerationLog.builder().staff(owner).targetType("SERVICE").targetId(serviceId)
+                .action("OWNER_REMOVED").note(previousStatus + " -> DELETED").build());
+        return info(listing.getRegistration());
+    }
 
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public RegistrationInfo cancel(Integer id, int revision) {
@@ -184,6 +203,8 @@ public class ServiceRegistrationService {
     @Transactional(rollbackFor = Exception.class, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public RegistrationInfo submit(ServiceRegistrationRequest value, List<MultipartFile> files, List<MultipartFile> images) throws IOException {
         validate(value);
+        if (images == null || images.isEmpty())
+            throw new BadRequestException("Vui lòng chọn ít nhất 1 ảnh dịch vụ.");
         var areas = ServiceAreaPolicy.normalize(value.serviceArea(), value.customServiceAreas(), Boolean.TRUE.equals(value.otherAreasEnabled()));
         if (files == null) files = List.of();
         if (files.size() > 5) throw new BadRequestException("Hồ sơ có tối đa 5 tài liệu xác minh.");

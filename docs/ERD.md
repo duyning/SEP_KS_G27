@@ -1,10 +1,8 @@
 # HL-RCS — ERD theo JPA hiện tại
 
-Đối chiếu ngày **2026-11-05**, commit `350dc13`; **29 entities**, tách thành 5 sơ đồ để dễ đọc.
-Nguồn: [entity catalog](ENTITY_CATALOG.md) và `src/main/java/org/hlrcs/entity/`. Không tìm thấy file ERD riêng trong repository trước lượt đọc này; các sơ đồ dưới đây được dựng từ JPA, không phải schema live.
+Đối chiếu source ngày **2026-11-28**: **53 @Entity, 2 @Embeddable và 12 enum độc lập và 6 enum lồng trong entity**. Thay thế sơ đồ snapshot 2026-11-05. Không kiểm tra schema MySQL live.
 
-Trong sơ đồ, tên hộp là **tên bảng**. `||` = đúng 1, `o{` = 0..n, `o|`/`|o` = 0..1.
-Nhãn cạnh là tên Java relationship. Node ngoài miền được lặp lại để giữ ngữ cảnh. Các attributes scalar đầy đủ nằm trong ENTITY_CATALOG.
+Node là tên bảng. Cạnh chỉ biểu diễn quan hệ JPA và element collection; ID scalar không tạo cạnh FK. `||` = đúng một, `|o` = không hoặc một, `o{` = không hoặc nhiều. Với quan hệ to-one, optionality lấy từ `nullable=false`, `optional=false` hoặc `@MapsId`; mặc định là optional. Các thuộc tính và index đầy đủ ở [ENTITY_CATALOG.md](ENTITY_CATALOG.md). Quan hệ ngược `mappedBy` không lặp cạnh đã có từ phía sở hữu.
 
 ## Tài khoản và quyền
 
@@ -19,30 +17,71 @@ erDiagram
     user_capabilities {
         int user_capability_id PK
     }
+    registration_otps {
+        string id PK
+    }
+    phone_verifications {
+        int user_id PK
+    }
+    user_notices {
+        bigint id PK
+    }
     users ||--o{ user_capabilities : user
     capabilities ||--o{ user_capabilities : capability
+    users ||--o{ user_notices : recipient
 ```
 
-## Nhà trọ, loại phòng và phòng vật lý
+## Nhà trọ và xác minh
 
 ```mermaid
 erDiagram
+    host_applications {
+        int id PK
+    }
+    host_application_identity {
+        int application_id PK
+    }
+    properties {
+        int property_id PK
+    }
     property_registrations {
         int registration_id PK
     }
     property_documents {
         int document_id PK
     }
-    properties {
-        int property_id PK
-        boolean reverification_required
-        text reverification_reasons_json
+    property_assignment_events {
+        bigint event_id PK
+    }
+    property_submission_events {
+        int event_id PK
+    }
+    verification_assignment_queue {
+        int id PK
+    }
+    users ||--o| host_applications : user
+    users |o--o{ host_applications : reviewedBy
+    host_applications ||--o| host_application_identity : application
+    users ||--o{ properties : owner
+    property_registrations |o--o| properties : registration
+    users ||--o{ property_registrations : user
+    users |o--o{ property_registrations : reviewer
+    users |o--o{ property_registrations : assignedStaff
+    property_registrations ||--o{ property_documents : registration
+    property_registrations ||--o{ property_assignment_events : registration
+    property_registrations ||--o{ property_submission_events : registration
+    users ||--o{ property_submission_events : actor
+```
+
+## Phòng và lịch xem
+
+```mermaid
+erDiagram
+    rooms {
+        int room_id PK
     }
     room_types {
         int room_type_id PK
-    }
-    rooms {
-        int room_id PK
     }
     room_type_images {
         int image_id PK
@@ -50,32 +89,71 @@ erDiagram
     room_type_videos {
         int video_id PK
     }
+    room_type_amenities {
+        int room_type_id PK
+        int amenity_id PK
+    }
     amenities {
         int amenity_id PK
     }
-    room_type_amenities {
-        int room_type_id PK,FK
-        int amenity_id PK,FK
+    wishlists {
+        int wishlist_id PK
     }
-    users ||--o{ property_registrations : user
-    users |o--o{ property_registrations : reviewer
-    property_registrations ||--o{ property_documents : registration
-    users ||--o{ properties : owner
-    property_registrations |o--o| properties : registration
-    properties ||--o{ room_types : property
-    users |o--o{ room_types : availabilityConfirmedBy
+    bookings {
+        int booking_id PK
+    }
+    viewing_notifications {
+        int notification_id PK
+    }
     properties ||--o{ rooms : property
     room_types ||--o{ rooms : roomType
+    properties ||--o{ room_types : property
+    users |o--o{ room_types : availabilityConfirmedBy
     room_types ||--o{ room_type_images : roomType
     room_types ||--o{ room_type_videos : roomType
     room_types ||--o{ room_type_amenities : roomType
     amenities ||--o{ room_type_amenities : amenity
+    users ||--o{ wishlists : user
+    room_types ||--o{ wishlists : roomType
+    users ||--o{ bookings : renter
+    room_types ||--o{ bookings : roomType
+    users |o--o{ bookings : processedBy
+    users ||--o{ viewing_notifications : recipient
+    bookings ||--o{ viewing_notifications : booking
 ```
 
-## Onboarding và dịch vụ công khai
+## Thuê phòng và hóa đơn
 
 ```mermaid
 erDiagram
+    rental_contracts {
+        bigint id PK
+    }
+    room_tenancies {
+        bigint id PK
+    }
+    room_occupants {
+        bigint id PK
+    }
+    room_utility_readings {
+        bigint id PK
+    }
+    room_bills {
+        bigint id PK
+    }
+    room_bill_payments {
+        bigint id PK
+    }
+    room_tenancies ||--o{ room_occupants : tenancy
+```
+
+## Dịch vụ
+
+```mermaid
+erDiagram
+    services {
+        int service_id PK
+    }
     service_categories {
         int category_id PK
     }
@@ -85,21 +163,43 @@ erDiagram
     service_documents {
         int document_id PK
     }
-    services {
-        int service_id PK
+    service_requests {
+        int request_id PK
     }
+    service_ratings {
+        int rating_id PK
+    }
+    service_complaints {
+        int complaint_id PK
+    }
+    service_complaint_events {
+        int event_id PK
+    }
+    users ||--o{ services : provider
+    service_categories ||--o{ services : category
+    service_registrations |o--o| services : registration
     users ||--o{ service_registrations : user
     service_categories ||--o{ service_registrations : category
     users |o--o{ service_registrations : reviewer
     users |o--o{ service_registrations : assignedStaff
-    service_registrations ||--o{ service_documents : registration
     services |o--o{ service_registrations : targetService
-    users ||--o{ services : provider
-    service_categories ||--o{ services : category
-    service_registrations |o--o| services : registration
+    service_registrations ||--o{ service_registration_images : additionalImages
+    service_registrations ||--o{ service_documents : registration
+    services ||--o{ service_requests : service
+    users ||--o{ service_requests : customer
+    users |o--o{ service_requests : handledBy
+    services ||--o{ service_ratings : service
+    users ||--o{ service_ratings : author
+    service_ratings ||--o{ service_rating_images : images
+    services ||--o{ service_complaints : service
+    users ||--o{ service_complaints : reporter
+    service_complaints ||--o{ service_complaint_images : images
+    service_complaints ||--o{ service_complaint_events : complaint
+    users ||--o{ service_complaint_events : actor
+    service_complaint_events ||--o{ service_complaint_event_images : images
 ```
 
-## Cộng đồng
+## Cộng đồng và kiểm duyệt
 
 ```mermaid
 erDiagram
@@ -121,6 +221,36 @@ erDiagram
     comments {
         int comment_id PK
     }
+    community_notifications {
+        int notification_id PK
+    }
+    community_scans {
+        int id PK
+    }
+    community_report_analyses {
+        int report_id PK
+    }
+    community_report_evidence {
+        int report_id PK
+    }
+    collected_posts {
+        bigint id PK
+    }
+    reports {
+        int report_id PK
+    }
+    feedbacks {
+        int feedback_id PK
+    }
+    moderation_logs {
+        int log_id PK
+    }
+    support_requests {
+        int request_id PK
+    }
+    support_logs {
+        int log_id PK
+    }
     users ||--o{ posts : author
     users |o--o{ posts : reviewer
     posts ||--o{ post_media : post
@@ -131,109 +261,24 @@ erDiagram
     posts ||--o| pass_item_post_details : post
     posts ||--o{ comments : post
     users ||--o{ comments : author
-```
-
-## Tương tác và vận hành
-
-```mermaid
-erDiagram
-    bookings {
-        int booking_id PK
-    }
-    wishlists {
-        int wishlist_id PK
-    }
-    feedbacks {
-        int feedback_id PK
-    }
-    reports {
-        int report_id PK
-    }
-    support_requests {
-        int request_id PK
-    }
-    support_logs {
-        int log_id PK
-    }
-    moderation_logs {
-        int log_id PK
-    }
-    users ||--o{ bookings : renter
-    room_types ||--o{ bookings : roomType
-    users ||--o{ wishlists : user
-    room_types ||--o{ wishlists : roomType
-    users ||--o{ feedbacks : user
-    properties ||--o{ feedbacks : property
+    users ||--o{ community_notifications : recipient
+    reports ||--o| community_report_evidence : report
+    collected_posts ||--o{ collected_post_images : images
+    users ||--o{ collected_posts : collectedBy
+    users |o--o{ collected_posts : publishedBy
     users ||--o{ reports : reporter
     users |o--o{ reports : handler
+    users ||--o{ feedbacks : user
+    properties ||--o{ feedbacks : property
+    users ||--o{ moderation_logs : staff
     users ||--o{ support_requests : requester
     properties |o--o{ support_requests : targetProperty
     support_requests ||--o{ support_logs : request
     users ||--o{ support_logs : performedBy
-    users ||--o{ moderation_logs : staff
 ```
 
-## Các ràng buộc cần đọc cùng ERD
+## ID scalar và phạm vi sơ đồ
 
-- `User` N–N `Capability` qua UserCapability, có status/grantedAt. Không có entity Provider riêng: `services.provider_id` trỏ `users.user_id`.
-- RoomType N–N Amenity qua RoomTypeAmenity với composite PK. RoomType còn có amenitiesJson; ERD không khẳng định hai cách lưu đồng bộ.
-- `Property.registration_id` và `Service.registration_id` là OneToOne nullable, tương ứng mỗi hồ sơ có tối đa một kết quả. Owner/provider có thể có nhiều row theo cardinality JPA; quy tắc onboarding có thể chặt hơn trong service.
-- `Room` liên kết cả Property và RoomType. Ràng buộc cùng một Property được business service kiểm tra; ERD không biểu diễn được quy tắc liên bảng đó. Room number unique theo Property.
-- Booking trỏ RoomType, không phải Room. Wishlist cũng trỏ RoomType; Feedback trỏ Property.
-- Các PostDetail dùng PK đồng thời FK tới Post. Đúng subtype theo postType cần business logic; sơ đồ không khẳng định database bảo đảm chỉ một subtype.
-- Cạnh assignedStaff là FK lịch sử; quyền xét duyệt dịch vụ hiện không phụ thuộc assignment. Mọi active STAFF/ADMIN được xử lý hồ sơ, trừ tự xét duyệt.
-- ModerationLog và Report có targetType/targetId dạng polymorphic; chỉ staff/reporter/handler là các FK được vẽ. Không vẽ FK giả tới các bảng đích.
-- Phân biệt cascade trong SQL tham khảo với cascade trong JPA. Không suy ra hành vi xóa từ sơ đồ này.
-- Trước thay đổi database, đối chiếu [schema drift](ENTITY_CATALOG.md#khác-biệt-cột-với-sqlschemasql) và kiểm tra schema live nếu được yêu cầu.
+`RentalContract`, `RoomTenancy`, `RoomBill` và các entity khác có ID snapshot/scalar: xem từng field trong catalog. Không vẽ chúng như FK nếu nguồn không khai báo quan hệ. Ràng buộc unique như activeRoomId/contractId và quy tắc transaction nằm trong annotation/service, không được suy ra chỉ từ đường nối ERD.
 
-## Bổ sung bộ ảnh dịch vụ — 2026-11-08
-
-```mermaid
-erDiagram
-    service_registrations ||--o{ service_registration_images : additionalImages
-    service_registration_images {
-        int registration_id FK
-        int image_position
-        blob image_content
-        string content_type
-    }
-```
-
-Bảng collection của embeddable ServiceImage; ảnh đại diện vẫn lưu trên service_registrations. Thứ tự ảnh được giữ bằng image_position.
-
-## Customer service requests — 2026-11-14
-
-```mermaid
-erDiagram
-    services ||--o{ service_requests : service
-    users ||--o{ service_requests : customer
-    users |o--o{ service_requests : handledBy
-```
-
-ServiceRequest is distinct from SupportRequest, ServiceRegistration and Booking. Customer/owner access is enforced by the application; timestamps represent UTC instants.
-
-
-## Mở rộng khu vực dịch vụ (2026-11-14)
-
-Service và ServiceRegistration thêm `custom_service_areas` tách khu vực tự nhập khỏi khu vực chuẩn; không thêm quan hệ/entity. Proposal chỉ cập nhật bản public sau duyệt. Xem [SERVICE_AREAS.md](SERVICE_AREAS.md) cho API mở rộng, validation, migration và danh sách file.
-
-## Đánh giá và báo cáo dịch vụ (2026-11-18)
-
-```mermaid
-erDiagram
-    services ||--o{ service_ratings : service
-    users ||--o{ service_ratings : author
-    service_ratings ||--o{ service_rating_images : images
-    services ||--o{ service_complaints : service
-    users ||--o{ service_complaints : reporter
-    service_complaints ||--o{ service_complaint_images : images
-    service_complaints ||--o{ service_complaint_events : history
-    users ||--o{ service_complaint_events : actor
-    service_complaint_events ||--o{ service_complaint_event_images : images
-```
-
-Một ServiceRating duy nhất theo cặp service/author. Service.moderationHidden chặn công khai độc lập với snapshot và capability. Xem [SERVICE_FEEDBACK.md](SERVICE_FEEDBACK.md).
-
-## AI hỗ trợ báo cáo Community (2026-11-22)
-
-`community_report_analyses` có một bản ghi hiện hành cho mỗi `report_id` (scalar, không ánh xạ FK JPA); `post_id` là scalar. Tác vụ giữ dấu vân tay và kết quả tham khảo; không thay đổi quan hệ/report lifecycle hiện có. Xem [rule và luồng phân tích](COMMUNITY_REPORT_AI_RULES.md).
+Bảng ảnh từ `ServiceImage` và các element collection được thể hiện bằng cạnh collection; `ServiceImage` không phải entity độc lập. Không suy rằng xóa node sẽ cascade: kiểm tra annotation cascade và logic soft delete trước khi thay đổi.

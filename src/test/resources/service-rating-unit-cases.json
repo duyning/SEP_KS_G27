@@ -1,0 +1,1734 @@
+[
+  {
+    "id": "UTC001",
+    "op": "submit",
+    "label": "Accept 0 stars",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC002",
+    "op": "submit",
+    "label": "Accept 1 stars",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC003",
+    "op": "submit",
+    "label": "Accept 2 stars",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 2,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC004",
+    "op": "submit",
+    "label": "Accept 3 stars",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC005",
+    "op": "submit",
+    "label": "Accept 4 stars",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 4,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC006",
+    "op": "submit",
+    "label": "Accept 5 stars",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 5,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC007",
+    "op": "submit",
+    "label": "Reject stars outside 0–5",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": -1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Số sao phải từ 0 đến 5.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC008",
+    "op": "submit",
+    "label": "Reject stars outside 0–5",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 6,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Số sao phải từ 0 đến 5.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC009",
+    "op": "submit",
+    "label": "Reject stars outside 0–5",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": -2147483648,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Số sao phải từ 0 đến 5.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC010",
+    "op": "submit",
+    "label": "Reject stars outside 0–5",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 2147483647,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Số sao phải từ 0 đến 5.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC011",
+    "op": "submit",
+    "label": "Guard: serviceExists=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "serviceExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC012",
+    "op": "submit",
+    "label": "Guard: providerExists=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "providerExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC013",
+    "op": "submit",
+    "label": "Guard: public=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "public": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC014",
+    "op": "submit",
+    "label": "Guard: owner=true",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "owner": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không thể tự đánh giá dịch vụ của mình.",
+      "status": 403
+    }
+  },
+  {
+    "id": "UTC015",
+    "op": "submit",
+    "label": "Guard: duplicate=true",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "duplicate": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Bạn đã đánh giá dịch vụ này. Mỗi người chỉ được đánh giá một lần.",
+      "status": 409
+    }
+  },
+  {
+    "id": "UTC016",
+    "op": "submit",
+    "label": "Recheck publication after provider lock and refresh",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "hideOnRefresh": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC017",
+    "op": "submit",
+    "label": "Owner guard precedes star validation",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": -1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "owner": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không thể tự đánh giá dịch vụ của mình.",
+      "status": 403
+    }
+  },
+  {
+    "id": "UTC018",
+    "op": "submit",
+    "label": "Star guard precedes duplicate guard",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": -1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "duplicate": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Số sao phải từ 0 đến 5.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC019",
+    "op": "submit",
+    "label": "Duplicate guard precedes content validation",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "duplicate": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Bạn đã đánh giá dịch vụ này. Mỗi người chỉ được đánh giá một lần.",
+      "status": 409
+    }
+  },
+  {
+    "id": "UTC020",
+    "op": "submit",
+    "label": "Propagate auth failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "auth"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "auth failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC021",
+    "op": "submit",
+    "label": "Propagate lookup failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "lookup"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "lookup failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC022",
+    "op": "submit",
+    "label": "Propagate lock failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "lock"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "lock failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC023",
+    "op": "submit",
+    "label": "Propagate refresh failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "refresh"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "refresh failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC024",
+    "op": "submit",
+    "label": "Propagate save failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "save"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "save failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC025",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC026",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC027",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC028",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 2,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC029",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC030",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 4,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC031",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 5,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC032",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": -1,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Bộ lọc đánh giá không hợp lệ.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC033",
+    "op": "list",
+    "label": "Exact star filter",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 6,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Bộ lọc đánh giá không hợp lệ.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC034",
+    "op": "list",
+    "label": "Negative page",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": -1,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Bộ lọc đánh giá không hợp lệ.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC035",
+    "op": "list",
+    "label": "Negative page",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": -1,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Bộ lọc đánh giá không hợp lệ.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC036",
+    "op": "list",
+    "label": "Beyond last page",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 2,
+      "min": 1
+    },
+    "fixture": {
+      "emptyPage": true
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC037",
+    "op": "list",
+    "label": "No ratings",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "emptyCounts": true,
+      "emptyPage": true
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC038",
+    "op": "list",
+    "label": "All ratings zero stars",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "zeroCounts": true
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC039",
+    "op": "list",
+    "label": "Authentication branch",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "none"
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC040",
+    "op": "list",
+    "label": "Authentication branch",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "anonymous"
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC041",
+    "op": "list",
+    "label": "Authentication branch",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": null,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user"
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC042",
+    "op": "list",
+    "label": "Own rating exists independently of filter",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 5,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user",
+      "mine": true
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC043",
+    "op": "list",
+    "label": "serviceExists=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "serviceExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC044",
+    "op": "list",
+    "label": "public=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "public": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC045",
+    "op": "list",
+    "label": "Dependency failure: lookup",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user",
+      "failure": "lookup"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "lookup failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC046",
+    "op": "list",
+    "label": "Dependency failure: page",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user",
+      "failure": "page"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "page failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC047",
+    "op": "list",
+    "label": "Dependency failure: counts",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user",
+      "failure": "counts"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "counts failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC048",
+    "op": "list",
+    "label": "Dependency failure: auth",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "authentication": "user",
+      "failure": "auth"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "auth failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC049",
+    "op": "reply",
+    "label": "First owner reply",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC050",
+    "op": "reply",
+    "label": "Missing rating",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "ratingExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC051",
+    "op": "reply",
+    "label": "Non-owner denied",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "owner": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Chỉ chủ dịch vụ được phản hồi đánh giá.",
+      "status": 403
+    }
+  },
+  {
+    "id": "UTC052",
+    "op": "reply",
+    "label": "Existing non-null reply",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "reply": "Already replied"
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Đánh giá này đã được phản hồi.",
+      "status": 409
+    }
+  },
+  {
+    "id": "UTC053",
+    "op": "reply",
+    "label": "Existing non-null reply",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "reply": ""
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Đánh giá này đã được phản hồi.",
+      "status": 409
+    }
+  },
+  {
+    "id": "UTC054",
+    "op": "reply",
+    "label": "Owner may reply when service is hidden",
+    "type": "N",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "public": false
+    },
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC055",
+    "op": "reply",
+    "label": "Ownership guard wins over existing reply",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "owner": false,
+      "reply": "Old"
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Chỉ chủ dịch vụ được phản hồi đánh giá.",
+      "status": 403
+    }
+  },
+  {
+    "id": "UTC056",
+    "op": "reply",
+    "label": "Dependency failure: replyLookup",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "replyLookup"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "replyLookup failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC057",
+    "op": "reply",
+    "label": "Dependency failure: auth",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "auth"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "auth failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC058",
+    "op": "reply",
+    "label": "Dependency failure: save",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "save"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "save failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC059",
+    "op": "image",
+    "label": "Image index boundary",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": -1,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC060",
+    "op": "image",
+    "label": "Image index boundary",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC061",
+    "op": "image",
+    "label": "Image index boundary",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 1,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  },
+  {
+    "id": "UTC062",
+    "op": "image",
+    "label": "Image index boundary",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 2,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC063",
+    "op": "image",
+    "label": "Image index boundary",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 2147483647,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC064",
+    "op": "image",
+    "label": "serviceExists=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "serviceExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC065",
+    "op": "image",
+    "label": "public=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "public": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC066",
+    "op": "image",
+    "label": "ratingExists=false",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "ratingExists": false
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC067",
+    "op": "image",
+    "label": "wrongService=true",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "wrongService": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC068",
+    "op": "image",
+    "label": "noImages=true",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "noImages": true
+    },
+    "expected": {
+      "exception": "AppException",
+      "message": "Không tìm thấy đánh giá hoặc dịch vụ công khai.",
+      "status": 404
+    }
+  },
+  {
+    "id": "UTC069",
+    "op": "image",
+    "label": "Dependency failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "lookup"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "lookup failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC070",
+    "op": "image",
+    "label": "Dependency failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 3,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "failure": "imageLookup"
+    },
+    "expected": {
+      "exception": "IllegalStateException",
+      "message": "imageLookup failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC071",
+    "op": "submit",
+    "label": "Propagate mocked text failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "helperFailure": "text"
+    },
+    "expected": {
+      "exception": "BadRequestException",
+      "message": "Nội dung phải có từ 1 đến 3000 ký tự.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC072",
+    "op": "submit",
+    "label": "Propagate mocked read failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "helperFailure": "read"
+    },
+    "expected": {
+      "exception": "BadRequestException",
+      "message": "Ảnh chỉ nhận JPG, PNG, WEBP đúng định dạng.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC073",
+    "op": "submit",
+    "label": "Propagate mocked read failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "helperFailure": "read"
+    },
+    "expected": {
+      "exception": "IOException",
+      "message": "read failed",
+      "status": null
+    }
+  },
+  {
+    "id": "UTC074",
+    "op": "reply",
+    "label": "Propagate mocked text failure",
+    "type": "A",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": null,
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {
+      "helperFailure": "text"
+    },
+    "expected": {
+      "exception": "BadRequestException",
+      "message": "Nội dung phải có từ 1 đến 3000 ký tự.",
+      "status": 400
+    }
+  },
+  {
+    "id": "UTC075",
+    "op": "submit",
+    "label": "Map images returned by mocked helper",
+    "type": "B",
+    "input": {
+      "serviceId": 10,
+      "stars": 0,
+      "content": "Good service",
+      "images": [
+        {
+          "mime": "image/png",
+          "size": 9,
+          "signature": "png"
+        }
+      ],
+      "ratingId": 100,
+      "index": 0,
+      "page": 0,
+      "min": 1
+    },
+    "fixture": {},
+    "expected": {
+      "exception": null,
+      "message": null
+    }
+  }
+]
