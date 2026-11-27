@@ -1,7 +1,6 @@
 import UIButton from '../common/Button.jsx';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
-  AlertTriangle,
   CheckCircle2,
   Clock,
   Globe,
@@ -84,13 +83,6 @@ export default function StaffSidebar({ isOpen, onClose, counts = { verif: 1, rep
                 <Home className="nav-icon" size={18} />
                 <span>Xác minh nhà trọ</span>
                 {counts.verif > 0 && <span className="nav-badge pending">{counts.verif}</span>}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/staff?view=content-moderation" className="nav-link" onClick={onClose}>
-                <AlertTriangle className="nav-icon" size={18} />
-                <span>Kiểm duyệt tin đăng</span>
-                {counts.reports > 0 && <span className="nav-badge pending">{counts.reports}</span>}
               </NavLink>
             </li>
             <li>

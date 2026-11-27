@@ -37,6 +37,7 @@ public class RegistrationOtpService {
     private final RegistrationOtpRepository repository;
     private final UserRepository users;
     private final RegistrationOtpSender sender;
+    private final PhoneOtpProvider phoneSender;
     private final PasswordEncoder encoder;
 
     public record Sent(int resendAfterSeconds, int expiresInSeconds) {}
@@ -53,8 +54,10 @@ public class RegistrationOtpService {
             throw resendTooSoon();
         }
 
-        String code = String.format(Locale.ROOT, "%06d", RANDOM.nextInt(1_000_000));
-        challenge.setSecretHash(encoder.encode(code));
+        String previousReference = challenge.isVerified() ? null : challenge.getProviderReference();
+        int previousAttempts = challenge.getFailedAttempts();
+        challenge.setSecretHash(null);
+        challenge.setProviderReference(null);
         challenge.setSentAt(now);
         challenge.setExpiresAt(now.plus(CODE_LIFETIME));
         challenge.setFailedAttempts(0);
@@ -65,7 +68,18 @@ public class RegistrationOtpService {
         } catch (DataIntegrityViolationException ex) {
             throw resendTooSoon();
         }
-        sender.send(contact, code);
+        if (contact.phone()) {
+            var sent = phoneSender.send("+" + contact.internationalPhone());
+            challenge.setSecretHash(sent.codeHash());
+            challenge.setProviderReference(sent.reference());
+            // Remote providers can reuse a code/reference; resending must not reset its attempt budget.
+            if (sent.reference() != null && sent.reference().equals(previousReference) && sent.codeHash() == null)
+                challenge.setFailedAttempts(previousAttempts);
+        } else {
+            String code = String.format(Locale.ROOT, "%06d", RANDOM.nextInt(1_000_000));
+            challenge.setSecretHash(encoder.encode(code));
+            sender.sendEmail(contact.identifier(), code);
+        }
         return new Sent((int) RESEND_DELAY.toSeconds(), (int) CODE_LIFETIME.toSeconds());
     }
 
@@ -73,10 +87,12 @@ public class RegistrationOtpService {
     public Verification verify(String identifier, String code) {
         RegistrationContact contact = RegistrationContact.parse(identifier);
         RegistrationOtp challenge = repository.findLocked(key(contact)).orElse(null);
-        if (!hasLiveSecret(challenge) || challenge.isVerified()) {
+        if (!hasLiveSecret(challenge) || challenge.isVerified() || challenge.getFailedAttempts() >= MAX_ATTEMPTS) {
             throw new FieldValidationException("code", "Mã OTP đã hết hạn hoặc đã dùng. Vui lòng gửi mã mới.");
         }
-        if (!encoder.matches(code, challenge.getSecretHash())) {
+        boolean valid = challenge.getSecretHash() != null ? encoder.matches(code, challenge.getSecretHash())
+                : phoneSender.check(challenge.getProviderReference(), code);
+        if (!valid) {
             challenge.setFailedAttempts(challenge.getFailedAttempts() + 1);
             if (challenge.getFailedAttempts() >= MAX_ATTEMPTS) {
                 challenge.setSecretHash(null);
@@ -101,6 +117,7 @@ public class RegistrationOtpService {
         }
         requireAvailable(contact);
         challenge.setSecretHash(null);
+        challenge.setProviderReference(null);
     }
 
     private void requireAvailable(RegistrationContact contact) {
@@ -133,7 +150,8 @@ public class RegistrationOtpService {
     }
 
     private static boolean hasLiveSecret(RegistrationOtp challenge) {
-        return challenge != null && challenge.getSecretHash() != null && challenge.getExpiresAt().isAfter(Instant.now());
+        return challenge != null && (challenge.getSecretHash() != null || challenge.getProviderReference() != null)
+                && challenge.getExpiresAt().isAfter(Instant.now());
     }
 
     private static AppException resendTooSoon() {

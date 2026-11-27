@@ -1,0 +1,70 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: "#dae8fc"
+    primaryBorderColor: "#6c8ebf"
+    actorBkg: "#dae8fc"
+    actorBorder: "#6c8ebf"
+    activationBkgColor: "#dae8fc"
+    activationBorderColor: "#6c8ebf"
+    signalColor: "#333333"
+    fontFamily: Arial
+title: HL-RCS — Registration Contact Verification
+---
+sequenceDiagram
+autonumber
+actor U as Guest
+participant UI as «user interaction» AuthPage
+participant C as «control» AuthController
+participant S as «service» RegistrationOtpService
+participant R as «entity» User / RegistrationOtp Repositories
+participant D as «external adapter» RegistrationOtpSender
+U->>UI: Enter email or phone; request OTP
+UI->>+C: POST /api/auth/register/otp/send
+C->>+S: send(identifier)
+S->>+R: Check contact availability; findLocked(contact key)
+R-->>-S: Existing account / challenge
+alt Contact used or resend within 60 seconds
+S-->>C: AppException (409 / 429)
+C-->>UI: Error response (via exception handler)
+UI-->>U: Display error
+else Contact available and resend allowed
+S->>S: Generate 6-digit code; hash; expire in 5 minutes
+S->>+R: saveAndFlush(challenge)
+R-->>-S: Saved challenge
+S->>+D: send(contact, code)
+Note right of D: Email via JavaMailSender<br/>Phone via Zalo template API
+D-->>-S: Delivery request accepted or exception
+alt Delivery unavailable or failed
+S-->>C: AppException (503 / 502); rollback
+C-->>UI: Error response
+UI-->>U: Display delivery error
+else Delivery request accepted
+S-->>C: Sent(resendAfterSeconds=60, expiresInSeconds=300)
+C-->>UI: HTTP 200 — ApiResponse
+UI-->>U: Show OTP entry and resend countdown
+end
+end
+deactivate S
+deactivate C
+U->>UI: Enter received OTP
+UI->>+C: POST /api/auth/register/otp/verify
+C->>+S: verify(identifier, code)
+S->>+R: findLocked(contact key)
+R-->>-S: Challenge or null
+alt Missing, expired, used or incorrect code
+S->>S: For wrong code, increment attempts; invalidate at 5
+Note over S,R: Failed-attempt changes persist despite validation error
+S-->>C: FieldValidationException
+C-->>UI: HTTP 400 — code error
+UI-->>U: Display error; retry or request new OTP
+else Correct live OTP
+S->>S: Generate verification token; hash token;<br/>mark verified; expire in 10 minutes
+Note over S,R: JPA dirty checking persists challenge at commit
+S-->>C: Verification(token, expiresInSeconds=600)
+C-->>UI: HTTP 200 — ApiResponse
+UI-->>U: Allow account registration
+end
+deactivate S
+deactivate C

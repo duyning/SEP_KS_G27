@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+﻿import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { authApi, clearToken, getToken, saveToken } from '../services/auth.js';
 import LogoutConfirmation from '../components/LogoutConfirmation.jsx';
 import { startCommunityRealtime } from '../services/community-live.js';
@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   useEffect(() => { if (!loading) return startCommunityRealtime(); }, [loading, user?.userId, user?.role]);
   const [sessionError, setSessionError] = useState('');
   const [explicitLogout, setExplicitLogout] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const [reload, setReload] = useState(0);
   const sessionVersion = useRef(0);
   const logoutTask = useRef(null), confirmLogout = useRef(null);
@@ -41,7 +42,7 @@ export function AuthProvider({ children }) {
     }).finally(() => { if (current()) setLoading(false); });
     return () => controller.abort();
   }, [reload]);
-  const acceptSession = (data, remember) => { cancelLogout();logoutTask.current = null;sessionVersion.current++; saveToken(data.accessToken, remember); setUser(data); setSessionError(''); setLoading(false); setExplicitLogout(false); };
+  const acceptSession = (data, remember) => { cancelLogout();logoutTask.current = null;sessionVersion.current++; saveToken(data.accessToken, remember); setUser(data); setSessionError(''); setLoading(false); setExplicitLogout(false); setPasswordChanged(false); };
   const login = async (values, remember) => { const version=++sessionVersion.current; const data = await authApi.login(values); if(version===sessionVersion.current)acceptSession(data, remember); };
   const loginWithGoogle = async (idToken, remember) => { const version=++sessionVersion.current; const data=await authApi.googleLogin(idToken); if(version===sessionVersion.current)acceptSession(data, remember); };
   const register = async values => { const version=++sessionVersion.current; const data = await authApi.register(values); if(version===sessionVersion.current)acceptSession(data, false); };
@@ -81,7 +82,11 @@ export function AuthProvider({ children }) {
     logoutTask.current = task;
     return task;
   };
-  return <AuthContext.Provider value={{ user, loading, sessionError, explicitLogout, login, loginWithGoogle, register, updateProfile, refreshUser, logout, retry: () => setReload(value => value + 1) }}>{children}
+  const endPasswordSession = () => {
+    cancelLogout(); sessionVersion.current++; clearToken(); setUser(null);
+    setSessionError(''); setLoading(false); setExplicitLogout(true); setPasswordChanged(true);
+  };
+  return <AuthContext.Provider value={{ user, loading, sessionError, explicitLogout, passwordChanged, login, loginWithGoogle, register, updateProfile, refreshUser, logout, endPasswordSession, retry: () => setReload(value => value + 1) }}>{children}
     {logoutOpen && <LogoutConfirmation busy={logoutBusy} onCancel={cancelLogout} onConfirm={()=>{setLogoutBusy(true);confirmLogout.current?.(true);confirmLogout.current=null;}}/>}
   </AuthContext.Provider>;
 }

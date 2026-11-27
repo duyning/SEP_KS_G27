@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapCanvas, LocationMarker } from './AccommodationMap.jsx';
 import { Modal } from './PortalUI.jsx';
 import { FPT_ORIGIN, MAX_RADIUS_KM, parseSearchOrigin } from '../services/search-origin.js';
+import '../styles/public-task-dialogs.css';
 
 export default function SearchOriginDialog({ origin, radiusKm, onApply, onClose }) {
   const [selectedOrigin, setSelectedOrigin] = useState(origin);
@@ -28,7 +29,7 @@ export default function SearchOriginDialog({ origin, radiusKm, onApply, onClose 
     onApply(selectedOrigin, km);
   }
 
-  return <Modal title="Tìm quanh địa điểm" onClose={onClose}>
+  return <Modal title="Tìm quanh địa điểm" className="public-task-dialog location-search-dialog" onClose={onClose}>
     <form className="location-search-form" onSubmit={submit}>
       <p>Nhấn vào bản đồ hoặc kéo ghim để chọn địa điểm. Nhập bán kính nếu muốn giới hạn khu vực tìm kiếm.</p>
       <MapCanvas label="Bản đồ chọn địa điểm tính khoảng cách" onSelect={select} nearbyPoint={null}

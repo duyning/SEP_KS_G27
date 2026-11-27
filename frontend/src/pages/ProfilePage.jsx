@@ -1,12 +1,16 @@
 import { MotionButton, AnimatePresence } from '../components/motion/MotionUI.jsx';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext.jsx';
-import {authApi} from '../services/auth.js';
+import {authApi,getToken} from '../services/auth.js';
 import {roleLabels} from '../routing/screens.js';
-import {Modal, useToast} from '../components/PortalUI.jsx';
+import {useToast} from '../components/PortalUI.jsx';
+import Modal from '../components/common/Modal.jsx';
 import ProfilePrototype from './ProfilePrototype.jsx';
 import ProfilePhoneOtp from '../components/ProfilePhoneOtp.jsx';
+import PasswordRecoveryDialog from '../components/PasswordRecoveryDialog.jsx';
+import { passwordErrors } from '../services/password-recovery.js';
+import { useUpcomingViewings } from '../hooks/useUpcomingViewings.js';
 import '../styles/home-prototype.css';
 import '../styles/home-prototype-integration.css';
 import '../styles/profile-prototype.css';
@@ -18,7 +22,10 @@ const ids={fullName:'editFullName',phoneNumber:'editPhone',organization:'editOrg
 const emptyPasswords={oldPassword:'',newPassword:'',confirmPassword:''};
 const tabs=['info','favorites','appointments','reports','security'];
 export default function ProfilePage() {
- const {user,updateProfile,logout}=useAuth();
+ const {user,updateProfile,logout,endPasswordSession}=useAuth();
+ const [passwordRecoveryOpen,setPasswordRecoveryOpen]=useState(false);
+ const passwordTask=useRef(false);
+ const appointments=useUpcomingViewings();
  const [phoneChallenge,setPhoneChallenge]=useState(null);
  const notify=useToast(), navigate=useNavigate();
  const [params,setParams]=useSearchParams();
@@ -74,17 +81,16 @@ export default function ProfilePage() {
  }
  function validatePassword(){
   if(busy)return;
-  const next={};
+  const next=passwordErrors(passwords.newPassword,passwords.confirmPassword,passwords.oldPassword);
   if(!passwords.oldPassword)next.oldPassword='Vui lòng nhập mật khẩu hiện tại.';
-  if(passwords.newPassword.length<6)next.newPassword='Mật khẩu mới cần ít nhất 6 ký tự.';
-  else if(passwords.newPassword===passwords.oldPassword)next.newPassword='Mật khẩu mới phải khác mật khẩu hiện tại.';
-  if(!passwords.confirmPassword||passwords.confirmPassword!==passwords.newPassword)next.confirmPassword='Mật khẩu xác nhận chưa khớp.';
   if(!showErrors(next))setConfirming(true);
  }
  async function changePassword(){
-  if(busy)return;setBusy(true);setAlert('');
-  try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});setPasswords(emptyPasswords);setEyes({});setErrors({});notify('Đã đổi mật khẩu thành công.');}catch(error){fail(error);}finally{setBusy(false);setConfirming(false);}
+  if(busy||passwordTask.current)return;passwordTask.current=true;setBusy(true);setAlert('');
+  const passwordSession=getToken();
+  try{await authApi.changePassword({oldPassword:passwords.oldPassword,newPassword:passwords.newPassword});if(getToken()!==passwordSession)return;setPasswords(emptyPasswords);setEyes({});setErrors({});finishPassword();}catch(error){if(getToken()===passwordSession)fail(error);}finally{passwordTask.current=false;setBusy(false);setConfirming(false);}
  }
+ function finishPassword(){endPasswordSession();navigate('/login',{replace:true,state:{passwordChanged:true}});}
  async function signOut(){if(busy)return;setBusy(true);try{if(await logout()===false)return;navigate('/login',{replace:true});}catch{notify('Phiên đăng nhập trên máy đã được kết thúc.','error');}finally{setBusy(false);}}
  function selectTab(key){
   if(busy)return;setAccountMenuOpen(false);setParams(key==='info'?{}:{tab:key});setErrors({});setAlert('');
@@ -97,6 +103,7 @@ export default function ProfilePage() {
   const target=event.target;
   const tabButton=target.closest('[data-tab]');if(tabButton)selectTab(tabButton.dataset.tab);
   if(target.closest('#headerApptBox'))selectTab('appointments');
+  if(target.closest('#btnProfilePasswordOtp'))setPasswordRecoveryOpen(true);
   if(target.closest('#btnStartEditProfile')){setValues(profileValues(user));setEditing(true);setErrors({});setAlert('');}
   if(target.closest('#btnCancelEditProfile')&&!busy){setEditing(false);setValues(profileValues(user));setErrors({});setAlert('');}
   if(target.closest('#btnTriggerAvatarUpload'))document.getElementById('avatarFileInput')?.click();
@@ -111,5 +118,5 @@ export default function ProfilePage() {
   setErrors(previous=>({...previous,[name]:undefined}));setAlert('');
  }
  function onSubmit(event){event.preventDefault();if(event.target.id==='profileEditForm')saveProfile();else if(event.target.id==='changePasswordForm')validatePassword();}
- return <><ProfilePrototype {...{user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,accountMenuOpen,onClick,onSubmit,onChange,alert}}/><AnimatePresence>{phoneChallenge&&<ProfilePhoneOtp key="phone-otp" challenge={phoneChallenge} preview={phoneChallenge.preview===true} onClose={closePhoneOtp} onVerified={async()=>{await updateProfile(phoneChallenge.payload);setPhoneChallenge(null);setEditing(false);notify('Đã xác minh số điện thoại và cập nhật tài khoản.');}}/>}{confirming&&<Modal className="pm-password-confirm" title="Xác nhận đổi mật khẩu" onClose={()=>{if(!busy)setConfirming(false);}}><p>Bạn muốn cập nhật mật khẩu đăng nhập mới?</p><div className="p-actions"><MotionButton className="p-button" disabled={busy} onClick={()=>setConfirming(false)}>Hủy bỏ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={changePassword}>{busy?'Đang cập nhật...':'Xác nhận đổi mật khẩu'}</MotionButton></div></Modal>}</AnimatePresence></>;
+ return <><ProfilePrototype {...{user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,accountMenuOpen,onClick,onSubmit,onChange,alert,appointments}}/><AnimatePresence>{passwordRecoveryOpen&&<PasswordRecoveryDialog user={user} onClose={()=>setPasswordRecoveryOpen(false)} onComplete={finishPassword}/>}{phoneChallenge&&<ProfilePhoneOtp key="phone-otp" challenge={phoneChallenge} preview={phoneChallenge.preview===true} onClose={closePhoneOtp} onVerified={async()=>{await updateProfile(phoneChallenge.payload);setPhoneChallenge(null);setEditing(false);notify('Đã xác minh số điện thoại và cập nhật tài khoản.');}}/>}{confirming&&<Modal closeDisabled={busy} className="pm-password-confirm" title="Xác nhận đổi mật khẩu" onClose={()=>{if(!busy)setConfirming(false);}}><p>Bạn muốn cập nhật mật khẩu đăng nhập mới?</p><div className="p-actions"><MotionButton className="p-button" disabled={busy} onClick={()=>setConfirming(false)}>Hủy bỏ</MotionButton><MotionButton className="p-button primary" disabled={busy} onClick={changePassword}>{busy?'Đang cập nhật...':'Xác nhận đổi mật khẩu'}</MotionButton></div></Modal>}</AnimatePresence></>;
 }

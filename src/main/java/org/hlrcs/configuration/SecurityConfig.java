@@ -98,7 +98,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/public/collected-posts").permitAll()
 
-                        .requestMatchers("/api/auth/profile/phone/**").authenticated()
+                        .requestMatchers("/api/auth/profile/phone/**", "/api/auth/profile/password-reset/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/properties/search", "/api/properties/location/nearby",
                                 "/api/properties/*/room-types/*", "/api/properties/*/room-types/*/details",
                                 "/api/properties/*/room-types/*/images/*").permitAll()

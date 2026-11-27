@@ -18,6 +18,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import GoogleSignIn from '../components/GoogleSignIn.jsx';
+import PasswordRecoveryDialog from '../components/PasswordRecoveryDialog.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/PortalUI.jsx';
 import { sessionDestination } from '../routing/session-destination.js';
@@ -44,7 +45,7 @@ function identifierError(value) {
 }
 
 export default function AuthPage({ registerMode = false }) {
-  const { login, loginWithGoogle, register, user } = useAuth();
+  const { login, loginWithGoogle, register, user, passwordChanged } = useAuth();
   const notify = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,6 +61,8 @@ export default function AuthPage({ registerMode = false }) {
   const [loginErrors, setLoginErrors] = useState({});
   const [loginAlert, setLoginAlert] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [passwordNotice, setPasswordNotice] = useState(location.state?.passwordChanged ? 'Đã đổi mật khẩu thành công. Vui lòng đăng nhập lại.' : '');
 
   // Register Form States
   const [regFullName, setRegFullName] = useState('');
@@ -280,6 +283,7 @@ export default function AuthPage({ registerMode = false }) {
   }
 
   return (
+    <>
     <div className="flip-viewport">
       <div className={`auth-flip-box ${isFlipped ? 'is-flipped' : ''}`} id="authFlipBox">
         {/* ==========================================================================
@@ -380,6 +384,7 @@ export default function AuthPage({ registerMode = false }) {
                 </div>
 
                 {/* Alert message if any */}
+                {(passwordNotice || passwordChanged) && <p className="password-success-notice" role="status">{passwordNotice || 'Đã đổi mật khẩu thành công. Vui lòng đăng nhập lại.'}</p>}
                 {(loginAlert || location.state?.message) && (
                   <div className="form-alert" role="alert">
                     <AlertCircle size={18} />
@@ -473,7 +478,7 @@ export default function AuthPage({ registerMode = false }) {
                     <MotionButton
                       type="button"
                       className="forgot-link"
-                      onClick={() => notify(`Vui lòng liên hệ ban quản trị ${BRAND.name} hoặc kiểm tra email để đặt lại mật khẩu.`, 'info')}
+                      onClick={() => setForgotPassword(true)}
                     >
                       Quên mật khẩu?
                     </MotionButton>
@@ -652,7 +657,7 @@ export default function AuthPage({ registerMode = false }) {
                     </div>
                     {!otpSent && !verification && !regErrors.identifier && (
                       <p id="regIdentifier-help" className="register-field-help">
-                        Nhận mã qua email hoặc qua Zalo theo số điện thoại.
+                        Nhận mã qua email hoặc SMS theo số điện thoại.
                       </p>
                     )}
                     {regErrors.identifier && <p id="regIdentifier-error" className="error-message" role="alert">{regErrors.identifier}</p>}
@@ -690,7 +695,7 @@ export default function AuthPage({ registerMode = false }) {
                         </MotionButton>
                       </div>
                       <p id="registerOtp-status" className="register-field-help" role="status">
-                        Đã gửi mã qua {registerPhone.test(regIdentifier.trim()) ? 'Zalo' : 'email'}. Mã có hiệu lực 5 phút.
+                        Yêu cầu gửi mã qua {registerPhone.test(regIdentifier.trim()) ? 'SMS' : 'email'} đã được tiếp nhận. Mã có hiệu lực 5 phút.
                         {resendAt > 0 && ' Có thể gửi lại sau 60 giây.'}
                       </p>
                       {regErrors.code && <p id="registerOtp-error" className="error-message" role="alert">{regErrors.code}</p>}
@@ -924,5 +929,7 @@ export default function AuthPage({ registerMode = false }) {
         </div>
       </div>
     </div>
+    {forgotPassword && <PasswordRecoveryDialog initialIdentifier={loginIdentifier} onClose={() => setForgotPassword(false)} onComplete={identifier => { setForgotPassword(false); setLoginIdentifier(identifier); setLoginPassword(''); setPasswordNotice('Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.'); setLoginAlert(''); }} />}
+    </>
   );
 }

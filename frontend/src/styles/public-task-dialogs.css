@@ -1,0 +1,62 @@
+/* More specific than prototype descendant resets. Only the two public task dialogs use this shell. */
+dialog.portal-modal.public-task-dialog {
+  box-sizing:border-box;
+  position:fixed;
+  inset:0;
+  width:calc(100% - 32px);
+  max-width:720px;
+  max-height:calc(100dvh - 32px);
+  margin:auto;
+  padding:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  scroll-padding-block:88px 24px;
+  border:1px solid var(--ui-border);
+  border-radius:18px;
+  background:var(--ui-surface);
+  color:var(--ui-text);
+  font:400 .9375rem/1.6 'Plus Jakarta Sans',sans-serif;
+}
+dialog.portal-modal.public-task-dialog > header {
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:20px 24px;
+  margin:0;
+  border-bottom:1px solid var(--ui-border);
+  background:var(--ui-surface);
+}
+.public-task-dialog > header h2 { margin:0; font-size:1.125rem; font-weight:750; line-height:1.5; overflow-wrap:anywhere; }
+.public-task-dialog > header .p-icon { display:inline-flex; align-items:center; justify-content:center; flex:none; width:44px; height:44px; padding:10px; border:1px solid var(--ui-border); border-radius:50%; background:var(--ui-surface); color:var(--ui-text); }
+.public-task-dialog :is(.location-search-form,.viewing-form) { padding:24px; min-width:0; }
+.public-task-dialog .location-search-form { display:grid; gap:20px; }
+.public-task-dialog .location-search-form > p,
+.public-task-dialog .viewing-form p { margin:0; color:var(--ui-muted); overflow-wrap:anywhere; }
+.public-task-dialog .viewing-form > p:first-child { padding:14px 16px; background:var(--slate-50,#f8fafc); border-radius:12px; }
+.public-task-dialog .viewing-form > p strong { color:var(--ui-text); }
+.public-task-dialog .viewing-form form { margin-top:20px; gap:20px; }
+.public-task-dialog .viewing-fields { gap:16px; }
+.public-task-dialog :is(.location-search-form,.viewing-form) label { display:grid; min-width:0; gap:8px; color:var(--ui-text); font-weight:600; }
+.public-task-dialog :is(input,textarea) { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:10px 12px; font-family:inherit; font-size:1rem; font-weight:400; line-height:1.5; border:1px solid var(--ui-border); border-radius:10px; color:var(--ui-text); background:var(--ui-surface); }
+.public-task-dialog .viewing-form textarea { min-height:96px; }
+.public-task-dialog :is(.viewing-actions,.location-search-actions) { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:12px; padding:20px 0 0; margin:0; border-top:1px solid var(--ui-border); }
+.public-task-dialog :is(.viewing-actions,.location-search-actions) .p-button,
+.public-task-dialog .viewing-form > .p-button { box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; min-width:112px; padding:10px 18px; border:1px solid var(--ui-border); border-radius:999px; background:var(--ui-surface); color:var(--ui-text); font:600 .875rem/1.5 'Plus Jakarta Sans',sans-serif; cursor:pointer; }
+.public-task-dialog :is(.viewing-actions,.location-search-actions) .p-button.primary,
+.public-task-dialog .viewing-form > .p-button.primary { background:var(--ui-primary); border-color:var(--ui-primary); color:white; }
+.public-task-dialog .viewing-form > .p-button { margin-top:20px; text-decoration:none; }
+.public-task-dialog button:disabled { opacity:.6; cursor:wait; }
+.public-task-dialog :is(button,input,textarea,a):focus-visible { outline:2px solid var(--ui-primary); outline-offset:3px; }
+.public-task-dialog :is(.viewing-error,.portal-form-alert) { color:var(--ui-danger); }
+.location-search-dialog .accommodation-map:not(.accommodation-map-expanded) :is(.leaflet-container,.nh-google-canvas) { height:clamp(220px,38dvh,360px); }
+@media(max-width:600px) {
+  dialog.portal-modal.public-task-dialog { width:calc(100% - 24px); max-height:calc(100dvh - 24px); border-radius:16px; }
+  dialog.portal-modal.public-task-dialog > header { padding:16px; }
+  .public-task-dialog :is(.location-search-form,.viewing-form) { padding:16px; }
+  .public-task-dialog .viewing-fields { grid-template-columns:minmax(0,1fr); }
+  .public-task-dialog :is(.viewing-actions,.location-search-actions) .p-button { flex:1 1 112px; }
+}

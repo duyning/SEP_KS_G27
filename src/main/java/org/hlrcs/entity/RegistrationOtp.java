@@ -27,6 +27,9 @@ public class RegistrationOtp {
     @Column(length = 100)
     private String secretHash;
 
+    @Column(length = 160)
+    private String providerReference;
+
     @Column(nullable = false)
     private Instant sentAt;
 

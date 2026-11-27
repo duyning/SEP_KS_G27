@@ -95,6 +95,7 @@ public class AuthServiceImpl implements AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .phoneNumber(contact.phone() ? contact.identifier() : null)
+                .phoneVerifiedAt(contact.phone() ? java.time.Instant.now() : null)
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .authProvider("LOCAL")
@@ -372,9 +373,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void changePassword(ChangePasswordRequest request) {
-        User user = getCurrentUser();
+        org.hlrcs.service.PasswordRules.validate(request.getNewPassword());
+        User user = userRepository.findForRegistrationUpdate(getCurrentUser().getUserId())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản."));
 
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+        if (request.getOldPassword().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72
+                || !passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Mật khẩu hiện tại không chính xác");
         }
 
@@ -383,6 +387,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setSessionVersion(user.getSessionVersion() + 1);
         userRepository.save(user);
     }
 }

@@ -1,5 +1,12 @@
 # HL-RCS — ERD theo JPA hiện tại
 
+2026-11-27: `registration_otps.provider_reference` VARCHAR(160) nullable là tham chiếu
+SMS bên ngoài, không có FK hoặc quan hệ entity mới; đăng ký SĐT dùng eSMS thay Zalo.
+
+2026-11-27: `password_reset_challenges` là bảng challenge tạm, PK SHA-256 định danh,
+lưu `userId`/`sessionVersion` snapshot và BCrypt hash cùng thời hạn/bộ đếm.
+Không có quan hệ JPA/FK tới User; xem [Password Recovery](PASSWORD_RECOVERY.md).
+
 ## Nhắn tin dùng chung (2026-11-25)
 
 ```mermaid

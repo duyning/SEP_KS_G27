@@ -1,5 +1,25 @@
 # Xác minh số điện thoại cho tài khoản Google
 
+## Đăng ký tài khoản qua eSMS (2026-11-27)
+
+Đăng ký SĐT đã chuyển từ Zalo sang cùng `PhoneOtpProvider` với hồ sơ và quên mật khẩu;
+provider mặc định là eSMS, dùng nguyên khóa/Brandname/mẫu bên dưới. Không gọi API Zalo
+hoặc đọc các biến `REGISTRATION_ZALO_*` trong ứng dụng nữa. Đăng ký email vẫn gửi SMTP.
+API `/api/auth/register/otp/send`, `/otp/verify` và `/api/auth/register` giữ hợp đồng cũ.
+Số `0...` và `+84...` dùng cùng challenge; eSMS nhận số local đã chuẩn hóa.
+
+OTP 5 phút, tối đa 5 lần sai, gửi lại sau 60 giây; proof 10 phút dùng một lần,
+chỉ tạo tài khoản `USER` và lưu mốc xác minh SĐT. Không gửi lại tự động nếu lỗi/timeout.
+Lỗi provider rollback challenge để không mất mã/proof trước khi gửi lại thành công.
+`registration_otps.secret_hash` chứa BCrypt; `provider_reference` mới lưu mã tham chiếu,
+không trả ra client. Migration thủ công: `sql/migrations/20261127_registration_sms_provider.sql`;
+development `ddl-auto=update` tự bổ sung cột. Giới hạn 10 lượt/24 giờ của xác minh hồ sơ
+không áp dụng tự động cho đăng ký; đăng ký giữ giới hạn gửi lại 60 giây hiện có.
+
+`RegistrationSmsTests` chạy eSMS adapter thật với HTTP server loopback, SMTP giả lập:
+tạo tài khoản, phân quyền, OTP sai/hết hạn, gửi lại, proof dùng một lần và rollback lỗi.
+Không gửi SMS thật hoặc sử dụng khóa dịch vụ thật trong kiểm thử.
+
 Cập nhật 2026-11-14: `/become-host` có **một popup duy nhất** để nhập số điện
 thoại, gửi SMS và nhập OTP. Không điều hướng sang profile, không mở thêm dialog
 ở bước OTP. Sau khi mã đúng, `POST /api/auth/profile/phone/confirm` lưu riêng số

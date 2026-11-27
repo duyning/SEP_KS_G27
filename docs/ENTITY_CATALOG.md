@@ -1,5 +1,15 @@
 # HL-RCS — Entity catalog
 
+Cập nhật 2026-11-27: `RegistrationOtp` có thêm `providerReference` VARCHAR(160),
+nullable, lưu tham chiếu SMS của provider dùng chung; email dùng BCrypt hash như cũ.
+
+Bổ sung 2026-11-27: `PasswordResetChallenge` → `password_reset_challenges`;
+`id` VARCHAR(64) PK là SHA-256 của định danh có prefix mục đích; `version` BIGINT optimistic lock,
+`userId` INT nullable và `sessionVersion` BIGINT snapshot; `secretHash` VARCHAR(100),
+`providerReference` VARCHAR(160), `sentAt`/`expiresAt`/`windowStart` Instant bắt buộc,
+`sends`/`failedAttempts` INT, `verified` BOOLEAN. ID snapshot không có FK/JPA relation.
+Xem [hợp đồng và vòng đời](PASSWORD_RECOVERY.md).
+
 Bổ sung 2026-11-25: `DirectConversation` → `messaging_conversations` và
 `DirectMessage` → `messaging_messages`. Hai thành viên User, unique cặp có thứ tự,
 sequence/read cursor và client key chống gửi trùng. Xem [MESSAGING.md](MESSAGING.md).

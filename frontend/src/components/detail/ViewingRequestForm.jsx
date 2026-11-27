@@ -5,6 +5,7 @@ import { Modal } from '../PortalUI.jsx';
 import { detailPhone } from '../../services/accommodation-detail.js';
 import { formatViewingDate, viewingApi, canScheduleViewing, viewingLink, viewingStatuses, VIEWING_MAX_DAYS, viewingDateRange } from '../../services/viewings.js';
 import '../../styles/viewing-flow.css';
+import '../../styles/public-task-dialogs.css';
 
 export default function ViewingRequestForm({ item, user, pending, onClose, onSaved, onViewSaved }) {
   const formId = useId();
@@ -46,7 +47,7 @@ export default function ViewingRequestForm({ item, user, pending, onClose, onSav
     }
   }
 
-  return <Modal title={title} className="detail-prototype-modal viewing-dialog"
+  return <Modal title={title} className="detail-prototype-modal viewing-dialog public-task-dialog viewing-request-dialog"
     onClose={() => { if (!inFlight.current) onClose(); }}>
     <div className="viewing-form">
       <p><strong>{item.propertyName} · {item.roomTypeName}</strong>{item.address && <><br />{item.address}</>}</p>

@@ -1,0 +1,21 @@
+.prototype-profile .profile-appointments-header .profile-card-title-group { flex: 1 1 300px; min-width:0; }
+.prototype-profile .profile-appointment-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; margin-left:auto; }
+.prototype-profile .profile-appointment-actions > a,
+.prototype-profile #tabPanelAppointments :is(.btn-secondary,.btn-primary-action) { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:12px; text-decoration:none; }
+.prototype-profile .profile-appointments-state { display:grid; justify-items:center; gap:16px; padding:32px 20px; text-align:center; color:var(--slate-600); }
+.prototype-profile .profile-appointments-empty { background:var(--slate-50); border:1px dashed var(--slate-300); border-radius:16px; }
+.prototype-profile .profile-appointments-empty > svg { color:var(--slate-400); }
+.prototype-profile .profile-appointments-empty h3 { margin:0; color:var(--slate-900); font-size:1rem; }
+.prototype-profile .profile-appointments-state p { margin:0; line-height:1.7; }
+.prototype-profile .profile-appointment-title { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.prototype-profile .profile-appointment-title h3 { margin:0; overflow-wrap:anywhere; }
+.prototype-profile .profile-appointment-type { padding:4px 10px; background:var(--slate-100); color:var(--slate-600); border-radius:999px; font-size:.8125rem; overflow-wrap:anywhere; }
+.prototype-profile .appointment-main-info { min-width:0; }
+.prototype-profile .appointment-main-info > .p-badge { display:inline-flex; align-self:flex-start; padding:4px 10px; border-radius:999px; font-size:.75rem; line-height:1.5; }
+.prototype-profile .appointment-main-info > .p-badge.warning { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+.prototype-profile #tabPanelAppointments :is(a,button):focus-visible { outline:2px solid var(--ui-primary); outline-offset:3px; }
+@media(max-width:600px) {
+  .prototype-profile .profile-appointment-actions { width:100%; margin-left:0; }
+  .prototype-profile .profile-appointment-actions > a { flex:1 1 200px; }
+  .prototype-profile #tabPanelAppointments .appointment-item-card { align-items:flex-start; padding:16px; }
+}

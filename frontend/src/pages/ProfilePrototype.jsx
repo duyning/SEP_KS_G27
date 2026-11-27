@@ -2,8 +2,9 @@ import { MotionButton } from '../components/motion/MotionUI.jsx';
 // Original markup from Code/giao_dien/html/profile.html, bound to the authenticated profile API.
 import {Link} from 'react-router-dom';
 import {ChevronDown,UserRound} from 'lucide-react';
+import ProfileUpcomingViewings from '../components/ProfileUpcomingViewings.jsx';
 const mobileTabLabels={info:'Thông tin cá nhân',favorites:'Phòng yêu thích',appointments:'Lịch xem phòng',reports:'Báo cáo của tôi',security:'Bảo mật & Mật khẩu'};
-export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,accountMenuOpen,onClick,onSubmit,onChange,alert}) {
+export default function ProfilePrototype({user,roleLabel,perks,values,passwords,eyes,editing,tab,errors,busy,accountMenuOpen,onClick,onSubmit,onChange,alert,appointments}) {
 return <div className="prototype-home prototype-profile profile-mobile" onClick={onClick} onSubmit={onSubmit} onChange={onChange}>
 
 
@@ -54,7 +55,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </div>
             <div>
-              <div className="profile-stat-num" id="headerApptCount">0</div>
+              <div className="profile-stat-num" id="headerApptCount">{appointments.items?.length ?? '—'}</div>
               <div className="profile-stat-label">Lịch xem phòng</div>
             </div>
           </div>
@@ -111,7 +112,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                   <span>Lịch xem phòng</span>
                 </span>
-                <span className="profile-nav-badge" id="sidebarApptBadge">0</span>
+                <span className="profile-nav-badge" id="sidebarApptBadge">{appointments.items?.length ?? '—'}</span>
               </MotionButton>
             </li>
             <li>
@@ -297,26 +298,17 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
 
           <div id="tabPanelAppointments" className={`profile-tab-panel ${tab === "appointments" ? "active" : ""}`}>
             <div className="profile-card">
-              <div className="profile-card-header">
+              <div className="profile-card-header profile-appointments-header">
                 <div className="profile-card-title-group">
-                  <h2>Lịch hẹn xem phòng thực tế</h2>
-                  <p>Danh sách các yêu cầu hẹn gặp chủ trọ trực tiếp tại cơ sở nhà trọ Hòa Lạc.</p>
+                  <h2>Lịch hẹn xem phòng sắp tới</h2>
+                  <p>Chỉ hiển thị lịch chờ xác nhận hoặc đã xác nhận chưa đến giờ hẹn, theo thứ tự gần nhất.</p>
                 </div>
-                <Link className="btn-secondary" style={{"textDecoration": "none"}} to="/search">+ Đặt lịch phòng khác</Link>
+                <div className="profile-appointment-actions">
+                  <Link className="btn-secondary" to="/bookings">Xem trang Lịch xem phòng</Link>
+                  <Link className="btn-secondary" to="/search">+ Đặt lịch phòng khác</Link>
+                </div>
               </div>
-
-
-              <div className="appointment-list-wrap" id="profileApptList">
-        <div style={{"textAlign": "center", "padding": "50px 20px", "background": "var(--slate-50)", "border": "2px dashed var(--slate-300)", "borderRadius": "16px"}}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="1.8" style={{"marginBottom": "12px"}}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          <h4 style={{"fontSize": "16px", "fontWeight": "700", "color": "var(--slate-900)", "marginBottom": "6px"}}>Bạn chưa có lịch hẹn xem phòng nào</h4>
-          <p style={{"fontSize": "13.5px", "color": "var(--slate-600)", "marginBottom": "18px"}}>Khi xem chi tiết một căn phòng, bạn có thể gửi yêu cầu đặt lịch hẹn gặp trực tiếp chủ trọ miễn phí.</p>
-          <div style={{"display": "flex", "justifyContent": "center", "gap": "10px", "flexWrap": "wrap"}}>
-            <Link className="btn-primary-action" style={{"textDecoration": "none"}} to="/search">Tìm phòng và đặt lịch</Link>
-            <Link className="btn-secondary" style={{"textDecoration": "none"}} to="/bookings">Xem trang Lịch xem phòng</Link>
-          </div>
-        </div>
-      </div>
+              <ProfileUpcomingViewings {...appointments} />
             </div>
           </div>
 
@@ -347,7 +339,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
                   <div className="form-field">
                     <label htmlFor="newPassword">Mật khẩu mới <span style={{"color": "var(--rose)"}}>*</span></label>
                     <div className="password-input-wrap">
-                      <input id="newPassword" className="form-input" placeholder="Tối thiểu 6 ký tự" required maxLength="128" autoComplete="new-password" name="newPassword" value={passwords.newPassword} aria-invalid={!!errors.newPassword} type={eyes.newPassword ? "text" : "password"}/>
+                      <input id="newPassword" className="form-input" placeholder="Tối thiểu 6 ký tự, tối đa 72 byte" required maxLength="72" autoComplete="new-password" name="newPassword" value={passwords.newPassword} aria-invalid={!!errors.newPassword} type={eyes.newPassword ? "text" : "password"}/>
                       <MotionButton type="button" className="btn-toggle-eye" data-target="newPassword" aria-label="Hiện hoặc ẩn mật khẩu">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                       </MotionButton>
@@ -371,6 +363,7 @@ return <div className="prototype-home prototype-profile profile-mobile" onClick=
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                       <span>Cập nhật mật khẩu mới</span>
                     </MotionButton>
+                    <div className="profile-password-otp-action"><span>Không nhớ mật khẩu hiện tại hoặc đang dùng Google?</span><MotionButton type="button" className="btn-secondary" id="btnProfilePasswordOtp" disabled={busy}>Đổi mật khẩu qua OTP</MotionButton></div>
                   </div>
 
                 </div>

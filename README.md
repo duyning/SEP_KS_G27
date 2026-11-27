@@ -195,31 +195,35 @@ file cau hinh local theo huong dan ben tren.
 ## Xác minh đăng ký tài khoản
 
 Đăng ký bằng một email hoặc một số di động Việt Nam. Backend gửi OTP qua email
-hoặc Zalo theo thông tin đã nhập. Mã gồm 6 chữ số, có hiệu lực 5 phút, được thử
+hoặc SMS qua eSMS theo thông tin đã nhập. Mã gồm 6 chữ số, có hiệu lực 5 phút, được thử
 tối đa 5 lần và có thể gửi lại sau 60 giây. Sau khi xác minh, người dùng có
 10 phút để hoàn tất việc tạo tài khoản `USER`. Hồ sơ xin quyền chủ trọ ở
 `/become-host`.
 
 Cấu hình ở backend qua biến môi trường hoặc trong
-`config/mysql-local.properties` khi chạy cục bộ. Tệp local này được Git bỏ qua.
+`config/mysql-local.properties` cho SMTP, `config/sms-local.properties` cho eSMS
+khi chạy cục bộ. Các tệp local này được Git bỏ qua.
 
 | Kênh | Thuộc tính backend | Biến môi trường tương ứng |
 | --- | --- | --- |
 | Email | `spring.mail.host`, `spring.mail.port`, `spring.mail.username`, `spring.mail.password` | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` |
 | Người gửi email | `app.registration.mail-from` | `REGISTRATION_MAIL_FROM` |
-| Zalo | `app.registration.zalo-access-token`, `app.registration.zalo-template-id` | `REGISTRATION_ZALO_ACCESS_TOKEN`, `REGISTRATION_ZALO_TEMPLATE_ID` |
-| Tên tham số OTP trong mẫu Zalo | `app.registration.zalo-otp-field` (mặc định `otp`) | `REGISTRATION_ZALO_OTP_FIELD` |
+| SMS provider | `app.phone-otp.provider` (mặc định `esms`) | `PHONE_OTP_PROVIDER` |
+| eSMS | `app.phone-otp.esms.api-key`, `app.phone-otp.esms.secret-key`, `app.phone-otp.esms.brandname` | `ESMS_API_KEY`, `ESMS_SECRET_KEY`, `ESMS_BRANDNAME` |
+| Mẫu SMS OTP | `app.phone-otp.esms.template` (chứa đúng một `{code}`) | `ESMS_OTP_TEMPLATE` |
 
-SMTP mặc định dùng xác thực và STARTTLS. Đặt cổng theo máy chủ gửi email. Zalo
-cần mẫu xác thực ZBS đã được duyệt, token có quyền gửi tin qua số điện thoại và
-số người nhận đã liên kết Zalo. Backend đọc token từ cấu hình lúc khởi động.
-Cập nhật token khi hết hạn và khởi động lại backend. [Hướng dẫn gửi tin qua API của Zalo](https://zalo.solutions/business-message/guidelines/en/gui-api).
+SMTP mặc định dùng xác thực và STARTTLS. Đặt cổng theo máy chủ gửi email.
+SMS dùng chung cấu hình, Brandname và mẫu đã đăng ký với eSMS của luồng xác minh SĐT;
+không cần tài khoản Zalo. Khởi động lại backend sau khi đổi cấu hình.
+Xem [cấu hình và giới hạn eSMS](docs/PHONE_OTP.md).
 
 API dùng `POST /api/auth/register/otp/send` với `identifier`, rồi
 `POST /api/auth/register/otp/verify` với `identifier` và `code`.
 Gửi `verificationToken` nhận được vào `POST /api/auth/register` cùng đúng một
 trường `email` hoặc `phoneNumber`, `fullName` và `password`. Hibernate tạo bảng
-`registration_otps` khi backend khởi động với cấu hình `ddl-auto=update`.
+`registration_otps` và cột `provider_reference` khi backend khởi động với cấu hình
+`ddl-auto=update`. Với môi trường migration/validate, áp dụng
+`sql/migrations/20261127_registration_sms_provider.sql` trước khi chạy phiên bản mới.
 
 ## Đăng ký cung cấp dịch vụ
 

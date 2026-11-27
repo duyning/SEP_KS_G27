@@ -1,5 +1,12 @@
 # HL-RCS — context và kiến trúc hiện tại
 
+Cập nhật 2026-11-27: OTP đăng ký SĐT dùng chung `PhoneOtpProvider` (eSMS mặc định),
+thay Zalo; email giữ SMTP. Xem [PHONE_OTP.md](PHONE_OTP.md) và migration
+`20261127_registration_sms_provider.sql` cho cột `registration_otps.provider_reference`.
+
+Bổ sung 2026-11-27: [quên/đổi mật khẩu qua OTP](PASSWORD_RECOVERY.md), tái sử dụng email
+và SMS hiện có, proof riêng theo mục đích, một lần sử dụng và vô hiệu phiên JWT sau khi đổi.
+
 Bổ sung 2026-11-25: [nhắn tin dùng chung](MESSAGING.md), hội thoại riêng giữa hai
 tài khoản ACTIVE, lịch sử/read cursor, gửi idempotent và SSE riêng theo thành viên.
 Tích hợp Community trước, có route `/messages` và resolver tham chiếu để mở rộng.

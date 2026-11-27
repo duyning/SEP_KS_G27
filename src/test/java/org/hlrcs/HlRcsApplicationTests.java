@@ -185,7 +185,7 @@ class HlRcsApplicationTests extends RegistrationOtpTestSupport {
     }
 
     @Test
-    void zaloRegistrationAcceptsBothPhoneFormatsAndGrantsOnlyUserRole() throws Exception {
+    void smsRegistrationAcceptsBothPhoneFormatsAndGrantsOnlyUserRole() throws Exception {
         String phone = "0355550141";
         String international = "+84355550141";
         var code = captureCode(phone);

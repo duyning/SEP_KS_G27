@@ -1,0 +1,58 @@
+---
+title: HL-RCS — Google Sign In and First-time Registration (Web)
+---
+sequenceDiagram
+autonumber
+actor U as Guest
+participant UI as «user interaction» AuthPage / GoogleSignIn
+participant G as «external» Google Identity Services
+participant C as «control» AuthController
+participant S as «service» AuthServiceImpl
+participant V as «security» GoogleTokenVerifier
+participant R as «entity» User / Capability Repositories
+participant J as «security» JwtTokenProvider
+U->>UI: Choose Sign in with Google
+UI->>+G: Open account selection and authentication
+G-->>-UI: Credential (Google ID token)
+UI->>+C: POST /api/auth/google (idToken)
+C->>+S: loginWithGoogle(request)
+S->>+V: verifyToken(idToken)
+V->>V: Verify signature, issuer, audience, expiry,<br/>verified email and subject
+V-->>-S: GoogleUserInfo or exception
+alt Invalid token or Google not configured
+S-->>C: AppException (401 / 503)
+C-->>UI: Error response
+UI-->>U: Display sign-in error
+else Valid Google identity
+S->>+R: findByGoogleSubject(subject)
+R-->>-S: User or null
+alt No account for Google subject
+S->>+R: existsByEmail(normalized email)
+R-->>-S: Exists?
+alt Email belongs to another account
+S->>S: Reject automatic account linking (409)
+else Email available
+S->>S: Build USER, ACTIVE, GOOGLE account;<br/>encode random password; set Google subject
+S->>+R: saveAndFlush(user)
+R-->>-S: Saved user or uniqueness violation (409)
+end
+else Existing Google account
+S->>S: Require ACTIVE status; otherwise 403
+end
+alt Conflict or inactive account
+S-->>C: AppException (409 / 403)
+C-->>UI: Error response; no session
+UI-->>U: Display conflict or account restriction
+else Eligible user
+S->>+R: Find ACTIVE capabilities
+R-->>-S: Capability codes
+S->>+J: generateTokenFromUser(user)
+J-->>-S: Application JWT
+S-->>C: AuthResponse; commit
+C-->>UI: HTTP 200 — ApiResponse of AuthResponse
+UI->>UI: acceptSession(data, remember)
+UI-->>U: Enter application
+end
+end
+deactivate S
+deactivate C

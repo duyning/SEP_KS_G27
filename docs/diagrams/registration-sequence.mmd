@@ -1,0 +1,66 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: "#dae8fc"
+    primaryBorderColor: "#6c8ebf"
+    actorBkg: "#dae8fc"
+    actorBorder: "#6c8ebf"
+    activationBkgColor: "#dae8fc"
+    activationBorderColor: "#6c8ebf"
+    signalColor: "#333333"
+    fontFamily: Arial
+title: HL-RCS — Register an Account
+---
+sequenceDiagram
+autonumber
+actor U as Guest
+participant UI as «user interaction» AuthPage / AuthContext
+participant C as «control» AuthController
+participant S as «service» AuthServiceImpl
+participant O as «service» RegistrationOtpService
+participant R as «entity» OTP / User Repositories
+participant J as «security» PasswordEncoder / JwtTokenProvider
+Note over U,O: Precondition: contact verified through Registration Contact Verification
+U->>UI: Submit name, email OR phone, password and confirmation
+UI->>UI: Validate fields, matching passwords, agreement and token expiry
+UI->>+C: POST /api/auth/register (RegisterRequest)
+Note right of C: Invalid request fields return HTTP 400 before service call
+C->>+S: register(request)
+S->>S: Validate one contact, normalize; password at most 72 bytes
+S->>+O: consume(contact, verificationToken)
+O->>+R: findLocked(contact key)
+R-->>-O: Verification challenge
+alt Invalid, unverified or expired token
+O-->>S: FieldValidationException
+else Valid token
+O->>+R: requireAvailable(contact): check existing accounts
+R-->>-O: Availability result
+O->>O: Reject used contact or clear token secret
+O-->>S: Consumed or conflict exception
+end
+deactivate O
+alt Validation or contact conflict
+S-->>C: Exception; rollback registration transaction
+C-->>UI: HTTP 400 / 409 — error
+UI-->>U: Display validation or conflict error
+else Verification consumed successfully
+S->>+J: encode(password)
+J-->>-S: Password hash
+S->>+R: saveAndFlush(User: USER, ACTIVE, LOCAL)
+R-->>-S: Saved user or uniqueness violation
+alt Concurrent duplicate account
+S-->>C: AppException (409); rollback including token consumption
+C-->>UI: HTTP 409 — contact already used
+UI-->>U: Display conflict
+else Account saved
+S->>+J: generateTokenFromUser(savedUser)
+J-->>-S: JWT access token
+S-->>C: AuthResponse; transaction commits
+C-->>UI: HTTP 201 — ApiResponse of AuthResponse
+UI->>UI: acceptSession(data, false); save JWT; set user
+UI-->>U: Enter application as signed-in user
+end
+end
+deactivate S
+deactivate C
